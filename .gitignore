@@ -1,0 +1,23 @@
+# build artifacts
+bin/
+dist/
+
+# Go
+*.test
+*.out
+coverage.txt
+
+# buddy runtime data
+.buddy/
+*.db
+*.db-wal
+*.db-shm
+
+# system
+.DS_Store
+*.log
+*.swp
+
+# IDE
+.vscode/
+.idea/
