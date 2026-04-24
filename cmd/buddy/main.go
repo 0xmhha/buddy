@@ -14,6 +14,7 @@ import (
 
 	"github.com/wm-it-22-00661/buddy/internal/daemon"
 	"github.com/wm-it-22-00661/buddy/internal/db"
+	"github.com/wm-it-22-00661/buddy/internal/diagnose"
 	"github.com/wm-it-22-00661/buddy/internal/hookwrap"
 	"github.com/wm-it-22-00661/buddy/internal/install"
 	"github.com/wm-it-22-00661/buddy/internal/schema"
@@ -57,7 +58,43 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newDaemonCmd())
 	root.AddCommand(newInstallCmd())
 	root.AddCommand(newUninstallCmd())
+	root.AddCommand(newDoctorCmd())
 	return root
+}
+
+// newDoctorCmd wires the read-only health snapshot. Render output goes to
+// stdout (it is the user-facing report, not log noise). Exit code is 0 when
+// the report is healthy, 1 otherwise — matches m4-plan §Task 2.
+func newDoctorCmd() *cobra.Command {
+	var (
+		dbFlag  string
+		pidFlag string
+	)
+	cmd := &cobra.Command{
+		Use:   "doctor",
+		Short: "hook health 즉시 진단 (read-only, daemon 의존 없음)",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			pidFile, err := resolvePIDFile(pidFlag, dbFlag)
+			if err != nil {
+				return err
+			}
+			rep, err := diagnose.Check(diagnose.Options{
+				DBPath:  dbFlag,
+				PIDFile: pidFile,
+			})
+			if err != nil {
+				return err
+			}
+			rep.Render(os.Stdout)
+			if !rep.Healthy {
+				os.Exit(1)
+			}
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: ~/.buddy/buddy.db)")
+	cmd.Flags().StringVar(&pidFlag, "pid", "", "PID 파일 경로 (기본: <db dir>/daemon.pid)")
+	return cmd
 }
 
 func newInstallCmd() *cobra.Command {
