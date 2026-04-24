@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,6 +15,7 @@ import (
 	"github.com/wm-it-22-00661/buddy/internal/daemon"
 	"github.com/wm-it-22-00661/buddy/internal/db"
 	"github.com/wm-it-22-00661/buddy/internal/hookwrap"
+	"github.com/wm-it-22-00661/buddy/internal/install"
 	"github.com/wm-it-22-00661/buddy/internal/schema"
 )
 
@@ -37,7 +39,93 @@ func newRootCmd() *cobra.Command {
 	}
 	root.AddCommand(newHookWrapCmd())
 	root.AddCommand(newDaemonCmd())
+	root.AddCommand(newInstallCmd())
+	root.AddCommand(newUninstallCmd())
 	return root
+}
+
+func newInstallCmd() *cobra.Command {
+	var (
+		claudeDirFlag string
+		buddyDirFlag  string
+		binaryFlag    string
+		dbFlag        string
+		withCliwrap   bool
+	)
+	cmd := &cobra.Command{
+		Use:   "install",
+		Short: "Claude Code settings.json의 hook들을 buddy로 감싼다",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			res, err := install.Install(install.Options{
+				ClaudeDir:   claudeDirFlag,
+				BuddyDir:    buddyDirFlag,
+				BuddyBinary: binaryFlag,
+				DBPath:      dbFlag,
+				WithCliwrap: withCliwrap,
+			})
+			if err != nil {
+				if errors.Is(err, install.ErrSettingsMissing) {
+					fmt.Fprintln(os.Stderr, "buddy: ~/.claude/settings.json 이 안 보여. Claude Code 설치되어 있어?")
+					os.Exit(1)
+				}
+				return err
+			}
+			if res.NoOp {
+				fmt.Fprintln(os.Stderr, "buddy: 이미 등록되어 있어. 변화 없음.")
+			} else {
+				fmt.Fprintln(os.Stderr, "buddy: 등록 완료. 이제 옆에서 보고 있을게.")
+			}
+			if res.CliwrapWritten {
+				fmt.Fprintf(os.Stderr, "buddy: cliwrap.yaml 도 써뒀어 (%s).\n", res.CliwrapPath)
+			}
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&claudeDirFlag, "claude-dir", "", "Claude Code 설정 디렉터리 (기본: ~/.claude)")
+	cmd.Flags().StringVar(&buddyDirFlag, "buddy-dir", "", "buddy 작업 디렉터리 (기본: ~/.buddy)")
+	cmd.Flags().StringVar(&binaryFlag, "buddy-binary", "", "buddy 바이너리 절대 경로 (기본: 현재 실행 파일)")
+	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (cliwrap.yaml 안의 daemon --db)")
+	cmd.Flags().BoolVar(&withCliwrap, "with-cliwrap", false, "cliwrap.yaml 도 함께 생성")
+	return cmd
+}
+
+func newUninstallCmd() *cobra.Command {
+	var (
+		claudeDirFlag string
+		buddyDirFlag  string
+		binaryFlag    string
+	)
+	cmd := &cobra.Command{
+		Use:   "uninstall",
+		Short: "settings.json의 buddy hook wrapping 을 제거 (백업 우선 복원)",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			res, err := install.Uninstall(install.Options{
+				ClaudeDir:   claudeDirFlag,
+				BuddyDir:    buddyDirFlag,
+				BuddyBinary: binaryFlag,
+			})
+			if err != nil {
+				if errors.Is(err, install.ErrSettingsMissing) {
+					fmt.Fprintln(os.Stderr, "buddy: ~/.claude/settings.json 이 안 보여. Claude Code 설치되어 있어?")
+					os.Exit(1)
+				}
+				return err
+			}
+			switch {
+			case res.RestoredFromBackup:
+				fmt.Fprintln(os.Stderr, "buddy: 해제 완료. 백업에서 복원했어.")
+			case res.Unwrapped > 0:
+				fmt.Fprintln(os.Stderr, "buddy: 해제 완료. wrapping 제거했어.")
+			default:
+				fmt.Fprintln(os.Stderr, "buddy: 등록된 게 없어. 그대로 둘게.")
+			}
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&claudeDirFlag, "claude-dir", "", "Claude Code 설정 디렉터리 (기본: ~/.claude)")
+	cmd.Flags().StringVar(&buddyDirFlag, "buddy-dir", "", "buddy 작업 디렉터리 (기본: ~/.buddy)")
+	cmd.Flags().StringVar(&binaryFlag, "buddy-binary", "", "buddy 바이너리 절대 경로 (기본: 현재 실행 파일)")
+	return cmd
 }
 
 func newDaemonCmd() *cobra.Command {
