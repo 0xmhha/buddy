@@ -160,6 +160,24 @@ func TestRun_HookFilter_MissesAll_EmptyResult(t *testing.T) {
 	assert.Empty(t, res.Rows)
 }
 
+// Locks the M4-T3 review fix: typing `--hook pretooluse` against a stored
+// hook called "PreToolUse" must match. Strict case matching previously
+// returned an empty result with no signal that capitalisation was the cause.
+func TestRun_HookFilter_IsCaseInsensitive(t *testing.T) {
+	dbPath := newTempDBPath(t)
+	conn := openWritable(t, dbPath)
+	insertStat(t, conn, "PreToolUse", "Bash", 60, 7, 0, 100, 200)
+
+	res, err := queries.Run(queries.Options{
+		DBPath:     dbPath,
+		Window:     "1h",
+		HookFilter: "pretooluse",
+	})
+	require.NoError(t, err)
+	require.Len(t, res.Rows, 1)
+	assert.Equal(t, "PreToolUse", res.Rows[0].HookName)
+}
+
 func TestRun_PicksLatestBucketPerPair(t *testing.T) {
 	// Older bucket should be ignored when a newer bucket exists for the same
 	// (hook, tool, window). Insert manually with explicit ts_bucket values.
@@ -235,6 +253,7 @@ func TestRender_ByTool_HasToolColumn(t *testing.T) {
 	r := queries.Result{
 		WindowMin:   60,
 		WindowLabel: "1시간",
+		ByTool:      true,
 		Rows: []queries.Row{
 			{HookName: "pre-commit", ToolName: "Bash", Count: 10, Failures: 1, P50Ms: 1000, P95Ms: 5000},
 		},
@@ -244,6 +263,28 @@ func TestRender_ByTool_HasToolColumn(t *testing.T) {
 	out := buf.String()
 	assert.Contains(t, out, "tool")
 	assert.Contains(t, out, "Bash")
+}
+
+// Locks the M4-T3 review fix: when --by-tool is on but the underlying hook
+// has no tool name (e.g. Stop), Render must surface "(none)" rather than
+// silently dropping the cell. Without ByTool=true on the Result, the renderer
+// previously inferred layout from the data and downgraded to no-tool layout,
+// hiding the user's explicit choice.
+func TestRender_ByTool_EmptyToolNameRendersAsNone(t *testing.T) {
+	r := queries.Result{
+		WindowMin:   60,
+		WindowLabel: "1시간",
+		ByTool:      true,
+		Rows: []queries.Row{
+			{HookName: "Stop", ToolName: "", Count: 5, Failures: 0, P50Ms: 100, P95Ms: 200},
+		},
+	}
+	var buf bytes.Buffer
+	r.Render(&buf)
+	out := buf.String()
+	assert.Contains(t, out, "tool", "ByTool layout should be preserved")
+	assert.Contains(t, out, "(none)", "empty ToolName should render as (none)")
+	assert.Contains(t, out, "Stop")
 }
 
 func TestRender_FailurePercent_ZeroCountIsZero(t *testing.T) {
@@ -283,26 +324,6 @@ func TestRender_ColumnAlignment_LinesShareWidth(t *testing.T) {
 }
 
 // table-driven helpers -----------------------------------------------------
-
-func TestHumanDur_Boundaries(t *testing.T) {
-	cases := []struct {
-		in   int64
-		want string
-	}{
-		{0, "0ms"},
-		{999, "999ms"},
-		{1000, "1.0s"},
-		{59_949, "59.9s"},
-		{59_950, "1.0m"},
-		{60_000, "1.0m"},
-		{125_000, "2.1m"},
-	}
-	for _, c := range cases {
-		t.Run(strconv.FormatInt(c.in, 10), func(t *testing.T) {
-			assert.Equal(t, c.want, queries.HumanDurForTest(c.in))
-		})
-	}
-}
 
 func TestFailurePercent_HalfUp(t *testing.T) {
 	cases := []struct {

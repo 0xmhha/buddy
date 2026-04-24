@@ -273,33 +273,6 @@ func TestRender_NonHealthy_HeaderAndBullets(t *testing.T) {
 	assert.Contains(t, out, "  • outbox에 1,247개 쌓였어")
 }
 
-func TestHumanDur_Boundaries(t *testing.T) {
-	cases := []struct {
-		in   int64
-		want string
-	}{
-		{0, "0ms"},
-		{1, "1ms"},
-		{123, "123ms"},
-		{999, "999ms"},
-		{1000, "1.0s"},
-		{1234, "1.2s"},
-		{5_000, "5.0s"},
-		{59_949, "59.9s"}, // last ms whose tenths-rounding stays under 60.0s
-		{59_950, "1.0m"},  // promotes to minutes once tenths-of-second would render 60.0s
-		{59_999, "1.0m"},  // boundary fix: previously rendered as "60.0s"
-		{60_000, "1.0m"},
-		{125_000, "2.1m"},
-		{600_000, "10.0m"},
-	}
-	for _, c := range cases {
-		t.Run(strconv.FormatInt(c.in, 10), func(t *testing.T) {
-			got := diagnose.HumanDurForTest(c.in)
-			assert.Equal(t, c.want, got)
-		})
-	}
-}
-
 func TestDefaultThresholds_LockInValues(t *testing.T) {
 	d := diagnose.DefaultThresholds()
 	// Decision 2 lock-in (v0.1-spec §6.2). Asserting the exact values guards

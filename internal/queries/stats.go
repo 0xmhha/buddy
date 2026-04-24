@@ -17,11 +17,11 @@ import (
 	"io"
 	"math"
 	"sort"
-	"strconv"
 	"strings"
 	"text/tabwriter"
 
 	"github.com/wm-it-22-00661/buddy/internal/db"
+	"github.com/wm-it-22-00661/buddy/internal/format"
 )
 
 // ErrInvalidWindow is the sentinel returned when Options.Window is not one of
@@ -60,7 +60,13 @@ type Row struct {
 type Result struct {
 	WindowMin   int
 	WindowLabel string // "5분" | "1시간" | "24시간"
-	Rows        []Row
+	// ByTool mirrors Options.ByTool so Render can pick the right layout even
+	// when the user explicitly asked for per-tool breakdown but the data has
+	// no tool names (e.g. Stop hook). Inferring layout from "any non-empty
+	// ToolName?" silently downgraded to the no-tool layout in that case;
+	// carrying the flag makes the user's intent authoritative.
+	ByTool bool
+	Rows   []Row
 }
 
 // Run validates options, opens the DB read-only, queries the latest hook_stats
@@ -104,6 +110,7 @@ func Run(opts Options) (Result, error) {
 	return Result{
 		WindowMin:   wmin,
 		WindowLabel: label,
+		ByTool:      opts.ByTool,
 		Rows:        rows,
 	}, nil
 }
@@ -163,12 +170,15 @@ func queryLatestBucket(conn *sql.DB, windowMin int) ([]Row, error) {
 	return out, nil
 }
 
-// filterByHook keeps only rows whose HookName matches name. Linear scan; the
-// stats table is small enough that pushing the filter to SQL would not pay off.
+// filterByHook keeps only rows whose HookName matches name, case-insensitively.
+// Linear scan; the stats table is small enough that pushing the filter to SQL
+// would not pay off. Case-insensitive because hook names are user-facing labels
+// (e.g. "PreToolUse" vs "pretooluse"); a strict match silently empties the
+// result with no signal back to the user that they typo'd capitalisation.
 func filterByHook(rows []Row, name string) []Row {
 	out := rows[:0]
 	for _, r := range rows {
-		if r.HookName == name {
+		if strings.EqualFold(r.HookName, name) {
 			out = append(out, r)
 		}
 	}
@@ -177,6 +187,12 @@ func filterByHook(rows []Row, name string) []Row {
 
 // aggregateByHook collapses per-(hook,tool) rows into per-hook rows. count and
 // failures sum; p50/p95 take the per-hook max — see Run's note for the rationale.
+//
+// We deliberately drop ToolName when aggregating by hook — even when a hook has
+// only one tool, the user's intent (no --by-tool) is "show me hook-level
+// totals." Use --by-tool to see per-tool detail. Doctor uses a different display
+// (`hookName:toolName`) because its mental model is "alert me on a misbehaving
+// pair," not "summarise traffic for this hook."
 func aggregateByHook(rows []Row) []Row {
 	if len(rows) == 0 {
 		return rows
@@ -235,39 +251,34 @@ func (r Result) Render(w io.Writer) {
 	// longest cell; we choose padding=2 (gap between columns) and minwidth=0
 	// so single-row outputs don't gain awkward trailing whitespace.
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	byTool := r.hasTool()
-	if byTool {
+	if r.ByTool {
 		_, _ = fmt.Fprintln(tw, "  hook\ttool\tcount\tp50\tp95\t실패율")
 	} else {
 		_, _ = fmt.Fprintln(tw, "  hook\tcount\tp50\tp95\t실패율")
 	}
 	for _, row := range r.Rows {
 		failPct := failurePercent(row.Failures, row.Count)
-		if byTool {
+		if r.ByTool {
+			// Empty ToolName under --by-tool means the underlying hook
+			// (e.g. Stop) doesn't carry tool info. Render "(none)" instead
+			// of an empty cell so the user sees an explicit "no tool data"
+			// signal rather than a silently dropped column.
+			tool := row.ToolName
+			if tool == "" {
+				tool = "(none)"
+			}
 			_, _ = fmt.Fprintf(tw, "  %s\t%s\t%s\t%s\t%s\t%d%%\n",
-				row.HookName, row.ToolName,
-				formatThousands(row.Count), humanDur(row.P50Ms),
-				humanDur(row.P95Ms), failPct)
+				row.HookName, tool,
+				format.Thousands(row.Count), format.Duration(row.P50Ms),
+				format.Duration(row.P95Ms), failPct)
 		} else {
 			_, _ = fmt.Fprintf(tw, "  %s\t%s\t%s\t%s\t%d%%\n",
 				row.HookName,
-				formatThousands(row.Count), humanDur(row.P50Ms),
-				humanDur(row.P95Ms), failPct)
+				format.Thousands(row.Count), format.Duration(row.P50Ms),
+				format.Duration(row.P95Ms), failPct)
 		}
 	}
 	_ = tw.Flush()
-}
-
-// hasTool reports whether the result was produced with ByTool=true. We infer
-// from the data instead of carrying a flag so the Result struct stays small;
-// any non-empty ToolName implies the by-tool layout.
-func (r Result) hasTool() bool {
-	for _, row := range r.Rows {
-		if row.ToolName != "" {
-			return true
-		}
-	}
-	return false
 }
 
 // failurePercent rounds half-up to the nearest integer. e.g. 0.155 → 16%.
@@ -278,56 +289,4 @@ func failurePercent(failures, count int64) int {
 		return 0
 	}
 	return int(math.Round(float64(failures) / float64(count) * 100))
-}
-
-// humanDur renders ms as a human-friendly duration. Behaviour mirrors
-// diagnose.humanDur (kept as a package-local copy to avoid cross-importing
-// internal/diagnose, which would couple report packages together).
-//
-//	[0, 1000)      → "<n>ms"
-//	[1000, 60000)  → "<n.n>s"   (rounded to nearest 0.1s)
-//	[60000, ∞)     → "<n.n>m"
-//
-// Bucket selection runs on integer-rounded tenths-of-a-second, so the [s → m]
-// boundary cannot straddle units. e.g. 59,999ms → "1.0m", not "60.0s".
-func humanDur(ms int64) string {
-	if ms < 0 {
-		ms = 0
-	}
-	if ms < 1000 {
-		return strconv.FormatInt(ms, 10) + "ms"
-	}
-	tenthsOfSec := (ms + 50) / 100
-	if tenthsOfSec < 600 {
-		return strconv.FormatFloat(float64(tenthsOfSec)/10.0, 'f', 1, 64) + "s"
-	}
-	return strconv.FormatFloat(float64(ms)/60_000.0, 'f', 1, 64) + "m"
-}
-
-// formatThousands inserts commas into a non-negative integer. Mirrors the
-// helper in internal/diagnose; copied for the same package-independence reason
-// as humanDur. v0.1 ships ko/en, both fine with comma separators.
-func formatThousands(n int64) string {
-	if n < 0 {
-		return "-" + formatThousands(-n)
-	}
-	s := strconv.FormatInt(n, 10)
-	if len(s) <= 3 {
-		return s
-	}
-	var b strings.Builder
-	pre := len(s) % 3
-	if pre > 0 {
-		b.WriteString(s[:pre])
-		if len(s) > pre {
-			b.WriteByte(',')
-		}
-	}
-	for i := pre; i < len(s); i += 3 {
-		b.WriteString(s[i : i+3])
-		if i+3 < len(s) {
-			b.WriteByte(',')
-		}
-	}
-	return b.String()
 }

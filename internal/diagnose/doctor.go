@@ -15,11 +15,10 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/wm-it-22-00661/buddy/internal/daemon"
 	"github.com/wm-it-22-00661/buddy/internal/db"
+	"github.com/wm-it-22-00661/buddy/internal/format"
 )
 
 // IssueKind identifies the category of a diagnostic, for testability and for
@@ -223,7 +222,7 @@ func outboxBacklogIssues(conn *sql.DB, threshold int) ([]Diagnostic, error) {
 		Kind: KindBacklog,
 		Message: fmt.Sprintf(
 			"outbox에 %s개 쌓였어. daemon 한 번 봐줘 (buddy daemon status).",
-			formatThousands(n)),
+			format.Thousands(int64(n))),
 	}}, nil
 }
 
@@ -281,7 +280,7 @@ func slowHookIssues(conn *sql.DB, thresholdMs int64) ([]Diagnostic, error) {
 			Message: fmt.Sprintf(
 				"'%s' hook이 좀 느려졌어. p95가 %s (기준 %s).",
 				displayName(e.hookName, e.toolName),
-				humanDur(e.p95), humanDur(thresholdMs)),
+				format.Duration(e.p95), format.Duration(thresholdMs)),
 		})
 	}
 	return out, nil
@@ -368,57 +367,4 @@ func displayName(hookName, toolName string) string {
 		return hookName
 	}
 	return hookName + ":" + toolName
-}
-
-// humanDur renders ms as a human-friendly duration. Boundaries:
-//
-//	[0, 1000)      → "<n>ms"
-//	[1000, 60000)  → "<n.n>s"   (rounded to nearest 0.1s)
-//	[60000, ∞)     → "<n.n>m"
-//
-// Bucket selection runs on integer-rounded tenths-of-a-second, not on the
-// formatted float, so the [s → m] boundary cannot straddle units. e.g. 59,999ms
-// rounds to 60.0s of tenths and is reported as "1.0m" rather than "60.0s".
-// We fix one decimal for s/m so columns line up in lists.
-func humanDur(ms int64) string {
-	if ms < 0 {
-		ms = 0
-	}
-	if ms < 1000 {
-		return strconv.FormatInt(ms, 10) + "ms"
-	}
-	// Round to nearest 0.1s. tenths >= 600 means the rendered seconds-value
-	// would be >= 60.0s, which we promote to the minute branch instead.
-	tenthsOfSec := (ms + 50) / 100
-	if tenthsOfSec < 600 {
-		return strconv.FormatFloat(float64(tenthsOfSec)/10.0, 'f', 1, 64) + "s"
-	}
-	return strconv.FormatFloat(float64(ms)/60_000.0, 'f', 1, 64) + "m"
-}
-
-// formatThousands inserts commas as thousands separators. Pure helper, no
-// locale awareness — v0.1 only ships ko/en, both of which are fine with commas.
-func formatThousands(n int) string {
-	if n < 0 {
-		return "-" + formatThousands(-n)
-	}
-	s := strconv.Itoa(n)
-	if len(s) <= 3 {
-		return s
-	}
-	var b strings.Builder
-	pre := len(s) % 3
-	if pre > 0 {
-		b.WriteString(s[:pre])
-		if len(s) > pre {
-			b.WriteByte(',')
-		}
-	}
-	for i := pre; i < len(s); i += 3 {
-		b.WriteString(s[i : i+3])
-		if i+3 < len(s) {
-			b.WriteByte(',')
-		}
-	}
-	return b.String()
 }
