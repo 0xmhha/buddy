@@ -25,6 +25,10 @@ cp ~/.claude/settings.json ~/.claude/settings.json.pre-buddy.$(date +%Y%m%d)
 첫 dogfood는 **cliwrap 없이** 시작 권장. 이유: 실패 모드를 단순하게 격리하기
 위해. cli-wrapper supervision은 round 2에서 옵트인.
 
+주의: cliwrap 통합 경로(부록 A)는 dry-run으로 검증되지 않았다 (cliwrap binary가
+검증 환경에 없어서). v0.1 plan에는 포함되지만, 사용자가 first-run 시 직접 검증
+후 알려달라.
+
 `--with-cliwrap`을 쓰려면 별도 binary가 필요해 (자동 설치 안 됨):
 ```bash
 go install github.com/0xmhha/cli-wrapper/cmd/cliwrap@latest
@@ -52,6 +56,15 @@ echo "$BUDDY_BIN"
 
 # 3) install (default — without cliwrap)
 $BUDDY_BIN install --buddy-binary "$BUDDY_BIN"
+```
+
+주의: 이 경로가 install 후에도 그대로 유지되어야 한다. binary를 옮기면 모든
+hook이 깨짐 (settings.json에 절대 경로로 박힘). 한 번 자리 잡고 싶으면
+`~/bin/buddy` 같은 영구 경로 권장:
+```bash
+mkdir -p ~/bin
+cp "$PWD/bin/buddy" ~/bin/buddy
+BUDDY_BIN="$HOME/bin/buddy"
 ```
 
 성공 시 친구 메시지:
@@ -144,6 +157,8 @@ $BUDDY_BIN stats --hook PreToolUse --window 24h
 $BUDDY_BIN events --hook PostToolUse --limit 30
 ```
 
+`stats --hook` / `events --hook` 둘 다 대소문자 무시 (`PreToolUse` == `pretooluse`).
+
 `stats --window` 허용값: `5m | 1h | 24h`.
 
 ---
@@ -153,7 +168,7 @@ $BUDDY_BIN events --hook PostToolUse --limit 30
 | 증상 | 친구 메시지 / 확인 | 대응 |
 |------|------------------|------|
 | `buddy: 실행 중인 daemon이 없어.` | `daemon stop` 했는데 status가 not running | `daemon start` 다시 |
-| `outbox에 N개 쌓였어. daemon 한 번 봐줘.` | `doctor`가 backlog 알림 | `daemon stop && daemon start`, 또는 임시로 `daemon run --batch 2000` |
+| `outbox에 N개 쌓였어. daemon 한 번 봐줘.` | `doctor`가 backlog 알림 | 우선 `buddy daemon stop`. 그 다음 둘 중 하나: (a) `buddy daemon start` 로 default 1s/500 batch 다시 띄우고 빠지는지 관찰, (b) 안 빠지면 foreground로 `buddy daemon run --batch 2000` (Ctrl-C로 멈춤). foreground 끝나면 `buddy daemon start`로 background 다시. (`daemon run`은 이미 실행 중인 daemon이 있으면 exit code 2로 충돌함) |
 | `DB를 못 열었어 … no such table` | daemon이 한 번도 안 떴음 | `daemon start` 먼저 |
 | `DB를 못 열었어 … out of memory (14)` | `--db` 경로의 부모 디렉터리가 없음 | `mkdir -p $(dirname <db>)` |
 | `buddy: 바이너리 경로에 공백이 있어.` | install 시 `BUDDY_BIN`에 공백 포함 | 공백 없는 경로로 옮긴 뒤 재실행 |
@@ -176,8 +191,8 @@ $BUDDY_BIN events --hook PostToolUse --limit 30
 
 수집할 데이터 항목:
 ```bash
-# 24시간 hook 호출 수
-$BUDDY_BIN stats --window 24h | wc -l
+# 24시간 hook 호출 수 (events 한 줄 = hook 호출 1번)
+$BUDDY_BIN events --limit 99999 | wc -l
 
 # 가장 자주 트리거된 hook + tool
 $BUDDY_BIN stats --by-tool --window 24h
@@ -202,6 +217,10 @@ $BUDDY_BIN events --limit 100 | grep -i 'fail\|error\|timeout'
 ---
 
 ## 6. 안전 종료
+
+> `daemon stop` 을 먼저 안 하고 `uninstall` 하면 settings.json은 원복되지만
+> daemon은 살아남아 `~/.buddy/`에 계속 쓴다 (orphan daemon). 항상
+> `daemon stop` → `uninstall` 순서로. `daemon status`로 확인 가능.
 
 ```bash
 # 1) daemon 멈추기
@@ -233,6 +252,9 @@ rm -rf ~/.buddy
 ---
 
 ## 부록 A. cli-wrapper 통합 (round 2 옵션)
+
+주의: 이 부록은 dry-run 검증되지 않음 (cliwrap binary가 환경에 없어서).
+cliwrap 통합은 v0.1 plan에는 포함되지만 사용자가 first-run 시 직접 알려달라.
 
 첫 사용에서 buddy가 안정적으로 돌면, daemon supervision을 cli-wrapper에
 맡기고 싶을 수 있어. 그때:
@@ -295,4 +317,5 @@ $BUDDY_BIN uninstall \
 rm -rf /tmp/buddy-trial-claude /tmp/buddy-trial-buddy
 ```
 
-이 가이드의 모든 명령은 위 dry-run 시나리오로 검증된 것.
+이 가이드의 §1~6 명령은 위 dry-run 시나리오로 검증됨. 부록 A (cliwrap 통합)는
+별도 — 검증 환경에 cliwrap binary가 없어 dry-run하지 않음.

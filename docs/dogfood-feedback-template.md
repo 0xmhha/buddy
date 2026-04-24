@@ -8,8 +8,8 @@
 - Days used: __
 - buddy version (`buddy --version`): __
 - Claude Code 사용 빈도 (대략): 매일 ___ 시간 / __ 세션
-- Total hook 호출 (24h): `buddy stats --window 24h | wc -l` → __
-- Total hook 호출 (전체 기간): `buddy stats --window 24h | wc -l` × 일수 ≈ __
+- Total hook 호출 (24h): `buddy events --limit 99999 | wc -l` (events 한 줄 = hook 호출 1번) → __
+- Total hook 호출 (전체 기간): 위 값 × 일수 ≈ __
 
 ### Top 3 hooks by count
 1. ___
@@ -36,6 +36,7 @@
 ## Bugs found
 
 - (재현 절차 / 메시지 / 예상 vs 실제)
+- `uninstall`이 daemon을 자동으로 안 끄는 게 의도적인지 알려줘 (orphan daemon 발견했나?): __
 - ...
 
 ## Things buddy should know but didn't
