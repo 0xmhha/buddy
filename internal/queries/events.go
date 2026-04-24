@@ -12,6 +12,7 @@ package queries
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -32,6 +33,20 @@ const defaultEventsLimit = 20
 // follow lag stays predictable relative to ingestion.
 const defaultPollInterval = time.Second
 
+// followMaxConsecutiveErrors caps how many back-to-back poll errors Follow
+// will tolerate before surfacing the error and aborting. Without a cap, a
+// permanently broken DB (file deleted/corrupted/permissions revoked) spins
+// forever at 1Hz spamming stderr — see m4-plan §Task 4 review fix.
+// Five gives transient blips (daemon restart, brief lock contention) room to
+// recover while still failing fast on permanent breakage.
+const followMaxConsecutiveErrors = 5
+
+// ErrInvalidLimit is the sentinel returned when EventsOptions.Limit is
+// negative. Limit == 0 still means "use the default" (defaultEventsLimit) —
+// consistent with the common UX expectation that 0 = unset on integer flags.
+// Carries a friend-tone Korean message that the CLI layer surfaces verbatim.
+var ErrInvalidLimit = errors.New("--limit 은 1 이상이어야 해.")
+
 // EventsOptions configure RunEvents and Follow.
 type EventsOptions struct {
 	// DBPath is the absolute path to the buddy SQLite store. Empty means
@@ -41,7 +56,8 @@ type EventsOptions struct {
 	// matched case-insensitively (same convention as stats.HookFilter).
 	HookFilter string
 	// Limit caps the row count of the initial fetch. Zero means
-	// defaultEventsLimit (20).
+	// defaultEventsLimit (20). Negative returns ErrInvalidLimit at the
+	// boundary (RunEvents / Follow entry).
 	Limit int
 	// Since, when > 0, restricts results to events with ts strictly greater
 	// than this unix-ms value. Used by Follow to fetch only new events on
@@ -80,9 +96,9 @@ type EventsResult struct {
 // RunEvents validates options, opens the DB read-only, runs the tail query,
 // and returns rows in chronological order.
 func RunEvents(opts EventsOptions) (EventsResult, error) {
-	limit := opts.Limit
-	if limit <= 0 {
-		limit = defaultEventsLimit
+	limit, err := resolveLimit(opts.Limit)
+	if err != nil {
+		return EventsResult{}, err
 	}
 
 	conn, err := db.Open(db.Options{Path: opts.DBPath, ReadOnly: true})
@@ -91,20 +107,42 @@ func RunEvents(opts EventsOptions) (EventsResult, error) {
 	}
 	defer conn.Close()
 
-	events, err := queryEvents(conn, opts.HookFilter, opts.Since, limit)
+	events, err := tailQuery(context.Background(), conn, opts.HookFilter, opts.Since, 0, limit)
 	if err != nil {
 		return EventsResult{}, fmt.Errorf("query hook_events: %w", err)
 	}
 	return EventsResult{Events: events}, nil
 }
 
-// queryEvents builds and runs the tail SELECT. We do all filtering in SQL so
-// LIMIT is meaningful: a Go-side filter after a LIMIT would silently drop
-// matching rows when the limit is hit by non-matching ones first.
+// resolveLimit applies the Limit boundary policy: negative is invalid (fail
+// fast at the boundary), zero means "use the default," positive passes through.
+// Centralised so RunEvents and Follow share the exact same rule.
+func resolveLimit(raw int) (int, error) {
+	if raw < 0 {
+		return 0, ErrInvalidLimit
+	}
+	if raw == 0 {
+		return defaultEventsLimit, nil
+	}
+	return raw, nil
+}
+
+// tailQuery builds and runs the tail SELECT against an existing conn. We do
+// all filtering in SQL so LIMIT is meaningful: a Go-side filter after a LIMIT
+// would silently drop matching rows when the limit is hit by non-matching ones
+// first.
 //
-// ORDER BY ts DESC + LIMIT + reverse-in-Go gives us "the most recent N events
-// in chronological order." Reversing 20 rows in Go is cheaper than a subquery.
-func queryEvents(conn *sql.DB, hookFilter string, since int64, limit int) ([]Event, error) {
+// Cursor semantics: (sinceTs, sinceID) is a lexicographic position. Rows with
+// (ts, id) > (sinceTs, sinceID) are returned. This prevents Follow from
+// dropping events that share a unix-ms with the last seen row — the daemon
+// batches inserts so same-millisecond rows are realistic, and a strict
+// `WHERE ts > ?` cursor would silently lose them.
+//
+// ORDER BY ts DESC, id DESC + LIMIT + reverse-in-Go gives us "the most recent
+// N events in chronological order." Reversing 20 rows in Go is cheaper than a
+// subquery. Using QueryContext lets ctx cancellation interrupt a long-running
+// query (matters for Follow when the user Ctrl-Cs mid-tick).
+func tailQuery(ctx context.Context, conn *sql.DB, hookFilter string, sinceTs, sinceID int64, limit int) ([]Event, error) {
 	var (
 		clauses []string
 		args    []any
@@ -113,9 +151,12 @@ func queryEvents(conn *sql.DB, hookFilter string, since int64, limit int) ([]Eve
 		clauses = append(clauses, "LOWER(hook_name) = LOWER(?)")
 		args = append(args, hookFilter)
 	}
-	if since > 0 {
-		clauses = append(clauses, "ts > ?")
-		args = append(args, since)
+	if sinceTs > 0 {
+		// Lexicographic cursor on (ts, id): strictly greater than the last
+		// seen row. Equivalent to "(ts, id) > (sinceTs, sinceID)" but
+		// expressed in standard SQL for SQLite portability.
+		clauses = append(clauses, "(ts > ? OR (ts = ? AND id > ?))")
+		args = append(args, sinceTs, sinceTs, sinceID)
 	}
 	where := ""
 	if len(clauses) > 0 {
@@ -128,11 +169,11 @@ func queryEvents(conn *sql.DB, hookFilter string, since int64, limit int) ([]Eve
 		       COALESCE(tool_name, '')  AS tool_name
 		  FROM hook_events
 		  ` + where + `
-		 ORDER BY ts DESC
+		 ORDER BY ts DESC, id DESC
 		 LIMIT ?`
 	args = append(args, limit)
 
-	rs, err := conn.Query(q, args...)
+	rs, err := conn.QueryContext(ctx, q, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -193,16 +234,38 @@ func shortSession(id string) string {
 	return id[:8]
 }
 
+// followTailFn is the indirection Follow uses for each tail query. Real code
+// always points it at tailQuery; tests swap it (via export_test.go) to
+// simulate persistent DB failures without needing to corrupt a real SQLite
+// file mid-tick. Package-private and only mutated from tests.
+var followTailFn = tailQuery
+
 // Follow streams events to w until ctx is cancelled. On entry it writes a
 // friend-tone start marker to opts.Stderr, fetches the initial tail (same as
 // RunEvents), then polls every PollInterval for events newer than the last
-// seen ts. On ctx cancel it writes a friend-tone end marker and returns nil.
+// seen (ts, id) cursor. On ctx cancel it writes a friend-tone end marker and
+// returns nil.
+//
+// Connection lifecycle: Follow opens the DB once at start and reuses the
+// handle across every tick. The previous design called RunEvents per tick,
+// which opened+closed a fresh handle ~3,600 times per hour — wasteful and
+// noisy in /proc.
+//
+// Error handling: a single poll error is logged to stderr and the loop
+// continues (transient blips like daemon restart shouldn't kill the tail).
+// After followMaxConsecutiveErrors back-to-back failures we surface the last
+// error and return — a permanently broken DB (file deleted, corrupted,
+// permissions revoked) shouldn't spin forever.
 //
 // Polling pattern (vs sqlite update_hook or fts5 triggers): the daemon writes
 // a few rows per second at most, and the user's terminal can only consume that
 // fast anyway. A simple ticker keeps the implementation single-goroutine and
 // race-free; ctx.Done() is the only stop signal we need.
 func Follow(ctx context.Context, opts EventsOptions, w io.Writer) error {
+	limit, err := resolveLimit(opts.Limit)
+	if err != nil {
+		return err
+	}
 	stderr := opts.Stderr
 	if stderr == nil {
 		stderr = os.Stderr
@@ -212,54 +275,60 @@ func Follow(ctx context.Context, opts EventsOptions, w io.Writer) error {
 		interval = defaultPollInterval
 	}
 
-	_, _ = fmt.Fprintln(stderr, "(따라가는 중. Ctrl-C로 멈춰.)")
-
-	// Initial fetch reuses RunEvents so the entry behaviour matches a bare
-	// `buddy events` invocation exactly — no drift between one-shot and follow.
-	initial, err := RunEvents(opts)
+	conn, err := db.Open(db.Options{Path: opts.DBPath, ReadOnly: true})
 	if err != nil {
-		return err
+		return fmt.Errorf("open db: %w", err)
 	}
-	initial.RenderLines(w)
+	defer conn.Close()
 
-	lastTs := opts.Since
-	for _, e := range initial.Events {
-		if e.Ts > lastTs {
-			lastTs = e.Ts
+	_, _ = fmt.Fprintln(stderr, "(따라가는 중. Ctrl-C로 멈춰.)")
+	// End marker on every exit path (including error returns) so the user
+	// sees a clean close even when the loop aborts on persistent failure.
+	defer func() { _, _ = fmt.Fprintln(stderr, "(끝.)") }()
+
+	// Initial fetch: same shape as a bare `buddy events` invocation so the
+	// entry behaviour matches one-shot mode exactly.
+	initial, err := followTailFn(ctx, conn, opts.HookFilter, opts.Since, 0, limit)
+	if err != nil {
+		return fmt.Errorf("query hook_events: %w", err)
+	}
+	(EventsResult{Events: initial}).RenderLines(w)
+
+	sinceTs, sinceID := opts.Since, int64(0)
+	for _, e := range initial {
+		if e.Ts > sinceTs || (e.Ts == sinceTs && e.ID > sinceID) {
+			sinceTs, sinceID = e.Ts, e.ID
 		}
 	}
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
+	consecErrs := 0
 	for {
 		select {
 		case <-ctx.Done():
-			_, _ = fmt.Fprintln(stderr, "(끝.)")
 			return nil
 		case <-ticker.C:
-			pollLimit := opts.Limit
-			if pollLimit <= 0 {
-				pollLimit = defaultEventsLimit
-			}
-			next, err := RunEvents(EventsOptions{
-				DBPath:     opts.DBPath,
-				HookFilter: opts.HookFilter,
-				// Limit on the polling fetch matches the initial limit so a
-				// sudden burst doesn't get truncated to a smaller cap; the
-				// Since filter keeps duplicates out across ticks.
-				Limit: pollLimit,
-				Since: lastTs,
-			})
+			next, err := followTailFn(ctx, conn, opts.HookFilter, sinceTs, sinceID, limit)
 			if err != nil {
-				// Surface DB blips to stderr but keep following: a daemon
-				// restart or transient read error shouldn't kill the tail.
+				// ctx cancellation surfaces as a query error; treat it as
+				// a normal shutdown rather than counting it toward the
+				// abort threshold.
+				if ctx.Err() != nil {
+					return nil
+				}
+				consecErrs++
 				_, _ = fmt.Fprintf(stderr, "buddy: events poll 실패 (%v)\n", err)
+				if consecErrs >= followMaxConsecutiveErrors {
+					return fmt.Errorf("events poll: %d consecutive failures: %w", consecErrs, err)
+				}
 				continue
 			}
-			next.RenderLines(w)
-			for _, e := range next.Events {
-				if e.Ts > lastTs {
-					lastTs = e.Ts
+			consecErrs = 0
+			(EventsResult{Events: next}).RenderLines(w)
+			for _, e := range next {
+				if e.Ts > sinceTs || (e.Ts == sinceTs && e.ID > sinceID) {
+					sinceTs, sinceID = e.Ts, e.ID
 				}
 			}
 		}

@@ -103,6 +103,9 @@ func newEventsCmd() *cobra.Command {
 					syscall.SIGINT, syscall.SIGTERM)
 				defer stop()
 				if err := queries.Follow(ctx, opts, os.Stdout); err != nil {
+					if errors.Is(err, queries.ErrInvalidLimit) {
+						return newFriendError("buddy: " + err.Error())
+					}
 					return newFriendError(fmt.Sprintf(
 						"buddy: events follow 실패 (%v)", err))
 				}
@@ -110,6 +113,9 @@ func newEventsCmd() *cobra.Command {
 			}
 			res, err := queries.RunEvents(opts)
 			if err != nil {
+				if errors.Is(err, queries.ErrInvalidLimit) {
+					return newFriendError("buddy: " + err.Error())
+				}
 				return newFriendError(fmt.Sprintf(
 					"buddy: DB를 못 읽었어. daemon이 한 번이라도 돈 적 있어? (%v)", err))
 			}
@@ -119,7 +125,7 @@ func newEventsCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: ~/.buddy/buddy.db)")
 	cmd.Flags().StringVar(&hookFlag, "hook", "", "특정 hook 이름으로 필터 (대소문자 무시)")
-	cmd.Flags().IntVar(&limitFlag, "limit", 20, "표시할 최근 event 개수")
+	cmd.Flags().IntVar(&limitFlag, "limit", 20, "표시할 최근 event 개수 (기본 20)")
 	cmd.Flags().BoolVarP(&followFlag, "follow", "f", false, "새 event를 1초 간격으로 따라가기")
 	return cmd
 }

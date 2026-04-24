@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -54,7 +56,7 @@ func TestRunEvents_DefaultLimitIs20(t *testing.T) {
 	dbPath := newTempDBPath(t)
 	conn := openWritable(t, dbPath)
 	base := time.Now().UnixMilli()
-	for i := 0; i < 25; i++ {
+	for i := range 25 {
 		insertEvent(t, conn, base+int64(i), "PreToolUse", "lint", "Bash", "abcd1234efgh", 100, 0)
 	}
 	res, err := queries.RunEvents(queries.EventsOptions{DBPath: dbPath})
@@ -66,7 +68,7 @@ func TestRunEvents_LimitReturnsMostRecentInChronologicalOrder(t *testing.T) {
 	dbPath := newTempDBPath(t)
 	conn := openWritable(t, dbPath)
 	base := time.Now().UnixMilli()
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		insertEvent(t, conn, base+int64(i*1000), "PreToolUse", "lint", "Bash", "s", int64(i*100), 0)
 	}
 	res, err := queries.RunEvents(queries.EventsOptions{DBPath: dbPath, Limit: 3})
@@ -286,4 +288,219 @@ func TestFollow_PicksUpNewEventAfterInitialFetch(t *testing.T) {
 	assert.Contains(t, out, "first  PreToolUse")
 	assert.Contains(t, out, "second  PostToolUse")
 	assert.Contains(t, out, "exit=1", "second event's non-zero exit code should appear")
+}
+
+// Same-millisecond cursor regression: with a strict `WHERE ts > ?` cursor,
+// Follow would silently drop the second of two rows landing in the same
+// unix-ms because the cursor advanced past that ts. The lexicographic
+// (ts, id) cursor must keep both rows visible across ticks.
+func TestFollow_PicksUpEventsWithSameMillisecondTs(t *testing.T) {
+	dbPath := newTempDBPath(t)
+	conn := openWritable(t, dbPath)
+
+	var stdout, stderr bytes.Buffer
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- queries.Follow(ctx, queries.EventsOptions{
+			DBPath:       dbPath,
+			PollInterval: 30 * time.Millisecond,
+			Stderr:       &stderr,
+		}, &stdout)
+	}()
+
+	// Let the initial fetch complete on the empty table.
+	time.Sleep(50 * time.Millisecond)
+
+	// Insert three rows at the same ms — the daemon batches inserts so this
+	// is realistic. With a strict ts > cursor, the 2nd and 3rd would drop.
+	sameMs := time.Now().UnixMilli()
+	insertEvent(t, conn, sameMs, "PreToolUse", "h", "Bash", "s1XXXXXXX", 100, 0)
+	insertEvent(t, conn, sameMs, "PostToolUse", "h", "Bash", "s1XXXXXXX", 200, 0)
+	insertEvent(t, conn, sameMs, "Stop", "h", "Bash", "s1XXXXXXX", 300, 0)
+
+	// Wait long enough for ≥2 ticks at 30ms cadence.
+	time.Sleep(150 * time.Millisecond)
+	cancel()
+
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("Follow did not return after ctx cancel")
+	}
+
+	out := stdout.String()
+	// All three same-ms events must appear.
+	assert.Contains(t, out, "PreToolUse")
+	assert.Contains(t, out, "PostToolUse")
+	assert.Contains(t, out, "Stop")
+	// Sanity: count distinct event lines (one per row, no duplicates from
+	// the cursor re-fetching the same id).
+	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
+	assert.Len(t, lines, 3, "exactly three events expected, got %d:\n%s", len(lines), out)
+}
+
+// Permanent DB failure must abort instead of spinning forever at 1Hz. We
+// inject a fake tail func that always errors and assert Follow returns once
+// the consecutive-error cap is hit.
+func TestFollow_AbortsAfterConsecutiveErrors(t *testing.T) {
+	dbPath := newTempDBPath(t)
+
+	var calls atomic.Int32
+	failErr := errors.New("synthetic db failure")
+	restore := queries.SwapFollowTailForTest(func(_ context.Context, _ *sql.DB,
+		_ string, _, _ int64, _ int) ([]queries.Event, error) {
+		calls.Add(1)
+		return nil, failErr
+	})
+	defer restore()
+
+	var stdout, stderr bytes.Buffer
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := queries.Follow(ctx, queries.EventsOptions{
+		DBPath:       dbPath,
+		PollInterval: 10 * time.Millisecond,
+		Stderr:       &stderr,
+	}, &stdout)
+
+	// Initial fetch already errored once, which is also a "tail" call. The
+	// initial-fetch error path returns immediately — verify that path too.
+	require.Error(t, err)
+	assert.ErrorIs(t, err, failErr)
+	// Initial-fetch failure aborts before the polling loop, so we expect
+	// exactly one call. That's stricter than "≥5" but matches the
+	// fail-fast invariant for the entry-point tail.
+	assert.Equal(t, int32(1), calls.Load(),
+		"initial-fetch error must abort immediately, not enter the poll loop")
+	// End marker still printed even on error exit.
+	assert.Contains(t, stderr.String(), "(끝.)")
+}
+
+// Variant: initial fetch succeeds, then every poll fails. Must abort after
+// followMaxConsecutiveErrors (5) ticks with the underlying error wrapped.
+func TestFollow_AbortsAfter5ConsecutivePollErrors(t *testing.T) {
+	dbPath := newTempDBPath(t)
+
+	var calls atomic.Int32
+	failErr := errors.New("synthetic poll failure")
+	restore := queries.SwapFollowTailForTest(func(_ context.Context, _ *sql.DB,
+		_ string, _, _ int64, _ int) ([]queries.Event, error) {
+		// First call (initial fetch) succeeds with no rows; subsequent
+		// poll calls fail.
+		if calls.Add(1) == 1 {
+			return nil, nil
+		}
+		return nil, failErr
+	})
+	defer restore()
+
+	var stdout, stderr bytes.Buffer
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := queries.Follow(ctx, queries.EventsOptions{
+		DBPath:       dbPath,
+		PollInterval: 5 * time.Millisecond,
+		Stderr:       &stderr,
+	}, &stdout)
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, failErr)
+	// 1 initial + 5 poll attempts = 6 total calls expected.
+	assert.Equal(t, int32(6), calls.Load(),
+		"expected 1 initial + 5 consecutive poll failures before abort")
+	// The poll error message should have been logged at least once on the
+	// way to the abort threshold.
+	assert.Contains(t, stderr.String(), "events poll 실패")
+	assert.Contains(t, stderr.String(), "(끝.)")
+}
+
+// Empty DB at start should not crash Follow; subsequent inserts must surface
+// in chronological order across ticks.
+func TestFollow_StartsEmptyThenPicksUpNewEvents(t *testing.T) {
+	dbPath := newTempDBPath(t)
+	conn := openWritable(t, dbPath)
+
+	var stdout, stderr bytes.Buffer
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- queries.Follow(ctx, queries.EventsOptions{
+			DBPath:       dbPath,
+			PollInterval: 50 * time.Millisecond,
+			Stderr:       &stderr,
+		}, &stdout)
+	}()
+
+	// Let the initial fetch complete on the empty table.
+	time.Sleep(80 * time.Millisecond)
+	assert.Empty(t, stdout.String(),
+		"initial fetch on empty DB must produce no stdout")
+
+	base := time.Now().UnixMilli()
+	insertEvent(t, conn, base, "PreToolUse", "lint", "Bash", "s1XXXXXXX", 100, 0)
+	insertEvent(t, conn, base+5, "PostToolUse", "lint", "Bash", "s1XXXXXXX", 200, 0)
+
+	// Wait for ~2 ticks to ensure both rows are picked up.
+	time.Sleep(180 * time.Millisecond)
+	cancel()
+
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("Follow did not return after ctx cancel")
+	}
+
+	out := stdout.String()
+	assert.Contains(t, out, "PreToolUse")
+	assert.Contains(t, out, "PostToolUse")
+	preIdx := strings.Index(out, "PreToolUse")
+	postIdx := strings.Index(out, "PostToolUse")
+	require.GreaterOrEqual(t, preIdx, 0)
+	require.GreaterOrEqual(t, postIdx, 0)
+	assert.Less(t, preIdx, postIdx,
+		"events must render in chronological order")
+	// Friend-tone start + end markers on stderr.
+	assert.Contains(t, stderr.String(), "(따라가는 중. Ctrl-C로 멈춰.)")
+	assert.Contains(t, stderr.String(), "(끝.)")
+}
+
+// --limit boundary: negative is rejected with ErrInvalidLimit; zero defaults.
+func TestRunEvents_NegativeLimitReturnsErrInvalidLimit(t *testing.T) {
+	dbPath := newTempDBPath(t)
+	_, err := queries.RunEvents(queries.EventsOptions{DBPath: dbPath, Limit: -1})
+	require.Error(t, err)
+	assert.ErrorIs(t, err, queries.ErrInvalidLimit)
+}
+
+func TestRunEvents_ZeroLimitDefaultsTo20(t *testing.T) {
+	dbPath := newTempDBPath(t)
+	conn := openWritable(t, dbPath)
+	base := time.Now().UnixMilli()
+	for i := range 25 {
+		insertEvent(t, conn, base+int64(i), "PreToolUse", "lint", "Bash", "s", 100, 0)
+	}
+	res, err := queries.RunEvents(queries.EventsOptions{DBPath: dbPath, Limit: 0})
+	require.NoError(t, err)
+	assert.Len(t, res.Events, 20, "Limit=0 must default to defaultEventsLimit (20)")
+}
+
+func TestFollow_NegativeLimitReturnsErrInvalidLimit(t *testing.T) {
+	dbPath := newTempDBPath(t)
+	var stdout, stderr bytes.Buffer
+	err := queries.Follow(context.Background(), queries.EventsOptions{
+		DBPath: dbPath,
+		Limit:  -5,
+		Stderr: &stderr,
+	}, &stdout)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, queries.ErrInvalidLimit)
 }
