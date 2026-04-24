@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -70,7 +72,56 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newUninstallCmd())
 	root.AddCommand(newDoctorCmd())
 	root.AddCommand(newStatsCmd())
+	root.AddCommand(newEventsCmd())
 	return root
+}
+
+// newEventsCmd wires the read-only hook_events tail. Output is structured
+// (one line per event) on stdout — debug surface, not friend tone. With
+// --follow the command installs a signal-aware context so Ctrl-C / SIGTERM
+// cleanly stops the polling loop and the command writes friend-tone start /
+// end markers to stderr (the only friendly touch on this command). See
+// m4-plan §Task 4.
+func newEventsCmd() *cobra.Command {
+	var (
+		dbFlag     string
+		hookFlag   string
+		limitFlag  int
+		followFlag bool
+	)
+	cmd := &cobra.Command{
+		Use:   "events",
+		Short: "최근 hook_events tail (read-only, --follow 으로 실시간)",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts := queries.EventsOptions{
+				DBPath:     dbFlag,
+				HookFilter: hookFlag,
+				Limit:      limitFlag,
+			}
+			if followFlag {
+				ctx, stop := signal.NotifyContext(cmd.Context(),
+					syscall.SIGINT, syscall.SIGTERM)
+				defer stop()
+				if err := queries.Follow(ctx, opts, os.Stdout); err != nil {
+					return newFriendError(fmt.Sprintf(
+						"buddy: events follow 실패 (%v)", err))
+				}
+				return nil
+			}
+			res, err := queries.RunEvents(opts)
+			if err != nil {
+				return newFriendError(fmt.Sprintf(
+					"buddy: DB를 못 읽었어. daemon이 한 번이라도 돈 적 있어? (%v)", err))
+			}
+			res.RenderLines(os.Stdout)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: ~/.buddy/buddy.db)")
+	cmd.Flags().StringVar(&hookFlag, "hook", "", "특정 hook 이름으로 필터 (대소문자 무시)")
+	cmd.Flags().IntVar(&limitFlag, "limit", 20, "표시할 최근 event 개수")
+	cmd.Flags().BoolVarP(&followFlag, "follow", "f", false, "새 event를 1초 간격으로 따라가기")
+	return cmd
 }
 
 // newStatsCmd wires the read-only hook_stats report. Output goes to stdout
@@ -255,10 +306,10 @@ func newDaemonCmd() *cobra.Command {
 
 func newDaemonRunCmd() *cobra.Command {
 	var (
-		dbFlag      string
-		pollFlag    time.Duration
-		batchFlag   int
-		pidFlag     string
+		dbFlag    string
+		pollFlag  time.Duration
+		batchFlag int
+		pidFlag   string
 	)
 	cmd := &cobra.Command{
 		Use:   "run",
@@ -426,10 +477,10 @@ var _ = context.Background
 
 func newHookWrapCmd() *cobra.Command {
 	var (
-		eventFlag    string
-		dbFlag       string
-		recordArgs   bool
-		tagFlags     []string
+		eventFlag  string
+		dbFlag     string
+		recordArgs bool
+		tagFlags   []string
 	)
 	cmd := &cobra.Command{
 		Use:   "hook-wrap <hook-name> [-- <original-command...>]",
