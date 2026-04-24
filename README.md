@@ -120,6 +120,8 @@ v0.1 PoC는 처음 TypeScript/Node로 시작했으나, hook wrapper의 self-over
 (매 hook 호출당 50-100ms vs Go 5-10ms)와 cli-wrapper와의 native 통합 가능성
 때문에 Go로 pivot했습니다. TS 자산은 `archive/ts-poc/` 에 보존.
 
+> 다음 작업 계획: [docs/roadmap.md](./docs/roadmap.md)
+
 ---
 
 ## 라이선스
