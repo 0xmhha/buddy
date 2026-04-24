@@ -64,15 +64,18 @@
   - Fix 후보 (택 1):
     - (a) `install`이 직접 마이그레이션을 실행해 buddy-dir·DB를 pre-create
     - (b) `doctor`가 schema 미존재를 감지해 친구 톤 메시지로 변환 ("DB가 아직 없어. `buddy daemon start` 한 번 띄워줘")
+  - 결정 시점: M5 implementation kickoff. 기본 후보 (a) — install이 self-contained 동작이 우선.
   - 위치: `internal/cli/install.go` 또는 `internal/cli/doctor.go`.
 - **T7**: `buddy daemon start`가 `pid -1`을 출력하는 문제 (`cmd.Process.Release` 후 PID race). Fix: detach 전에 PID를 캡처하거나, start 직후 PID 파일을 read해 보고. 위치: `internal/daemon/start.go` (또는 `internal/cli/daemon.go`의 fork 경로).
 - **T8**: `--db` 부모 디렉터리가 없을 때 `out of memory (14)` cryptic 에러. Fix 후보 (택 1):
   - (a) `db.Open`이 write 경로일 때 부모 디렉터리를 `mkdir -p`로 보장 (명시적 `--db` 여부 무관)
   - (b) 부모 디렉터리 부재 시 친구 톤 에러로 fail-fast ("`<dir>` 가 없어. `mkdir -p` 먼저.")
+  - 결정 시점: M5 implementation kickoff. 기본 후보 (a) — db.Open이 mkdir까지 책임지는 게 단순.
   - 위치: `internal/store/db.go` (`Open` 함수).
 - **T9**: `uninstall`이 실행 중인 daemon을 안 끄는 문제 (orphan daemon). Fix 후보 (택 1):
   - (a) `uninstall` 내부에서 `daemon stop`을 자동 실행 (PID 파일 + flock 확인 후)
   - (b) `uninstall`이 daemon 실행을 감지하면 `--force` 없이 거부 + 친구 톤 안내
+  - 결정 시점: M5 implementation kickoff. 기본 후보 (a) — uninstall이 daemon stop을 자동 호출, --keep-daemon 플래그로 escape hatch.
   - 위치: `internal/cli/uninstall.go` ([DOGFOOD.md §6](../DOGFOOD.md) "안전 종료" 가이드 참조).
 
 ### Acceptance
@@ -127,6 +130,7 @@
 - **T3**: 단일 세션 단위 stats를 *여러 세션 합산* 뷰로 확장. 기존 `buddy stats` 플래그에 `--all-sessions` 추가 또는 신규 `buddy sessions list/show` subcommand 검토. CLI 표면 디자인은 T4 결정 후 확정.
 - **T4**: dashboard UI — TUI (`charmbracelet/bubbletea` + `lipgloss`) 또는 web (localhost HTTP, 포트 미정). **Open question (아래)**.
 - **T5**: cost estimate — model 단가 테이블 (`internal/pricing/`)을 코드에 삽입(v1.0에서 외부 데이터로 분리 검토). `tokens × price`로 추정치 출력. 단가 변경 시 release로 업데이트.
+- **T6**: i18n full split (en/ko strings, gettext-style or embed map). M5 T5의 forward-pointer 회수.
 
 ### Acceptance
 
@@ -174,8 +178,8 @@
 ### Tasks
 
 - **T1**: AGENTS.md auto-sync — buddy가 본인 capability(stats·doctor·task·sessions)를 사용자 프로젝트의 AGENTS.md / CLAUDE.md에 자동 기록·갱신. 위치: 신규 `internal/agentsmd/` 패키지. install/uninstall에 hook (opt-in 플래그).
-- **T2**: plugin model — 사용자 정의 hook health checker 등록. 외부 binary 또는 Go plugin (`-buildmode=plugin`은 cross-compile 친화적이지 않음 → 외부 binary + IPC 방식 권장). 인터페이스 정의 위치: 신규 `pkg/plugin/`.
-- **T3**: MCP server — Claude Code가 buddy를 tool로 직접 호출 (예: `mcp__buddy__doctor`, `mcp__buddy__stats`, `mcp__buddy__task_run`). 참조 SDK: `modelcontextprotocol/go-sdk` (또는 그 시점 시점 표준). 위치: 신규 `cmd/buddy-mcp/` 또는 `buddy mcp serve` subcommand.
+- **T2**: plugin model — 사용자 정의 hook health checker 등록. 외부 binary 또는 Go plugin (`-buildmode=plugin`은 cross-compile 친화적이지 않음 → 외부 binary + IPC 방식 권장). 권장 IPC: v1.0 T3에서 도입하는 MCP transport 재활용 (stdio JSON-RPC). 즉 buddy가 spawn한 plugin process가 buddy에게 MCP tool로 노출. 일관성 + 별도 transport 학습 부담 0. 인터페이스 정의 위치: 신규 `pkg/plugin/`.
+- **T3**: MCP server — Claude Code가 buddy를 tool로 직접 호출 (예: `mcp__buddy__doctor`, `mcp__buddy__stats`, `mcp__buddy__task_run`). 참조 SDK: `modelcontextprotocol/go-sdk` (또는 그 시점의 표준). 위치: 신규 `cmd/buddy-mcp/` 또는 `buddy mcp serve` subcommand.
 - **T4**: cross-harness 시도? — Codex/OpenCode 지원. [Harness analysis](../../harness-engineering-analysis.md)가 "각 harness hook 형식이 다름"을 갭 C로 지적했고, [v0.1-spec.md §1 Non-goals](./v0.1-spec.md#1-non-goals-v01에서-안-하는-것)는 의도적 비범위로 명시. v1.0 시점이면 buddy 자체가 단단해진 상태이므로 *시도 가치*만 검토 (실현 시 별도 spec 문서 필요).
 
 ### Acceptance
