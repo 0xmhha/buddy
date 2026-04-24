@@ -83,6 +83,7 @@ M1~M4 완료 — v0.1 user-facing CLI 한 번 통과.
 다음: M5 (config / threshold tuning / 친구 페르소나 polish).
 
 → 처음 켜는 사람은 [DOGFOOD.md](./DOGFOOD.md) 부터.
+→ 다른 세션에서 작업 이어 받는 사람은 [docs/HANDOFF.md](./docs/HANDOFF.md) 부터.
 
 ## Quickstart
 
