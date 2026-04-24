@@ -74,5 +74,8 @@ func TestValidate_RejectsNegativeTokenUsage(t *testing.T) {
 func TestIsKnown(t *testing.T) {
 	assert.True(t, EventPreToolUse.IsKnown())
 	assert.True(t, EventStop.IsKnown())
+	assert.True(t, EventNotification.IsKnown())
+	assert.True(t, EventSubagentStop.IsKnown())
+	assert.True(t, EventSessionEnd.IsKnown())
 	assert.False(t, HookEventName("Bogus").IsKnown())
 }

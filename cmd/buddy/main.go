@@ -21,12 +21,28 @@ import (
 
 const version = "0.0.1"
 
+// friendError carries a pre-formatted, friend-tone message that main() prints
+// verbatim (no `buddy: ` prefix added) and uses to exit with code 1 instead of
+// the generic 2. Use newFriendError to construct.
+type friendError struct{ msg string }
+
+func (e *friendError) Error() string { return e.msg }
+
+func newFriendError(msg string) error { return &friendError{msg: msg} }
+
 func main() {
 	root := newRootCmd()
-	if err := root.ExecuteContext(context.Background()); err != nil {
-		fmt.Fprintf(os.Stderr, "buddy: %v\n", err)
-		os.Exit(2)
+	err := root.ExecuteContext(context.Background())
+	if err == nil {
+		return
 	}
+	var fe *friendError
+	if errors.As(err, &fe) {
+		fmt.Fprintln(os.Stderr, fe.msg)
+		os.Exit(1)
+	}
+	fmt.Fprintf(os.Stderr, "buddy: %v\n", err)
+	os.Exit(2)
 }
 
 func newRootCmd() *cobra.Command {
@@ -64,11 +80,7 @@ func newInstallCmd() *cobra.Command {
 				WithCliwrap: withCliwrap,
 			})
 			if err != nil {
-				if errors.Is(err, install.ErrSettingsMissing) {
-					fmt.Fprintln(os.Stderr, "buddy: ~/.claude/settings.json 이 안 보여. Claude Code 설치되어 있어?")
-					os.Exit(1)
-				}
-				return err
+				return translateInstallError(err)
 			}
 			if res.NoOp {
 				fmt.Fprintln(os.Stderr, "buddy: 이미 등록되어 있어. 변화 없음.")
@@ -89,6 +101,20 @@ func newInstallCmd() *cobra.Command {
 	return cmd
 }
 
+// translateInstallError maps install/uninstall sentinel errors to friend-tone
+// friendError values that main() prints verbatim and exits 1 on.
+func translateInstallError(err error) error {
+	var spaceErr *install.BinaryPathSpaceError
+	switch {
+	case errors.Is(err, install.ErrSettingsMissing):
+		return newFriendError("buddy: ~/.claude/settings.json 이 안 보여. Claude Code 설치되어 있어?")
+	case errors.As(err, &spaceErr):
+		return newFriendError(fmt.Sprintf(
+			"buddy: 바이너리 경로에 공백이 있어. 다른 경로로 옮겨봐: %s", spaceErr.Path))
+	}
+	return err
+}
+
 func newUninstallCmd() *cobra.Command {
 	var (
 		claudeDirFlag string
@@ -105,11 +131,7 @@ func newUninstallCmd() *cobra.Command {
 				BuddyBinary: binaryFlag,
 			})
 			if err != nil {
-				if errors.Is(err, install.ErrSettingsMissing) {
-					fmt.Fprintln(os.Stderr, "buddy: ~/.claude/settings.json 이 안 보여. Claude Code 설치되어 있어?")
-					os.Exit(1)
-				}
-				return err
+				return translateInstallError(err)
 			}
 			switch {
 			case res.RestoredFromBackup:

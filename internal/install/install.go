@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/wm-it-22-00661/buddy/internal/cliwrapcfg"
+	"github.com/wm-it-22-00661/buddy/internal/schema"
 )
 
 // SettingsFileName is the Claude Code settings filename inside ClaudeDir.
@@ -29,13 +30,16 @@ const BackupSuffix = ".buddy.bak"
 const CliwrapFileName = "cliwrap.yaml"
 
 // hookEvents is the canonical set of Claude Code hook events buddy wraps.
-// We hard-code this rather than scanning unknown keys to avoid touching
-// non-hook settings (e.g. `permissions`, `env`).
-var hookEvents = []string{
-	"SessionStart", "PreToolUse", "PostToolUse",
-	"Stop", "PreCompact", "UserPromptSubmit",
-	"Notification", "SubagentStop", "SessionEnd",
-}
+// Derived from schema.KnownEvents so the two lists can never drift; we still
+// iterate this fixed list (rather than scanning unknown keys) so non-hook
+// settings such as `permissions` or `env` stay untouched.
+var hookEvents = func() []string {
+	out := make([]string, len(schema.KnownEvents))
+	for i, e := range schema.KnownEvents {
+		out[i] = string(e)
+	}
+	return out
+}()
 
 // Options configure Install / Uninstall. Paths are absolute.
 type Options struct {
@@ -79,6 +83,23 @@ type Result struct {
 // ErrSettingsMissing is returned when ~/.claude/settings.json does not exist.
 // CLI layer translates this to a friend-tone message.
 var ErrSettingsMissing = errors.New("settings.json not found")
+
+// ErrBinaryPathHasSpaces is returned (wrapped in BinaryPathSpaceError) when
+// the resolved buddy binary path contains a space character. settings.json
+// wrap commands are shell-tokenized by Claude Code, so a space in the binary
+// path produces malformed invocations. CLI layer translates this to a
+// friend-tone message.
+var ErrBinaryPathHasSpaces = errors.New("buddy binary path contains spaces")
+
+// BinaryPathSpaceError carries the offending path so the CLI layer can render
+// a friend-tone message naming exactly which path is wrong.
+type BinaryPathSpaceError struct{ Path string }
+
+func (e *BinaryPathSpaceError) Error() string {
+	return fmt.Sprintf("%s: %q", ErrBinaryPathHasSpaces.Error(), e.Path)
+}
+
+func (e *BinaryPathSpaceError) Unwrap() error { return ErrBinaryPathHasSpaces }
 
 // Install wraps every command in settings.json hooks with `buddy hook-wrap`.
 // Idempotent: already-wrapped commands are detected and skipped.
@@ -234,6 +255,11 @@ func resolve(opts Options) (resolvedPaths, error) {
 		}
 		binary = exe
 	}
+	if strings.ContainsRune(binary, ' ') {
+		// settings.json hook commands are shell-tokenized; a path with spaces
+		// would split into multiple argv slots and break invocation.
+		return out, &BinaryPathSpaceError{Path: binary}
+	}
 	out.binary = binary
 	return out, nil
 }
@@ -277,6 +303,7 @@ func transformHooks(doc map[string]any, binary string, fn commandFn) (changed, a
 			if !ok {
 				continue
 			}
+			matcher, _ := entryMap["matcher"].(string)
 			inner, ok := entryMap["hooks"].([]any)
 			if !ok {
 				continue
@@ -290,7 +317,7 @@ func transformHooks(doc map[string]any, binary string, fn commandFn) (changed, a
 				if !ok {
 					continue
 				}
-				newCmd, didChange := fn(event, cmdRaw, binary)
+				newCmd, didChange := fn(event, matcher, cmdRaw, binary)
 				if didChange {
 					hMap["command"] = newCmd
 					changed++
@@ -305,31 +332,61 @@ func transformHooks(doc map[string]any, binary string, fn commandFn) (changed, a
 
 // commandFn returns (newCommand, changed). changed=false means the input was
 // already in the desired form (or didn't apply) and was left untouched.
-type commandFn func(event, command, binary string) (string, bool)
+type commandFn func(event, matcher, command, binary string) (string, bool)
 
-func wrapCommand(event, command, binary string) (string, bool) {
+// wrapCommand transforms `<cmd>` into:
+//
+//	<binary> hook-wrap <hookName> --event <Event> -- <cmd>
+//
+// where `<hookName>` is `"<event>:<matcher>"` when a matcher is present (e.g.
+// `"PreToolUse:Bash"`) and `<event>` alone otherwise. The `--event` flag (not
+// the positional hook-name) decides the schema event when stdin lacks
+// `hook_event_name`, so each wrapped slot reports the event it actually lives
+// in instead of silently falling back to PreToolUse.
+func wrapCommand(event, matcher, command, binary string) (string, bool) {
 	prefix := binary + " hook-wrap "
 	if strings.HasPrefix(command, prefix) {
 		return command, false
 	}
-	return fmt.Sprintf("%s hook-wrap %s -- %s", binary, event, command), true
+	hookName := event
+	if matcher != "" {
+		hookName = event + ":" + matcher
+	}
+	return fmt.Sprintf("%s hook-wrap %s --event %s -- %s",
+		binary, hookName, event, command), true
 }
 
-func unwrapCommand(_ /*event*/, command, binary string) (string, bool) {
-	prefix := binary + " hook-wrap "
-	if !strings.HasPrefix(command, prefix) {
-		return command, false
+// unwrapCommand reverses wrapCommand by stripping everything up to and
+// including the ` -- ` separator. We accept two prefix shapes so that
+// uninstall still matches even when the buddy binary has moved between
+// install and uninstall:
+//  1. exact `<binary> hook-wrap ` (current binary path)
+//  2. any `…/buddy hook-wrap ` substring (handles relocations). The leading
+//     slash on the suffix avoids matching a bare `buddy` in cwd, which would
+//     be ambiguous.
+//
+// In both cases we require a literal ` -- ` separator after the prefix; if
+// it's missing we return the input untouched rather than guess and silently
+// corrupt user data.
+func unwrapCommand(_, _, command, binary string) (string, bool) {
+	exactPrefix := binary + " hook-wrap "
+	if strings.HasPrefix(command, exactPrefix) {
+		_, after, ok := strings.Cut(command[len(exactPrefix):], " -- ")
+		if !ok {
+			return command, false
+		}
+		return after, true
 	}
-	rest := command[len(prefix):]
-	// rest = "<event> -- <original>"
-	sep := " -- "
-	idx := strings.Index(rest, sep)
+	const marker = "/buddy hook-wrap "
+	idx := strings.Index(command, marker)
 	if idx < 0 {
-		// Malformed wrapping (no -- separator): leave it alone rather than
-		// guess. Better to surface than to silently corrupt user data.
 		return command, false
 	}
-	return rest[idx+len(sep):], true
+	_, after, ok := strings.Cut(command[idx+len(marker):], " -- ")
+	if !ok {
+		return command, false
+	}
+	return after, true
 }
 
 func writeBackupOnce(settingsPath, backupPath string, original []byte) (bool, error) {

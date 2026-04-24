@@ -249,7 +249,7 @@ func TestUninstall_NoBackup_UnwrapsByJSONWalk(t *testing.T) {
       {
         "matcher": "*",
         "hooks": [
-          {"type": "command", "command": "/usr/local/bin/buddy hook-wrap PreToolUse -- /bin/foo --bar"}
+          {"type": "command", "command": "/usr/local/bin/buddy hook-wrap PreToolUse:* --event PreToolUse -- /bin/foo --bar"}
         ]
       }
     ]
@@ -268,6 +268,38 @@ func TestUninstall_NoBackup_UnwrapsByJSONWalk(t *testing.T) {
 	cmds := extractCommands(t, settingsPath)
 	require.Len(t, cmds, 1)
 	assert.Equal(t, "/bin/foo --bar", cmds[0])
+}
+
+// I2 regression: uninstall must still unwrap when the buddy binary moved
+// between install and uninstall. We simulate that by writing the wrap with
+// one binary path and uninstalling with a different one.
+func TestUninstall_UnwrapsAcrossBinaryPathChanges(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	wrapped := `{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {"type": "command", "command": "/old/path/to/buddy hook-wrap Stop --event Stop -- cleanup.sh"}
+        ]
+      }
+    ]
+  }
+}
+`
+	settingsPath := writeSettings(t, claudeDir, wrapped)
+
+	res, err := install.Uninstall(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: "/new/place/buddy", // different from the wrap prefix
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 1, res.Unwrapped, "suffix-based fallback should detect the wrap")
+
+	cmds := extractCommands(t, settingsPath)
+	require.Len(t, cmds, 1)
+	assert.Equal(t, "cleanup.sh", cmds[0])
 }
 
 func TestInstall_WithCliwrap_WritesValidYAML(t *testing.T) {
@@ -347,32 +379,38 @@ func TestUninstall_MissingSettingsJSON_ReturnsSentinelError(t *testing.T) {
 }
 
 // Table-driven check on the wrapping rule itself, going through Install.
+// Asserts: (a) --event flag is the source of truth for the schema event,
+// (b) hookName is "<event>[:<matcher>]", (c) -- separator is preserved,
+// (d) original command text follows verbatim after " -- ".
 func TestInstall_WrapTransformShape(t *testing.T) {
 	cases := []struct {
-		name  string
-		event string
-		input string
-		want  string
+		name    string
+		event   string
+		matcher string
+		input   string
+		want    string
 	}{
-		{"PreToolUse simple", "PreToolUse", "/bin/foo --bar",
-			fakeBuddy + " hook-wrap PreToolUse -- /bin/foo --bar"},
-		{"Stop with spaces", "Stop", "echo hello world",
-			fakeBuddy + " hook-wrap Stop -- echo hello world"},
-		{"PostToolUse with quotes", "PostToolUse", `sh -c "echo $X"`,
-			fakeBuddy + ` hook-wrap PostToolUse -- sh -c "echo $X"`},
+		{"PreToolUse with matcher", "PreToolUse", "Bash", "/bin/foo --bar",
+			fakeBuddy + " hook-wrap PreToolUse:Bash --event PreToolUse -- /bin/foo --bar"},
+		{"Stop no matcher with spaces", "Stop", "", "echo hello world",
+			fakeBuddy + " hook-wrap Stop --event Stop -- echo hello world"},
+		{"PostToolUse with quotes", "PostToolUse", "*", `sh -c "echo $X"`,
+			fakeBuddy + ` hook-wrap PostToolUse:* --event PostToolUse -- sh -c "echo $X"`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			claudeDir, buddyDir := newTempDirs(t)
+			entry := map[string]any{
+				"hooks": []any{
+					map[string]any{"type": "command", "command": tc.input},
+				},
+			}
+			if tc.matcher != "" {
+				entry["matcher"] = tc.matcher
+			}
 			doc := map[string]any{
 				"hooks": map[string]any{
-					tc.event: []any{
-						map[string]any{
-							"hooks": []any{
-								map[string]any{"type": "command", "command": tc.input},
-							},
-						},
-					},
+					tc.event: []any{entry},
 				},
 			}
 			raw, err := json.MarshalIndent(doc, "", "  ")
@@ -387,6 +425,64 @@ func TestInstall_WrapTransformShape(t *testing.T) {
 			cmds := extractCommands(t, filepath.Join(claudeDir, install.SettingsFileName))
 			require.Len(t, cmds, 1)
 			assert.Equal(t, tc.want, cmds[0])
+			// Spec-level invariants the C1 bug violated: --event present and
+			// the original command survives intact after " -- ".
+			assert.Contains(t, cmds[0], "--event "+tc.event)
+			assert.Contains(t, cmds[0], " -- "+tc.input)
 		})
 	}
+}
+
+// I4 regression: would have caught C1. After installing a real PostToolUse
+// hook, the wrapped command must contain `--event PostToolUse` (not the
+// silent fallback PreToolUse) and the original command after " -- ".
+func TestInstall_PostToolUse_CarriesEventFlag(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, `{
+  "hooks": {
+    "PostToolUse": [
+      {"matcher": "*", "hooks": [{"type": "command", "command": "report.sh"}]}
+    ]
+  }
+}
+`)
+	_, err := install.Install(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	cmds := extractCommands(t, filepath.Join(claudeDir, install.SettingsFileName))
+	require.Len(t, cmds, 1)
+	tokens := strings.Fields(cmds[0])
+	assert.Contains(t, tokens, "--event")
+	// --event PostToolUse appears as adjacent tokens.
+	for i, tok := range tokens {
+		if tok == "--event" {
+			require.Less(t, i+1, len(tokens), "--event must have a value")
+			assert.Equal(t, "PostToolUse", tokens[i+1],
+				"event flag must reflect the actual hook slot, not fall back")
+		}
+	}
+	assert.Contains(t, tokens, "--", "wrap must preserve -- separator")
+	assert.True(t, strings.HasSuffix(cmds[0], " -- report.sh"),
+		"original command must follow -- verbatim")
+}
+
+// I1 regression: install must reject buddy binary paths containing spaces,
+// since wrap output is shell-tokenized.
+func TestInstall_RejectsBinaryPathWithSpaces(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	_, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: "/Users/me/My Buddy/buddy",
+	})
+	require.Error(t, err)
+	assert.ErrorIs(t, err, install.ErrBinaryPathHasSpaces)
+
+	var spaceErr *install.BinaryPathSpaceError
+	require.ErrorAs(t, err, &spaceErr)
+	assert.Equal(t, "/Users/me/My Buddy/buddy", spaceErr.Path)
 }

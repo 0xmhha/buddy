@@ -19,12 +19,18 @@ const (
 	EventStop             HookEventName = "Stop"
 	EventPreCompact       HookEventName = "PreCompact"
 	EventUserPromptSubmit HookEventName = "UserPromptSubmit"
+	EventNotification     HookEventName = "Notification"
+	EventSubagentStop     HookEventName = "SubagentStop"
+	EventSessionEnd       HookEventName = "SessionEnd"
 )
 
 // KnownEvents is the canonical, ordered list of hook events.
+// install.hookEvents derives from this list, so adding a new event
+// here automatically widens install's wrap coverage.
 var KnownEvents = []HookEventName{
 	EventSessionStart, EventPreToolUse, EventPostToolUse,
 	EventStop, EventPreCompact, EventUserPromptSubmit,
+	EventNotification, EventSubagentStop, EventSessionEnd,
 }
 
 // IsKnown reports whether n is one of the canonical hook event names.
