@@ -31,11 +31,20 @@ func (e *friendError) Error() string { return e.msg }
 
 func newFriendError(msg string) error { return &friendError{msg: msg} }
 
+// errUnhealthy is a sentinel returned by report-driven commands (e.g. doctor)
+// that have already printed their full output to stdout and only need main() to
+// signal a non-zero exit code. main() recognises it and exits 1 silently — no
+// extra "buddy: " line, no message duplication.
+var errUnhealthy = errors.New("unhealthy")
+
 func main() {
 	root := newRootCmd()
 	err := root.ExecuteContext(context.Background())
 	if err == nil {
 		return
+	}
+	if errors.Is(err, errUnhealthy) {
+		os.Exit(1)
 	}
 	var fe *friendError
 	if errors.As(err, &fe) {
@@ -87,7 +96,7 @@ func newDoctorCmd() *cobra.Command {
 			}
 			rep.Render(os.Stdout)
 			if !rep.Healthy {
-				os.Exit(1)
+				return errUnhealthy
 			}
 			return nil
 		},

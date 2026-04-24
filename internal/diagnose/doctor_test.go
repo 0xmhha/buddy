@@ -121,7 +121,7 @@ func TestCheck_OutboxBacklog_TriggersWithFormattedCount(t *testing.T) {
 	require.NoError(t, err)
 	stmt, err := tx.Prepare("INSERT INTO hook_outbox (ts, payload) VALUES (?, ?)")
 	require.NoError(t, err)
-	for i := 0; i < 1247; i++ {
+	for range 1247 {
 		_, err := stmt.Exec(time.Now().UnixMilli(), "{}")
 		require.NoError(t, err)
 	}
@@ -196,7 +196,7 @@ func TestCheck_AllIssuesStack_PreservesOrder(t *testing.T) {
 	require.NoError(t, err)
 	stmt, err := tx.Prepare("INSERT INTO hook_outbox (ts, payload) VALUES (?, ?)")
 	require.NoError(t, err)
-	for i := 0; i < 1500; i++ {
+	for range 1500 {
 		_, err := stmt.Exec(time.Now().UnixMilli(), "{}")
 		require.NoError(t, err)
 	}
@@ -230,7 +230,7 @@ func TestCheck_SlowAndFail_LimitedToTopFive(t *testing.T) {
 	dbPath := newTempDBPath(t)
 	conn := openWritable(t, dbPath)
 	// 7 distinct slow hooks; expect only 5 surfaced.
-	for i := 0; i < 7; i++ {
+	for i := range 7 {
 		insertStat(t, conn,
 			fmt.Sprintf("hook-%d", i), "Bash",
 			50, 0, int64(6000+100*i))
@@ -285,7 +285,9 @@ func TestHumanDur_Boundaries(t *testing.T) {
 		{1000, "1.0s"},
 		{1234, "1.2s"},
 		{5_000, "5.0s"},
-		{59_999, "60.0s"}, // strconv rounds .9994... to 60.0
+		{59_949, "59.9s"}, // last ms whose tenths-rounding stays under 60.0s
+		{59_950, "1.0m"},  // promotes to minutes once tenths-of-second would render 60.0s
+		{59_999, "1.0m"},  // boundary fix: previously rendered as "60.0s"
 		{60_000, "1.0m"},
 		{125_000, "2.1m"},
 		{600_000, "10.0m"},

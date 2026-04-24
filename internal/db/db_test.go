@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -71,6 +72,26 @@ func TestOpen_UsesWALMode(t *testing.T) {
 	var mode string
 	require.NoError(t, conn.QueryRow("PRAGMA journal_mode").Scan(&mode))
 	assert.Equal(t, "wal", mode)
+}
+
+func TestOpen_ReadOnly_DoesNotCreateMissingParentDir(t *testing.T) {
+	// Read-only opens must not have a write side effect. A missing parent dir
+	// should surface as an open/query failure (doctor collapses it to a single
+	// KindDBOpen issue) rather than being silently created behind the user's back.
+	missingDir := filepath.Join(t.TempDir(), "no-such-subdir")
+	dbPath := filepath.Join(missingDir, "buddy.db")
+
+	conn, err := db.Open(db.Options{Path: dbPath, ReadOnly: true})
+	// Open itself may succeed (modernc/sqlite is lazy); the parent dir must
+	// still be absent regardless. Force first I/O to surface the failure.
+	if err == nil {
+		t.Cleanup(func() { _ = conn.Close() })
+		_, queryErr := conn.Exec("SELECT 1")
+		assert.Error(t, queryErr, "expected first query to fail on missing DB dir")
+	}
+	_, statErr := os.Stat(missingDir)
+	assert.True(t, os.IsNotExist(statErr),
+		"read-only open must not create parent dir %q (stat err: %v)", missingDir, statErr)
 }
 
 func TestOutbox_AppendAndReadPending(t *testing.T) {

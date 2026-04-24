@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -101,6 +100,12 @@ const topN = 5
 // The order is: DB → daemon → backlog → slow p95 → high failure rate.
 // If the DB cannot be opened the function bails after the single DBOpen issue:
 // no other check is meaningful without the store.
+//
+// Options.PIDFile must be set to the daemon PID file path; the CLI layer is
+// the sole resolver of "default" PID locations (see cmd/buddy/main.go).
+// Passing an empty PIDFile produces an empty-path daemon read attempt, which
+// surfaces as a KindDaemon issue — intentionally noisy so callers notice the
+// missing wiring rather than silently defaulting.
 func Check(opts Options) (Report, error) {
 	thr := opts.Thresholds.withDefaults()
 
@@ -108,7 +113,6 @@ func Check(opts Options) (Report, error) {
 	if err != nil {
 		return Report{}, fmt.Errorf("resolve db path: %w", err)
 	}
-	pidFile := resolvePIDFile(opts.PIDFile, dbPath)
 
 	rep := Report{}
 
@@ -122,7 +126,7 @@ func Check(opts Options) (Report, error) {
 	// or corrupt DB surfaces here, not at Open. Any DB-side failure during the
 	// snapshot collapses into a single KindDBOpen issue: partial diagnostics
 	// would mislead more than they'd help.
-	rep.Issues = append(rep.Issues, daemonIssues(pidFile)...)
+	rep.Issues = append(rep.Issues, daemonIssues(opts.PIDFile)...)
 
 	backlogIssues, err := outboxBacklogIssues(conn, thr.OutboxBacklog)
 	if err != nil {
@@ -180,13 +184,6 @@ func resolveDBPath(p string) (string, error) {
 		return p, nil
 	}
 	return db.DefaultPath()
-}
-
-func resolvePIDFile(p, dbPath string) string {
-	if p != "" {
-		return p
-	}
-	return filepath.Join(filepath.Dir(dbPath), "daemon.pid")
 }
 
 func daemonIssues(pidFile string) []Diagnostic {
@@ -376,31 +373,27 @@ func displayName(hookName, toolName string) string {
 // humanDur renders ms as a human-friendly duration. Boundaries:
 //
 //	[0, 1000)      → "<n>ms"
-//	[1000, 60000)  → "<n.n>s"
+//	[1000, 60000)  → "<n.n>s"   (rounded to nearest 0.1s)
 //	[60000, ∞)     → "<n.n>m"
 //
+// Bucket selection runs on integer-rounded tenths-of-a-second, not on the
+// formatted float, so the [s → m] boundary cannot straddle units. e.g. 59,999ms
+// rounds to 60.0s of tenths and is reported as "1.0m" rather than "60.0s".
 // We fix one decimal for s/m so columns line up in lists.
 func humanDur(ms int64) string {
 	if ms < 0 {
 		ms = 0
 	}
-	switch {
-	case ms < 1000:
+	if ms < 1000 {
 		return strconv.FormatInt(ms, 10) + "ms"
-	case ms < 60_000:
-		return formatOneDecimal(float64(ms)/1000.0) + "s"
-	default:
-		return formatOneDecimal(float64(ms)/60_000.0) + "m"
 	}
-}
-
-// formatOneDecimal trims to one decimal place without scientific notation,
-// avoiding fmt's default %g rounding surprises near boundaries (e.g. 59.999).
-func formatOneDecimal(v float64) string {
-	s := strconv.FormatFloat(v, 'f', 1, 64)
-	// Strip a trailing ".0" only if it would still leave a digit; we keep "1.0"
-	// rather than "1" to make the unit suffix unambiguous in friend-tone copy.
-	return s
+	// Round to nearest 0.1s. tenths >= 600 means the rendered seconds-value
+	// would be >= 60.0s, which we promote to the minute branch instead.
+	tenthsOfSec := (ms + 50) / 100
+	if tenthsOfSec < 600 {
+		return strconv.FormatFloat(float64(tenthsOfSec)/10.0, 'f', 1, 64) + "s"
+	}
+	return strconv.FormatFloat(float64(ms)/60_000.0, 'f', 1, 64) + "m"
 }
 
 // formatThousands inserts commas as thousands separators. Pure helper, no

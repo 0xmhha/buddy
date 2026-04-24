@@ -35,8 +35,14 @@ func Open(opts Options) (*sql.DB, error) {
 		}
 		opts.Path = p
 	}
-	if err := os.MkdirAll(filepath.Dir(opts.Path), 0o755); err != nil {
-		return nil, fmt.Errorf("mkdir %s: %w", filepath.Dir(opts.Path), err)
+	// Read-only opens never create the parent directory: that would be a write
+	// side effect on a "read-only" code path, and read-driven callers (doctor)
+	// rely on a missing-DB open failing loudly so they can collapse it into a
+	// single KindDBOpen issue.
+	if !opts.ReadOnly {
+		if err := os.MkdirAll(filepath.Dir(opts.Path), 0o755); err != nil {
+			return nil, fmt.Errorf("mkdir %s: %w", filepath.Dir(opts.Path), err)
+		}
 	}
 
 	dsn := opts.Path + "?_pragma=foreign_keys(1)"
