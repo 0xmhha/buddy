@@ -49,15 +49,15 @@ type TokenUsage struct {
 // HookEventPayload is what buddy writes to the outbox per hook execution.
 // Field-by-field 1:1 with the TS Zod schema in archive/ts-poc.
 type HookEventPayload struct {
-	Ts         int64             `json:"ts"`
-	Event      HookEventName     `json:"event"`
-	HookName   string            `json:"hookName"`
-	DurationMs int64             `json:"durationMs"`
-	ExitCode   int               `json:"exitCode"`
+	Ts         int64         `json:"ts"`
+	Event      HookEventName `json:"event"`
+	HookName   string        `json:"hookName"`
+	DurationMs int64         `json:"durationMs"`
+	ExitCode   int           `json:"exitCode"`
 
-	SessionID  string            `json:"sessionId,omitempty"`
-	PID        int               `json:"pid,omitempty"`
-	Cwd        string            `json:"cwd,omitempty"`
+	SessionID string `json:"sessionId,omitempty"`
+	PID       int    `json:"pid,omitempty"`
+	Cwd       string `json:"cwd,omitempty"`
 
 	ToolName   string            `json:"toolName,omitempty"`
 	ToolArgs   any               `json:"toolArgs,omitempty"`
