@@ -1,8 +1,10 @@
 package db_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -92,6 +94,66 @@ func TestOpen_ReadOnly_DoesNotCreateMissingParentDir(t *testing.T) {
 	_, statErr := os.Stat(missingDir)
 	assert.True(t, os.IsNotExist(statErr),
 		"read-only open must not create parent dir %q (stat err: %v)", missingDir, statErr)
+}
+
+// TestOpen_ReadOnly_MissingFile_ReturnsErrDBMissing covers the case where the
+// parent directory exists but the DB file itself does not. Without the sentinel
+// translation, modernc.org/sqlite would lazily create an empty file in mode=ro
+// (or surface "no such table: hook_outbox" on first query) — neither helpful.
+// (M5 T8.)
+func TestOpen_ReadOnly_MissingFile_ReturnsErrDBMissing(t *testing.T) {
+	parent := t.TempDir() // exists
+	dbPath := filepath.Join(parent, "missing.db")
+
+	conn, err := db.Open(db.Options{Path: dbPath, ReadOnly: true})
+	if conn != nil {
+		_ = conn.Close()
+	}
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, db.ErrDBMissing),
+		"expected ErrDBMissing for read-only open of nonexistent file; got %v", err)
+	assert.NotContains(t, err.Error(), "out of memory",
+		"sentinel must replace SQLite's cryptic OOM (14) message")
+}
+
+// TestOpen_ReadOnly_MissingParent_ReturnsErrDBMissing covers the headline T8
+// failure: a user passing --db <nowhere>/buddy.db with the parent dir absent
+// previously saw "out of memory (14)". The stat-first check converts that to
+// the sentinel that the CLI translates to a friend-tone message.
+func TestOpen_ReadOnly_MissingParent_ReturnsErrDBMissing(t *testing.T) {
+	missingDir := filepath.Join(t.TempDir(), "no-such-subdir")
+	dbPath := filepath.Join(missingDir, "buddy.db")
+
+	conn, err := db.Open(db.Options{Path: dbPath, ReadOnly: true})
+	if conn != nil {
+		_ = conn.Close()
+	}
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, db.ErrDBMissing),
+		"expected ErrDBMissing for read-only open with missing parent; got %v", err)
+	// Regression seal: T8's whole point is to never let "out of memory (14)"
+	// reach the CLI again.
+	assert.NotContains(t, strings.ToLower(err.Error()), "out of memory",
+		"must not leak SQLite OOM(14) wording to callers")
+	// Read-only opens still must not have a write side effect.
+	_, statErr := os.Stat(missingDir)
+	assert.True(t, os.IsNotExist(statErr),
+		"sentinel translation must not create parent dir %q (stat err: %v)",
+		missingDir, statErr)
+}
+
+// TestOpen_Writable_DeepNestedMissingParent_Creates is a regression test:
+// the writable path's existing os.MkdirAll(<dir>, 0755) must keep working for
+// deeply nested missing parents. T8 must not regress install/daemon/hook-wrap.
+func TestOpen_Writable_DeepNestedMissingParent_Creates(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "a", "b", "c", "buddy.db")
+
+	conn, err := db.Open(db.Options{Path: dbPath}) // writable
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	_, statErr := os.Stat(dbPath)
+	assert.NoError(t, statErr, "writable open should create the DB file even with deeply nested missing parents")
 }
 
 func TestOutbox_AppendAndReadPending(t *testing.T) {

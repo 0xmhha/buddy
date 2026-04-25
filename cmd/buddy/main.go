@@ -40,6 +40,29 @@ func newFriendError(msg string) error { return &friendError{msg: msg} }
 // extra "buddy: " line, no message duplication.
 var errUnhealthy = errors.New("unhealthy")
 
+// resolvedDBPath returns the user-visible DB path: the explicit --db value if
+// non-empty, else the default. Used solely to embed a friendly path in
+// db-missing error messages — never propagated to db.Open (which has its own
+// default-resolution and is the source of truth for actual file IO).
+func resolvedDBPath(dbFlag string) string {
+	if dbFlag != "" {
+		return dbFlag
+	}
+	if p, err := db.DefaultPath(); err == nil {
+		return p
+	}
+	return "~/.buddy/buddy.db"
+}
+
+// dbMissingFriendError renders the M5 T8 friend-tone message for read-only
+// commands (stats, events) when db.Open returns ErrDBMissing. Centralised so
+// stats and events stay in sync with each other and with diagnose's wording.
+func dbMissingFriendError(dbFlag string) error {
+	return newFriendError(fmt.Sprintf(
+		"buddy: DB가 아직 없어 (%s). 먼저 'buddy install' 했는지 확인해줘.",
+		resolvedDBPath(dbFlag)))
+}
+
 func main() {
 	root := newRootCmd()
 	err := root.ExecuteContext(context.Background())
@@ -106,6 +129,9 @@ func newEventsCmd() *cobra.Command {
 					if errors.Is(err, queries.ErrInvalidLimit) {
 						return newFriendError("buddy: " + err.Error())
 					}
+					if errors.Is(err, db.ErrDBMissing) {
+						return dbMissingFriendError(dbFlag)
+					}
 					return newFriendError(fmt.Sprintf(
 						"buddy: events follow 실패 (%v)", err))
 				}
@@ -115,6 +141,9 @@ func newEventsCmd() *cobra.Command {
 			if err != nil {
 				if errors.Is(err, queries.ErrInvalidLimit) {
 					return newFriendError("buddy: " + err.Error())
+				}
+				if errors.Is(err, db.ErrDBMissing) {
+					return dbMissingFriendError(dbFlag)
 				}
 				return newFriendError(fmt.Sprintf(
 					"buddy: DB를 못 읽었어. daemon이 한 번이라도 돈 적 있어? (%v)", err))
@@ -154,6 +183,9 @@ func newStatsCmd() *cobra.Command {
 			if err != nil {
 				if errors.Is(err, queries.ErrInvalidWindow) {
 					return newFriendError("buddy: " + err.Error())
+				}
+				if errors.Is(err, db.ErrDBMissing) {
+					return dbMissingFriendError(dbFlag)
 				}
 				// Any other failure is a DB-side problem (open or query). Match
 				// doctor's wording so the two read-only commands feel consistent.

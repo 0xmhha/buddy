@@ -152,7 +152,21 @@ func Check(opts Options) (Report, error) {
 // dbOpenReport builds the single-issue, not-healthy report for any DB-level
 // failure (open or query). Centralised so the friend-tone wording stays
 // identical across call sites.
+//
+// db.ErrDBMissing gets a dedicated, friendlier message so users who pointed
+// --db at a path where nothing has been written yet don't see SQLite's
+// "out of memory (14)" or "no such table" leak through (M5 T8).
 func dbOpenReport(dbPath string, err error) Report {
+	if errors.Is(err, db.ErrDBMissing) {
+		return Report{
+			Healthy: false,
+			Issues: []Diagnostic{{
+				Kind: KindDBOpen,
+				Message: fmt.Sprintf(
+					"DB가 아직 없어 (%s). 먼저 'buddy install' 했는지 확인해줘.", dbPath),
+			}},
+		}
+	}
 	return Report{
 		Healthy: false,
 		Issues: []Diagnostic{{
