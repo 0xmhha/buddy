@@ -242,7 +242,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&claudeDirFlag, "claude-dir", "", "Claude Code 설정 디렉터리 (기본: ~/.claude)")
 	cmd.Flags().StringVar(&buddyDirFlag, "buddy-dir", "", "buddy 작업 디렉터리 (기본: ~/.buddy)")
 	cmd.Flags().StringVar(&binaryFlag, "buddy-binary", "", "buddy 바이너리 절대 경로 (기본: 현재 실행 파일)")
-	cmd.Flags().StringVar(&dbFlag, "db", "", "cliwrap.yaml 안의 daemon --db 값. 이후 명령(daemon/doctor/stats/events)에 자동 적용 안 됨 — 같은 --db 를 직접 줘야 함.")
+	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: <buddy-dir>/buddy.db). 이 경로로 DB가 만들어지고 cliwrap.yaml 에도 들어가. 이후 daemon/doctor/stats/events 에는 같은 --db 를 직접 줘야 해.")
 	cmd.Flags().BoolVar(&withCliwrap, "with-cliwrap", false, "cliwrap.yaml 도 함께 생성")
 	return cmd
 }

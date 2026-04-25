@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/wm-it-22-00661/buddy/internal/db"
+	"github.com/wm-it-22-00661/buddy/internal/diagnose"
 	"github.com/wm-it-22-00661/buddy/internal/install"
 )
 
@@ -306,12 +308,16 @@ func TestInstall_WithCliwrap_WritesValidYAML(t *testing.T) {
 	claudeDir, buddyDir := newTempDirs(t)
 	writeSettings(t, claudeDir, settingsWithMixedHooks())
 
+	// T6: install pre-creates the DB at this path, so the path must be
+	// writable (was a fixed /var/lib/... before T6).
+	customDB := filepath.Join(t.TempDir(), "buddy.db")
+
 	res, err := install.Install(install.Options{
 		ClaudeDir:   claudeDir,
 		BuddyDir:    buddyDir,
 		BuddyBinary: fakeBuddy,
 		WithCliwrap: true,
-		DBPath:      "/var/lib/buddy/buddy.db",
+		DBPath:      customDB,
 	})
 	require.NoError(t, err)
 	require.True(t, res.CliwrapWritten)
@@ -323,7 +329,7 @@ func TestInstall_WithCliwrap_WritesValidYAML(t *testing.T) {
 	assert.Contains(t, body, "buddy-daemon")
 	assert.Contains(t, body, `"daemon", "run"`)
 	assert.Contains(t, body, fakeBuddy)
-	assert.Contains(t, body, "/var/lib/buddy/buddy.db")
+	assert.Contains(t, body, customDB)
 }
 
 func TestInstall_MissingSettingsJSON_ReturnsSentinelError(t *testing.T) {
@@ -485,4 +491,189 @@ func TestInstall_RejectsBinaryPathWithSpaces(t *testing.T) {
 	var spaceErr *install.BinaryPathSpaceError
 	require.ErrorAs(t, err, &spaceErr)
 	assert.Equal(t, "/Users/me/My Buddy/buddy", spaceErr.Path)
+}
+
+// assertMigratedDB opens dbPath read-only and verifies that schema_version
+// has at least one applied migration AND that hook_outbox is queryable
+// without raising a "no such table" error. This is the headline T6 invariant:
+// after install, doctor's read-only open + outbox query must succeed.
+func assertMigratedDB(t *testing.T, dbPath string) {
+	t.Helper()
+	conn, err := db.Open(db.Options{Path: dbPath, ReadOnly: true})
+	require.NoError(t, err, "read-only open of pre-created DB must succeed")
+	t.Cleanup(func() { _ = conn.Close() })
+
+	var version int
+	require.NoError(t,
+		conn.QueryRow("SELECT COALESCE(MAX(version), 0) FROM schema_version").Scan(&version),
+		"schema_version must be queryable after install")
+	assert.GreaterOrEqual(t, version, 1, "at least one migration must be applied")
+
+	var count int
+	require.NoError(t,
+		conn.QueryRow("SELECT COUNT(*) FROM hook_outbox").Scan(&count),
+		"hook_outbox must exist (no 'no such table' SQL error)")
+	assert.Equal(t, 0, count, "fresh DB has no outbox rows")
+}
+
+// T6: install must pre-create buddy-dir and migrate the default DB so that
+// `buddy doctor` (run before `buddy daemon start`) does NOT surface a raw
+// `no such table: hook_outbox` SQL error. Default path = <BuddyDir>/buddy.db.
+func TestInstall_PreCreatesDB_DefaultPath(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	_, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	dbPath := filepath.Join(buddyDir, "buddy.db")
+	_, statErr := os.Stat(dbPath)
+	require.NoError(t, statErr, "default DB must exist after install")
+	assertMigratedDB(t, dbPath)
+}
+
+// T6: when `--db /custom/path.db` is supplied, install pre-creates exactly
+// that path (not the default buddy-dir/buddy.db), so `--db` is honored
+// end-to-end across install → doctor.
+func TestInstall_PreCreatesDB_ExplicitPath(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	customDir := filepath.Join(t.TempDir(), "custom-state")
+	customDB := filepath.Join(customDir, "elsewhere.db")
+
+	_, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+		DBPath:      customDB,
+	})
+	require.NoError(t, err)
+
+	_, statErr := os.Stat(customDB)
+	require.NoError(t, statErr, "explicit --db path must exist after install")
+	assertMigratedDB(t, customDB)
+
+	// Default path under buddy-dir must NOT have been created when --db is set.
+	_, defaultStatErr := os.Stat(filepath.Join(buddyDir, "buddy.db"))
+	assert.True(t, os.IsNotExist(defaultStatErr),
+		"explicit --db must not also create the default DB")
+}
+
+// T6 acceptance: this is the headline. After install (no daemon started),
+// running diagnose.Check must NOT surface a KindDBOpen issue. A KindDaemon
+// issue is expected because we did not start the daemon.
+func TestInstall_DoctorCleanAfterInstall(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	_, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	dbPath := filepath.Join(buddyDir, "buddy.db")
+	pidPath := filepath.Join(buddyDir, "no-such.pid") // daemon definitely not running
+
+	rep, err := diagnose.Check(diagnose.Options{
+		DBPath:  dbPath,
+		PIDFile: pidPath,
+	})
+	require.NoError(t, err)
+
+	for _, iss := range rep.Issues {
+		assert.NotEqual(t, diagnose.KindDBOpen, iss.Kind,
+			"install must leave DB readable; got DB-open issue: %s", iss.Message)
+		assert.NotContains(t, iss.Message, "no such table",
+			"raw SQL 'no such table' must not surface to users")
+	}
+
+	// Sanity: doctor still flags the daemon, so the test isn't just passing
+	// because Check silently failed. Daemon was never started.
+	var sawDaemon bool
+	for _, iss := range rep.Issues {
+		if iss.Kind == diagnose.KindDaemon {
+			sawDaemon = true
+			break
+		}
+	}
+	assert.True(t, sawDaemon,
+		"daemon-down issue is expected since we never started the daemon")
+}
+
+// T6: installing twice must be idempotent — db.Open's migration loop is
+// already idempotent, but verify install() doesn't double-error on a
+// pre-existing DB.
+func TestInstall_PreCreatesDB_IdempotentOnReinstall(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	_, err := install.Install(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	_, err = install.Install(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err, "second install must succeed on already-migrated DB")
+
+	assertMigratedDB(t, filepath.Join(buddyDir, "buddy.db"))
+}
+
+// T6: when --with-cliwrap and an explicit --db are both set, the rendered
+// cliwrap.yaml must reference the same explicit DB path that install
+// pre-created. Prevents drift between install pre-create and cliwrap config.
+func TestInstall_WithCliwrap_UsesResolvedDBPath(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	customDB := filepath.Join(t.TempDir(), "custom-state", "buddy.db")
+
+	res, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+		WithCliwrap: true,
+		DBPath:      customDB,
+	})
+	require.NoError(t, err)
+	require.True(t, res.CliwrapWritten)
+
+	yaml, err := os.ReadFile(filepath.Join(buddyDir, install.CliwrapFileName))
+	require.NoError(t, err)
+	assert.Contains(t, string(yaml), customDB,
+		"cliwrap.yaml must use the same DB path install pre-created")
+	assertMigratedDB(t, customDB)
+}
+
+// T6: when --with-cliwrap is set without an explicit --db, the rendered
+// cliwrap.yaml must reference the default <buddy-dir>/buddy.db that install
+// just created — not an empty path. Same default flows from install through
+// cliwrap so the daemon spawned by cliwrap reads the same DB doctor reads.
+func TestInstall_WithCliwrap_DefaultDBPath(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	res, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+		WithCliwrap: true,
+	})
+	require.NoError(t, err)
+	require.True(t, res.CliwrapWritten)
+
+	defaultDB := filepath.Join(buddyDir, "buddy.db")
+	yaml, err := os.ReadFile(filepath.Join(buddyDir, install.CliwrapFileName))
+	require.NoError(t, err)
+	assert.Contains(t, string(yaml), defaultDB,
+		"cliwrap.yaml must point at the default DB install just created")
+	assertMigratedDB(t, defaultDB)
 }
