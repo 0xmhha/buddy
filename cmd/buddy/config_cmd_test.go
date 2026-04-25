@@ -99,6 +99,44 @@ func TestConfigShow_JSON(t *testing.T) {
 		_, ok := out[f.Name]
 		assert.True(t, ok, "JSON output missing key %s", f.Name)
 	}
+
+	// Lock value types so a future field accidentally returning the wrong
+	// shape (e.g. nil, or a struct) gets caught here instead of breaking
+	// downstream JSON consumers. JSON numbers unmarshal to float64; strings
+	// (including duration's canonical form) stay strings.
+	assert.IsType(t, float64(0), out["hookTimeoutMs"], "hookTimeoutMs must be a JSON number")
+	assert.IsType(t, float64(0), out["batchSize"], "batchSize must be a JSON number")
+	assert.IsType(t, "", out["pollInterval"], "pollInterval must be a JSON string (duration form)")
+	assert.IsType(t, "", out["personaLocale"], "personaLocale must be a JSON string")
+	assert.IsType(t, "", out["notifyChannel"], "notifyChannel must be a JSON string")
+}
+
+// TestConfigShow_MultiError_FormatsAsBullets — when a hand-edited config has
+// multiple invalid fields, `buddy config show` must surface ALL of them in
+// one friend-tone bullet list (driven by translateConfigError's *MultiError
+// branch). Locks the multi-error CLI surface so it can't silently regress to
+// "first error only".
+func TestConfigShow_MultiError_FormatsAsBullets(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.json")
+
+	// Hand-write a config with two invalid fields so Validate produces a
+	// *MultiError. hookFailRatePct=200 violates the 1..100 range; the
+	// personaLocale "fr" violates the ko|en rule.
+	raw := []byte(`{"hookFailRatePct": 200, "personaLocale": "fr"}`)
+	require.NoError(t, os.WriteFile(cfgPath, raw, 0o644))
+
+	_, _, err := runConfig(t, cfgPath, "show")
+	require.Error(t, err)
+
+	var fe *friendError
+	require.True(t, errors.As(err, &fe), "want friendError, got %T: %v", err, err)
+	// Friend-tone header from translateConfigError.
+	assert.Contains(t, fe.msg, "buddy: 설정이 잘못됐어:")
+	// Both bad fields show up — the bullet shape ("  - <field>:") plus the
+	// field name itself locks the rendering.
+	assert.Contains(t, fe.msg, "  - hookFailRatePct:")
+	assert.Contains(t, fe.msg, "  - personaLocale:")
 }
 
 // --- get --------------------------------------------------------------------
@@ -240,6 +278,28 @@ func TestConfigSet_BadDurationParse_FriendlyError(t *testing.T) {
 	var fe *friendError
 	require.True(t, errors.As(err, &fe))
 	assert.Contains(t, fe.msg, "pollInterval")
+	// User-visible surface stays Korean — internal/config returns English,
+	// the cmd layer translates. Lock the friend-tone wording so the
+	// translation can't silently regress to leaking the English message.
+	assert.Contains(t, fe.msg, "duration 형식이어야 해")
+	assert.Contains(t, fe.msg, "not-a-duration")
+}
+
+// TestConfigSet_BadIntParse_FriendlyError mirrors the duration-parse test for
+// the int kind: locks that the cmd-layer wrapping speaks Korean for `Atoi`
+// failures too, not just durations.
+func TestConfigSet_BadIntParse_FriendlyError(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.json")
+
+	_, _, err := runConfig(t, cfgPath, "set", "hookSlowMs", "not-a-number")
+	require.Error(t, err)
+
+	var fe *friendError
+	require.True(t, errors.As(err, &fe))
+	assert.Contains(t, fe.msg, "hookSlowMs")
+	assert.Contains(t, fe.msg, "숫자여야 해")
+	assert.Contains(t, fe.msg, "not-a-number")
 }
 
 // --- unset ------------------------------------------------------------------

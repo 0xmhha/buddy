@@ -123,6 +123,12 @@ func TestFields_Set_BadInt_ReturnsError(t *testing.T) {
 	var c config.Config
 	err := f.Set(&c, "not-a-number")
 	require.Error(t, err)
+	// internal/config returns machine-shaped English messages — the CLI
+	// layer is responsible for friend-tone Korean. Asserting on English
+	// here so the package boundary stays locale-free.
+	assert.Contains(t, err.Error(), "hookSlowMs")
+	assert.Contains(t, err.Error(), "expected integer")
+	assert.Contains(t, err.Error(), `"not-a-number"`)
 }
 
 func TestFields_Set_BadDuration_ReturnsError(t *testing.T) {
@@ -132,6 +138,9 @@ func TestFields_Set_BadDuration_ReturnsError(t *testing.T) {
 	var c config.Config
 	err := f.Set(&c, "not-a-duration")
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "pollInterval")
+	assert.Contains(t, err.Error(), "expected duration")
+	assert.Contains(t, err.Error(), `"not-a-duration"`)
 }
 
 // TestFields_Set_AllowsValueValidationToCatchInvalid — the field-level Set is

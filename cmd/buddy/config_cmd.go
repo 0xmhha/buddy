@@ -97,6 +97,22 @@ func unknownFieldError(name string) error {
 		"buddy: '%s' 같은 설정은 없어. 'buddy config show'로 목록 봐줘.", name))
 }
 
+// friendParseError translates the internal/config parser error into the
+// friend-tone Korean wording the user sees on `buddy config set` failures.
+// The cmd layer owns the locale; internal/config stays string-locale-free.
+func friendParseError(name, raw string, kind config.FieldKind, err error) string {
+	switch kind {
+	case config.KindInt, config.KindInt64:
+		return fmt.Sprintf("buddy: %s 값은 숫자여야 해 (\"%s\").", name, raw)
+	case config.KindDuration:
+		return fmt.Sprintf("buddy: %s 는 duration 형식이어야 해 (\"%s\", 예: 1s, 500ms).", name, raw)
+	default:
+		// KindString never errors in the current registry, but stay
+		// defensive in case a future kind needs a generic fallback.
+		return fmt.Sprintf("buddy: %s 값을 못 읽었어 (%v).", name, err)
+	}
+}
+
 // --- show -------------------------------------------------------------------
 
 func newConfigShowCmd() *cobra.Command {
@@ -148,44 +164,20 @@ func showText(cmd *cobra.Command, c config.Config) error {
 }
 
 // showJSON marshals the Effective view as a pretty-printed JSON object with
-// the same camelCase keys the on-disk schema uses.
+// the same camelCase keys the on-disk schema uses. Per-field JSON shaping
+// lives on Field.JSONValue so adding a new Config knob can't accidentally
+// emit `null` here — the registry is the single source of truth.
 func showJSON(cmd *cobra.Command, c config.Config) error {
 	eff := c.Effective()
 	view := map[string]any{}
 	for _, f := range config.Fields() {
-		view[f.Name] = effectiveJSONValue(eff, f.Name)
+		view[f.Name] = f.JSONValue(eff)
 	}
 	raw, err := json.MarshalIndent(view, "", "  ")
 	if err != nil {
 		return newFriendError(fmt.Sprintf("buddy: JSON 직렬화 실패 (%v).", err))
 	}
 	fmt.Fprintln(cmd.OutOrStdout(), string(raw))
-	return nil
-}
-
-// effectiveJSONValue returns the JSON-shaped value for a given field. Numbers
-// stay as numbers; strings as strings; durations as their canonical string
-// (matches Duration.MarshalJSON in config.go so JSON `show` matches what
-// `Save` would emit).
-func effectiveJSONValue(eff config.Effective, name string) any {
-	switch name {
-	case "hookTimeoutMs":
-		return eff.HookTimeoutMs
-	case "hookSlowMs":
-		return eff.HookSlowMs
-	case "hookFailRatePct":
-		return eff.HookFailRatePct
-	case "outboxBacklog":
-		return eff.OutboxBacklog
-	case "notifyChannel":
-		return eff.NotifyChannel
-	case "pollInterval":
-		return eff.PollInterval.String()
-	case "batchSize":
-		return eff.BatchSize
-	case "personaLocale":
-		return eff.PersonaLocale
-	}
 	return nil
 }
 
@@ -240,9 +232,14 @@ func newConfigSetCmd() *cobra.Command {
 				return err
 			}
 			if err := f.Set(&c, raw); err != nil {
-				// Parser-level error (e.g. "expected duration"). Already
-				// includes the field name; just prefix friend tone.
-				return newFriendError("buddy: " + err.Error())
+				// Parser-level error. internal/config returns English /
+				// machine-shaped messages; the CLI is the i18n boundary, so
+				// translate to friend-tone Korean here per Field.Kind. The
+				// underlying err is intentionally swallowed in the user-
+				// facing message — its English form would only confuse
+				// non-English readers, and the kind already implies the
+				// expected shape ("숫자", "duration").
+				return newFriendError(friendParseError(name, raw, f.Kind, err))
 			}
 			if err := c.Validate(); err != nil {
 				return translateConfigError(err)

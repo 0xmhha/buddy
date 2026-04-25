@@ -59,19 +59,33 @@ type Field struct {
 	// when raw is unparseable. Set does NOT range-validate — that is
 	// Config.Validate's job, run by the CLI after Set so the user sees the
 	// canonical validation message rather than a parser-specific one.
+	//
+	// Error messages are intentionally English/machine-shaped here. The CLI
+	// layer (cmd/buddy/config_cmd.go) wraps them with friend-tone Korean
+	// before showing the user. Keeping internal/config string-locale-free
+	// means a future i18n switch lives in one place (cmd/buddy/) instead of
+	// being scattered through the registry.
 	Set func(c *Config, raw string) error
 
 	// Unset clears the override (sets the pointer back to nil on c).
 	Unset func(c *Config)
+
+	// JSONValue returns the field's effective value as a Go value suitable
+	// for direct JSON marshalling: int / int64 / string for primitives, and
+	// the duration's canonical string form (e.g. "1s") for Duration fields.
+	// Each builder fills this in at registration time, so adding a new field
+	// can't accidentally produce a `null` in `buddy config show --json` —
+	// forward-compat is enforced structurally, not by a separate switch.
+	JSONValue func(eff Effective) any
 }
 
 // Fields returns every registered field, sorted alphabetically by Name. The
-// slice is fresh each call (cheap; nine entries) so callers can't accidentally
+// slice is fresh each call (cheap; eight entries) so callers can't accidentally
 // mutate the registry.
 func Fields() []Field {
 	// Order is the alphabetical key order the CLI's `show` output relies on.
 	// Adding a new field: keep alphabetical, update FieldByName implicitly
-	// (it scans this slice), and ensure config_test.go TestFields_AllFields*
+	// (it scans this slice), and ensure fields_test.go TestFields_AllFields*
 	// covers it.
 	return []Field{
 		intField("batchSize",
@@ -149,13 +163,16 @@ func intField(
 		Set: func(c *Config, raw string) error {
 			v, err := strconv.Atoi(raw)
 			if err != nil {
-				return fmt.Errorf("%s: 정수가 들어가야 해 (%q)", name, raw)
+				return fmt.Errorf("%s: expected integer, got %q", name, raw)
 			}
 			*ptr(c) = &v
 			return nil
 		},
 		Unset: func(c *Config) {
 			*ptr(c) = nil
+		},
+		JSONValue: func(e Effective) any {
+			return eff(e)
 		},
 	}
 }
@@ -181,13 +198,16 @@ func int64Field(
 		Set: func(c *Config, raw string) error {
 			v, err := strconv.ParseInt(raw, 10, 64)
 			if err != nil {
-				return fmt.Errorf("%s: 정수가 들어가야 해 (%q)", name, raw)
+				return fmt.Errorf("%s: expected integer, got %q", name, raw)
 			}
 			*ptr(c) = &v
 			return nil
 		},
 		Unset: func(c *Config) {
 			*ptr(c) = nil
+		},
+		JSONValue: func(e Effective) any {
+			return eff(e)
 		},
 	}
 }
@@ -218,6 +238,9 @@ func stringField(
 		Unset: func(c *Config) {
 			*ptr(c) = nil
 		},
+		JSONValue: func(e Effective) any {
+			return eff(e)
+		},
 	}
 }
 
@@ -242,7 +265,7 @@ func durationField(
 		Set: func(c *Config, raw string) error {
 			d, err := time.ParseDuration(raw)
 			if err != nil {
-				return fmt.Errorf("%s: duration 형식이 아니야 (%q, 예: 1s, 500ms)", name, raw)
+				return fmt.Errorf("%s: expected duration like 1s or 500ms, got %q", name, raw)
 			}
 			v := Duration{Duration: d}
 			*ptr(c) = &v
@@ -250,6 +273,12 @@ func durationField(
 		},
 		Unset: func(c *Config) {
 			*ptr(c) = nil
+		},
+		// Duration emits its canonical string ("1s", "500ms") rather than a
+		// nanosecond integer, matching Duration.MarshalJSON. Keeping the
+		// `show --json` view byte-equivalent to what `Save` would write.
+		JSONValue: func(e Effective) any {
+			return eff(e).String()
 		},
 	}
 }
