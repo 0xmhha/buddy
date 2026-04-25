@@ -63,7 +63,6 @@ func TestFields_AllFieldsRoundTrip(t *testing.T) {
 		{"pollInterval", "750ms"},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			f, ok := config.FieldByName(tc.name)
 			require.True(t, ok)
