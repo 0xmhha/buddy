@@ -468,13 +468,11 @@ func spawnDetached(dbFlag, pidFile string, poll time.Duration) error {
 	cmd.Stdin = nil
 	cmd.Stdout = nil
 	cmd.Stderr = nil
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("spawn: %w", err)
+	pid, err := startAndDetach(cmd)
+	if err != nil {
+		return err
 	}
-	if err := cmd.Process.Release(); err != nil {
-		return fmt.Errorf("detach: %w", err)
-	}
-	fmt.Fprintf(os.Stderr, "buddy: daemon 시작 (pid %d).\n", cmd.Process.Pid)
+	fmt.Fprintf(os.Stderr, "buddy: daemon 시작 (pid %d).\n", pid)
 	return nil
 }
 
