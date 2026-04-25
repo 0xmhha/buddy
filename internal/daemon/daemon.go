@@ -59,6 +59,13 @@ var ErrAlreadyRunning = errors.New("buddy daemon: another instance already runni
 func Run(ctx context.Context, cfg Config) error {
 	cfg.Defaults()
 
+	// Install the signal handler before publishing the PID file. Otherwise a
+	// caller that watches for the PID file appearing can race in with SIGTERM
+	// before NotifyContext is wired up, and the default Go signal handler
+	// terminates the process.
+	ctx, stop := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
 	conn, err := db.Open(db.Options{Path: cfg.DBPath})
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
@@ -70,9 +77,6 @@ func Run(ctx context.Context, cfg Config) error {
 		return err
 	}
 	defer releasePIDFile(pidF, cfg.PIDFile)
-
-	ctx, stop := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
-	defer stop()
 
 	fmt.Fprintf(cfg.LogTo, "buddy: daemon up (db=%s poll=%s batch=%d)\n",
 		cfg.DBPath, cfg.PollInterval, cfg.BatchSize)

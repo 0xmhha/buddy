@@ -45,7 +45,9 @@ func Open(opts Options) (*sql.DB, error) {
 		}
 	}
 
-	dsn := opts.Path + "?_pragma=foreign_keys(1)"
+	// busy_timeout makes concurrent opens (e.g. daemon writer + doctor reader)
+	// wait for the WAL/header lock instead of failing with "database is locked".
+	dsn := opts.Path + "?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)"
 	if opts.ReadOnly {
 		dsn += "&mode=ro"
 	}
