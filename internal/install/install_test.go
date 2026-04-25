@@ -607,6 +607,26 @@ func TestInstall_DoctorCleanAfterInstall(t *testing.T) {
 		"daemon-down issue is expected since we never started the daemon")
 }
 
+// T6 invariant: pre-create must run BEFORE the settings.json read, so that
+// even when settings.json is missing (and Install therefore returns
+// ErrSettingsMissing), a subsequent `buddy doctor` still sees a migrated DB.
+// This locks in the order so a future refactor can't move initBuddyState
+// below the settings read and silently break the contract.
+func TestInstall_MissingSettingsJSON_StillPreCreatesDB(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	// deliberately no settings.json in claudeDir
+
+	_, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+	})
+	require.ErrorIs(t, err, install.ErrSettingsMissing)
+
+	// Even though install errored at settings, doctor must see a migrated DB.
+	assertMigratedDB(t, filepath.Join(buddyDir, "buddy.db"))
+}
+
 // T6: installing twice must be idempotent — db.Open's migration loop is
 // already idempotent, but verify install() doesn't double-error on a
 // pre-existing DB.

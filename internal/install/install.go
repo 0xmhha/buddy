@@ -1,6 +1,7 @@
 // Package install wraps and unwraps Claude Code's settings.json hook entries
-// with `buddy hook-wrap`, and optionally writes a cliwrap.yaml supervising the
-// buddy daemon.
+// with `buddy hook-wrap`, pre-creates the buddy SQLite state DB (so doctor
+// works before the daemon ever starts), and optionally writes a cliwrap.yaml
+// supervising the buddy daemon.
 //
 // All operations are pure (no os.Exit, no cobra). The CLI layer in
 // cmd/buddy/main.go owns user-facing printing and exit codes.
@@ -295,19 +296,21 @@ func resolve(opts Options) (resolvedPaths, error) {
 	return out, nil
 }
 
-// initBuddyState mkdirs the DB's parent directory and runs schema migrations
-// idempotently. Pre-creating the DB at install time means `buddy doctor` (run
-// before the daemon ever starts) opens a properly migrated DB and surfaces
-// the friend-tone "daemon이 실행 중이 아니야" message instead of a raw
-// "no such table: hook_outbox" SQL error. (M5 T6.)
+// initBuddyState opens the buddy DB writably, which delegates to db.Open for
+// mkdir of the parent directory and idempotent schema migrations. Pre-creating
+// the DB at install time means `buddy doctor` (run before the daemon ever
+// starts) opens a properly migrated DB and surfaces the friend-tone "daemon이
+// 실행 중이 아니야" message instead of a raw "no such table: hook_outbox" SQL
+// error. (M5 T6.)
 func initBuddyState(dbPath string) error {
 	conn, err := db.Open(db.Options{Path: dbPath})
 	if err != nil {
 		return fmt.Errorf("init buddy state: %w", err)
 	}
-	if err := conn.Close(); err != nil {
-		return fmt.Errorf("close buddy state: %w", err)
-	}
+	// modernc.org/sqlite Close() on a successfully-opened pool isn't a
+	// meaningful failure mode; matches the _ = conn.Close() pattern used in
+	// internal/diagnose/doctor.go.
+	_ = conn.Close()
 	return nil
 }
 
