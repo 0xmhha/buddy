@@ -16,8 +16,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/wm-it-22-00661/buddy/internal/cliwrapcfg"
+	"github.com/wm-it-22-00661/buddy/internal/daemon"
 	"github.com/wm-it-22-00661/buddy/internal/db"
 	"github.com/wm-it-22-00661/buddy/internal/schema"
 )
@@ -59,6 +61,12 @@ type Options struct {
 	// --with-cliwrap is set). Empty means default to <BuddyDir>/buddy.db so
 	// that a subsequent `buddy doctor` (with no --db flag) can read it.
 	DBPath string
+	// KeepDaemon, when true on Uninstall, leaves any running daemon alone.
+	// Default behavior (M5 T9) is to stop the daemon if its PID file at
+	// <dir(DBPath)>/daemon.pid shows it's running, so users don't end up with
+	// an orphan daemon polling a DB they no longer use. See docs/roadmap.md
+	// §M5 T9 for the friction this fixes.
+	KeepDaemon bool
 }
 
 // Result describes what an Install/Uninstall did. Used by the CLI layer
@@ -83,6 +91,18 @@ type Result struct {
 	CliwrapWritten bool
 	// NoOp is true when nothing changed (idempotent re-install or empty hooks).
 	NoOp bool
+
+	// DaemonWasRunning is true when Uninstall observed a running daemon at
+	// the start of the call. Reported regardless of whether KeepDaemon
+	// suppressed the actual stop, so the CLI can render the right message
+	// in either case. (M5 T9.)
+	DaemonWasRunning bool
+	// DaemonStopped is true when Uninstall sent SIGTERM to a running daemon
+	// AND confirmed (via PID-file disappearance) that it exited within the
+	// wait window. False when no daemon was running, when KeepDaemon
+	// suppressed the stop, or when the wait window expired before the
+	// daemon released its PID file. (M5 T9.)
+	DaemonStopped bool
 }
 
 // ErrSettingsMissing is returned when ~/.claude/settings.json does not exist.
@@ -180,6 +200,13 @@ func Install(opts Options) (*Result, error) {
 // Uninstall reverses Install. If a .buddy.bak backup exists, restores from it
 // (preserving original byte-for-byte). Otherwise walks the JSON and unwraps
 // any buddy-wrapped command back to its original form.
+//
+// M5 T9: Uninstall also stops a running daemon up front (unless
+// opts.KeepDaemon is set). The rationale, per docs/roadmap.md §M5 T9, is to
+// avoid orphan daemons that keep polling a DB the user no longer uses.
+// Failures of the stop attempt are advisory — we proceed with the unwrap
+// regardless, since leaving the wrap in place is strictly worse than leaving
+// the daemon alone (the user can always run `buddy daemon stop` themselves).
 func Uninstall(opts Options) (*Result, error) {
 	resolved, err := resolve(opts)
 	if err != nil {
@@ -189,6 +216,11 @@ func Uninstall(opts Options) (*Result, error) {
 		SettingsPath: resolved.settingsPath,
 		BackupPath:   resolved.backupPath,
 	}
+
+	// Stop the daemon BEFORE touching settings.json. Doing it first means a
+	// transient stop failure doesn't leave the user with both a half-unwrap
+	// AND an orphan daemon — they at least get a clean wrap state.
+	stopDaemonIfRunning(resolved.pidFile, opts.KeepDaemon, res)
 
 	if _, err := os.Stat(resolved.settingsPath); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -243,6 +275,11 @@ type resolvedPaths struct {
 	// also embedded in cliwrap.yaml so the daemon spawned by cliwrap reads
 	// the same DB doctor and stats read.
 	dbPath string
+	// pidFile is <dir(dbPath)>/daemon.pid — same convention as
+	// cmd/buddy/main.go's defaultPIDFromDB. Resolving it alongside dbPath
+	// keeps Uninstall's auto-stop in lockstep with whatever DB layout
+	// install pre-created. (M5 T9.)
+	pidFile string
 }
 
 func resolve(opts Options) (resolvedPaths, error) {
@@ -293,6 +330,10 @@ func resolve(opts Options) (resolvedPaths, error) {
 	} else {
 		out.dbPath = filepath.Join(buddyDir, "buddy.db")
 	}
+	// PID file lives next to the DB. Default <buddy-dir>/buddy.db produces
+	// <buddy-dir>/daemon.pid; an explicit --db /custom/x.sqlite produces
+	// /custom/daemon.pid. Same rule the CLI's defaultPIDFromDB uses.
+	out.pidFile = filepath.Join(filepath.Dir(out.dbPath), "daemon.pid")
 	return out, nil
 }
 
@@ -312,6 +353,47 @@ func initBuddyState(dbPath string) error {
 	// internal/diagnose/doctor.go.
 	_ = conn.Close()
 	return nil
+}
+
+// stopDaemonIfRunning checks the PID file and, if a daemon is alive AND the
+// caller hasn't asked to keep it, sends SIGTERM and waits briefly for the
+// daemon to release its PID file. The result fields DaemonWasRunning /
+// DaemonStopped are written in place so the CLI layer can choose the right
+// friend-tone message.
+//
+// All errors here are intentionally swallowed: if we can't read the PID file
+// or the daemon refuses to stop, we still want Uninstall's main work (the
+// settings unwrap) to proceed. Worst case the user runs `buddy daemon stop`
+// themselves — strictly better than aborting the unwrap on a daemon issue.
+func stopDaemonIfRunning(pidFile string, keepDaemon bool, res *Result) {
+	st, err := daemon.CheckStatus(pidFile)
+	if err != nil || !st.Running {
+		return
+	}
+	res.DaemonWasRunning = true
+	if keepDaemon {
+		return
+	}
+	if err := daemon.Stop(pidFile); err != nil {
+		return
+	}
+	res.DaemonStopped = waitForDaemonStop(pidFile, 2*time.Second)
+}
+
+// waitForDaemonStop polls the PID file until CheckStatus reports !Running or
+// the timeout elapses. Returns true on graceful stop, false on timeout.
+// Polling at 50ms keeps the test fast while leaving plenty of slack for the
+// daemon's signal handler + releasePIDFile cleanup.
+func waitForDaemonStop(pidFile string, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		st, err := daemon.CheckStatus(pidFile)
+		if err == nil && !st.Running {
+			return true
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	return false
 }
 
 // parseJSON decodes the settings file into a generic map. We round-trip via

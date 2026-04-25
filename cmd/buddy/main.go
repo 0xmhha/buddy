@@ -298,6 +298,8 @@ func newUninstallCmd() *cobra.Command {
 		claudeDirFlag string
 		buddyDirFlag  string
 		binaryFlag    string
+		dbFlag        string
+		keepDaemon    bool
 	)
 	cmd := &cobra.Command{
 		Use:   "uninstall",
@@ -307,6 +309,8 @@ func newUninstallCmd() *cobra.Command {
 				ClaudeDir:   claudeDirFlag,
 				BuddyDir:    buddyDirFlag,
 				BuddyBinary: binaryFlag,
+				DBPath:      dbFlag,
+				KeepDaemon:  keepDaemon,
 			})
 			if err != nil {
 				return translateInstallError(err)
@@ -319,12 +323,27 @@ func newUninstallCmd() *cobra.Command {
 			default:
 				fmt.Fprintln(os.Stderr, "buddy: 등록된 게 없어. 그대로 둘게.")
 			}
+			// M5 T9: friend-tone note about daemon disposition. The Uninstall
+			// call already attempted (or skipped) the stop based on
+			// KeepDaemon — we just report what happened.
+			if res.DaemonWasRunning {
+				switch {
+				case res.DaemonStopped:
+					fmt.Fprintln(os.Stderr, "buddy: daemon도 같이 멈췄어.")
+				case keepDaemon:
+					fmt.Fprintln(os.Stderr, "buddy: daemon은 그대로 둘게 (--keep-daemon).")
+				default:
+					fmt.Fprintln(os.Stderr, "buddy: daemon이 안 멈춰서 그냥 두고 갈게. 'buddy daemon stop' 한 번 해줘.")
+				}
+			}
 			return nil
 		},
 	}
 	cmd.Flags().StringVar(&claudeDirFlag, "claude-dir", "", "Claude Code 설정 디렉터리 (기본: ~/.claude)")
 	cmd.Flags().StringVar(&buddyDirFlag, "buddy-dir", "", "buddy 작업 디렉터리 (기본: ~/.buddy)")
 	cmd.Flags().StringVar(&binaryFlag, "buddy-binary", "", "buddy 바이너리 절대 경로 (기본: 현재 실행 파일)")
+	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: <buddy-dir>/buddy.db). daemon PID 위치 추론에 사용.")
+	cmd.Flags().BoolVar(&keepDaemon, "keep-daemon", false, "daemon이 떠있어도 자동 stop 하지 않음")
 	return cmd
 }
 
