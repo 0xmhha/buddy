@@ -90,6 +90,7 @@ func newRootCmd() *cobra.Command {
 		SilenceErrors: true,
 	}
 	root.AddCommand(newHookWrapCmd())
+	root.AddCommand(newConfigCmd())
 	root.AddCommand(newDaemonCmd())
 	root.AddCommand(newInstallCmd())
 	root.AddCommand(newUninstallCmd())

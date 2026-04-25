@@ -1,0 +1,296 @@
+package main
+
+// config_cmd.go owns the `buddy config {show, get, set, unset}` subtree.
+// Lives next to main.go (rather than inside it) so main.go doesn't keep
+// growing — see HANDOFF.md §11 watch list.
+//
+// Design contract:
+//   - SUCCESS is silent for set/unset (spec §6.3 "침묵 default" — no
+//     "saved!" hype). show and get write to stdout; everything else stays
+//     quiet on success.
+//   - FAILURE flows through friendError (already defined in main.go) so the
+//     user gets the friend-tone message verbatim and the process exits 1.
+//   - The actual parsing/formatting per field is delegated to the Field
+//     registry in internal/config. This file is pure CLI plumbing.
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"sort"
+	"strings"
+
+	"github.com/spf13/cobra"
+
+	"github.com/wm-it-22-00661/buddy/internal/config"
+)
+
+// newConfigCmd returns the `buddy config` parent command. The four subcommands
+// share a `--config <path>` flag (default ~/.buddy/config.json) so tests can
+// point them at t.TempDir() without setting HOME.
+func newConfigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "config",
+		Short: "buddy 설정 보기/수정 (~/.buddy/config.json)",
+	}
+	cmd.AddCommand(
+		newConfigShowCmd(),
+		newConfigGetCmd(),
+		newConfigSetCmd(),
+		newConfigUnsetCmd(),
+	)
+	return cmd
+}
+
+// configPath returns either the explicit --config flag value, or the spec'd
+// default path (~/.buddy/config.json). Centralised so all four subcommands
+// resolve the path identically.
+func configPath(cmd *cobra.Command) (string, error) {
+	flag, _ := cmd.Flags().GetString("config")
+	if flag != "" {
+		return flag, nil
+	}
+	p, err := config.DefaultPath()
+	if err != nil {
+		return "", newFriendError(fmt.Sprintf(
+			"buddy: config 경로를 모르겠어 (%v).", err))
+	}
+	return p, nil
+}
+
+// loadForCLI loads the config file with friend-tone error mapping. A missing
+// file is NOT an error — it just means "no overrides yet" and we return a
+// zero Config.
+func loadForCLI(path string) (config.Config, error) {
+	c, err := config.Load(path)
+	if err != nil {
+		return config.Config{}, translateConfigError(err)
+	}
+	return c, nil
+}
+
+// translateConfigError wraps a config-package error in the friend-tone shell
+// the user expects. Validation errors get a per-field bullet list; everything
+// else gets a generic "설정 못 읽었어" wrapper.
+func translateConfigError(err error) error {
+	var ve *config.ValidationError
+	var multi *config.MultiError
+	switch {
+	case errors.As(err, &multi):
+		var sb strings.Builder
+		sb.WriteString("buddy: 설정이 잘못됐어:\n")
+		for _, e := range multi.Errors {
+			fmt.Fprintf(&sb, "  - %s: %s\n", e.Field, e.Reason)
+		}
+		return newFriendError(strings.TrimRight(sb.String(), "\n"))
+	case errors.As(err, &ve):
+		return newFriendError(fmt.Sprintf(
+			"buddy: 설정이 잘못됐어:\n  - %s: %s", ve.Field, ve.Reason))
+	}
+	return newFriendError(fmt.Sprintf("buddy: 설정 못 읽었어 (%v).", err))
+}
+
+// unknownFieldError is the friend-tone message for "you typed a name that
+// isn't a config knob". Used by get/set/unset.
+func unknownFieldError(name string) error {
+	return newFriendError(fmt.Sprintf(
+		"buddy: '%s' 같은 설정은 없어. 'buddy config show'로 목록 봐줘.", name))
+}
+
+// --- show -------------------------------------------------------------------
+
+func newConfigShowCmd() *cobra.Command {
+	var jsonOut bool
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "현재 effective 설정 출력 (defaults + overrides)",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			path, err := configPath(cmd)
+			if err != nil {
+				return err
+			}
+			c, err := loadForCLI(path)
+			if err != nil {
+				return err
+			}
+			if jsonOut {
+				return showJSON(cmd, c)
+			}
+			return showText(cmd, c)
+		},
+	}
+	cmd.Flags().String("config", "", "config 파일 경로 (기본: ~/.buddy/config.json)")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "JSON 형식으로 출력 (tooling 용)")
+	return cmd
+}
+
+// showText prints "<key>=<value> (default|override)" lines, one per field,
+// alphabetically sorted. Designed for human reading + grep/awk; not friend
+// tone (it's a structured surface).
+func showText(cmd *cobra.Command, c config.Config) error {
+	eff := c.Effective()
+	fields := config.Fields()
+	// Fields() already returns alphabetical order, but sort defensively in
+	// case a future change reorders the registry.
+	sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
+
+	out := cmd.OutOrStdout()
+	for _, f := range fields {
+		_, hasOverride := f.GetOverride(c)
+		marker := "default"
+		if hasOverride {
+			marker = "override"
+		}
+		fmt.Fprintf(out, "%s=%s (%s)\n", f.Name, f.Get(eff), marker)
+	}
+	return nil
+}
+
+// showJSON marshals the Effective view as a pretty-printed JSON object with
+// the same camelCase keys the on-disk schema uses.
+func showJSON(cmd *cobra.Command, c config.Config) error {
+	eff := c.Effective()
+	view := map[string]any{}
+	for _, f := range config.Fields() {
+		view[f.Name] = effectiveJSONValue(eff, f.Name)
+	}
+	raw, err := json.MarshalIndent(view, "", "  ")
+	if err != nil {
+		return newFriendError(fmt.Sprintf("buddy: JSON 직렬화 실패 (%v).", err))
+	}
+	fmt.Fprintln(cmd.OutOrStdout(), string(raw))
+	return nil
+}
+
+// effectiveJSONValue returns the JSON-shaped value for a given field. Numbers
+// stay as numbers; strings as strings; durations as their canonical string
+// (matches Duration.MarshalJSON in config.go so JSON `show` matches what
+// `Save` would emit).
+func effectiveJSONValue(eff config.Effective, name string) any {
+	switch name {
+	case "hookTimeoutMs":
+		return eff.HookTimeoutMs
+	case "hookSlowMs":
+		return eff.HookSlowMs
+	case "hookFailRatePct":
+		return eff.HookFailRatePct
+	case "outboxBacklog":
+		return eff.OutboxBacklog
+	case "notifyChannel":
+		return eff.NotifyChannel
+	case "pollInterval":
+		return eff.PollInterval.String()
+	case "batchSize":
+		return eff.BatchSize
+	case "personaLocale":
+		return eff.PersonaLocale
+	}
+	return nil
+}
+
+// --- get --------------------------------------------------------------------
+
+func newConfigGetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get <field>",
+		Short: "한 설정값 출력 (shell 치환용; 마커/접두어 없이)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			name := args[0]
+			f, ok := config.FieldByName(name)
+			if !ok {
+				return unknownFieldError(name)
+			}
+			path, err := configPath(cmd)
+			if err != nil {
+				return err
+			}
+			c, err := loadForCLI(path)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(cmd.OutOrStdout(), f.Get(c.Effective()))
+			return nil
+		},
+	}
+	cmd.Flags().String("config", "", "config 파일 경로 (기본: ~/.buddy/config.json)")
+	return cmd
+}
+
+// --- set --------------------------------------------------------------------
+
+func newConfigSetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set <field> <value>",
+		Short: "설정값 갱신 (성공시 침묵)",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			name, raw := args[0], args[1]
+			f, ok := config.FieldByName(name)
+			if !ok {
+				return unknownFieldError(name)
+			}
+			path, err := configPath(cmd)
+			if err != nil {
+				return err
+			}
+			c, err := loadForCLI(path)
+			if err != nil {
+				return err
+			}
+			if err := f.Set(&c, raw); err != nil {
+				// Parser-level error (e.g. "expected duration"). Already
+				// includes the field name; just prefix friend tone.
+				return newFriendError("buddy: " + err.Error())
+			}
+			if err := c.Validate(); err != nil {
+				return translateConfigError(err)
+			}
+			if err := config.Save(path, c); err != nil {
+				return newFriendError(fmt.Sprintf("buddy: config 저장 실패 (%v).", err))
+			}
+			// Silent on success — see file-level comment.
+			return nil
+		},
+	}
+	cmd.Flags().String("config", "", "config 파일 경로 (기본: ~/.buddy/config.json)")
+	return cmd
+}
+
+// --- unset ------------------------------------------------------------------
+
+func newConfigUnsetCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unset <field>",
+		Short: "override 제거 (기본값으로 되돌림, 성공시 침묵)",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			name := args[0]
+			f, ok := config.FieldByName(name)
+			if !ok {
+				return unknownFieldError(name)
+			}
+			path, err := configPath(cmd)
+			if err != nil {
+				return err
+			}
+			c, err := loadForCLI(path)
+			if err != nil {
+				return err
+			}
+			f.Unset(&c)
+			// Defaults always validate, but run anyway as a sanity guard
+			// against future field additions that change semantics.
+			if err := c.Validate(); err != nil {
+				return translateConfigError(err)
+			}
+			if err := config.Save(path, c); err != nil {
+				return newFriendError(fmt.Sprintf("buddy: config 저장 실패 (%v).", err))
+			}
+			return nil
+		},
+	}
+	cmd.Flags().String("config", "", "config 파일 경로 (기본: ~/.buddy/config.json)")
+	return cmd
+}
