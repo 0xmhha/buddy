@@ -26,7 +26,36 @@ import (
 	"github.com/wm-it-22-00661/buddy/internal/schema"
 )
 
-const version = "0.0.1"
+// version / gitSHA / buildDate are the three pieces that compose `buddy
+// --version`. They are package-level `var` (not `const`) so the release build
+// can inject real values via `-ldflags "-X main.gitSHA=... -X main.buildDate=..."`
+// — see Makefile `build` target. The defaults below keep an unflagged
+// `go build ./cmd/buddy` working, but mark the binary as a dev cut so users
+// reporting bugs can tell at a glance.
+//
+// NOTE: `version` below is the source of truth for the binary's self-reported
+// version. The Makefile mirrors it as RELEASE_VERSION (used in release
+// artifact filenames like `dist/buddy_0.1.0_linux_amd64`) — when bumping for
+// a release, update both. See Makefile §RELEASE_VERSION.
+//
+// Roadmap §3 M6 T3.
+var (
+	version   = "0.1.0"
+	gitSHA    = "dev"
+	buildDate = "unknown"
+)
+
+// versionString assembles the spec format
+//
+//	buddy X.Y.Z (sha=<short>, built=<rfc3339>)
+//
+// for cobra's `--version` output. Kept as a function (not a const) because
+// gitSHA / buildDate are themselves vars set at link time. The "buddy " prefix
+// is part of the contract, so newRootCmd overrides cobra's own version
+// template to avoid printing "buddy version buddy 0.1.0 ...".
+func versionString() string {
+	return fmt.Sprintf("buddy %s (sha=%s, built=%s)", version, gitSHA, buildDate)
+}
 
 // friendError carries a pre-formatted, friend-tone message that main() prints
 // verbatim (no `buddy: ` prefix added) and uses to exit with code 1 instead of
@@ -86,7 +115,7 @@ func newRootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "buddy",
 		Short:         "Claude Code 옆에서 hook 신뢰성을 지켜주는 친구",
-		Version:       version,
+		Version:       versionString(),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		// PersistentPreRunE: best-effort locale resolution. Errors here are
@@ -112,6 +141,11 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newStatsCmd())
 	root.AddCommand(newEventsCmd())
 	root.AddCommand(newPurgeCmd())
+	// Strip cobra's default "<name> version " prefix: versionString() already
+	// starts with "buddy ", and the spec format would otherwise render as
+	// "buddy version buddy 0.1.0 (...)". The trailing newline matches cobra's
+	// own default template so terminal output is unchanged in feel.
+	root.SetVersionTemplate("{{.Version}}\n")
 	return root
 }
 
