@@ -33,6 +33,11 @@ import (
 // `go build ./cmd/buddy` working, but mark the binary as a dev cut so users
 // reporting bugs can tell at a glance.
 //
+// NOTE: `version` below is the source of truth for the binary's self-reported
+// version. The Makefile mirrors it as RELEASE_VERSION (used in release
+// artifact filenames like `dist/buddy_0.1.0_linux_amd64`) — when bumping for
+// a release, update both. See Makefile §RELEASE_VERSION.
+//
 // Roadmap §3 M6 T3.
 var (
 	version   = "0.1.0"
