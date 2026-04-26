@@ -4,13 +4,13 @@
 >
 > 이 문서는 v0.1 이후 작업의 *Single Source of Truth* (SSoT). [`v0.1-spec.md`](./v0.1-spec.md) §8 마일스톤 표는 이 문서로 위임됨.
 
-작성일: 2026-04-23 / 상태: ACTIVE — M5 우선순위는 [`docs/dogfood-feedback-template.md`](./dogfood-feedback-template.md) 회수 결과에 따라 재정렬됨.
+작성일: 2026-04-23 (최종 갱신: 2026-04-26 M5 완료) / 상태: ACTIVE — M5 ✅ DONE (PR #1). 이후 우선순위(M6 → v0.2 / v0.3)는 dogfood feedback 회수 시점에 따라 재정렬.
 
 ---
 
 ## 1. 현재 위치
 
-### v0.1 status (2026-04-23 기준)
+### v0.1 status (2026-04-26 기준)
 
 | M | 내용 | 상태 |
 |---|------|------|
@@ -18,8 +18,8 @@
 | M2 (Go) | Hook wrapper (cobra) + invariants ([spec §7.1](./v0.1-spec.md#71-hook-wrap--m2-implemented)) | DONE |
 | M3 | Daemon (outbox → events → stats) + cli-wrapper hybrid | DONE |
 | M4 | `buddy install/uninstall/doctor/stats/events` CLI | DONE |
-| **Dogfood** | [`DOGFOOD.md`](../DOGFOOD.md) + [`dogfood-feedback-template.md`](./dogfood-feedback-template.md) — 사용자 본인 첫 사용 진행 중 | IN PROGRESS |
-| M5 | Config / threshold tuning / dogfood 마찰 fix / purge / 페르소나 polish | PLANNED (이 문서 §2) |
+| M5 | Config CLI / threshold tuning / dogfood 4-friction fix / purge / 페르소나 catalog | **DONE (PR #1)** |
+| **Dogfood** | [`DOGFOOD.md`](../DOGFOOD.md) + [`dogfood-feedback-template.md`](./dogfood-feedback-template.md) — 사용자 본인 첫 사용 (M5 friction fix 반영판으로 재시작) | IN PROGRESS |
 | M6 | Release prep (cross-compile + GitHub Actions release) | PLANNED (이 문서 §3) |
 
 ### 향후 5개 마일스톤 한눈 표
@@ -34,7 +34,20 @@
 
 ---
 
-## 2. M5 — Config / Threshold tuning / dogfood 마찰 fix / Purge / 페르소나 polish
+## 2. M5 — Config / Threshold tuning / dogfood 마찰 fix / Purge / 페르소나 polish ✅ DONE
+
+> **상태:** 완료 (PR [#1](https://github.com/0xmhha/buddy/pull/1)). 14 commits, +4245/−76 LOC, 15 packages race-clean.
+> 아래 §Tasks T1~T9는 *역사적 spec*으로 보존 — 실제 구현 위치는 코드의 `internal/config/`, `internal/purge/`, `internal/persona/`, `internal/install/`, `internal/db/`, `internal/diagnose/` 패키지 + `cmd/buddy/{config_cmd,loadconfig,purge_cmd,spawn,main}.go` 참조.
+>
+> **Lock-in (이번 M5에서 실제로 채택된 결정):**
+> - T6: 후보 (a) — install이 `db.Open` 호출해 DB pre-create + 마이그레이션
+> - T7: PID는 `cmd.Process.Release()` 전에 캡처 (`startAndDetach` helper)
+> - T8: read-only `db.Open`이 missing parent/file 시 `ErrDBMissing` sentinel 반환, CLI가 친구 톤으로 변환
+> - T9: 후보 (a) — `uninstall`이 자동 `daemon stop`, `--keep-daemon` escape hatch
+> - Config 우선순위: 명시적 CLI flag > config 파일 > spec-locked default
+> - 페르소나 catalog: `internal/persona/`, typed `Key` 상수, en→ko fallback (en map은 v0.2까지 비어있음)
+> - DB busy_timeout: `_pragma=busy_timeout(5000)` 추가 (concurrent open race fix)
+> - Daemon SIGTERM handler: PID 파일 publish 전에 설치 (race fix)
 
 ### Why
 
@@ -85,10 +98,14 @@
 - `install` → `doctor` 순서 (daemon 미실행) 실행 시 raw SQL error가 나오지 않는다 (T6 acceptance).
 - `daemon start` 출력에 실제 PID가 표시된다 (T7 acceptance).
 
-### Open questions
+### Open questions (M5 종료 시점)
 
-- config 값 hot-reload? — daemon이 config 변경을 watch할지, restart 요구할지. 1차 결정: **restart 요구** (단순함 + dogfood 단계에서 빈번 변경 안 예상). 단, 실제 사용 패턴 보고 재검토.
-- `purge`의 outbox 정책 — 위에서 "건드리지 않음"으로 결정했으나, outbox row가 daemon이 영영 못 드레인할 만큼 오래 쌓인 경우(예: schema migration 실패) 수동 cleanup 경로가 필요한지 검토.
+- ✅ **config 값 hot-reload?** — 1차안 *restart 요구* 적용됨. daemon은 시작 시점에 config 읽고, 변경 시 사용자가 `daemon stop`/`daemon start` 재시작. 실제 dogfood 사용 패턴 보고 v0.2에서 재검토.
+- ⏳ **`purge`의 outbox 수동 cleanup 경로** — M5에서 "건드리지 않음" 정책 유지. outbox가 영영 드레인 안 되는 케이스(예: schema migration 실패) 발견 시 별도 명령 검토 — **현재 미발생, 데이터 들어오면 결정**.
+- ⏳ **`config.ValidationError.Reason` i18n** — persona 카탈로그에 `KeyConfigReason*` 키들 declared & test 보호되어 있음. `translateConfigError` bullet 렌더링 wiring은 v0.2 i18n sweep으로.
+- ⏳ **`queries.ErrInvalidLimit` / `ErrInvalidWindow`** — Korean 문자열을 sentinel error 값에 직접 보유. 카탈로그로 이전은 v0.2 sweep.
+- ⏳ **English locale 카탈로그** — `internal/persona/en.go`는 빈 map placeholder. 본격 ko/en 분리는 v0.2.
+- ⏳ **Subcommand-flag-aware locale** — root `PersistentPreRunE`가 현재 `config.DefaultPath()`만 읽음. 서브커맨드 `--config` 인지 locale 해석은 v0.2 polish.
 
 ---
 
@@ -212,14 +229,14 @@
 │  Dogfood     │  (사용자 본인)
 │  Feedback    │
 └──────┬───────┘
-       │ (M5 task 우선순위 직접 입력)
+       │ (다음 우선순위 입력 — v0.2 UX, v0.3 tracker 통합 여부)
        ▼
 ┌──────────────┐     ┌──────────────┐
-│  M5 (config  │ ──▶ │  M6 (release │
-│  + 4 friction│     │  prep)       │
-│  fix + purge │     └──────┬───────┘
-│  + persona)  │            │
-└──────────────┘            ▼
+│  M5 ✅ DONE  │ ──▶ │  M6 (release │
+│  PR #1       │     │  prep)       │
+└──────────────┘     └──────┬───────┘
+                            │
+                            ▼
                      ┌──────────────┐     ┌──────────────┐
                      │  v0.2        │     │  v0.3        │
                      │  Control     │ ◀┄┄ │  Orchestration│
@@ -236,17 +253,17 @@
 
 **의존 규칙:**
 
-- M5 → M6: release 전 config / purge / 페르소나가 안정화되어야 외부 사용자가 install 후 자가 조정 가능.
+- ~~M5 → M6~~: ✅ 충족 (M5 완료). config / purge / 페르소나가 안정화되어 외부 사용자가 install 후 자가 조정 가능한 상태.
 - M6 → v0.2 / v0.3: release binary가 있어야 외부 사용자 dogfood가 시작되고, 그 피드백이 v0.2/v0.3 우선순위에 영향.
 - **v0.2 ↔ v0.3 순서 무관**: 두 wedge는 데이터(SQLite)는 공유하나 코드 경로는 독립. dogfood 결과 어느 쪽 수요가 큰지에 따라 순서 결정.
 - v1.0 = v0.2 + v0.3 통합 위에서만 의미. AGENTS.md 자동 동기화는 sync할 capability가 충분히 모인 후 가치 발생.
 
-**dogfood feedback의 영향 범위:**
+**dogfood feedback의 영향 범위 (M5 이후):**
 
-- M5: task 우선순위 직접 결정 (위 §2 acceptance 참조)
-- M6: 우선순위 영향 적음 (release 작업은 기계적)
-- v0.2: dashboard UX 형식 (TUI vs web) 결정에 영향
-- v0.3: tracker 통합 여부 결정에 영향
+- M6: 우선순위 영향 적음 (release 작업은 기계적). 단, M5 friction fix 회귀 검증 가치 큼.
+- v0.2: dashboard UX 형식 (TUI vs web) 결정에 영향.
+- v0.3: tracker 통합 여부 결정에 영향.
+- 카탈로그 sweep (v0.2 i18n): M5 deferred 항목 — `ValidationError.Reason`, queries sentinels, en locale.
 
 ---
 
