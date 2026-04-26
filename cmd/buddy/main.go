@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -207,23 +208,30 @@ func newStatsCmd() *cobra.Command {
 // newDoctorCmd wires the read-only health snapshot. Render output goes to
 // stdout (it is the user-facing report, not log noise). Exit code is 0 when
 // the report is healthy, 1 otherwise — matches m4-plan §Task 2.
+//
+// M5 T3: thresholds (HookTimeoutMs, HookSlowMs, HookFailRatePct, OutboxBacklog)
+// are now read from ~/.buddy/config.json via loadEffectiveConfig. A missing
+// config file falls back to spec defaults silently. Pass --config <path> to
+// point at a different file.
 func newDoctorCmd() *cobra.Command {
 	var (
-		dbFlag  string
-		pidFlag string
+		dbFlag     string
+		pidFlag    string
+		configFlag string
 	)
 	cmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "hook health 즉시 진단 (read-only, daemon 의존 없음)",
 		RunE: func(_ *cobra.Command, _ []string) error {
+			eff, err := loadEffectiveConfig(configFlag)
+			if err != nil {
+				return err
+			}
 			pidFile, err := resolvePIDFile(pidFlag, dbFlag)
 			if err != nil {
 				return err
 			}
-			rep, err := diagnose.Check(diagnose.Options{
-				DBPath:  dbFlag,
-				PIDFile: pidFile,
-			})
+			rep, err := diagnose.Check(buildDoctorOptions(dbFlag, pidFile, eff))
 			if err != nil {
 				return err
 			}
@@ -236,6 +244,7 @@ func newDoctorCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: ~/.buddy/buddy.db)")
 	cmd.Flags().StringVar(&pidFlag, "pid", "", "PID 파일 경로 (기본: <db dir>/daemon.pid)")
+	cmd.Flags().StringVar(&configFlag, "config", "", "config 파일 경로 (기본: ~/.buddy/config.json)")
 	return cmd
 }
 
@@ -362,37 +371,50 @@ func newDaemonCmd() *cobra.Command {
 	return cmd
 }
 
+// newDaemonRunCmd wires `buddy daemon run`. M5 T3: pollInterval / batchSize
+// are read from ~/.buddy/config.json (spec defaults: 1s / 500). Explicit
+// --poll / --batch flags still win — the precedence is flag > config > default.
+// Zero is the "use config / default" sentinel for the flags, so the help text
+// reflects that rather than the old hard-coded 1s / 500.
 func newDaemonRunCmd() *cobra.Command {
 	var (
-		dbFlag    string
-		pollFlag  time.Duration
-		batchFlag int
-		pidFlag   string
+		dbFlag     string
+		pollFlag   time.Duration
+		batchFlag  int
+		pidFlag    string
+		configFlag string
 	)
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "foreground 실행 (cli-wrapper supervise용)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return daemon.Run(cmd.Context(), daemon.Config{
-				DBPath:       dbFlag,
-				PIDFile:      pidFlag,
-				PollInterval: pollFlag,
-				BatchSize:    batchFlag,
-			})
+			eff, err := loadEffectiveConfig(configFlag)
+			if err != nil {
+				return err
+			}
+			return daemon.Run(cmd.Context(),
+				resolveDaemonRunConfig(dbFlag, pidFlag, pollFlag, batchFlag, eff))
 		},
 	}
 	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: ~/.buddy/buddy.db)")
 	cmd.Flags().StringVar(&pidFlag, "pid", "", "PID 파일 경로 (기본: <db dir>/daemon.pid)")
-	cmd.Flags().DurationVar(&pollFlag, "poll", time.Second, "outbox poll 간격")
-	cmd.Flags().IntVar(&batchFlag, "batch", 500, "한 tick에 처리할 outbox row 상한")
+	cmd.Flags().DurationVar(&pollFlag, "poll", 0, "outbox poll 간격 (기본: config 또는 1s)")
+	cmd.Flags().IntVar(&batchFlag, "batch", 0, "한 tick에 처리할 outbox row 상한 (기본: config 또는 500)")
+	cmd.Flags().StringVar(&configFlag, "config", "", "config 파일 경로 (기본: ~/.buddy/config.json)")
 	return cmd
 }
 
+// newDaemonStartCmd spawns `buddy daemon run` detached. Flags here mirror
+// `daemon run` so the user can express the same intent at start time; we
+// forward them as argv to the spawned child, which then loads config itself.
+// M5 T3: --config and --batch are now propagated alongside --poll.
 func newDaemonStartCmd() *cobra.Command {
 	var (
-		dbFlag   string
-		pidFlag  string
-		pollFlag time.Duration
+		dbFlag     string
+		pidFlag    string
+		pollFlag   time.Duration
+		batchFlag  int
+		configFlag string
 	)
 	cmd := &cobra.Command{
 		Use:   "start",
@@ -407,12 +429,14 @@ func newDaemonStartCmd() *cobra.Command {
 				fmt.Fprintf(os.Stderr, "buddy: 이미 실행 중이야 (pid %d).\n", st.PID)
 				return nil
 			}
-			return spawnDetached(dbFlag, pidFile, pollFlag)
+			return spawnDetached(dbFlag, pidFile, pollFlag, batchFlag, configFlag)
 		},
 	}
 	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로")
 	cmd.Flags().StringVar(&pidFlag, "pid", "", "PID 파일 경로")
-	cmd.Flags().DurationVar(&pollFlag, "poll", time.Second, "outbox poll 간격")
+	cmd.Flags().DurationVar(&pollFlag, "poll", 0, "outbox poll 간격 (기본: config 또는 1s)")
+	cmd.Flags().IntVar(&batchFlag, "batch", 0, "한 tick에 처리할 outbox row 상한 (기본: config 또는 500)")
+	cmd.Flags().StringVar(&configFlag, "config", "", "config 파일 경로 (기본: ~/.buddy/config.json)")
 	return cmd
 }
 
@@ -501,7 +525,12 @@ func defaultPIDFromDB(dbPath string) string {
 	return dir + "/daemon.pid"
 }
 
-func spawnDetached(dbFlag, pidFile string, poll time.Duration) error {
+// spawnDetached launches `buddy daemon run` as a detached child. Each flag
+// is forwarded only when set (non-zero / non-empty) so the child can fall
+// back to its own config / spec defaults — the parent does NOT pre-resolve
+// poll / batch here, that resolution happens once on the child via
+// loadEffectiveConfig (M5 T3).
+func spawnDetached(dbFlag, pidFile string, poll time.Duration, batch int, configFlag string) error {
 	self, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("locate self: %w", err)
@@ -515,6 +544,12 @@ func spawnDetached(dbFlag, pidFile string, poll time.Duration) error {
 	}
 	if poll > 0 {
 		args = append(args, "--poll", poll.String())
+	}
+	if batch > 0 {
+		args = append(args, "--batch", strconv.Itoa(batch))
+	}
+	if configFlag != "" {
+		args = append(args, "--config", configFlag)
 	}
 	cmd := exec.Command(self, args...)
 	cmd.Stdin = nil
