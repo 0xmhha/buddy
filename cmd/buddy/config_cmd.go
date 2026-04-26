@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/wm-it-22-00661/buddy/internal/config"
+	"github.com/wm-it-22-00661/buddy/internal/persona"
 )
 
 // newConfigCmd returns the `buddy config` parent command. The four subcommands
@@ -52,8 +53,7 @@ func configPath(cmd *cobra.Command) (string, error) {
 	}
 	p, err := config.DefaultPath()
 	if err != nil {
-		return "", newFriendError(fmt.Sprintf(
-			"buddy: config 경로를 모르겠어 (%v).", err))
+		return "", newFriendError(persona.M(persona.KeyConfigPathUnknown, err))
 	}
 	return p, nil
 }
@@ -72,29 +72,38 @@ func loadForCLI(path string) (config.Config, error) {
 // translateConfigError wraps a config-package error in the friend-tone shell
 // the user expects. Validation errors get a per-field bullet list; everything
 // else gets a generic "설정 못 읽었어" wrapper.
+//
+// TODO(M5/v0.2): the bullet's Reason is still the English string emitted by
+// internal/config (e.g. `must be 1..100 (got 200)`). The persona catalog
+// already declares Korean replacements (KeyConfigReasonHookTimeoutOutOfRange
+// & friends); v0.2's i18n sweep will route ValidationError → persona Key by
+// adding a Code/Args field on ValidationError. Out of scope for T5 — see
+// docs/roadmap.md M5 T2 deferred Important #2.
 func translateConfigError(err error) error {
 	var ve *config.ValidationError
 	var multi *config.MultiError
 	switch {
 	case errors.As(err, &multi):
 		var sb strings.Builder
-		sb.WriteString("buddy: 설정이 잘못됐어:\n")
+		sb.WriteString(persona.M(persona.KeyConfigInvalid))
+		sb.WriteString("\n")
 		for _, e := range multi.Errors {
-			fmt.Fprintf(&sb, "  - %s: %s\n", e.Field, e.Reason)
+			sb.WriteString(persona.M(persona.KeyConfigInvalidField, e.Field, e.Reason))
+			sb.WriteString("\n")
 		}
 		return newFriendError(strings.TrimRight(sb.String(), "\n"))
 	case errors.As(err, &ve):
-		return newFriendError(fmt.Sprintf(
-			"buddy: 설정이 잘못됐어:\n  - %s: %s", ve.Field, ve.Reason))
+		return newFriendError(
+			persona.M(persona.KeyConfigInvalid) + "\n" +
+				persona.M(persona.KeyConfigInvalidField, ve.Field, ve.Reason))
 	}
-	return newFriendError(fmt.Sprintf("buddy: 설정 못 읽었어 (%v).", err))
+	return newFriendError(persona.M(persona.KeyConfigReadFailed, err))
 }
 
 // unknownFieldError is the friend-tone message for "you typed a name that
 // isn't a config knob". Used by get/set/unset.
 func unknownFieldError(name string) error {
-	return newFriendError(fmt.Sprintf(
-		"buddy: '%s' 같은 설정은 없어. 'buddy config show'로 목록 봐줘.", name))
+	return newFriendError(persona.M(persona.KeyConfigUnknownField, name))
 }
 
 // friendParseError translates the internal/config parser error into the
@@ -103,13 +112,13 @@ func unknownFieldError(name string) error {
 func friendParseError(name, raw string, kind config.FieldKind, err error) string {
 	switch kind {
 	case config.KindInt, config.KindInt64:
-		return fmt.Sprintf("buddy: %s 값은 숫자여야 해 (\"%s\").", name, raw)
+		return persona.M(persona.KeyConfigSetExpectInt, name, raw)
 	case config.KindDuration:
-		return fmt.Sprintf("buddy: %s 는 duration 형식이어야 해 (\"%s\", 예: 1s, 500ms).", name, raw)
+		return persona.M(persona.KeyConfigSetExpectDuration, name, raw)
 	default:
 		// KindString never errors in the current registry, but stay
 		// defensive in case a future kind needs a generic fallback.
-		return fmt.Sprintf("buddy: %s 값을 못 읽었어 (%v).", name, err)
+		return persona.M(persona.KeyConfigSetParseFailed, name, err)
 	}
 }
 
@@ -175,7 +184,7 @@ func showJSON(cmd *cobra.Command, c config.Config) error {
 	}
 	raw, err := json.MarshalIndent(view, "", "  ")
 	if err != nil {
-		return newFriendError(fmt.Sprintf("buddy: JSON 직렬화 실패 (%v).", err))
+		return newFriendError(persona.M(persona.KeyConfigJSONFailed, err))
 	}
 	fmt.Fprintln(cmd.OutOrStdout(), string(raw))
 	return nil
@@ -245,7 +254,7 @@ func newConfigSetCmd() *cobra.Command {
 				return translateConfigError(err)
 			}
 			if err := config.Save(path, c); err != nil {
-				return newFriendError(fmt.Sprintf("buddy: config 저장 실패 (%v).", err))
+				return newFriendError(persona.M(persona.KeyConfigSaveFailed, err))
 			}
 			// Silent on success — see file-level comment.
 			return nil
@@ -283,7 +292,7 @@ func newConfigUnsetCmd() *cobra.Command {
 				return translateConfigError(err)
 			}
 			if err := config.Save(path, c); err != nil {
-				return newFriendError(fmt.Sprintf("buddy: config 저장 실패 (%v).", err))
+				return newFriendError(persona.M(persona.KeyConfigSaveFailed, err))
 			}
 			return nil
 		},

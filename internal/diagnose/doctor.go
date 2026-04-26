@@ -19,6 +19,7 @@ import (
 	"github.com/wm-it-22-00661/buddy/internal/daemon"
 	"github.com/wm-it-22-00661/buddy/internal/db"
 	"github.com/wm-it-22-00661/buddy/internal/format"
+	"github.com/wm-it-22-00661/buddy/internal/persona"
 )
 
 // IssueKind identifies the category of a diagnostic, for testability and for
@@ -161,9 +162,8 @@ func dbOpenReport(dbPath string, err error) Report {
 		return Report{
 			Healthy: false,
 			Issues: []Diagnostic{{
-				Kind: KindDBOpen,
-				Message: fmt.Sprintf(
-					"DB가 아직 없어 (%s). 먼저 'buddy install' 했는지 확인해줘.", dbPath),
+				Kind:    KindDBOpen,
+				Message: persona.M(persona.KeyDoctorDBMissing, dbPath),
 			}},
 		}
 	}
@@ -171,7 +171,7 @@ func dbOpenReport(dbPath string, err error) Report {
 		Healthy: false,
 		Issues: []Diagnostic{{
 			Kind:    KindDBOpen,
-			Message: fmt.Sprintf("DB를 못 열었어 (%s): %v", dbPath, err),
+			Message: persona.M(persona.KeyDoctorDBOpenFailed, dbPath, err),
 		}},
 	}
 }
@@ -179,12 +179,16 @@ func dbOpenReport(dbPath string, err error) Report {
 // Render writes a friend-tone Korean summary of the report to w.
 // Healthy reports get a single line; otherwise we lead with a header and bullet
 // each issue. No trailing blank line — callers that need spacing add their own.
+//
+// Templates KeyDoctorAllHealthy and KeyDoctorIssuesHeader carry their trailing
+// newlines inside the catalog so byte-level test fixtures keep matching. Don't
+// add another \n here.
 func (r Report) Render(w io.Writer) {
 	if r.Healthy {
-		_, _ = io.WriteString(w, "모두 정상이야.\n")
+		_, _ = io.WriteString(w, persona.M(persona.KeyDoctorAllHealthy))
 		return
 	}
-	_, _ = io.WriteString(w, "어, 몇 가지 봐줄 게 있어.\n\n")
+	_, _ = io.WriteString(w, persona.M(persona.KeyDoctorIssuesHeader))
 	for _, issue := range r.Issues {
 		_, _ = io.WriteString(w, "  • "+issue.Message+"\n")
 	}
@@ -206,15 +210,14 @@ func daemonIssues(pidFile string) []Diagnostic {
 		// there but we can't tell who owns it. Surface it under KindDaemon so
 		// the user sees a single coherent thread per concern.
 		return []Diagnostic{{
-			Kind: KindDaemon,
-			Message: fmt.Sprintf(
-				"daemon 상태를 못 읽었어 (%s): %v", pidFile, err),
+			Kind:    KindDaemon,
+			Message: persona.M(persona.KeyDoctorDaemonUnreadable, pidFile, err),
 		}}
 	}
 	if !st.Running {
 		return []Diagnostic{{
 			Kind:    KindDaemon,
-			Message: "daemon이 실행 중이 아니야. 'buddy daemon start'로 띄울 수 있어.",
+			Message: persona.M(persona.KeyDoctorDaemonNotRunning),
 		}}
 	}
 	return nil
@@ -233,10 +236,8 @@ func outboxBacklogIssues(conn *sql.DB, threshold int) ([]Diagnostic, error) {
 		return nil, nil
 	}
 	return []Diagnostic{{
-		Kind: KindBacklog,
-		Message: fmt.Sprintf(
-			"outbox에 %s개 쌓였어. daemon 한 번 봐줘 (buddy daemon status).",
-			format.Thousands(int64(n))),
+		Kind:    KindBacklog,
+		Message: persona.M(persona.KeyDoctorBacklog, format.Thousands(int64(n))),
 	}}, nil
 }
 
@@ -291,8 +292,7 @@ func slowHookIssues(conn *sql.DB, thresholdMs int64) ([]Diagnostic, error) {
 	for _, e := range entries {
 		out = append(out, Diagnostic{
 			Kind: KindSlow,
-			Message: fmt.Sprintf(
-				"'%s' hook이 좀 느려졌어. p95가 %s (기준 %s).",
+			Message: persona.M(persona.KeyDoctorSlowHook,
 				displayName(e.hookName, e.toolName),
 				format.Duration(e.p95), format.Duration(thresholdMs)),
 		})
@@ -366,8 +366,7 @@ func failRateIssues(conn *sql.DB, thresholdPct int) ([]Diagnostic, error) {
 		pct := (e.failures * 100) / e.count
 		out = append(out, Diagnostic{
 			Kind: KindFailRate,
-			Message: fmt.Sprintf(
-				"'%s' hook 실패율이 %d%% 야. 최근 %d번 중 %d번 실패.",
+			Message: persona.M(persona.KeyDoctorFailRate,
 				displayName(e.hookName, e.toolName), pct, e.count, e.failures),
 		})
 	}

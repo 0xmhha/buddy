@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/wm-it-22-00661/buddy/internal/db"
+	"github.com/wm-it-22-00661/buddy/internal/persona"
 	"github.com/wm-it-22-00661/buddy/internal/purge"
 )
 
@@ -40,14 +41,11 @@ func newPurgeCmd() *cobra.Command {
 		Short: "오래된 hook_events·hook_stats 정리 (outbox는 안 건드림)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if beforeFlag == "" {
-				return newFriendError(
-					"buddy: --before 가 필요해 (예: --before 30d, --before 2026-01-01).")
+				return newFriendError(persona.M(persona.KeyPurgeBeforeRequired))
 			}
 			cutoff, err := purge.ParseBefore(beforeFlag, time.Now().UTC())
 			if err != nil {
-				return newFriendError(fmt.Sprintf(
-					"buddy: --before 형식이 이상해 (%v). 예: 30d, 2026-01-01, 2026-01-01T00:00:00Z",
-					err))
+				return newFriendError(persona.M(persona.KeyPurgeBeforeBadFormat, err))
 			}
 			// Existence-check before writable open so a missing --db path
 			// doesn't silently create an empty DB (and worse, run migrations
@@ -65,7 +63,7 @@ func newPurgeCmd() *cobra.Command {
 					if errors.Is(statErr, fs.ErrNotExist) {
 						return dbMissingFriendError(dbFlag)
 					}
-					return newFriendError(fmt.Sprintf("buddy: DB를 못 열었어 (%v).", statErr))
+					return newFriendError(persona.M(persona.KeyDBOpenFailed, statErr))
 				}
 			}
 			conn, err := db.Open(db.Options{Path: dbFlag})
@@ -73,7 +71,7 @@ func newPurgeCmd() *cobra.Command {
 				if errors.Is(err, db.ErrDBMissing) {
 					return dbMissingFriendError(dbFlag)
 				}
-				return newFriendError(fmt.Sprintf("buddy: DB를 못 열었어 (%v).", err))
+				return newFriendError(persona.M(persona.KeyDBOpenFailed, err))
 			}
 			defer conn.Close()
 
@@ -82,22 +80,20 @@ func newPurgeCmd() *cobra.Command {
 				DryRun:       !applyFlag,
 			})
 			if err != nil {
-				return newFriendError(fmt.Sprintf("buddy: purge 실패 (%v).", err))
+				return newFriendError(persona.M(persona.KeyPurgeFailed, err))
 			}
 
 			// Use cmd.ErrOrStderr() (defaults to os.Stderr at runtime; tests
 			// swap it via cmd.SetErr). All friend-tone summary lines go to
-			// stderr — stdout stays clean for future tooling pipes.
+			// stderr — stdout stays clean for future tooling pipes. Templates
+			// for these summaries already include trailing newlines (see
+			// internal/persona/ko.go), so we use Fprint, not Fprintln.
 			out := cmd.ErrOrStderr()
 			if !applyFlag {
-				fmt.Fprintf(out,
-					"buddy: dry-run. %d개 hook_events, %d개 hook_stats 가 삭제 대상이야.\n"+
-						"buddy: 진짜 지우려면 --apply 추가해줘. (outbox는 안 건드려.)\n",
-					res.Events, res.Stats)
+				fmt.Fprint(out, persona.M(persona.KeyPurgeDryRunSummary, res.Events, res.Stats))
+				fmt.Fprint(out, persona.M(persona.KeyPurgeDryRunNudge))
 			} else {
-				fmt.Fprintf(out,
-					"buddy: %d개 hook_events, %d개 hook_stats 삭제했어. (outbox는 그대로.)\n",
-					res.Events, res.Stats)
+				fmt.Fprint(out, persona.M(persona.KeyPurgeAppliedSummary, res.Events, res.Stats))
 			}
 			return nil
 		},

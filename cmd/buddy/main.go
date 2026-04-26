@@ -15,11 +15,13 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/wm-it-22-00661/buddy/internal/config"
 	"github.com/wm-it-22-00661/buddy/internal/daemon"
 	"github.com/wm-it-22-00661/buddy/internal/db"
 	"github.com/wm-it-22-00661/buddy/internal/diagnose"
 	"github.com/wm-it-22-00661/buddy/internal/hookwrap"
 	"github.com/wm-it-22-00661/buddy/internal/install"
+	"github.com/wm-it-22-00661/buddy/internal/persona"
 	"github.com/wm-it-22-00661/buddy/internal/queries"
 	"github.com/wm-it-22-00661/buddy/internal/schema"
 )
@@ -59,9 +61,7 @@ func resolvedDBPath(dbFlag string) string {
 // commands (stats, events) when db.Open returns ErrDBMissing. Centralised so
 // stats and events stay in sync with each other and with diagnose's wording.
 func dbMissingFriendError(dbFlag string) error {
-	return newFriendError(fmt.Sprintf(
-		"buddy: DB가 아직 없어 (%s). 먼저 'buddy install' 했는지 확인해줘.",
-		resolvedDBPath(dbFlag)))
+	return newFriendError(persona.M(persona.KeyDBMissing, resolvedDBPath(dbFlag)))
 }
 
 func main() {
@@ -89,6 +89,19 @@ func newRootCmd() *cobra.Command {
 		Version:       version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		// PersistentPreRunE: best-effort locale resolution. Errors here are
+		// non-fatal — buddy works in ko regardless. We deliberately use
+		// DefaultPath only (not the per-command --config flag): cobra parses
+		// flags AFTER PersistentPreRunE, so reading them here would be empty.
+		// A fancier "config-flag-aware locale" lands in v0.2.
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if path, err := config.DefaultPath(); err == nil {
+				if c, err := config.Load(path); err == nil {
+					_ = persona.SetLocale(persona.Locale(c.Effective().PersonaLocale))
+				}
+			}
+			return nil
+		},
 	}
 	root.AddCommand(newHookWrapCmd())
 	root.AddCommand(newConfigCmd())
@@ -135,8 +148,7 @@ func newEventsCmd() *cobra.Command {
 					if errors.Is(err, db.ErrDBMissing) {
 						return dbMissingFriendError(dbFlag)
 					}
-					return newFriendError(fmt.Sprintf(
-						"buddy: events follow 실패 (%v)", err))
+					return newFriendError(persona.M(persona.KeyEventsFollowFailed, err))
 				}
 				return nil
 			}
@@ -148,8 +160,7 @@ func newEventsCmd() *cobra.Command {
 				if errors.Is(err, db.ErrDBMissing) {
 					return dbMissingFriendError(dbFlag)
 				}
-				return newFriendError(fmt.Sprintf(
-					"buddy: DB를 못 읽었어. daemon이 한 번이라도 돈 적 있어? (%v)", err))
+				return newFriendError(persona.M(persona.KeyDBReadFailed, err))
 			}
 			res.RenderLines(os.Stdout)
 			return nil
@@ -192,8 +203,7 @@ func newStatsCmd() *cobra.Command {
 				}
 				// Any other failure is a DB-side problem (open or query). Match
 				// doctor's wording so the two read-only commands feel consistent.
-				return newFriendError(fmt.Sprintf(
-					"buddy: DB를 못 읽었어. daemon이 한 번이라도 돈 적 있어? (%v)", err))
+				return newFriendError(persona.M(persona.KeyDBReadFailed, err))
 			}
 			res.Render(os.Stdout)
 			return nil
@@ -272,12 +282,12 @@ func newInstallCmd() *cobra.Command {
 				return translateInstallError(err)
 			}
 			if res.NoOp {
-				fmt.Fprintln(os.Stderr, "buddy: 이미 등록되어 있어. 변화 없음.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyInstallNoOp))
 			} else {
-				fmt.Fprintln(os.Stderr, "buddy: 등록 완료. 이제 옆에서 보고 있을게.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyInstallDone))
 			}
 			if res.CliwrapWritten {
-				fmt.Fprintf(os.Stderr, "buddy: cliwrap.yaml 도 써뒀어 (%s).\n", res.CliwrapPath)
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyInstallCliwrapWritten, res.CliwrapPath))
 			}
 			return nil
 		},
@@ -296,10 +306,9 @@ func translateInstallError(err error) error {
 	var spaceErr *install.BinaryPathSpaceError
 	switch {
 	case errors.Is(err, install.ErrSettingsMissing):
-		return newFriendError("buddy: ~/.claude/settings.json 이 안 보여. Claude Code 설치되어 있어?")
+		return newFriendError(persona.M(persona.KeyInstallSettingsMissing))
 	case errors.As(err, &spaceErr):
-		return newFriendError(fmt.Sprintf(
-			"buddy: 바이너리 경로에 공백이 있어. 다른 경로로 옮겨봐: %s", spaceErr.Path))
+		return newFriendError(persona.M(persona.KeyInstallBinaryHasSpaces, spaceErr.Path))
 	}
 	return err
 }
@@ -328,11 +337,11 @@ func newUninstallCmd() *cobra.Command {
 			}
 			switch {
 			case res.RestoredFromBackup:
-				fmt.Fprintln(os.Stderr, "buddy: 해제 완료. 백업에서 복원했어.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallRestoredFromBackup))
 			case res.Unwrapped > 0:
-				fmt.Fprintln(os.Stderr, "buddy: 해제 완료. wrapping 제거했어.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallRemovedWrapping))
 			default:
-				fmt.Fprintln(os.Stderr, "buddy: 등록된 게 없어. 그대로 둘게.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallNothingRegistered))
 			}
 			// M5 T9: friend-tone note about daemon disposition. The Uninstall
 			// call already attempted (or skipped) the stop based on
@@ -340,11 +349,11 @@ func newUninstallCmd() *cobra.Command {
 			if res.DaemonWasRunning {
 				switch {
 				case res.DaemonStopped:
-					fmt.Fprintln(os.Stderr, "buddy: daemon도 같이 멈췄어.")
+					fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallDaemonStopped))
 				case keepDaemon:
-					fmt.Fprintln(os.Stderr, "buddy: daemon은 그대로 둘게 (--keep-daemon).")
+					fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallDaemonKept))
 				default:
-					fmt.Fprintln(os.Stderr, "buddy: daemon이 안 멈춰서 그냥 두고 갈게. 'buddy daemon stop' 한 번 해줘.")
+					fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallDaemonNotStopping))
 				}
 			}
 			return nil
@@ -427,7 +436,7 @@ func newDaemonStartCmd() *cobra.Command {
 			}
 			st, _ := daemon.CheckStatus(pidFile)
 			if st.Running {
-				fmt.Fprintf(os.Stderr, "buddy: 이미 실행 중이야 (pid %d).\n", st.PID)
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyDaemonAlreadyRunning, st.PID))
 				return nil
 			}
 			return spawnDetached(dbFlag, pidFile, pollFlag, batchFlag, configFlag)
@@ -456,13 +465,13 @@ func newDaemonStopCmd() *cobra.Command {
 				return err
 			}
 			if !st.Running {
-				fmt.Fprintln(os.Stderr, "buddy: 실행 중인 daemon이 없어.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyDaemonNotRunning))
 				return nil
 			}
 			if err := daemon.Stop(pidFile); err != nil {
 				return err
 			}
-			fmt.Fprintf(os.Stderr, "buddy: daemon에 종료 신호 보냈어 (pid %d).\n", st.PID)
+			fmt.Fprintln(os.Stderr, persona.M(persona.KeyDaemonStopSignalSent, st.PID))
 			return nil
 		},
 	}
@@ -560,7 +569,7 @@ func spawnDetached(dbFlag, pidFile string, poll time.Duration, batch int, config
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(os.Stderr, "buddy: daemon 시작 (pid %d).\n", pid)
+	fmt.Fprintln(os.Stderr, persona.M(persona.KeyDaemonStarted, pid))
 	return nil
 }
 

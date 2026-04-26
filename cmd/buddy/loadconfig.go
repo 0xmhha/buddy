@@ -16,12 +16,12 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/wm-it-22-00661/buddy/internal/config"
 	"github.com/wm-it-22-00661/buddy/internal/daemon"
 	"github.com/wm-it-22-00661/buddy/internal/diagnose"
+	"github.com/wm-it-22-00661/buddy/internal/persona"
 )
 
 // loadEffectiveConfig loads ~/.buddy/config.json (or path) and returns its
@@ -59,7 +59,7 @@ func translateConfigLoadError(err error) error {
 	case errors.As(err, &ve):
 		return translateConfigError(ve)
 	}
-	return newFriendError(fmt.Sprintf("buddy: 설정 못 읽었어 (%v).", err))
+	return newFriendError(persona.M(persona.KeyConfigReadFailed, err))
 }
 
 // buildDoctorOptions packages an Effective into the diagnose.Options the
