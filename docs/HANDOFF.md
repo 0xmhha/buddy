@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-04-26 (M5 완료, PR #1 open)
+**Last updated:** 2026-04-26 (M5 + M6 + v0.1.0 release 완료)
 
 ---
 
@@ -27,15 +27,16 @@
 | M3 daemon + aggregator + cliwrapcfg | ✅ |
 | M4 install/uninstall/doctor/stats/events | ✅ |
 | **M5** config CLI + 4 friction fix + purge + 페르소나 catalog | ✅ (PR #1) |
+| **M6** release prep (cross-compile + tag-triggered workflow + CHANGELOG) | ✅ (PR #2) |
+| **v0.1.0 release** | ✅ tag publish 시 GitHub Actions 자동 실행 — 4 binaries + SHA256SUMS published 2026-04-26 |
 | DOGFOOD.md + feedback template | ✅ |
-| 사용자의 실제 dogfood 사용 | ⏳ 대기 (M5 friction fix 반영판으로 재시작 권장) |
-| Dogfood feedback 회수 | ⏳ 대기 |
-| M6 (release prep) | 📋 계획 완료, 시작 안 함 |
+| 사용자의 실제 dogfood 사용 | ⏳ 대기 (release binary 로 본격 시작 가능) |
+| Dogfood feedback 회수 | ⏳ 대기 (v0.2 / v0.3 우선순위 입력) |
 | v0.2 / v0.3 / v1.0 | 📋 outline only |
 
 **테스트:** 15개 패키지, ~150+ tests pass (`-race -count=2` clean).
-**Sync 상태:** `m5` 브랜치 `origin/m5`에 push 완료. PR #1 (`m5 → main`) review/merge 대기.
-**Active PR:** https://github.com/0xmhha/buddy/pull/1
+**Sync 상태:** main 이 `bd97352` (M5 squash) → `514f667` (docs sync) → `03a4fa9` (M6 squash) 까지 origin과 일치.
+**Latest release:** [v0.1.0](https://github.com/0xmhha/buddy/releases/tag/v0.1.0) (2026-04-26)
 
 ---
 
@@ -64,45 +65,35 @@ gh pr view 1 --json state,reviews,mergeable
 
 사용자의 입력이 어떤 종류냐에 따라 분기.
 
-### 시나리오 A — PR #1 머지 후 후속 작업
-
-**Trigger 발화 예시:** "PR 머지했어", "M5 머지됐다", "다음 마일스톤"
-
-**다음 행동:**
-1. `git fetch origin && git checkout main && git pull` 으로 로컬 main 동기화
-2. M6 진행 의향이면 `docs/roadmap.md` §3 (M6 — Release prep) 읽고 plan 만들기
-3. 새 feature brunch (`m6` 등) 생성 후 `subagent-driven-development` skill로 task별 진행
-4. 시나리오 D(dogfood feedback) 가 들어오면 v0.2/v0.3 우선순위 입력으로 활용
-
-### 시나리오 B — PR #1 review 피드백 반영
-
-**Trigger 발화 예시:** "리뷰 코멘트 받았어", "PR 수정해줘"
-
-**다음 행동:**
-1. `gh pr view 1 --comments` 로 코멘트 fetch
-2. `m5` 브랜치 체크아웃 후 코멘트별 fix
-3. `git push origin m5` (force-with-lease 필요한 경우만)
-4. PR 자동 갱신
-
-### 시나리오 C — 사용자가 dogfood 후 feedback 가져옴
+### 시나리오 A — 사용자가 dogfood 후 feedback 가져옴
 
 **Trigger 발화 예시:** "dogfood 결과 정리했어", "feedback 반영해줘", "며칠 써보니 X가 불편하더라"
 
-**M5 이전엔 M5 우선순위 입력**이었지만, 이제 **v0.2/v0.3 우선순위 입력**으로 활용.
+v0.1.0 release 가 끝났으므로 dogfood feedback 은 **v0.2 / v0.3 우선순위 + v0.2 dashboard UX (TUI vs web) 결정** 입력.
 
 **다음 행동:**
 1. `docs/dogfood-feedback-template.md` 채운 버전(또는 자유 형식) 받기
 2. feedback 항목을 분류:
-   - **버그/회귀** → 시나리오 E 처리
-   - **새 명령/플래그** → roadmap §M6 Open question 또는 v0.2/v0.3 task로 매핑
-   - **dashboard UX 형식 (TUI vs web)** → roadmap §4 v0.2 open question에 답
-   - **task tracker 통합 여부** → roadmap §5 v0.3 open question에 답
+   - **버그/회귀** → 시나리오 D 처리. patch release (v0.1.1) 가 필요하면 별도 brunch.
+   - **새 명령/플래그** → v0.2 / v0.3 task 로 매핑
+   - **dashboard UX 형식 (TUI vs web)** → roadmap §4 v0.2 open question 에 답
+   - **task tracker 통합 여부** → roadmap §5 v0.3 open question 에 답
 
-### 시나리오 D — 사용자가 "M6 release", "v0.2 dashboard", "v0.3 task" 류 발화
+### 시나리오 B — 사용자가 "v0.2 dashboard", "v0.3 task", "i18n sweep" 류 발화
 
-`docs/roadmap.md` 해당 §읽고 plan 만들어 `subagent-driven-development`. M6는 의존성상 v0.2/v0.3보다 먼저(roadmap §8 그래프).
+`docs/roadmap.md` 해당 §(§4/§5/§6) 읽고 plan 만들어 `subagent-driven-development`. dogfood feedback 없이 plan대로 진행할지 한 번 확인.
 
-### 시나리오 E — "buddy doctor가 X를 보여줘", "stats가 Y가 안 돼" 같은 버그 리포트
+### 시나리오 C — patch release (v0.1.1) 필요한 버그 발견
+
+**다음 행동:**
+1. `git checkout main && git pull origin main`
+2. `git checkout -b fix/<issue-name>`
+3. `superpowers:systematic-debugging` 으로 fix + regression test
+4. PR → main 머지
+5. main 에서 `cmd/buddy/main.go`의 `var version = "0.1.1"`, `Makefile`의 `RELEASE_VERSION = 0.1.1`, `CHANGELOG.md` 신규 entry, README의 `VERSION=0.1.1` 동시 업데이트 (5곳 동기화 필수 — workflow의 tag↔Makefile sanity check 가 보호)
+6. `git tag v0.1.1 && git push origin v0.1.1` → tag-triggered workflow가 release publish
+
+### 시나리오 D — "buddy doctor가 X를 보여줘", "stats가 Y가 안 돼" 같은 버그 리포트
 
 1. **재현 먼저** (사용자 환경에서 정확한 명령 + output 받기)
 2. 영향 패키지 추정:
@@ -113,7 +104,7 @@ gh pr view 1 --json state,reviews,mergeable
 3. `superpowers:systematic-debugging` skill 적용
 4. fix 후 regression test 추가
 
-### 시나리오 F — "buddy를 어떻게 써?" 같은 사용자 본인용 질문
+### 시나리오 E — "buddy를 어떻게 써?" 같은 사용자 본인용 질문
 
 `DOGFOOD.md` §1~6 안내. 사용자가 본인 머신에 install 시작하려는 시점.
 
@@ -151,22 +142,27 @@ gh pr view 1 --json state,reviews,mergeable
 
 `docs/roadmap.md` 전반에 산재. 결정은 *데이터 들어왔을 때*.
 
-**M5 종료 시점에 정리됨:**
+**M5 종료 시점에 정리됨 (모두 v0.2 sweep 후보):**
 - ~~M5 config hot-reload vs restart~~ → restart 요구 (1차 결정 적용)
 - M5 outbox 수동 cleanup 경로 — *현재 미발생, 데이터 들어오면 결정* (deferred)
-- **M5 i18n carry-over (v0.2 i18n sweep targets):**
+- **i18n carry-over (v0.2 i18n sweep targets):**
   - `config.ValidationError.Reason` 카탈로그 wiring (persona keys 이미 declared)
   - `queries.ErrInvalidLimit` / `ErrInvalidWindow` 카탈로그 이전
   - English locale map 채우기
   - 서브커맨드 `--config` 인지 locale 해석 (현재 root PersistentPreRunE는 default path만)
 
-**남아있는 것 (M6 이후):**
-1. **M6 darwin notarization** — v0.1.0 미적용 결정 (사용자가 `xattr -d com.apple.quarantine` 안내)
-2. **v0.2 TUI vs web** — dogfood 결과가 신호
-3. **v0.2 멀티-머신 통합** — v1.0+ 검토
-4. **v0.3 buddy = task tracker vs 외부 tracker 실행 엔진** — 후자가 scope 작음
-5. **v0.3 DAG 시각화 형식** — graphviz / mermaid / TUI
-6. **v1.0 plugin 권한 경계** — DB 직접 vs IPC. v1.0 T2가 "MCP transport 재활용" 권장으로 좁혀짐.
+**M6 종료 시점에 정리됨 (모두 v0.2 polish 후보):**
+- darwin notarization — v0.1.0 미적용 (사용자가 `xattr -d com.apple.quarantine` 안내)
+- 3rd-party Actions SHA pinning — supply-chain 강화
+- 별도 `ci.yml` — PR/push 시 test 강제
+- `VERSION` 파일 / build-time embed — release cadence 잦아지면
+
+**남아있는 것 (v0.2+):**
+1. **v0.2 TUI vs web** — dogfood 결과가 신호
+2. **v0.2 멀티-머신 통합** — v1.0+ 검토
+3. **v0.3 buddy = task tracker vs 외부 tracker 실행 엔진** — 후자가 scope 작음
+4. **v0.3 DAG 시각화 형식** — graphviz / mermaid / TUI
+5. **v1.0 plugin 권한 경계** — DB 직접 vs IPC. v1.0 T2가 "MCP transport 재활용" 권장으로 좁혀짐.
 
 ---
 
@@ -263,9 +259,11 @@ rm -rf $SANDBOX
 
 다음 세션이 빠른 워밍업으로 처리 가능한 항목 (우선순위 낮음, *원할 때*):
 
-- ~~Daemon test flake~~ ✅ M5 prereq commit (`a82272f`)에서 fix됨 — `db.Open` busy_timeout + signal handler order.
+- ~~Daemon test flake~~ ✅ M5 prereq commit 에서 fix됨 — `db.Open` busy_timeout + signal handler order.
 - ~~`docs/roadmap.md` 8 open question 인덱스 추가~~ ✅ 이 HANDOFF.md §5 에 통합.
-- **`cmd/buddy/main.go` 분할 (650+ lines):** M5 후 651 lines. M6에서 명령이 더 늘기 전에 sibling files (`config_cmd.go`, `loadconfig.go`, `purge_cmd.go`, `spawn.go` 는 이미 분리됨)에 추가로 install/daemon/doctor/stats/events/hookwrap 도 옮기면 좋음. **권고: M6 시작 전.**
+- ~~Versioned binary~~ ✅ M6 T3.
+- ~~Cross-compile + release workflow~~ ✅ M6 T1+T2.
+- **`cmd/buddy/main.go` 분할 (650+ lines):** M6 후 651 lines (변동 없음 — M6 변경분이 sibling files 에 들어감). v0.2 새 명령 추가 전에 install/daemon/doctor/stats/events/hookwrap 도 sibling으로 옮기면 좋음.
 - **모듈 path:** `github.com/wm-it-22-00661/buddy` — 이전 머신 잔재. 현재 origin인 `github.com/0xmhha/buddy` 와 일치시키려면 모든 import 경로 일괄 변경 필요. v0.2 cleanup 후보.
 - **gofmt drift 한 번 정리:** `gofmt -l .`이 가끔 비어있지 않으면 한 commit으로 정리 (현재는 clean).
 
@@ -274,20 +272,20 @@ rm -rf $SANDBOX
 ## 12. 마지막 commit으로 무엇이 들어갔나 (sanity check)
 
 ```bash
-git log --oneline -6 m5
+git log --oneline -6 main
 ```
 
-예상 (M5 완료 직후 기준 — rebased 이후 SHA):
+예상 (v0.1.0 release 직후 기준):
 ```
-a625694 fix(persona): address T5 review (1 Important + 3 Minor)
-914defa feat(persona): user-facing message catalog (M5 T5)
-ac4fa79 feat(purge): buddy purge --before <date> --apply (M5 T4)
-d3c9e54 feat(config): wire config into doctor/daemon (M5 T3)
-21b5366 style(config): drop unneeded loop-var copy (Go 1.22+)
-d64e75a fix(config): address T2 review (2 Important + 3 Minor)
+03a4fa9 Add release prep: cross-compile matrix, tag-triggered workflow, CHANGELOG (#2)
+514f667 docs: sync HANDOFF, roadmap, v0.1-spec with M5 outcome
+bd97352 Add config, retention purge, message catalog, and reliability fixes (#1)
+d3b5b0b docs: HANDOFF.md — session resume guide
+a461de3 docs: roadmap polish (typo + M5 decision-deadlines + plugin IPC + i18n forward)
+b721998 docs: add post-v0.1 roadmap (M5/M6/v0.2/v0.3/v1.0)
 ```
 
-만약 위와 다르면 누군가 직접 작업했다는 뜻. `git log --since='1 month ago' m5` 로 확인. PR #1 이 머지되어 main에 squash/merge 형태로 들어가면 SHA는 또 달라짐.
+만약 위와 다르면 누군가 직접 작업했다는 뜻. `git log --since='1 month ago' main` 로 확인. v0.1.0 tag 위로 hotfix가 쌓이면 SHA는 또 달라짐.
 
 ---
 

@@ -4,13 +4,13 @@
 >
 > 이 문서는 v0.1 이후 작업의 *Single Source of Truth* (SSoT). [`v0.1-spec.md`](./v0.1-spec.md) §8 마일스톤 표는 이 문서로 위임됨.
 
-작성일: 2026-04-23 (최종 갱신: 2026-04-26 M5 완료) / 상태: ACTIVE — M5 ✅ DONE (PR #1). 이후 우선순위(M6 → v0.2 / v0.3)는 dogfood feedback 회수 시점에 따라 재정렬.
+작성일: 2026-04-23 (최종 갱신: 2026-04-26 v0.1.0 release) / 상태: ACTIVE — M5 ✅ + M6 ✅ + v0.1.0 ✅ released. 이후 우선순위(v0.2 / v0.3)는 dogfood feedback 회수 시점에 따라 재정렬.
 
 ---
 
 ## 1. 현재 위치
 
-### v0.1 status (2026-04-26 기준)
+### v0.1 status (2026-04-26 v0.1.0 release 기준)
 
 | M | 내용 | 상태 |
 |---|------|------|
@@ -19,8 +19,9 @@
 | M3 | Daemon (outbox → events → stats) + cli-wrapper hybrid | DONE |
 | M4 | `buddy install/uninstall/doctor/stats/events` CLI | DONE |
 | M5 | Config CLI / threshold tuning / dogfood 4-friction fix / purge / 페르소나 catalog | **DONE (PR #1)** |
-| **Dogfood** | [`DOGFOOD.md`](../DOGFOOD.md) + [`dogfood-feedback-template.md`](./dogfood-feedback-template.md) — 사용자 본인 첫 사용 (M5 friction fix 반영판으로 재시작) | IN PROGRESS |
-| M6 | Release prep (cross-compile + GitHub Actions release) | PLANNED (이 문서 §3) |
+| M6 | Release prep (cross-compile + GitHub Actions release + CHANGELOG) | **DONE (PR #2)** |
+| **v0.1.0 release** | Tag `v0.1.0` + 4 binaries (linux/darwin × amd64/arm64) + SHA256SUMS GitHub Release | **DONE (2026-04-26)** |
+| **Dogfood** | [`DOGFOOD.md`](../DOGFOOD.md) + [`dogfood-feedback-template.md`](./dogfood-feedback-template.md) — release binary로 본격 시작 가능 | READY |
 
 ### 향후 5개 마일스톤 한눈 표
 
@@ -109,7 +110,18 @@
 
 ---
 
-## 3. M6 — Release prep
+## 3. M6 — Release prep ✅ DONE
+
+> **상태:** 완료 (PR [#2](https://github.com/0xmhha/buddy/pull/2)). 6 commits, +394/−12 LOC. v0.1.0 tag publish 시 GitHub Actions 워크플로가 자동으로 4 binaries + SHA256SUMS 업로드 — 2026-04-26 13:12 UTC 동작 확인.
+>
+> **As-built (T1~T5 lock-in):**
+> - T3: `var version = "0.1.0"` / `gitSHA = "dev"` / `buildDate = "unknown"` defaults + `versionString()` helper. Cobra version template override 로 `buddy version buddy 0.1.0 ...` double prefix 회피.
+> - T1: `make release-binaries` → 4 platforms (linux/amd64, linux/arm64, darwin/amd64, darwin/arm64) `CGO_ENABLED=0` + `-trimpath` + ldflags + `dist/SHA256SUMS`. 파일명 `buddy_${RELEASE_VERSION}_${OS}_${ARCH}`.
+> - T2: `.github/workflows/release.yml` — `v*` tag push → `make release-binaries` → `softprops/action-gh-release@v2` upload. Tag↔Makefile RELEASE_VERSION mismatch 시 fail-fast.
+> - T4: `CHANGELOG.md` Keep a Changelog 1.1.0 + SemVer. v0.1.0 entry 가 M1~M5 user-facing surface 전체 + Deferred 항목 명시.
+> - T5: README install 섹션 — release binary path 위 + `make build` 아래(`### Install — from source`). macOS Gatekeeper 노트 (`xattr -d com.apple.quarantine`).
+>
+> **단일 source-of-truth — `0.1.0` 토큰 5곳 (main.go, Makefile, CHANGELOG, README, release.yml). Drift 시 워크플로의 tag↔RELEASE_VERSION 검증으로 publish 전 차단.**
 
 ### Why
 
@@ -128,9 +140,12 @@
 - `git tag v0.1.0 && git push --tags` 한 번으로 GitHub release 페이지에 4개 binary + `SHA256SUMS` 자동 첨부.
 - `buddy --version` 실행 시 `buddy 0.1.0 (sha=abc1234, built=2026-XX-XXT...Z)` 형식 출력.
 
-### Open questions
+### Open questions (M6 종료 시점)
 
-- 서명? Apple notarization은 darwin binary 비공증 시 macOS Gatekeeper 경고. v0.1.0에서는 미적용 (사용자가 `xattr -d com.apple.quarantine` 안내), v0.2 이후 검토.
+- ⏳ **macOS notarization** — v0.1.0 미적용 (사용자가 `xattr -d com.apple.quarantine` 안내). v0.2 이후 검토.
+- ⏳ **Third-party Actions SHA pinning** — `actions/checkout@v4`, `actions/setup-go@v5`, `softprops/action-gh-release@v2` 모두 mutable major tag. supply-chain 강화 시 commit SHA 핀+Dependabot. v0.2 polish.
+- ⏳ **별도 `ci.yml`** — 현재 `release.yml`만 존재. tag 전 PR/push 단계에서 `go test/vet/fmt`를 강제하는 CI workflow 분리 필요.
+- ⏳ **Single-source-of-truth `VERSION` 파일** — 현재 `0.1.0` 5곳에 분산되어 있고 tag↔Makefile sanity check 로 보호. release cadence가 잦아지면 파일 분리 또는 build-time embed 검토.
 
 ---
 
@@ -225,45 +240,47 @@
 ## 8. 결정 의존성 그래프
 
 ```
-┌──────────────┐
-│  Dogfood     │  (사용자 본인)
-│  Feedback    │
-└──────┬───────┘
-       │ (다음 우선순위 입력 — v0.2 UX, v0.3 tracker 통합 여부)
-       ▼
-┌──────────────┐     ┌──────────────┐
-│  M5 ✅ DONE  │ ──▶ │  M6 (release │
-│  PR #1       │     │  prep)       │
-└──────────────┘     └──────┬───────┘
-                            │
-                            ▼
-                     ┌──────────────┐     ┌──────────────┐
-                     │  v0.2        │     │  v0.3        │
-                     │  Control     │ ◀┄┄ │  Orchestration│
-                     │  Plane       │  ┊  │  (task DAG)  │
-                     └──────┬───────┘  ┊  └──────┬───────┘
-                            │          ┊         │
-                            │   (순서 독립)      │
-                            ▼                    ▼
-                     ┌─────────────────────────────────┐
-                     │  v1.0  통합                      │
-                     │  AGENTS.md / plugin / MCP server│
-                     └─────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│  M5 ✅ + M6 ✅ + v0.1.0 release ✅  (현재 위치)      │
+│  PR #1, PR #2, tag v0.1.0 (2026-04-26)               │
+└──────────────────┬───────────────────────────────────┘
+                   │
+                   ▼
+            ┌──────────────┐
+            │  Dogfood     │  (release binary 로 본격 시작 가능)
+            │  Feedback    │
+            └──────┬───────┘
+                   │ (v0.2 UX / v0.3 tracker 통합 여부 입력)
+                   ▼
+        ┌──────────────┐     ┌──────────────┐
+        │  v0.2        │     │  v0.3        │
+        │  Control     │ ◀┄┄ │  Orchestration│
+        │  Plane       │  ┊  │  (task DAG)  │
+        └──────┬───────┘  ┊  └──────┬───────┘
+               │          ┊         │
+               │   (순서 독립)      │
+               ▼                    ▼
+        ┌─────────────────────────────────┐
+        │  v1.0  통합                      │
+        │  AGENTS.md / plugin / MCP server│
+        └─────────────────────────────────┘
 ```
 
 **의존 규칙:**
 
-- ~~M5 → M6~~: ✅ 충족 (M5 완료). config / purge / 페르소나가 안정화되어 외부 사용자가 install 후 자가 조정 가능한 상태.
-- M6 → v0.2 / v0.3: release binary가 있어야 외부 사용자 dogfood가 시작되고, 그 피드백이 v0.2/v0.3 우선순위에 영향.
-- **v0.2 ↔ v0.3 순서 무관**: 두 wedge는 데이터(SQLite)는 공유하나 코드 경로는 독립. dogfood 결과 어느 쪽 수요가 큰지에 따라 순서 결정.
-- v1.0 = v0.2 + v0.3 통합 위에서만 의미. AGENTS.md 자동 동기화는 sync할 capability가 충분히 모인 후 가치 발생.
+- ~~M5 → M6~~ ✅ 충족.
+- ~~M6 → v0.1.0 release~~ ✅ 충족 (tag-triggered workflow 동작 확인).
+- v0.1.0 → dogfood: 외부 사용자 install 가능한 상태이므로 dogfood 가 본격 시작 가능.
+- dogfood feedback → v0.2 / v0.3 우선순위 입력.
+- **v0.2 ↔ v0.3 순서 무관**: 데이터(SQLite) 공유, 코드 경로 독립. dogfood 결과 어느 쪽 수요가 큰지로 결정.
+- v1.0 = v0.2 + v0.3 통합 위에서만 의미.
 
-**dogfood feedback의 영향 범위 (M5 이후):**
+**dogfood feedback의 영향 범위 (v0.1.0 release 이후):**
 
-- M6: 우선순위 영향 적음 (release 작업은 기계적). 단, M5 friction fix 회귀 검증 가치 큼.
 - v0.2: dashboard UX 형식 (TUI vs web) 결정에 영향.
 - v0.3: tracker 통합 여부 결정에 영향.
-- 카탈로그 sweep (v0.2 i18n): M5 deferred 항목 — `ValidationError.Reason`, queries sentinels, en locale.
+- v0.2 i18n sweep: M5 deferred 항목(`ValidationError.Reason`, queries sentinels, en locale) + en locale 카탈로그 채우기.
+- v0.2 release polish: SHA pinning, 별도 `ci.yml`, macOS notarization (M6 deferred).
 
 ---
 
