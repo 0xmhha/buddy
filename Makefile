@@ -1,4 +1,4 @@
-.PHONY: build test fmt vet tidy clean release-binaries
+.PHONY: build test fmt vet tidy clean release-binaries print-%
 
 BIN := bin/buddy
 PKG := ./...
@@ -44,6 +44,13 @@ tidy:
 
 clean:
 	rm -rf bin/ $(DIST) *.out coverage.txt
+
+# print-VAR: utility for CI to read a Makefile variable without parsing.
+# Example: `make -s print-RELEASE_VERSION` -> `0.1.0`.
+# Used by .github/workflows/release.yml to verify the pushed tag matches
+# RELEASE_VERSION before publishing artifacts. Roadmap §3 M6 T2.
+print-%:
+	@echo $($*)
 
 # release-binaries cross-compiles buddy for the v0.1 support matrix:
 # linux/amd64, linux/arm64, darwin/amd64, darwin/arm64. CGO_ENABLED=0 is safe

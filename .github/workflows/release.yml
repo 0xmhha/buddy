@@ -1,0 +1,69 @@
+name: Release
+
+# Tag-triggered release workflow (Roadmap §3 M6 T2).
+# A `git tag vX.Y.Z && git push --tags` produces a GitHub Release with the
+# 4-binary cross-compile matrix from `make release-binaries` (T1) plus the
+# matching `SHA256SUMS`. The matrix and ldflags injection (T3) live in the
+# Makefile so this workflow stays a thin wrapper — local `make release-binaries`
+# and CI produce byte-identical outputs (modulo BUILD_DATE).
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # required for softprops/action-gh-release to create the release
+
+jobs:
+  release:
+    name: Build and publish release artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source at tagged commit
+        uses: actions/checkout@v4
+        with:
+          # The release rule embeds the short SHA into --version via ldflags;
+          # checking out at the tagged commit makes that SHA accurate.
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Verify tag matches Makefile RELEASE_VERSION
+        run: |
+          # The tag must be of the form v<release-version>; reject mismatches early
+          # so we don't publish a v0.2.0 tag that contains 0.1.0 binaries.
+          tag="${GITHUB_REF_NAME#v}"
+          mk="$(make -s print-RELEASE_VERSION)"
+          if [ "$tag" != "$mk" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match Makefile RELEASE_VERSION ($mk)"
+            exit 1
+          fi
+          echo "Tag and RELEASE_VERSION agree: $mk"
+
+      - name: Build cross-compile matrix
+        run: make release-binaries
+
+      - name: Verify checksums match
+        run: |
+          cd dist
+          if command -v sha256sum >/dev/null; then
+            sha256sum -c SHA256SUMS
+          else
+            shasum -a 256 -c SHA256SUMS
+          fi
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Auto-uses the tag that triggered the workflow.
+          files: |
+            dist/buddy_*
+            dist/SHA256SUMS
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
