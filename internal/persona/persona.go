@@ -23,6 +23,15 @@
 // internal package that wants friend-tone output can import persona without
 // risking an import cycle. In particular, internal/diagnose currently imports
 // it for doctor's render strings.
+//
+// Known gaps (v0.2 i18n sweep targets):
+//   - queries.ErrInvalidLimit / queries.ErrInvalidWindow carry Korean text in
+//     their Error() value; the CLI surfaces them via "buddy: " + err.Error().
+//     Migrate to KeyQueriesInvalidLimit / KeyQueriesInvalidWindow when the
+//     queries package error type grows a Code field (mirrors the v0.2 plan
+//     for config.ValidationError.Reason).
+//   - Internal log surfaces (daemon boot, hookwrap stderr) intentionally stay
+//     scattered — they are debug surfaces, not friend-tone prompts.
 package persona
 
 import (
@@ -122,10 +131,14 @@ const (
 
 // AllKeys returns every Key constant in declaration order. Used by the
 // catalog-coverage test (TestKO_HasEntryForEveryKey) and intended to be the
-// single source of truth for "what keys exist". Adding a new Key without
-// adding it here is fine for callers (the runtime panic still triggers if
-// the catalog forgot the entry) but it weakens the test gate, so always
-// add new keys to BOTH the const block and this slice.
+// single source of truth for "what keys exist".
+//
+// IMPORTANT: this slice is the single source of truth for
+// TestKO_HasEntryForEveryKey. A new Key added to the const block but NOT
+// added here weakens the gate — koCatalog() could be missing an entry for
+// it without any test failing (the runtime panic in M() would still trigger,
+// but only when that code path is exercised). Adding new keys to BOTH the
+// const block and this slice is mandatory.
 func AllKeys() []Key {
 	return []Key{
 		// install / uninstall
@@ -199,7 +212,9 @@ func AllKeys() []Key {
 }
 
 // mu guards `current` and `catalog`. Reads (M, ML, ActiveLocale) take RLock;
-// writes (SetLocale) take Lock. Tests mutate `catalog` directly under Lock.
+// writes (SetLocale) take Lock. Tests may read or temporarily mutate the
+// catalog under Lock to exercise fallback / panic paths; production code
+// never mutates after init.
 var (
 	mu      sync.RWMutex
 	current = LocaleKO
