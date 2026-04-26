@@ -1,15 +1,22 @@
 package install_test
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/wm-it-22-00661/buddy/internal/daemon"
+	"github.com/wm-it-22-00661/buddy/internal/db"
+	"github.com/wm-it-22-00661/buddy/internal/diagnose"
 	"github.com/wm-it-22-00661/buddy/internal/install"
 )
 
@@ -306,12 +313,16 @@ func TestInstall_WithCliwrap_WritesValidYAML(t *testing.T) {
 	claudeDir, buddyDir := newTempDirs(t)
 	writeSettings(t, claudeDir, settingsWithMixedHooks())
 
+	// T6: install pre-creates the DB at this path, so the path must be
+	// writable (was a fixed /var/lib/... before T6).
+	customDB := filepath.Join(t.TempDir(), "buddy.db")
+
 	res, err := install.Install(install.Options{
 		ClaudeDir:   claudeDir,
 		BuddyDir:    buddyDir,
 		BuddyBinary: fakeBuddy,
 		WithCliwrap: true,
-		DBPath:      "/var/lib/buddy/buddy.db",
+		DBPath:      customDB,
 	})
 	require.NoError(t, err)
 	require.True(t, res.CliwrapWritten)
@@ -323,7 +334,7 @@ func TestInstall_WithCliwrap_WritesValidYAML(t *testing.T) {
 	assert.Contains(t, body, "buddy-daemon")
 	assert.Contains(t, body, `"daemon", "run"`)
 	assert.Contains(t, body, fakeBuddy)
-	assert.Contains(t, body, "/var/lib/buddy/buddy.db")
+	assert.Contains(t, body, customDB)
 }
 
 func TestInstall_MissingSettingsJSON_ReturnsSentinelError(t *testing.T) {
@@ -485,4 +496,416 @@ func TestInstall_RejectsBinaryPathWithSpaces(t *testing.T) {
 	var spaceErr *install.BinaryPathSpaceError
 	require.ErrorAs(t, err, &spaceErr)
 	assert.Equal(t, "/Users/me/My Buddy/buddy", spaceErr.Path)
+}
+
+// assertMigratedDB opens dbPath read-only and verifies that schema_version
+// has at least one applied migration AND that hook_outbox is queryable
+// without raising a "no such table" error. This is the headline T6 invariant:
+// after install, doctor's read-only open + outbox query must succeed.
+func assertMigratedDB(t *testing.T, dbPath string) {
+	t.Helper()
+	conn, err := db.Open(db.Options{Path: dbPath, ReadOnly: true})
+	require.NoError(t, err, "read-only open of pre-created DB must succeed")
+	t.Cleanup(func() { _ = conn.Close() })
+
+	var version int
+	require.NoError(t,
+		conn.QueryRow("SELECT COALESCE(MAX(version), 0) FROM schema_version").Scan(&version),
+		"schema_version must be queryable after install")
+	assert.GreaterOrEqual(t, version, 1, "at least one migration must be applied")
+
+	var count int
+	require.NoError(t,
+		conn.QueryRow("SELECT COUNT(*) FROM hook_outbox").Scan(&count),
+		"hook_outbox must exist (no 'no such table' SQL error)")
+	assert.Equal(t, 0, count, "fresh DB has no outbox rows")
+}
+
+// T6: install must pre-create buddy-dir and migrate the default DB so that
+// `buddy doctor` (run before `buddy daemon start`) does NOT surface a raw
+// `no such table: hook_outbox` SQL error. Default path = <BuddyDir>/buddy.db.
+func TestInstall_PreCreatesDB_DefaultPath(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	_, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	dbPath := filepath.Join(buddyDir, "buddy.db")
+	_, statErr := os.Stat(dbPath)
+	require.NoError(t, statErr, "default DB must exist after install")
+	assertMigratedDB(t, dbPath)
+}
+
+// T6: when `--db /custom/path.db` is supplied, install pre-creates exactly
+// that path (not the default buddy-dir/buddy.db), so `--db` is honored
+// end-to-end across install → doctor.
+func TestInstall_PreCreatesDB_ExplicitPath(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	customDir := filepath.Join(t.TempDir(), "custom-state")
+	customDB := filepath.Join(customDir, "elsewhere.db")
+
+	_, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+		DBPath:      customDB,
+	})
+	require.NoError(t, err)
+
+	_, statErr := os.Stat(customDB)
+	require.NoError(t, statErr, "explicit --db path must exist after install")
+	assertMigratedDB(t, customDB)
+
+	// Default path under buddy-dir must NOT have been created when --db is set.
+	_, defaultStatErr := os.Stat(filepath.Join(buddyDir, "buddy.db"))
+	assert.True(t, os.IsNotExist(defaultStatErr),
+		"explicit --db must not also create the default DB")
+}
+
+// T6 acceptance: this is the headline. After install (no daemon started),
+// running diagnose.Check must NOT surface a KindDBOpen issue. A KindDaemon
+// issue is expected because we did not start the daemon.
+func TestInstall_DoctorCleanAfterInstall(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	_, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	dbPath := filepath.Join(buddyDir, "buddy.db")
+	pidPath := filepath.Join(buddyDir, "no-such.pid") // daemon definitely not running
+
+	rep, err := diagnose.Check(diagnose.Options{
+		DBPath:  dbPath,
+		PIDFile: pidPath,
+	})
+	require.NoError(t, err)
+
+	for _, iss := range rep.Issues {
+		assert.NotEqual(t, diagnose.KindDBOpen, iss.Kind,
+			"install must leave DB readable; got DB-open issue: %s", iss.Message)
+		assert.NotContains(t, iss.Message, "no such table",
+			"raw SQL 'no such table' must not surface to users")
+	}
+
+	// Sanity: doctor still flags the daemon, so the test isn't just passing
+	// because Check silently failed. Daemon was never started.
+	var sawDaemon bool
+	for _, iss := range rep.Issues {
+		if iss.Kind == diagnose.KindDaemon {
+			sawDaemon = true
+			break
+		}
+	}
+	assert.True(t, sawDaemon,
+		"daemon-down issue is expected since we never started the daemon")
+}
+
+// T6 invariant: pre-create must run BEFORE the settings.json read, so that
+// even when settings.json is missing (and Install therefore returns
+// ErrSettingsMissing), a subsequent `buddy doctor` still sees a migrated DB.
+// This locks in the order so a future refactor can't move initBuddyState
+// below the settings read and silently break the contract.
+func TestInstall_MissingSettingsJSON_StillPreCreatesDB(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	// deliberately no settings.json in claudeDir
+
+	_, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+	})
+	require.ErrorIs(t, err, install.ErrSettingsMissing)
+
+	// Even though install errored at settings, doctor must see a migrated DB.
+	assertMigratedDB(t, filepath.Join(buddyDir, "buddy.db"))
+}
+
+// T6: installing twice must be idempotent — db.Open's migration loop is
+// already idempotent, but verify install() doesn't double-error on a
+// pre-existing DB.
+func TestInstall_PreCreatesDB_IdempotentOnReinstall(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	_, err := install.Install(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	_, err = install.Install(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err, "second install must succeed on already-migrated DB")
+
+	assertMigratedDB(t, filepath.Join(buddyDir, "buddy.db"))
+}
+
+// T6: when --with-cliwrap and an explicit --db are both set, the rendered
+// cliwrap.yaml must reference the same explicit DB path that install
+// pre-created. Prevents drift between install pre-create and cliwrap config.
+func TestInstall_WithCliwrap_UsesResolvedDBPath(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	customDB := filepath.Join(t.TempDir(), "custom-state", "buddy.db")
+
+	res, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+		WithCliwrap: true,
+		DBPath:      customDB,
+	})
+	require.NoError(t, err)
+	require.True(t, res.CliwrapWritten)
+
+	yaml, err := os.ReadFile(filepath.Join(buddyDir, install.CliwrapFileName))
+	require.NoError(t, err)
+	assert.Contains(t, string(yaml), customDB,
+		"cliwrap.yaml must use the same DB path install pre-created")
+	assertMigratedDB(t, customDB)
+}
+
+// T6: when --with-cliwrap is set without an explicit --db, the rendered
+// cliwrap.yaml must reference the default <buddy-dir>/buddy.db that install
+// just created — not an empty path. Same default flows from install through
+// cliwrap so the daemon spawned by cliwrap reads the same DB doctor reads.
+func TestInstall_WithCliwrap_DefaultDBPath(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	res, err := install.Install(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+		WithCliwrap: true,
+	})
+	require.NoError(t, err)
+	require.True(t, res.CliwrapWritten)
+
+	defaultDB := filepath.Join(buddyDir, "buddy.db")
+	yaml, err := os.ReadFile(filepath.Join(buddyDir, install.CliwrapFileName))
+	require.NoError(t, err)
+	assert.Contains(t, string(yaml), defaultDB,
+		"cliwrap.yaml must point at the default DB install just created")
+	assertMigratedDB(t, defaultDB)
+}
+
+// --- M5 T9: uninstall auto-stops daemon ---
+
+// spawnInProcessDaemon runs daemon.Run on a goroutine, waits for the PID file
+// to report Running, and returns a (cancel, done) pair so tests can either
+// cancel the context (clean shutdown) or assert the daemon exited on its own.
+// Mirrors the pattern in internal/daemon/daemon_test.go.
+func spawnInProcessDaemon(t *testing.T, dbPath, pidFile string) (cancel context.CancelFunc, done <-chan error) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
+	d := make(chan error, 1)
+	go func() {
+		d <- daemon.Run(ctx, daemon.Config{
+			DBPath:       dbPath,
+			PIDFile:      pidFile,
+			PollInterval: 50 * time.Millisecond,
+		})
+	}()
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		st, _ := daemon.CheckStatus(pidFile)
+		if st.Running {
+			return cancel, d
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	cancel()
+	t.Fatalf("daemon did not become Running within 2s")
+	return cancel, d
+}
+
+// TestUninstall_StopsRunningDaemon: with a running daemon and the default flag
+// set (KeepDaemon=false), Uninstall must SIGTERM the daemon, observe its
+// PID file disappear, and report DaemonStopped=true.
+func TestUninstall_StopsRunningDaemon(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	// Pre-install so the DB and wrap state look like a real "user just ran
+	// install" world before they ask to uninstall.
+	_, err := install.Install(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	dbPath := filepath.Join(buddyDir, "buddy.db")
+	pidFile := filepath.Join(buddyDir, "daemon.pid")
+
+	cancel, done := spawnInProcessDaemon(t, dbPath, pidFile)
+	defer cancel() // safety net if Uninstall fails to stop it
+
+	res, err := install.Uninstall(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+	assert.True(t, res.DaemonWasRunning, "daemon was up at uninstall time")
+	assert.True(t, res.DaemonStopped, "uninstall must stop the daemon")
+
+	// Daemon goroutine returns nil on graceful shutdown.
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("daemon goroutine did not exit after Uninstall stopped it")
+	}
+
+	// PID file is gone (releasePIDFile removes it on graceful exit).
+	_, statErr := os.Stat(pidFile)
+	assert.True(t, errors.Is(statErr, fs.ErrNotExist),
+		"PID file must be removed after daemon stop; stat err = %v", statErr)
+}
+
+// TestUninstall_KeepDaemonFlag_LeavesRunning: --keep-daemon must keep the
+// daemon alive even when it's running. DaemonWasRunning is reported truthfully
+// so the CLI layer can show the right message.
+func TestUninstall_KeepDaemonFlag_LeavesRunning(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	_, err := install.Install(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	dbPath := filepath.Join(buddyDir, "buddy.db")
+	pidFile := filepath.Join(buddyDir, "daemon.pid")
+
+	cancel, done := spawnInProcessDaemon(t, dbPath, pidFile)
+
+	res, err := install.Uninstall(install.Options{
+		ClaudeDir:   claudeDir,
+		BuddyDir:    buddyDir,
+		BuddyBinary: fakeBuddy,
+		KeepDaemon:  true,
+	})
+	require.NoError(t, err)
+	assert.True(t, res.DaemonWasRunning, "daemon was up at uninstall time")
+	assert.False(t, res.DaemonStopped, "--keep-daemon must NOT stop the daemon")
+
+	// Daemon goroutine should still be running. Verify PID file still says so.
+	st, err := daemon.CheckStatus(pidFile)
+	require.NoError(t, err)
+	assert.True(t, st.Running, "daemon must still be running after --keep-daemon uninstall")
+
+	// Now clean up: cancel the ctx and wait for the goroutine to exit.
+	cancel()
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("daemon did not exit after explicit cleanup cancel")
+	}
+}
+
+// TestUninstall_NoDaemonRunning_NoError: when no daemon is running, Uninstall
+// behaves as before — no error from a missing PID file, both daemon flags are
+// false on the result.
+func TestUninstall_NoDaemonRunning_NoError(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	_, err := install.Install(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	res, err := install.Uninstall(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+	assert.False(t, res.DaemonWasRunning, "no daemon was running")
+	assert.False(t, res.DaemonStopped, "nothing to stop")
+
+	// Settings unwrap path still works.
+	assert.True(t, res.RestoredFromBackup, "first uninstall after install restores from backup")
+}
+
+// TestUninstall_DaemonStopped_PIDFileGone: regression seal — after the
+// auto-stop path, the PID file at <buddy-dir>/daemon.pid no longer exists.
+// Locks in the cleanup contract so a future refactor can't leave a stale PID.
+func TestUninstall_DaemonStopped_PIDFileGone(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	_, err := install.Install(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	dbPath := filepath.Join(buddyDir, "buddy.db")
+	pidFile := filepath.Join(buddyDir, "daemon.pid")
+
+	cancel, done := spawnInProcessDaemon(t, dbPath, pidFile)
+	defer cancel()
+
+	_, err = install.Uninstall(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+	})
+	require.NoError(t, err)
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("daemon goroutine did not exit")
+	}
+
+	_, statErr := os.Stat(pidFile)
+	require.Error(t, statErr)
+	assert.True(t, errors.Is(statErr, fs.ErrNotExist),
+		"PID file must be ErrNotExist after auto-stop; got %v", statErr)
+}
+
+// TestUninstall_WithExplicitDB_ResolvesPIDFromDBDir: when --db points outside
+// buddy-dir, the daemon's PID file lives next to the DB (matching cmd/buddy's
+// defaultPIDFromDB convention). Uninstall must use that resolved path.
+func TestUninstall_WithExplicitDB_ResolvesPIDFromDBDir(t *testing.T) {
+	claudeDir, buddyDir := newTempDirs(t)
+	writeSettings(t, claudeDir, settingsWithMixedHooks())
+
+	customDir := filepath.Join(t.TempDir(), "custom-state")
+	customDB := filepath.Join(customDir, "elsewhere.db")
+
+	_, err := install.Install(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+		DBPath: customDB,
+	})
+	require.NoError(t, err)
+
+	pidFile := filepath.Join(customDir, "daemon.pid")
+	cancel, done := spawnInProcessDaemon(t, customDB, pidFile)
+	defer cancel()
+
+	res, err := install.Uninstall(install.Options{
+		ClaudeDir: claudeDir, BuddyDir: buddyDir, BuddyBinary: fakeBuddy,
+		DBPath: customDB,
+	})
+	require.NoError(t, err)
+	assert.True(t, res.DaemonWasRunning)
+	assert.True(t, res.DaemonStopped)
+
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("daemon did not exit")
+	}
 }

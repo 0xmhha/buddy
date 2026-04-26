@@ -88,6 +88,45 @@ func TestCheck_DBOpenFailure_ReturnsSingleIssueAndBails(t *testing.T) {
 	assert.Contains(t, rep.Issues[0].Message, "DB를 못 열었어")
 }
 
+// TestCheck_DBMissing_RendersFriendTone covers M5 T8: when the user points
+// --db at a path that doesn't exist (parent dir missing OR file missing), the
+// doctor report must surface the friend-tone "DB가 아직 없어 ..." message
+// instead of leaking SQLite's "out of memory (14)" or "no such table" wording.
+func TestCheck_DBMissing_RendersFriendTone(t *testing.T) {
+	cases := []struct {
+		name string
+		path string
+	}{
+		{
+			name: "missing parent dir",
+			path: filepath.Join(t.TempDir(), "no-such-subdir", "buddy.db"),
+		},
+		{
+			name: "parent exists, file missing",
+			path: filepath.Join(t.TempDir(), "missing.db"),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rep, err := diagnose.Check(diagnose.Options{
+				DBPath:  tc.path,
+				PIDFile: nonExistentPID(t),
+			})
+			require.NoError(t, err)
+			assert.False(t, rep.Healthy)
+			require.Len(t, rep.Issues, 1)
+			assert.Equal(t, diagnose.KindDBOpen, rep.Issues[0].Kind)
+			assert.Contains(t, rep.Issues[0].Message, "DB가 아직 없어",
+				"friend-tone message expected; got %q", rep.Issues[0].Message)
+			assert.Contains(t, rep.Issues[0].Message, tc.path,
+				"message should include the offending path")
+			// Regression seal — T8 exists to scrub these strings.
+			assert.NotContains(t, rep.Issues[0].Message, "out of memory")
+			assert.NotContains(t, rep.Issues[0].Message, "no such table")
+		})
+	}
+}
+
 func TestCheck_EmptyDB_DaemonDown_OneIssue(t *testing.T) {
 	rep, err := diagnose.Check(diagnose.Options{
 		DBPath:  newTempDBPath(t),

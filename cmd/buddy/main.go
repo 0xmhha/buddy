@@ -8,17 +8,20 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/wm-it-22-00661/buddy/internal/config"
 	"github.com/wm-it-22-00661/buddy/internal/daemon"
 	"github.com/wm-it-22-00661/buddy/internal/db"
 	"github.com/wm-it-22-00661/buddy/internal/diagnose"
 	"github.com/wm-it-22-00661/buddy/internal/hookwrap"
 	"github.com/wm-it-22-00661/buddy/internal/install"
+	"github.com/wm-it-22-00661/buddy/internal/persona"
 	"github.com/wm-it-22-00661/buddy/internal/queries"
 	"github.com/wm-it-22-00661/buddy/internal/schema"
 )
@@ -39,6 +42,27 @@ func newFriendError(msg string) error { return &friendError{msg: msg} }
 // signal a non-zero exit code. main() recognises it and exits 1 silently — no
 // extra "buddy: " line, no message duplication.
 var errUnhealthy = errors.New("unhealthy")
+
+// resolvedDBPath returns the user-visible DB path: the explicit --db value if
+// non-empty, else the default. Used solely to embed a friendly path in
+// db-missing error messages — never propagated to db.Open (which has its own
+// default-resolution and is the source of truth for actual file IO).
+func resolvedDBPath(dbFlag string) string {
+	if dbFlag != "" {
+		return dbFlag
+	}
+	if p, err := db.DefaultPath(); err == nil {
+		return p
+	}
+	return "~/.buddy/buddy.db"
+}
+
+// dbMissingFriendError renders the M5 T8 friend-tone message for read-only
+// commands (stats, events) when db.Open returns ErrDBMissing. Centralised so
+// stats and events stay in sync with each other and with diagnose's wording.
+func dbMissingFriendError(dbFlag string) error {
+	return newFriendError(persona.M(persona.KeyDBMissing, resolvedDBPath(dbFlag)))
+}
 
 func main() {
 	root := newRootCmd()
@@ -65,14 +89,29 @@ func newRootCmd() *cobra.Command {
 		Version:       version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
+		// PersistentPreRunE: best-effort locale resolution. Errors here are
+		// non-fatal — buddy works in ko regardless. The per-subcommand --config
+		// flag isn't a persistent flag, so root's PersistentPreRunE can't see
+		// it; we read only config.DefaultPath() here. Subcommand-flag-aware
+		// locale is a v0.2 deferral.
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if path, err := config.DefaultPath(); err == nil {
+				if c, err := config.Load(path); err == nil {
+					_ = persona.SetLocale(persona.Locale(c.Effective().PersonaLocale))
+				}
+			}
+			return nil
+		},
 	}
 	root.AddCommand(newHookWrapCmd())
+	root.AddCommand(newConfigCmd())
 	root.AddCommand(newDaemonCmd())
 	root.AddCommand(newInstallCmd())
 	root.AddCommand(newUninstallCmd())
 	root.AddCommand(newDoctorCmd())
 	root.AddCommand(newStatsCmd())
 	root.AddCommand(newEventsCmd())
+	root.AddCommand(newPurgeCmd())
 	return root
 }
 
@@ -106,8 +145,10 @@ func newEventsCmd() *cobra.Command {
 					if errors.Is(err, queries.ErrInvalidLimit) {
 						return newFriendError("buddy: " + err.Error())
 					}
-					return newFriendError(fmt.Sprintf(
-						"buddy: events follow 실패 (%v)", err))
+					if errors.Is(err, db.ErrDBMissing) {
+						return dbMissingFriendError(dbFlag)
+					}
+					return newFriendError(persona.M(persona.KeyEventsFollowFailed, err))
 				}
 				return nil
 			}
@@ -116,8 +157,10 @@ func newEventsCmd() *cobra.Command {
 				if errors.Is(err, queries.ErrInvalidLimit) {
 					return newFriendError("buddy: " + err.Error())
 				}
-				return newFriendError(fmt.Sprintf(
-					"buddy: DB를 못 읽었어. daemon이 한 번이라도 돈 적 있어? (%v)", err))
+				if errors.Is(err, db.ErrDBMissing) {
+					return dbMissingFriendError(dbFlag)
+				}
+				return newFriendError(persona.M(persona.KeyDBReadFailed, err))
 			}
 			res.RenderLines(os.Stdout)
 			return nil
@@ -155,10 +198,12 @@ func newStatsCmd() *cobra.Command {
 				if errors.Is(err, queries.ErrInvalidWindow) {
 					return newFriendError("buddy: " + err.Error())
 				}
+				if errors.Is(err, db.ErrDBMissing) {
+					return dbMissingFriendError(dbFlag)
+				}
 				// Any other failure is a DB-side problem (open or query). Match
 				// doctor's wording so the two read-only commands feel consistent.
-				return newFriendError(fmt.Sprintf(
-					"buddy: DB를 못 읽었어. daemon이 한 번이라도 돈 적 있어? (%v)", err))
+				return newFriendError(persona.M(persona.KeyDBReadFailed, err))
 			}
 			res.Render(os.Stdout)
 			return nil
@@ -174,23 +219,30 @@ func newStatsCmd() *cobra.Command {
 // newDoctorCmd wires the read-only health snapshot. Render output goes to
 // stdout (it is the user-facing report, not log noise). Exit code is 0 when
 // the report is healthy, 1 otherwise — matches m4-plan §Task 2.
+//
+// M5 T3: thresholds (HookTimeoutMs, HookSlowMs, HookFailRatePct, OutboxBacklog)
+// are now read from ~/.buddy/config.json via loadEffectiveConfig. A missing
+// config file falls back to spec defaults silently. Pass --config <path> to
+// point at a different file.
 func newDoctorCmd() *cobra.Command {
 	var (
-		dbFlag  string
-		pidFlag string
+		dbFlag     string
+		pidFlag    string
+		configFlag string
 	)
 	cmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "hook health 즉시 진단 (read-only, daemon 의존 없음)",
 		RunE: func(_ *cobra.Command, _ []string) error {
+			eff, err := loadEffectiveConfig(configFlag)
+			if err != nil {
+				return err
+			}
 			pidFile, err := resolvePIDFile(pidFlag, dbFlag)
 			if err != nil {
 				return err
 			}
-			rep, err := diagnose.Check(diagnose.Options{
-				DBPath:  dbFlag,
-				PIDFile: pidFile,
-			})
+			rep, err := diagnose.Check(buildDoctorOptions(dbFlag, pidFile, eff))
 			if err != nil {
 				return err
 			}
@@ -203,6 +255,7 @@ func newDoctorCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: ~/.buddy/buddy.db)")
 	cmd.Flags().StringVar(&pidFlag, "pid", "", "PID 파일 경로 (기본: <db dir>/daemon.pid)")
+	cmd.Flags().StringVar(&configFlag, "config", "", "config 파일 경로 (기본: ~/.buddy/config.json)")
 	return cmd
 }
 
@@ -229,12 +282,12 @@ func newInstallCmd() *cobra.Command {
 				return translateInstallError(err)
 			}
 			if res.NoOp {
-				fmt.Fprintln(os.Stderr, "buddy: 이미 등록되어 있어. 변화 없음.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyInstallNoOp))
 			} else {
-				fmt.Fprintln(os.Stderr, "buddy: 등록 완료. 이제 옆에서 보고 있을게.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyInstallDone))
 			}
 			if res.CliwrapWritten {
-				fmt.Fprintf(os.Stderr, "buddy: cliwrap.yaml 도 써뒀어 (%s).\n", res.CliwrapPath)
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyInstallCliwrapWritten, res.CliwrapPath))
 			}
 			return nil
 		},
@@ -242,7 +295,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&claudeDirFlag, "claude-dir", "", "Claude Code 설정 디렉터리 (기본: ~/.claude)")
 	cmd.Flags().StringVar(&buddyDirFlag, "buddy-dir", "", "buddy 작업 디렉터리 (기본: ~/.buddy)")
 	cmd.Flags().StringVar(&binaryFlag, "buddy-binary", "", "buddy 바이너리 절대 경로 (기본: 현재 실행 파일)")
-	cmd.Flags().StringVar(&dbFlag, "db", "", "cliwrap.yaml 안의 daemon --db 값. 이후 명령(daemon/doctor/stats/events)에 자동 적용 안 됨 — 같은 --db 를 직접 줘야 함.")
+	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: <buddy-dir>/buddy.db). 이 경로로 DB가 만들어지고 cliwrap.yaml 에도 들어가. 이후 daemon/doctor/stats/events 에는 같은 --db 를 직접 줘야 해.")
 	cmd.Flags().BoolVar(&withCliwrap, "with-cliwrap", false, "cliwrap.yaml 도 함께 생성")
 	return cmd
 }
@@ -253,10 +306,9 @@ func translateInstallError(err error) error {
 	var spaceErr *install.BinaryPathSpaceError
 	switch {
 	case errors.Is(err, install.ErrSettingsMissing):
-		return newFriendError("buddy: ~/.claude/settings.json 이 안 보여. Claude Code 설치되어 있어?")
+		return newFriendError(persona.M(persona.KeyInstallSettingsMissing))
 	case errors.As(err, &spaceErr):
-		return newFriendError(fmt.Sprintf(
-			"buddy: 바이너리 경로에 공백이 있어. 다른 경로로 옮겨봐: %s", spaceErr.Path))
+		return newFriendError(persona.M(persona.KeyInstallBinaryHasSpaces, spaceErr.Path))
 	}
 	return err
 }
@@ -266,6 +318,8 @@ func newUninstallCmd() *cobra.Command {
 		claudeDirFlag string
 		buddyDirFlag  string
 		binaryFlag    string
+		dbFlag        string
+		keepDaemon    bool
 	)
 	cmd := &cobra.Command{
 		Use:   "uninstall",
@@ -275,17 +329,32 @@ func newUninstallCmd() *cobra.Command {
 				ClaudeDir:   claudeDirFlag,
 				BuddyDir:    buddyDirFlag,
 				BuddyBinary: binaryFlag,
+				DBPath:      dbFlag,
+				KeepDaemon:  keepDaemon,
 			})
 			if err != nil {
 				return translateInstallError(err)
 			}
 			switch {
 			case res.RestoredFromBackup:
-				fmt.Fprintln(os.Stderr, "buddy: 해제 완료. 백업에서 복원했어.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallRestoredFromBackup))
 			case res.Unwrapped > 0:
-				fmt.Fprintln(os.Stderr, "buddy: 해제 완료. wrapping 제거했어.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallRemovedWrapping))
 			default:
-				fmt.Fprintln(os.Stderr, "buddy: 등록된 게 없어. 그대로 둘게.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallNothingRegistered))
+			}
+			// M5 T9: friend-tone note about daemon disposition. The Uninstall
+			// call already attempted (or skipped) the stop based on
+			// KeepDaemon — we just report what happened.
+			if res.DaemonWasRunning {
+				switch {
+				case res.DaemonStopped:
+					fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallDaemonStopped))
+				case keepDaemon:
+					fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallDaemonKept))
+				default:
+					fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallDaemonNotStopping))
+				}
 			}
 			return nil
 		},
@@ -293,6 +362,8 @@ func newUninstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&claudeDirFlag, "claude-dir", "", "Claude Code 설정 디렉터리 (기본: ~/.claude)")
 	cmd.Flags().StringVar(&buddyDirFlag, "buddy-dir", "", "buddy 작업 디렉터리 (기본: ~/.buddy)")
 	cmd.Flags().StringVar(&binaryFlag, "buddy-binary", "", "buddy 바이너리 절대 경로 (기본: 현재 실행 파일)")
+	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: <buddy-dir>/buddy.db). daemon PID 위치 추론에 사용.")
+	cmd.Flags().BoolVar(&keepDaemon, "keep-daemon", false, "daemon이 떠있어도 자동 stop 하지 않음")
 	return cmd
 }
 
@@ -310,37 +381,50 @@ func newDaemonCmd() *cobra.Command {
 	return cmd
 }
 
+// newDaemonRunCmd wires `buddy daemon run`. M5 T3: pollInterval / batchSize
+// are read from ~/.buddy/config.json (spec defaults: 1s / 500). Explicit
+// --poll / --batch flags still win — the precedence is flag > config > default.
+// Zero is the "use config / default" sentinel for the flags, so the help text
+// reflects that rather than the old hard-coded 1s / 500.
 func newDaemonRunCmd() *cobra.Command {
 	var (
-		dbFlag    string
-		pollFlag  time.Duration
-		batchFlag int
-		pidFlag   string
+		dbFlag     string
+		pollFlag   time.Duration
+		batchFlag  int
+		pidFlag    string
+		configFlag string
 	)
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "foreground 실행 (cli-wrapper supervise용)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return daemon.Run(cmd.Context(), daemon.Config{
-				DBPath:       dbFlag,
-				PIDFile:      pidFlag,
-				PollInterval: pollFlag,
-				BatchSize:    batchFlag,
-			})
+			eff, err := loadEffectiveConfig(configFlag)
+			if err != nil {
+				return err
+			}
+			return daemon.Run(cmd.Context(),
+				resolveDaemonRunConfig(dbFlag, pidFlag, pollFlag, batchFlag, eff))
 		},
 	}
 	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로 (기본: ~/.buddy/buddy.db)")
 	cmd.Flags().StringVar(&pidFlag, "pid", "", "PID 파일 경로 (기본: <db dir>/daemon.pid)")
-	cmd.Flags().DurationVar(&pollFlag, "poll", time.Second, "outbox poll 간격")
-	cmd.Flags().IntVar(&batchFlag, "batch", 500, "한 tick에 처리할 outbox row 상한")
+	cmd.Flags().DurationVar(&pollFlag, "poll", 0, "outbox poll 간격 (기본: config 또는 1s)")
+	cmd.Flags().IntVar(&batchFlag, "batch", 0, "한 tick에 처리할 outbox row 상한 (기본: config 또는 500)")
+	cmd.Flags().StringVar(&configFlag, "config", "", "config 파일 경로 (기본: ~/.buddy/config.json)")
 	return cmd
 }
 
+// newDaemonStartCmd spawns `buddy daemon run` detached. Flags here mirror
+// `daemon run` so the user can express the same intent at start time; we
+// forward them as argv to the spawned child, which then loads config itself.
+// M5 T3: --config and --batch are now propagated alongside --poll.
 func newDaemonStartCmd() *cobra.Command {
 	var (
-		dbFlag   string
-		pidFlag  string
-		pollFlag time.Duration
+		dbFlag     string
+		pidFlag    string
+		pollFlag   time.Duration
+		batchFlag  int
+		configFlag string
 	)
 	cmd := &cobra.Command{
 		Use:   "start",
@@ -352,15 +436,17 @@ func newDaemonStartCmd() *cobra.Command {
 			}
 			st, _ := daemon.CheckStatus(pidFile)
 			if st.Running {
-				fmt.Fprintf(os.Stderr, "buddy: 이미 실행 중이야 (pid %d).\n", st.PID)
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyDaemonAlreadyRunning, st.PID))
 				return nil
 			}
-			return spawnDetached(dbFlag, pidFile, pollFlag)
+			return spawnDetached(dbFlag, pidFile, pollFlag, batchFlag, configFlag)
 		},
 	}
 	cmd.Flags().StringVar(&dbFlag, "db", "", "buddy DB 경로")
 	cmd.Flags().StringVar(&pidFlag, "pid", "", "PID 파일 경로")
-	cmd.Flags().DurationVar(&pollFlag, "poll", time.Second, "outbox poll 간격")
+	cmd.Flags().DurationVar(&pollFlag, "poll", 0, "outbox poll 간격 (기본: config 또는 1s)")
+	cmd.Flags().IntVar(&batchFlag, "batch", 0, "한 tick에 처리할 outbox row 상한 (기본: config 또는 500)")
+	cmd.Flags().StringVar(&configFlag, "config", "", "config 파일 경로 (기본: ~/.buddy/config.json)")
 	return cmd
 }
 
@@ -379,13 +465,13 @@ func newDaemonStopCmd() *cobra.Command {
 				return err
 			}
 			if !st.Running {
-				fmt.Fprintln(os.Stderr, "buddy: 실행 중인 daemon이 없어.")
+				fmt.Fprintln(os.Stderr, persona.M(persona.KeyDaemonNotRunning))
 				return nil
 			}
 			if err := daemon.Stop(pidFile); err != nil {
 				return err
 			}
-			fmt.Fprintf(os.Stderr, "buddy: daemon에 종료 신호 보냈어 (pid %d).\n", st.PID)
+			fmt.Fprintln(os.Stderr, persona.M(persona.KeyDaemonStopSignalSent, st.PID))
 			return nil
 		},
 	}
@@ -449,7 +535,12 @@ func defaultPIDFromDB(dbPath string) string {
 	return dir + "/daemon.pid"
 }
 
-func spawnDetached(dbFlag, pidFile string, poll time.Duration) error {
+// spawnDetached launches `buddy daemon run` as a detached child. Each flag
+// is forwarded only when set (non-zero / non-empty) so the child can fall
+// back to its own config / spec defaults — the parent does NOT pre-resolve
+// poll / batch here, that resolution happens once on the child via
+// loadEffectiveConfig (M5 T3).
+func spawnDetached(dbFlag, pidFile string, poll time.Duration, batch int, configFlag string) error {
 	self, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("locate self: %w", err)
@@ -464,17 +555,21 @@ func spawnDetached(dbFlag, pidFile string, poll time.Duration) error {
 	if poll > 0 {
 		args = append(args, "--poll", poll.String())
 	}
+	if batch > 0 {
+		args = append(args, "--batch", strconv.Itoa(batch))
+	}
+	if configFlag != "" {
+		args = append(args, "--config", configFlag)
+	}
 	cmd := exec.Command(self, args...)
 	cmd.Stdin = nil
 	cmd.Stdout = nil
 	cmd.Stderr = nil
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("spawn: %w", err)
+	pid, err := startAndDetach(cmd)
+	if err != nil {
+		return err
 	}
-	if err := cmd.Process.Release(); err != nil {
-		return fmt.Errorf("detach: %w", err)
-	}
-	fmt.Fprintf(os.Stderr, "buddy: daemon 시작 (pid %d).\n", cmd.Process.Pid)
+	fmt.Fprintln(os.Stderr, persona.M(persona.KeyDaemonStarted, pid))
 	return nil
 }
 
