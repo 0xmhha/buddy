@@ -2,6 +2,10 @@
 
 > v0.1 spec §6.1을 보강. 각 필드의 *출처·비용·활용·위험*을 평가하여
 > 사용자가 의미 있는 결정을 할 수 있도록 정보를 제공.
+>
+> **Status:** LOCKED (옵션 A 채택, 2026-04-23). 실제 Go 구현은
+> [`internal/schema/hook_event.go`](../internal/schema/hook_event.go).
+> 이하 TS Zod 샘플은 Go pivot 이전 PoC 기준 (참조용 — 필드 결정은 동일).
 
 ---
 

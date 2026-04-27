@@ -1,6 +1,10 @@
 # build artifacts
 bin/
 dist/
+SHA256SUMS
+
+# plugin build artefacts
+plugin/mcp/servers.json
 
 # Go
 *.test

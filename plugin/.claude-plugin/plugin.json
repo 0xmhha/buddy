@@ -1,0 +1,10 @@
+{
+  "name": "buddy",
+  "version": "0.1.0-dev",
+  "description": "Buddy — friend-tone Claude Code plugin. Bundles skills/hooks/MCP/commands/agents/rules to support diverse LLM workflows from a single install.",
+  "author": {
+    "name": "mhha"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/0xmhha/buddy"
+}
