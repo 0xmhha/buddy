@@ -45,10 +45,14 @@ tidy:
 clean:
 	rm -rf bin/ $(DIST) *.out coverage.txt
 
-PLUGIN_DIR := $(shell pwd)/plugin
+GITHUB_REPO := 0xmhha/buddy
 
 install-plugin:
-	claude plugin marketplace add $(PLUGIN_DIR)
+	claude plugin marketplace add $(GITHUB_REPO)
+	claude plugin install buddy@buddy
+
+install-plugin-local:
+	claude plugin marketplace add $(shell pwd)
 	claude plugin install buddy@buddy
 
 uninstall-plugin:

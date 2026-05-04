@@ -9,7 +9,7 @@
       "name": "buddy",
       "description": "9-phase multi-orchestrator model: idea → business validation → design → build → quality → release → A/B iterate → lifecycle. 77 skills, 26 commands.",
       "version": "1.0.0",
-      "source": "./",
+      "source": "./plugin",
       "author": {
         "name": "mhha"
       }
