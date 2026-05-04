@@ -1,7 +1,7 @@
 {
   "name": "buddy",
-  "version": "0.1.0-dev",
-  "description": "Buddy — friend-tone Claude Code plugin. Bundles skills/hooks/MCP/commands/agents/rules to support diverse LLM workflows from a single install.",
+  "version": "1.0.0",
+  "description": "Buddy — 상용 제품 빌딩 풀 라이프사이클 지원 Claude Code plugin. 9-phase multi-orchestrator 모델로 idea → 사업성 → 설계 → 개발 → 테스트 → 배포 → A/B 분석 → 개선 → 수명주기 관리까지 단일 설치로 지원.",
   "author": {
     "name": "mhha"
   },

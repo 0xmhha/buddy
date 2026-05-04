@@ -7,6 +7,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-05-04
+
+### Architecture: 9-Phase Multi-Orchestrator Model
+
+Buddy plugin이 단일 orchestrator(`autoplan`) 가정에서 **9-phase multi-orchestrator 모델**로 전환됩니다.
+각 라이프사이클 단계가 독립적인 phase orchestrator를 가지며, `autoplan`은 cross-phase review sub-orchestrator로 재배치됩니다.
+
+### Added
+
+**Phase Orchestrator Skills (9개 신규)**
+- `concretize-idea` — §1 Idea & Business Validation (idea → PRD + business viability)
+- `define-features` — §2 Feature Definition & Backlog (PRD → actor/use case/system boundary 기반 feature backlog)
+- `design-system` — §3 Technical Design (feature backlog → tech stack ADR + infra + API + data model)
+- `plan-build` — §4 Implementation Plan (technical design → actor별 task DAG + parallel execution plan)
+- `build-feature` — §5 Development (implementation plan → working code + tests)
+- `verify-quality` — §6 Quality (code complete → QA + security + compliance sign-off)
+- `ship-release` — §7 Release & Beta (quality gate pass → tagged release + UAT + GA)
+- `iterate-product` — §8 Operate & Iterate (production traffic → A/B 실험 + funnel + improvement backlog)
+- `manage-lifecycle` — §9 Lifecycle Management (feature/product 노후화 → deprecation + migration + EOL)
+
+**§8 Stage Skills (6개 신규 — Q3 우선순위)**
+- `design-ab-experiment` — 통계적으로 유효한 A/B 실험 설계 (가설/표본/대조군/지표/기간)
+- `analyze-ab-experiment` — 실험 결과 분석 (통계 유의성 + 실용 유의성 → Ship/Revert/Continue)
+- `analyze-user-funnel` — §2 use case 기반 actor별 funnel 전환/이탈 분석
+- `generate-improvement-tasks` — 분석 결과 → RICE 기반 improvement backlog (§2 재진입 준비)
+- `handle-incident` — 프로덕션 인시던트 대응 런북 (심각도 → 완화 → 근본 원인 → fix → 커뮤니케이션)
+- `conduct-postmortem` — 비난 없는 포스트모템 (타임라인 + 5 Whys + action items)
+
+**§2 Stage Skills (7개 신규 — Q8=(a) Use Case 분해)**
+- `identify-actors` — 시스템 참여 actor 열거 (user/system/3rd-party/external-tool 분류)
+- `map-actor-use-cases` — actor별 use case 식별 (UML use case 다이어그램 등가)
+- `map-use-case-to-system-boundary` — use case → 시스템 경계 매핑 (frontend/backend/external SaaS)
+- `compose-feature-from-use-cases` — cross-actor use case → feature 합성
+- `define-feature-spec` — feature 완전 명세서 (actor/use case/system boundary/acceptance/test plan 포함)
+- `score-feature-priority` — RICE/ICE/MoSCoW 우선순위 결정
+- `map-feature-dependencies` — feature 간 선후 의존성 DAG + critical path + 병렬 그룹
+
+**Phase Orchestrator Commands (9개 신규 — Q2=(b))**
+- `/buddy:concretize-idea`, `/buddy:define-features`, `/buddy:design-system`, `/buddy:plan-build`
+- `/buddy:build-feature`, `/buddy:verify-quality`, `/buddy:ship-release`
+- `/buddy:iterate-product`, `/buddy:manage-lifecycle`
+- 기존 17개 commands 유지 — 총 26개 commands
+
+### Changed
+
+**SKILL_ROUTER.md** — 9-phase multi-orchestrator 모델로 완전 재작성
+- Priority 1: 9개 phase orchestrator (기존 `autoplan` 단일 orchestrator → 교체)
+- Priority 2: `autoplan` (cross-phase review sub-orchestrator)
+- 11-stage 라우팅 표 → 9-phase 라우팅 표로 교체
+- 케이스 A~G 업데이트 (신규 orchestrator 기반)
+
+**SKILLS.md** — 9-phase 라이프사이클 구조로 재구성
+- Phase별 섹션으로 재분류 (기존 알파벳 순 → phase 소속 기준)
+- 신규 22개 skill 등재
+- archive 섹션 추가
+
+**plugin.json** — version 0.1.0-dev → 1.0.0
+
+### Moved
+
+- `plugin/skills/route-intent/` → `plugin/_archive/route-intent/` (Q5=(b))
+- `plugin/skills/route-multi-platform/` → `plugin/_archive/route-multi-platform/`
+- `plugin/skills/route-spec-to-code/` → `plugin/_archive/route-spec-to-code/`
+
+### Architecture Decisions
+
+- **Q1=(a)**: 9-phase 모델 전체 채택 (§9 lifecycle 포함)
+- **Q2=(b)**: 26 commands (9 phase orchestrator + 17 기존 stage commands 유지)
+- **Q3=(c)→(b)**: §8 먼저 → §1~§5 순서로 신규 stage skill 작성
+- **Q4=(c)**: MCP 작성 보류 — skill 정리 우선
+- **Q5=(b)**: archive 3개 `plugin/_archive/`로 격리
+- **Q6=(a)**: `autoplan` = cross-phase review sub-orchestrator
+- **Q7=(b)**: §7.5 Beta/UAT를 §7 내부 sub-phase로 분리
+- **Q8=(a)**: use case 분해를 §2 첫 단계로 강제 + actor/use case/system boundary를 feature spec 필수 필드로
+
 ## [0.1.0] - 2026-04-26
 
 First public release of Buddy — a friend-tone CLI that observes Claude Code
