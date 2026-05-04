@@ -252,6 +252,50 @@ verification:
 - 다음 단계: `build-with-tdd` — gate 통과 보장된 환경에서 TDD 시작
 - 다음 단계: `write-changelog` — release gate 활용
 
+## 9. Claude Code Hook 설치 (buddy 통합)
+
+§5 build-feature 진입 전, 또는 buddy plugin install 직후 Claude Code hook을 활성화한다.
+husky pre-commit gate와 독립적으로 동작 — Claude Code hook은 *AI 도구 호출* 레이어를 감싼다.
+
+### 자동 설치 (권장)
+
+```bash
+# user-global 설치 (~/.claude/settings.json)
+bash plugin/skills/setup-quality-gates/scripts/apply-claude-hooks.sh --scope user
+
+# project 설치 (.claude/settings.json)
+bash plugin/skills/setup-quality-gates/scripts/apply-claude-hooks.sh --scope project
+
+# 미리보기 (dry-run)
+bash plugin/skills/setup-quality-gates/scripts/apply-claude-hooks.sh --dry-run
+```
+
+### 등록되는 hook 요약
+
+| Hook 종류 | Matcher | buddy 서브커맨드 | 역할 |
+|-----------|---------|-----------------|------|
+| PreToolUse | Edit\|Write\|MultiEdit | `buddy hook-wrap freeze-scope` | 허가된 경로 외 파일 편집 차단 |
+| PreToolUse | Bash | `buddy hook-wrap guard-destructive` | rm -rf / DROP / force-push 등 확인 요청 |
+| PostToolUse | Edit\|Write\|MultiEdit | `buddy hook-wrap run-tests` | 파일 저장 후 관련 테스트 자동 실행 |
+| Stop | — | `buddy hook-wrap save-context` | 세션 종료 시 컨텍스트 저장 |
+| SessionStart | — | `buddy hook-wrap restore-context` | 세션 시작 시 컨텍스트 복원 |
+
+### 수동 설치 (템플릿 직접 적용)
+
+```bash
+# 템플릿 위치: plugin/skills/setup-quality-gates/references/claude-hooks-template.json
+# 기존 ~/.claude/settings.json에 "hooks" 키를 병합한다.
+jq -s '.[0] * .[1]' ~/.claude/settings.json \
+  plugin/skills/setup-quality-gates/references/claude-hooks-template.json \
+  > /tmp/settings-merged.json && mv /tmp/settings-merged.json ~/.claude/settings.json
+```
+
+### 참조
+
+- 훅 설계 상세: `design-claude-hooks` skill
+- 훅 이벤트 스키마: `plugin/skills/design-claude-hooks/references/hook-events.md`
+- 패턴 예시: `plugin/skills/design-claude-hooks/references/hook-patterns.md`
+
 ## 8. Anti-patterns
 
 1. **Pre-commit이 너무 느림 (>10초)** — 매번 짜증. lint-staged로 변경 파일만.

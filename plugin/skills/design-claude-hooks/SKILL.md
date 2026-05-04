@@ -374,7 +374,19 @@ operations:
 - 후속: `setup-quality-gates` (CI 게이트와 hook 연결)
 - 후속: `audit-security` (hook 보안 검증)
 
-## 9. Anti-patterns
+## 9. 참조 문서
+
+상세 내용은 references/ 파일에서 필요 시 로드:
+
+| 파일 | 내용 |
+|------|------|
+| `references/hook-events.md` | PreToolUse/PostToolUse/Stop/SessionStart stdin/stdout 완전 스키마 |
+| `references/hook-patterns.md` | freeze-scope / guard-destructive / run-tests / save-restore 구현 예시 |
+| `references/settings-schema.md` | ~/.claude/settings.json hook 필드 완전 명세 + composition 규칙 |
+
+hook script 작성 시 `hook-events.md` → 입력 파싱, `hook-patterns.md` → 패턴 참조, `settings-schema.md` → 등록 방법 순서로 참조.
+
+## 10. Anti-patterns
 
 1. **Hook이 너무 느림 (>1초)** — 모든 도구 호출이 통과. UX 저하. <100ms 목표.
 2. **Matcher가 너무 broad (`.*`)** — 모든 호출에 hook. 성능 + 의도 모호.

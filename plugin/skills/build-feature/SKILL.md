@@ -42,7 +42,18 @@ build-feature (§5 phase orchestrator)
 
 ### Stage 2: 병렬 Actor Track 실행
 
-§4 parallel execution plan을 기반으로 `dispatch-parallel-agents` skill을 invoke해 actor track별로 worktree를 격리하고 병렬 agent를 분배한다.
+§4 actor-track plan (`docs/actor-track-plan.yaml`)을 기반으로 `dispatch-parallel-agents` skill을 invoke해 actor track별로 worktree를 격리하고 병렬 agent를 분배한다.
+
+**subagent_type 결정**: `system_boundary` → subagent_type 매핑 기준표를 참조.
+→ `references/actor-track-mapping.md`
+
+```
+frontend-spa          → senior-frontend
+backend-*             → senior-backend
+backend-auth-*        → senior-backend (audit-security 병행)
+external-saas / infra → senior-devops
+(기본)                → feature-dev:code-architect
+```
 
 각 agent는 `build-with-tdd` skill을 invoke해 TDD 루프로 구현한다:
 ```
@@ -52,6 +63,7 @@ refactor: test 통과 상태 유지하며 개선
 ```
 
 **Synchronization point**: actor 간 contract 의존성이 있는 지점에서 다른 track의 완료를 기다린다.
+동기화 유형과 확인 방법: `plugin/skills/dispatch-parallel-agents/references/synchronization.md`
 
 ### Stage 3: Fix-Verify 루프
 

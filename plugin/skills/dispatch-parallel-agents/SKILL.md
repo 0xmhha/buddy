@@ -214,6 +214,56 @@ cleanup:
 - 후속: `iterate-fix-verify` (실패 worker fix loop)
 - 후속: `automate-release-tagging` (모든 worker 통합 후 release)
 
+## 9. Actor-Track Dispatch 절차 (§5 build-feature 연동)
+
+§4 plan-build의 actor-track plan을 입력으로 받아 실제 worktree + Agent를 분배하는 구체 절차.
+
+### Step 1. actor-track plan 읽기
+
+`docs/actor-track-plan.yaml`에서 추출:
+- `tracks[].actor_id` → worktree 이름
+- `tracks[].system_boundary` → subagent_type 결정
+- `sync_points` → 동기화 포인트 식별
+
+### Step 2. Worktree 생성
+
+```bash
+bash plugin/skills/dispatch-parallel-agents/scripts/create-worktrees.sh \
+  main frontend backend integration
+```
+
+### Step 3. 병렬 그룹 결정
+
+동기화 의존성 없는 track은 동시에 dispatch. 의존성 있는 track은 선행 완료 후 시작.
+상세: `references/synchronization.md`
+
+### Step 4. Agent tool 병렬 호출
+
+각 actor-track에 대해 system_boundary → subagent_type 매핑 후 호출.
+호출 형식 상세: `references/agent-dispatch-pattern.md §4`
+
+### Step 5. Contract 확인 후 다음 그룹 시작
+
+```bash
+test -f docs/api-contract.yaml && echo "SYNC 완료 — 다음 track 시작 가능"
+```
+
+### Step 6. 완료 후 병합
+
+```bash
+bash plugin/skills/dispatch-parallel-agents/scripts/cleanup-worktrees.sh \
+  main frontend backend integration
+```
+
+### 참조 문서
+
+| 파일 | 내용 |
+|------|------|
+| `references/agent-dispatch-pattern.md` | actor-track plan 포맷, subagent_type 매핑, Agent tool 호출 형식 |
+| `references/synchronization.md` | contract 의존성 유형, 동기화 체크리스트, 병렬 그룹 결정 |
+| `scripts/create-worktrees.sh` | actor 배열 → worktree 일괄 생성 |
+| `scripts/cleanup-worktrees.sh` | 병합 + worktree 정리 |
+
 ## 8. Anti-patterns
 
 1. **순환 dependency dispatch** — A↔B 양방향. dispatch 전 graph 검증 강제.
