@@ -3,10 +3,12 @@ package mcp
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/wm-it-22-00661/buddy/internal/db"
 	"github.com/wm-it-22-00661/buddy/internal/diagnose"
 )
 
@@ -17,12 +19,29 @@ type doctorResult struct {
 	Issues  []string `json:"issues"`
 }
 
+// resolvePIDFile derives daemon.pid path from the DB path.
+// Mirrors the same logic in cmd/buddy/main.go:defaultPIDFromDB.
+func resolvePIDFile(dbPath string) (string, error) {
+	if dbPath == "" {
+		p, err := db.DefaultPath()
+		if err != nil {
+			return "", err
+		}
+		dbPath = p
+	}
+	return filepath.Join(filepath.Dir(dbPath), "daemon.pid"), nil
+}
+
 func addDoctorTool(s *mcp.Server, opts Options) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "doctor",
 		Description: "Run buddy health check. Returns healthy=true when DB, daemon, and hook metrics are all green. When healthy=false, issues lists the problems found.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, _ doctorArgs) (*mcp.CallToolResult, doctorResult, error) {
-		rep, err := diagnose.Check(diagnose.Options{DBPath: opts.DBPath})
+		pidFile, err := resolvePIDFile(opts.DBPath)
+		if err != nil {
+			return nil, doctorResult{}, fmt.Errorf("resolve pid file: %w", err)
+		}
+		rep, err := diagnose.Check(diagnose.Options{DBPath: opts.DBPath, PIDFile: pidFile})
 		if err != nil {
 			return nil, doctorResult{}, err
 		}
@@ -36,7 +55,7 @@ func addDoctorTool(s *mcp.Server, opts Options) {
 		if rep.Healthy {
 			sb.WriteString("All checks passed.")
 		} else {
-			sb.WriteString(fmt.Sprintf("%d issue(s) found:\n", len(rep.Issues)))
+			fmt.Fprintf(&sb, "%d issue(s) found:\n", len(rep.Issues))
 			for _, line := range out.Issues {
 				sb.WriteString("  • ")
 				sb.WriteString(line)
