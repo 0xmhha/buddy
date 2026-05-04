@@ -1,18 +1,43 @@
 ---
 name: query-feature-registry
-description: "PRD 또는 feature candidate를 받아 feature-management-saas-mcp registry에서 유사 feature를 검색해 reuse / adapt / inspired-by / new 판단. semantic + interface + stack + license + security gate. 트리거: '비슷한 feature 있어?' / 'reuse 가능해?' / 'feature registry 검색' / '유사 구현 찾아줘' / 'patch 가져와' / 'feature 재사용' / 'registry query'. 입력: feature candidate (problem, interfaces, stack, constraints) + target product context. 출력: matched features + reuse_decision + patch artifact + apply recipe. 흐름: split-work-into-features → query-feature-registry → build-with-tdd."
+description: "PRD 또는 feature candidate를 받아 feature registry(로컬 buddy DB 우선, 외부 MCP fallback)에서 유사 feature를 검색해 reuse / adapt / inspired-by / new 판단. 트리거: '비슷한 feature 있어?' / 'reuse 가능해?' / 'feature registry 검색' / '유사 구현 찾아줘' / 'feature 재사용' / 'registry query' / 'feature 저장해' / 'feature 목록 보여줘'. 입력: feature candidate (problem, interfaces, stack) + target product context. 출력: matched features + reuse_decision. 흐름: split-work-into-features → query-feature-registry → build-with-tdd."
 type: skill
 ---
 
-# Query Feature Registry — Reuse 검색 + 판단 루프
+# Query Feature Registry — 로컬 DB 우선 + MCP Fallback
 
 ## 1. 목적
 
-`split-work-into-features` 출력 feature candidate를 **feature registry SaaS / MCP에 조회**해 유사 feature가 있으면 reuse / adapt / inspired-by / new 판단을 내린다.
+feature candidate를 **buddy 로컬 DB(우선) → 외부 MCP(fallback)** 순서로 조회해 유사 feature가 있으면 reuse / adapt / inspired-by / new 판단을 내린다.
 
 핵심 가치: **0부터 만들지 말고 검색 먼저**. autoplan의 "Search Before Building" ethos를 feature 단위로 강제.
 
-이 스킬은 `feature-management-saas-mcp.md`의 `feature.query` MCP tool과 직결된다. 동일 입력 형식 + 동일 결과 등급(0.85+ reuse / 0.70-0.84 adapt / 0.50-0.69 inspired-by / <0.50 new) 사용.
+## 1a. 로컬 buddy DB 사용법
+
+buddy CLI에 `internal/feature` 패키지가 내장되어 있다. 아래 CLI 명령으로 로컬 DB를 직접 조작한다:
+
+```bash
+# feature 저장 (Upsert)
+buddy feature upsert --id feat-001 --name "Signup Flow" --status draft \
+  --summary "email/password 회원가입 엔드포인트 + 폼"
+
+# feature 검색
+buddy feature search "signup"
+
+# feature 목록 (전체 / status 필터)
+buddy feature list
+buddy feature list --status in_progress
+
+# feature 상세 조회
+buddy feature get feat-001
+
+# feature 삭제
+buddy feature delete feat-001
+```
+
+로컬 DB 경로: `~/.buddy/buddy.db` (기본값). `--db <path>`로 override.
+
+**MCP fallback**: 로컬 DB 결과가 부족하거나 (`<3` matches) 외부 registry가 설정된 경우 `mcp__buddy__feature_search` tool을 호출한다.
 
 ## 2. 사용 시점 (When to invoke)
 
@@ -69,14 +94,22 @@ feature candidate → MCP query 형식:
 - limit (5 default)
 
 ### Phase 2. Registry Search
-`feature.query` MCP tool 또는 직접 vector + BM25 검색:
+
+**Step 2a — 로컬 buddy DB 먼저**:
+```bash
+buddy feature search "<keyword>"        # name/summary 검색
+buddy feature list --status done        # 완료된 feature 탐색
+buddy feature get <feature_id>          # 특정 feature 상세
+```
+
+**Step 2b — 결과 < 3개이거나 외부 MCP 설정된 경우 fallback**:
+`mcp__buddy__feature_search` tool 또는 외부 registry MCP 호출:
 - semantic similarity (problem / summary / scope)
 - interface similarity (API / UI / data)
 - flow similarity (user flow / state transition)
 - stack compatibility
-- license / security gate
 
-각 매치에 detailed score + mismatch reasons.
+각 매치에 score + mismatch reasons.
 
 ### Phase 3. Gate Filtering
 검색 결과를 hard gate로 필터:

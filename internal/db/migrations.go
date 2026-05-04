@@ -59,6 +59,23 @@ var migrations = []migration{
 			);
 		`,
 	},
+	{
+		version: 2,
+		sql: `
+			CREATE TABLE features (
+				feature_id          TEXT    PRIMARY KEY,
+				name                TEXT    NOT NULL,
+				summary             TEXT    NOT NULL DEFAULT '',
+				actors              TEXT    NOT NULL DEFAULT '[]',
+				acceptance_criteria TEXT    NOT NULL DEFAULT '[]',
+				test_plan           TEXT    NOT NULL DEFAULT '{}',
+				status              TEXT    NOT NULL DEFAULT 'draft',
+				updated_at          INTEGER NOT NULL
+			);
+			CREATE INDEX idx_features_status  ON features(status);
+			CREATE INDEX idx_features_updated ON features(updated_at);
+		`,
+	},
 }
 
 // RunMigrations applies every migration whose version is greater than the
