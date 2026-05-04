@@ -1,7 +1,8 @@
 .PHONY: build test fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
 
-BIN := bin/buddy
-PKG := ./...
+BIN     := bin/buddy
+BIN_MCP := bin/buddy-mcp
+PKG     := ./...
 
 # Version metadata injected into cmd/buddy at link time. GIT_SHA falls back to
 # "unknown" so a non-git tree (release tarball, sandbox) still builds; an
@@ -24,11 +25,16 @@ RELEASE_BINS := \
 	$(DIST)/buddy_$(RELEASE_VERSION)_linux_amd64 \
 	$(DIST)/buddy_$(RELEASE_VERSION)_linux_arm64 \
 	$(DIST)/buddy_$(RELEASE_VERSION)_darwin_amd64 \
-	$(DIST)/buddy_$(RELEASE_VERSION)_darwin_arm64
+	$(DIST)/buddy_$(RELEASE_VERSION)_darwin_arm64 \
+	$(DIST)/buddy-mcp_$(RELEASE_VERSION)_linux_amd64 \
+	$(DIST)/buddy-mcp_$(RELEASE_VERSION)_linux_arm64 \
+	$(DIST)/buddy-mcp_$(RELEASE_VERSION)_darwin_amd64 \
+	$(DIST)/buddy-mcp_$(RELEASE_VERSION)_darwin_arm64
 
 build:
 	@mkdir -p bin
-	go build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN) ./cmd/buddy
+	go build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN)     ./cmd/buddy
+	go build -trimpath                        -o $(BIN_MCP) ./cmd/buddy-mcp
 
 test:
 	go test -race -count=1 $(PKG)
@@ -78,7 +84,7 @@ print-%:
 release-binaries: $(DIST)/SHA256SUMS
 
 $(DIST)/SHA256SUMS: $(RELEASE_BINS)
-	@cd $(DIST) && shasum -a 256 buddy_$(RELEASE_VERSION)_* > SHA256SUMS
+	@cd $(DIST) && shasum -a 256 buddy_$(RELEASE_VERSION)_* buddy-mcp_$(RELEASE_VERSION)_* > SHA256SUMS
 	@cat $(DIST)/SHA256SUMS
 
 $(DIST)/buddy_$(RELEASE_VERSION)_linux_amd64:
@@ -96,3 +102,19 @@ $(DIST)/buddy_$(RELEASE_VERSION)_darwin_amd64:
 $(DIST)/buddy_$(RELEASE_VERSION)_darwin_arm64:
 	@mkdir -p $(DIST)
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./cmd/buddy
+
+$(DIST)/buddy-mcp_$(RELEASE_VERSION)_linux_amd64:
+	@mkdir -p $(DIST)
+	GOOS=linux  GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o $@ ./cmd/buddy-mcp
+
+$(DIST)/buddy-mcp_$(RELEASE_VERSION)_linux_arm64:
+	@mkdir -p $(DIST)
+	GOOS=linux  GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -o $@ ./cmd/buddy-mcp
+
+$(DIST)/buddy-mcp_$(RELEASE_VERSION)_darwin_amd64:
+	@mkdir -p $(DIST)
+	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o $@ ./cmd/buddy-mcp
+
+$(DIST)/buddy-mcp_$(RELEASE_VERSION)_darwin_arm64:
+	@mkdir -p $(DIST)
+	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -o $@ ./cmd/buddy-mcp
