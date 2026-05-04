@@ -1,126 +1,63 @@
 # Buddy
 
-> 무에서 유를 창조하는 작업, 옆에서 같이 도와주는 친구.
-> Claude Code 위에서 *세션 운영의 신뢰성·관제·오케스트레이션*을 한 자리에서.
+A reliability and observability control plane for [Claude Code](https://claude.ai/code) sessions.
+
+Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 26 slash commands and 77 skills covering the full product development lifecycle.
 
 ```
-                  ╭──────────────────────────╮
-   you ──── ▶  │      buddy (control)     │ ── ▶  Claude Code sessions
-                  │  hooks · state · tasks   │       (1, 2, 3, ... N)
-                  ╰──────────────────────────╯
+              ┌──────────────────────────┐
+  you ──────▶ │      buddy (control)     │ ──▶  Claude Code sessions
+              │  hooks · state · tasks   │       (1, 2, 3, ... N)
+              └──────────────────────────┘
 ```
 
 ---
 
-## 왜 만드는가
+## Features
 
-Harness 생태계 33개 프로젝트(claude-code, codex, opencode, SuperClaude, oh-my-*,
-arc-reactor, recon, spec-kit, serena, cli-wrapper, token-monitor 등)를 분석한
-결과, 모든 도구가 같은 4가지 갭을 공유한다는 사실이 드러났습니다:
-
-1. **Hook reliability** — hook이 silent failure 나도 사용자는 모름
-2. **State schema** — JSON 상태가 검증 없이 흩어져 충돌·손상 발생
-3. **Task dependency / retry loop** — wave 병렬 후 실패 시 재실행 로직 없음
-4. **통합 observability** — 토큰·세션·비용·hook 상태가 별개 도구로 분산
-
-Buddy는 위 4가지를 *Claude Code 한정*으로 통합 해결하는 control plane입니다.
-Cross-harness parity 야심은 의도적으로 포기 — 한 harness에서 깊이 있게 작동하는
-도구가, 모든 harness에서 얕게 작동하는 도구보다 가치 있습니다.
-
-> 분석 보고서: [`../harness-engineering-analysis.md`](../harness-engineering-analysis.md)
+| Area | What it does |
+|------|-------------|
+| **Hook reliability** | Wraps Claude Code hooks; surfaces silent failures with structured logs |
+| **State schema** | Zod-validated JSON state prevents corruption and schema drift |
+| **Task retry** | WAL-backed outbox ensures failed tasks are replayed, not dropped |
+| **Observability** | Unified token/cost/session/hook status via a single `stats` command |
+| **Claude Code plugin** | 9-phase lifecycle orchestrator, 26 `/buddy:*` commands, 77 skills |
 
 ---
 
-## 정체성: "친구"
+## Requirements
 
-Buddy는 *비서*도 *오케스트레이터*도 아닙니다. **친구**입니다.
-
-| 친구가 하는 일 | Buddy가 하는 일 |
-|---------------|----------------|
-| 옆에 조용히 있다가 필요할 때 알려준다 | hook 실패·state 충돌·토큰 burn rate 알림 |
-| 내가 잊은 걸 기억해 준다 | session/task 상태를 schema로 검증하며 보존 |
-| 같이 막힌 문제를 풀어준다 | 실패한 task 재시도, 의존 그래프로 다음 단계 제시 |
-| 잔소리하지 않는다 | 침묵이 default. fail loud, success quiet |
-
-**페르소나 결정은 사용자 입력 필요** — `docs/v0.1-spec.md` §6 참조.
+- Go 1.22+ (build from source only)
+- macOS or Linux (Windows: v1.0+)
+- Claude Code (for the plugin)
 
 ---
 
-## 로드맵
+## Installation
 
-장기 비전은 A+B+C 통합 control plane:
-- **A) Control Plane** — 멀티-세션 통합 dashboard (token/cost/status)
-- **B) Orchestration** — task DAG executor (wave + retry + dependency)
-- **C) Reliability** — hook health monitor + state schema validation + WAL replay
-
-v0.1은 **C)부터** wedge로 진입. 이유: 갭이 가장 비어 있고, 다른 도구의 의존
-대상(=control plane이 다른 도구를 신뢰성 있게 관리하려면 신뢰 인프라가 먼저).
-
-| 버전 | wedge | 주요 기능 |
-|------|-------|----------|
-| **v0.1** | Reliability | hook health monitor, state schema (Zod), WAL replay |
-| v0.2 | + Control Plane | multi-session dashboard, token/cost unified view |
-| v0.3 | + Orchestration | task DAG, wave executor, auto-retry |
-| v1.0 | 통합 | AGENTS.md auto-sync, plugin model, MCP server |
-
----
-
-## 1차 타겟
-
-- **Claude Code only** (cross-harness parity는 의도적으로 보류)
-- macOS / Linux (Windows는 v1.0+)
-- **Go 1.22+** static binary, 런타임 의존성 0
-- M3부터 `0xmhha/cli-wrapper`를 daemon supervision에 통합
-
----
-
-## 현재 상태
-
-v0.1 통과. M1 schema/SQLite/outbox · M2 hook-wrap · M3 daemon+aggregator
-+cli-wrapper · M4 install/uninstall/doctor/stats/events · M5 config CLI +
-purge + 페르소나 카탈로그 + 4 friction fix · M6 release prep (cross-compile
-matrix + tag-triggered GH Actions release + CHANGELOG).
-- 15개 패키지, ~150+ tests pass (race-clean), ~12MB static binary.
-- v0.1.0 은 `git tag v0.1.0 && git push --tags` 한 번으로 GitHub Releases publish.
-  다음: dogfood feedback 회수 후 v0.2 우선순위 결정.
-
-→ 처음 켜는 사람은 [DOGFOOD.md](./DOGFOOD.md) 부터.
-→ 다른 세션에서 작업 이어 받는 사람은 [docs/HANDOFF.md](./docs/HANDOFF.md) 부터.
-
-## Quickstart
-
-### Install — release binary (recommended)
-
-GitHub Releases는 태그마다 4개 바이너리(`linux/amd64`, `linux/arm64`,
-`darwin/amd64`, `darwin/arm64`)와 `SHA256SUMS`를 함께 publish 합니다. 최신
-릴리즈: [github.com/0xmhha/buddy/releases](https://github.com/0xmhha/buddy/releases).
+### Release binary (recommended)
 
 ```bash
-# 1. 플랫폼 감지
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')          # linux | darwin
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 VERSION=0.1.0
 
-# 2. 바이너리 + 체크섬 다운로드
 curl -fL "https://github.com/0xmhha/buddy/releases/download/v${VERSION}/buddy_${VERSION}_${OS}_${ARCH}" -o buddy
 curl -fL "https://github.com/0xmhha/buddy/releases/download/v${VERSION}/SHA256SUMS" -o SHA256SUMS
 
-# 3. 체크섬 수동 비교 (자동화 trick은 파일명 미스매치를 숨길 수 있어 비추)
+# Verify checksum manually
 shasum -a 256 buddy
 grep "buddy_${VERSION}_${OS}_${ARCH}$" SHA256SUMS
-# 두 줄의 hash가 동일한지 눈으로 확인.
 
-# 4. 설치
 chmod +x buddy
 sudo mv buddy /usr/local/bin/
 buddy --version
 ```
 
-> **macOS:** 서명 안 된 바이너리는 Gatekeeper에 막힙니다. 다운로드 후 한 번만
-> `xattr -d com.apple.quarantine /usr/local/bin/buddy` 실행하면 됩니다.
-> Notarization은 v0.2 punchlist.
+> **macOS:** Remove the quarantine attribute after download:
+> `xattr -d com.apple.quarantine /usr/local/bin/buddy`
 
-`gh` CLI 사용자라면 release asset를 바로 가져올 수 있습니다 (Go 툴체인 불필요):
+Using the `gh` CLI:
 
 ```bash
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -129,97 +66,132 @@ gh release download v0.1.0 --repo 0xmhha/buddy \
   --pattern "buddy_*_${OS}_${ARCH}" -O buddy
 ```
 
-### Install — Claude Code Plugin (recommended for AI workflows)
+### Claude Code plugin
 
-Buddy를 Claude Code 플러그인으로 설치하면 `/buddy:*` slash commands와 77개 skill을
-바로 사용할 수 있습니다. **git clone 없이** GitHub 레포에서 직접 설치합니다.
+Install directly from GitHub — no local clone needed:
 
 ```bash
 claude plugin marketplace add 0xmhha/buddy
 claude plugin install buddy@buddy
 ```
 
-설치 확인:
+Verify:
 
 ```bash
 claude plugin list
-# buddy  1.0.0  설치됨
+# buddy  1.0.0  installed
 ```
 
-제거할 때:
+Uninstall:
 
 ```bash
 claude plugin uninstall buddy@buddy
 claude plugin marketplace remove buddy
 ```
 
-> **포함 기능**: 9-phase lifecycle orchestrator (§1 idea → §9 EOL),
-> 26개 `/buddy:*` commands, 77개 skills.
-
-#### 로컬 개발용 설치
-
-레포를 클론해서 수정 중인 경우:
+### Build from source
 
 ```bash
 git clone https://github.com/0xmhha/buddy.git
 cd buddy
-make install-plugin-local
+make build       # outputs bin/buddy
 ```
-
-### Install — from source
-
-```bash
-git clone https://github.com/0xmhha/buddy.git
-cd buddy
-make build                                 # bin/buddy 생성
-```
-
-### 사용
-
-```bash
-# 1. Claude Code hook을 buddy로 감싼다 (선택: --with-cliwrap 으로 cliwrap.yaml도 생성)
-./bin/buddy install --with-cliwrap
-
-# 2. 백그라운드 daemon 띄우기 (또는 cliwrap이 supervise)
-./bin/buddy daemon start
-
-# 3. 한 번 진단
-./bin/buddy doctor
-
-# 4. 통계 보기
-./bin/buddy stats --window 1h
-./bin/buddy stats --by-tool --window 5m
-
-# 5. 설정 확인 / 변경 (M5)
-./bin/buddy config show
-./bin/buddy config set hookSlowMs 3000
-
-# 6. 오래된 데이터 정리 — dry-run 먼저 (M5)
-./bin/buddy purge --before 30d
-# ./bin/buddy purge --before 30d --apply       # 실제 삭제
-
-# 7. 디버그용 raw 이벤트 따라가기
-./bin/buddy events --follow
-
-# 8. 다시 떼고 싶으면
-./bin/buddy daemon stop
-./bin/buddy uninstall
-```
-
-자세한 CLI 표면은 `docs/v0.1-spec.md` §7, 결정 lock-in은 §6 참조.
 
 ---
 
-## 역사적 메모
+## Usage
 
-v0.1 PoC는 처음 TypeScript/Node로 시작했으나, hook wrapper의 self-overhead
-(매 hook 호출당 50-100ms vs Go 5-10ms)와 cli-wrapper와의 native 통합 가능성
-때문에 Go로 pivot했습니다. TS 자산은 `archive/ts-poc/` 에 보존.
+```bash
+# Wrap Claude Code hooks (optionally generate cliwrap.yaml)
+buddy install --with-cliwrap
 
-> 다음 작업 계획: [docs/roadmap.md](./docs/roadmap.md)
+# Start the background daemon
+buddy daemon start
+
+# Run diagnostics
+buddy doctor
+
+# View token/hook stats
+buddy stats --window 1h
+buddy stats --by-tool --window 5m
+
+# Inspect and tune configuration
+buddy config show
+buddy config set hookSlowMs 3000
+
+# Purge old data (dry-run first)
+buddy purge --before 30d
+buddy purge --before 30d --apply
+
+# Stream raw events for debugging
+buddy events --follow
+
+# Remove hooks and stop daemon
+buddy daemon stop
+buddy uninstall
+```
+
+Full CLI reference: [`docs/v0.1-spec.md §7`](./docs/v0.1-spec.md).
+
+### Claude Code plugin — slash commands
+
+Once the plugin is installed, the following commands are available in any Claude Code session:
+
+| Phase | Command |
+|-------|---------|
+| §1 Idea | `/buddy:concretize-idea`, `/buddy:validate-idea` |
+| §2 Features | `/buddy:define-features`, `/buddy:map-actor-use-cases` |
+| §3 Design | `/buddy:design-system`, `/buddy:explore-design-variants` |
+| §4 Plan | `/buddy:plan-build`, `/buddy:autoplan` |
+| §5 Build | `/buddy:build-feature`, `/buddy:build-with-tdd` |
+| §6 Quality | `/buddy:verify-quality`, `/buddy:audit-security` |
+| §7 Release | `/buddy:ship-release`, `/buddy:auto-create-pr` |
+| §8 Operate | `/buddy:iterate-product`, `/buddy:analyze-ab-experiment` |
+| §9 Lifecycle | `/buddy:manage-lifecycle` |
 
 ---
 
-## 라이선스
+## Roadmap
 
-Apache 2.0
+| Version | Focus | Key additions |
+|---------|-------|---------------|
+| **v0.1** ✓ | Reliability | Hook monitor, Zod state schema, WAL replay |
+| v0.2 | Control Plane | Multi-session dashboard, unified token/cost view |
+| v0.3 | Orchestration | Task DAG, wave executor, auto-retry |
+| v1.0 | Integration | AGENTS.md auto-sync, plugin model, MCP server |
+
+---
+
+## Contributing
+
+Contributions are welcome. Please follow these steps:
+
+1. Fork the repository and create a feature branch from `main`.
+2. Run the test suite: `make test` (includes race detector).
+3. Keep changes focused — one logical change per PR.
+4. Open a pull request with a clear description of the problem and solution.
+
+For larger changes, open an issue first to discuss the approach.
+
+Bug reports and feature requests: [GitHub Issues](https://github.com/0xmhha/buddy/issues).
+
+---
+
+## Acknowledgments
+
+Portions of the Claude Code plugin skills (`plugin/skills/`) are derived from or inspired by the following MIT-licensed projects:
+
+- **[mattpocock/skills](https://github.com/mattpocock/skills)** — Copyright (c) 2026 Matt Pocock. [MIT License](https://opensource.org/licenses/MIT).
+- **[gstack](https://github.com/garrytan/gstack)** — Copyright (c) 2026 Garry Tan. [MIT License](https://opensource.org/licenses/MIT).
+
+These works are used and modified in accordance with their respective MIT licenses. Full license texts are reproduced in [`NOTICE`](./NOTICE).
+
+---
+
+## License
+
+Copyright 2026 mhha
+
+Licensed under the Apache License, Version 2.0. See [`LICENSE`](./LICENSE) for the full text.
+
+Third-party components are listed in [`NOTICE`](./NOTICE).
