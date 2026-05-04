@@ -129,6 +129,43 @@ gh release download v0.1.0 --repo 0xmhha/buddy \
   --pattern "buddy_*_${OS}_${ARCH}" -O buddy
 ```
 
+### Install — Claude Code Plugin (recommended for AI workflows)
+
+Buddy는 Claude Code 플러그인으로 설치하면 `/buddy:*` slash commands와 77개 skill을
+바로 사용할 수 있습니다.
+
+```bash
+git clone https://github.com/0xmhha/buddy.git
+cd buddy
+make install-plugin
+```
+
+또는 수동으로:
+
+```bash
+# 1. 마켓플레이스에 로컬 플러그인 등록
+claude plugin marketplace add /path/to/buddy/plugin
+
+# 2. 플러그인 설치
+claude plugin install buddy@buddy
+```
+
+설치 확인:
+
+```bash
+claude plugin list
+# buddy  1.0.0  설치됨
+```
+
+제거할 때:
+
+```bash
+make uninstall-plugin
+```
+
+> **포함 기능**: 9-phase lifecycle orchestrator (§1 idea → §9 EOL),
+> 26개 `/buddy:*` commands, 77개 skills.
+
 ### Install — from source
 
 ```bash

@@ -1,4 +1,4 @@
-.PHONY: build test fmt vet tidy clean release-binaries print-%
+.PHONY: build test fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
 
 BIN := bin/buddy
 PKG := ./...
@@ -44,6 +44,16 @@ tidy:
 
 clean:
 	rm -rf bin/ $(DIST) *.out coverage.txt
+
+PLUGIN_DIR := $(shell pwd)/plugin
+
+install-plugin:
+	claude plugin marketplace add $(PLUGIN_DIR)
+	claude plugin install buddy@buddy
+
+uninstall-plugin:
+	claude plugin uninstall buddy@buddy || true
+	claude plugin marketplace remove buddy || true
 
 # print-VAR: utility for CI to read a Makefile variable without parsing.
 # Example: `make -s print-RELEASE_VERSION` -> `0.1.0`.

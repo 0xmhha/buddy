@@ -1,0 +1,18 @@
+{
+  "name": "buddy",
+  "description": "Buddy — 상용 제품 빌딩 풀 라이프사이클 지원 Claude Code plugin",
+  "owner": {
+    "name": "mhha"
+  },
+  "plugins": [
+    {
+      "name": "buddy",
+      "description": "9-phase multi-orchestrator model: idea → business validation → design → build → quality → release → A/B iterate → lifecycle. 77 skills, 26 commands.",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "mhha"
+      }
+    }
+  ]
+}
