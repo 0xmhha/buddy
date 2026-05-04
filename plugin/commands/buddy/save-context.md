@@ -1,6 +1,6 @@
 ---
 description: 현재 git state, decisions, remaining work를 checkpoint로 저장 — branch가 달라도 future session이 이어받게.
-argument-hint: [<체크포인트 라벨>]
+argument-hint: "[<체크포인트 라벨>]"
 ---
 
 # /buddy:save-context

@@ -1,6 +1,6 @@
 ---
 description: Red-Green-Refactor TDD 루프로 신규 기능 구현 — test 먼저 → 실패 확인 → 최소 구현 → 통과 → 리팩터.
-argument-hint: <기능/스펙 설명>
+argument-hint: "<기능/스펙 설명>"
 ---
 
 # /buddy:build-with-tdd

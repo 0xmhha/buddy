@@ -1,6 +1,6 @@
 ---
 description: §4 Implementation Plan — technical design → ordered task graph + actor별 parallel execution plan. feature를 actor track으로 분해하고 task DAG와 build timeline을 생성.
-argument-hint: <feature backlog 또는 technical design 경로>
+argument-hint: "<feature backlog 또는 technical design 경로>"
 ---
 
 # /buddy:plan-build

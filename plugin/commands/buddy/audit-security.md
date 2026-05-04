@@ -1,6 +1,6 @@
 ---
 description: CSO-mode 8-category 보안 감사 — secrets, supply chain, CI/CD, LLM/AI threats, OWASP Top 10, STRIDE.
-argument-hint: [--scope <path>] [--severity <level>]
+argument-hint: "[--scope <path>] [--severity <level>]"
 ---
 
 # /buddy:audit-security

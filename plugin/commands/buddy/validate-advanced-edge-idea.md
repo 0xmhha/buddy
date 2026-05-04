@@ -1,6 +1,6 @@
 ---
 description: validate-idea 후속 — edge case, hidden assumption, second-order effect를 압박 인터뷰(grilling)로 박멸.
-argument-hint: <validate-idea 산출물 또는 가설>
+argument-hint: "<validate-idea 산출물 또는 가설>"
 ---
 
 # /buddy:validate-advanced-edge-idea

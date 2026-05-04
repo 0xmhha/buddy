@@ -1,6 +1,6 @@
 ---
 description: multi-stage review pipeline 자동 실행 — CEO/design/eng/DX 리뷰를 순차로 돌려 plan을 finalize.
-argument-hint: <plan 경로 또는 설명>
+argument-hint: "<plan 경로 또는 설명>"
 ---
 
 # /buddy:autoplan

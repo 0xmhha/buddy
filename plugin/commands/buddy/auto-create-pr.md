@@ -1,6 +1,6 @@
 ---
 description: feature/task 완료 후 commit → branch push → PR 생성 자동화.
-argument-hint: [<PR 제목 또는 비고>]
+argument-hint: "[<PR 제목 또는 비고>]"
 ---
 
 # /buddy:auto-create-pr

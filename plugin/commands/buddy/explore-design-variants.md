@@ -1,6 +1,6 @@
 ---
 description: design variant N개를 parallel 생성하고 structured feedback으로 iterate.
-argument-hint: <디자인 컨텍스트> [--count N]
+argument-hint: "<디자인 컨텍스트> [--count N]"
 ---
 
 # /buddy:explore-design-variants

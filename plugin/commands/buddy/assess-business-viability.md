@@ -1,6 +1,6 @@
 ---
 description: 아이디어가 사업으로 성립하는지 7차원(TAM/SAM/SOM, 고객, WTP, GTM, 경쟁, unit economics, 규제)으로 평가.
-argument-hint: <아이디어 또는 PRD 경로>
+argument-hint: "<아이디어 또는 PRD 경로>"
 ---
 
 # /buddy:assess-business-viability

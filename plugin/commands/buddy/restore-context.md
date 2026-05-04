@@ -1,6 +1,6 @@
 ---
 description: context-save가 저장한 most recent work checkpoint를 cross-branch로 load.
-argument-hint: [<체크포인트 라벨 또는 ID>]
+argument-hint: "[<체크포인트 라벨 또는 ID>]"
 ---
 
 # /buddy:restore-context

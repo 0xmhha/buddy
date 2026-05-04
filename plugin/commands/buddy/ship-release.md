@@ -1,6 +1,6 @@
 ---
 description: §7 Release & Beta — quality gate pass → tagged release + canary/UAT + GA. changelog, doc sync, PR, UAT, release tagging을 포함.
-argument-hint: <릴리즈 버전 또는 릴리즈 설명>
+argument-hint: "<릴리즈 버전 또는 릴리즈 설명>"
 ---
 
 # /buddy:ship-release

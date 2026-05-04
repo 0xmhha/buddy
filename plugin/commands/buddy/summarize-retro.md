@@ -1,6 +1,6 @@
 ---
 description: git history를 evidence-based weekly retrospective로 변환 — work types, hotspots, focus score, AI collaboration.
-argument-hint: [<기간: 예 7d, 14d>]
+argument-hint: "[<기간: 예 7d, 14d>]"
 ---
 
 # /buddy:summarize-retro

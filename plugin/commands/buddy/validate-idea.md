@@ -1,6 +1,6 @@
 ---
 description: YC 스타일 아이디어 검증 인터뷰 — 6 forcing question으로 product idea를 stress-test.
-argument-hint: <아이디어 1-3 paragraph>
+argument-hint: "<아이디어 1-3 paragraph>"
 ---
 
 # /buddy:validate-idea

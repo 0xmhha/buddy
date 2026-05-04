@@ -1,6 +1,6 @@
 ---
 description: §2 Feature Definition & Backlog — PRD → feature backlog (actor/use case/system boundary 포함). identify-actors, map-actor-use-cases, compose-feature-from-use-cases, define-feature-spec을 순차 실행.
-argument-hint: <PRD 경로 또는 제품 설명>
+argument-hint: "<PRD 경로 또는 제품 설명>"
 ---
 
 # /buddy:define-features

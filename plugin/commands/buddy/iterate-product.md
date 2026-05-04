@@ -1,6 +1,6 @@
 ---
 description: §8 Operate & Iterate — production traffic → A/B 실험, funnel 분석, 인시던트 대응, 개선 backlog 생성. design-ab-experiment, analyze-user-funnel, handle-incident, generate-improvement-tasks를 포함.
-argument-hint: <분석 대상 feature 또는 문제 설명>
+argument-hint: "<분석 대상 feature 또는 문제 설명>"
 ---
 
 # /buddy:iterate-product

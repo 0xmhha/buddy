@@ -1,6 +1,6 @@
 ---
 description: §5 Development — implementation plan → working code per feature + tests. build-with-tdd, dispatch-parallel-agents, diagnose-bug, iterate-fix-verify를 actor track별로 실행.
-argument-hint: <feature 이름 또는 implementation plan 경로>
+argument-hint: "<feature 이름 또는 implementation plan 경로>"
 ---
 
 # /buddy:build-feature

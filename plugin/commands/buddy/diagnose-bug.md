@@ -1,6 +1,6 @@
 ---
 description: 증상 반응이 아닌 재현 가능한 원인 분석으로 버그 추적.
-argument-hint: <버그 증상 또는 재현 단계>
+argument-hint: "<버그 증상 또는 재현 단계>"
 ---
 
 # /buddy:diagnose-bug

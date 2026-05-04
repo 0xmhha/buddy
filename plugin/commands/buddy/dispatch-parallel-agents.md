@@ -1,6 +1,6 @@
 ---
 description: feature/task를 worktree로 격리해 Sonnet worker agent에 병렬 분배하고 결과를 aggregate.
-argument-hint: <feature 목록 또는 plan 경로>
+argument-hint: "<feature 목록 또는 plan 경로>"
 ---
 
 # /buddy:dispatch-parallel-agents
