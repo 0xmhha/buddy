@@ -29,21 +29,21 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | Skill name | Path | Trigger 경로 | When to use (1줄) |
 |------------|------|------------|------------------|
 | `apply-builder-ethos` | `plugin/skills/apply-builder-ethos/SKILL.md` | dispatch | Boil the Lake, Search Before Building, User Sovereignty 3 원칙을 주입해 AI collaboration project에 적용 |
-| `assess-business-viability` | `plugin/skills/assess-business-viability/SKILL.md` | dispatch | 아이디어가 사업으로 성립하는지 7차원(TAM/SAM/SOM, 고객-구매자, willingness-to-pay, GTM, 경쟁, unit economics, 규제)으로 평가 |
+| `assess-business-viability` | `plugin/skills/assess-business-viability/SKILL.md` | command + dispatch | 아이디어가 사업으로 성립하는지 7차원(TAM/SAM/SOM, 고객-구매자, willingness-to-pay, GTM, 경쟁, unit economics, 규제)으로 평가 |
 | `audit-live-devex` | `plugin/skills/audit-live-devex/SKILL.md` | dispatch | [패턴 라이브러리] 빌드/배포된 live developer product를 실제로 따라 하며 TTHW timing, evidence, literal doc-following으로 DX audit |
-| `audit-security` | `plugin/skills/audit-security/SKILL.md` | dispatch | CSO-mode security audit을 수행한다 |
-| `auto-create-pr` | `plugin/skills/auto-create-pr/SKILL.md` | dispatch | feature/task 완료 후 commit → branch push → PR 생성을 자동화 |
+| `audit-security` | `plugin/skills/audit-security/SKILL.md` | command + dispatch | CSO-mode security audit을 수행한다 |
+| `auto-create-pr` | `plugin/skills/auto-create-pr/SKILL.md` | command + dispatch | feature/task 완료 후 commit → branch push → PR 생성을 자동화 |
 | `automate-release-tagging` | `plugin/skills/automate-release-tagging/SKILL.md` | dispatch | merged PR set으로부터 semver auto-decision (breaking → MAJOR, feat → MINOR, fix → PATCH), git tag 생성, release note 발행 |
-| `autoplan` | `plugin/skills/autoplan/SKILL.md` | dispatch | 자동 multi-stage 리뷰 파이프라인 |
+| `autoplan` | `plugin/skills/autoplan/SKILL.md` | command + dispatch | 자동 multi-stage 리뷰 파이프라인 |
 | `benchmark-llm-models` | `plugin/skills/benchmark-llm-models/SKILL.md` | dispatch | [패턴 라이브러리] multi-provider LLM benchmark 패턴 (Claude/GPT/Gemini) — dry-run auth verify, provider select, comparison |
-| `build-with-tdd` | `plugin/skills/build-with-tdd/SKILL.md` | dispatch | 신규 기능을 red-green-refactor TDD 루프(test 먼저 → 실패 확인 → 최소 구현 → 통과 → 리팩터)로 구현 |
+| `build-with-tdd` | `plugin/skills/build-with-tdd/SKILL.md` | command + dispatch | 신규 기능을 red-green-refactor TDD 루프(test 먼저 → 실패 확인 → 최소 구현 → 통과 → 리팩터)로 구현 |
 | `classify-qa-tiers` | `plugin/skills/classify-qa-tiers/SKILL.md` | dispatch | [패턴 라이브러리] QA intensity를 Quick/Standard/Exhaustive 3 tiers로 분류 + fix→commit→re-verify loop |
 | `classify-review-risks` | `plugin/skills/classify-review-risks/SKILL.md` | dispatch | [패턴 라이브러리] structural code review에서 반복적으로 놓치는 risk 11 category 분류 (SQL safety, LLM trust boundary 등) |
 | `compose-safety-mode` | `plugin/skills/compose-safety-mode/SKILL.md` | dispatch | [패턴 라이브러리 / META] guard-destructive-commands + freeze-edit-scope 같은 multiple safety hooks를 max safety mode로 합성 |
-| `consult-codex` | `plugin/skills/consult-codex/SKILL.md` | dispatch | 독립 컨텍스트의 외부 LLM CLI(codex 등)를 호출해 review/challenge/consult 3 modes로 second opinion을 얻음 |
+| `consult-codex` | `plugin/skills/consult-codex/SKILL.md` | command + dispatch | 독립 컨텍스트의 외부 LLM CLI(codex 등)를 호출해 review/challenge/consult 3 modes로 second opinion을 얻음 |
 | `consult-design-system` | `plugin/skills/consult-design-system/SKILL.md` | dispatch | research → synthesize → output pipeline으로 complete design system 생성 |
 | `critique-plan` | `plugin/skills/critique-plan/SKILL.md` | dispatch | Implementation plan에 대한 strategic critique (CEO/founder 페르소나) |
-| `define-product-spec` | `plugin/skills/define-product-spec/SKILL.md` | dispatch | 아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정 |
+| `define-product-spec` | `plugin/skills/define-product-spec/SKILL.md` | command + dispatch | 아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정 |
 | `design-artifact-storage` | `plugin/skills/design-artifact-storage/SKILL.md` | dispatch | patch / git_bundle / template / package 같은 immutable artifact의 저장·검증·배포 설계 |
 | `design-billing-system` | `plugin/skills/design-billing-system/SKILL.md` | dispatch | SaaS 결제 시스템 설계 — Stripe/Toss + point wallet + subscription tier + usage metering + invoice + dunning |
 | `design-claude-hooks` | `plugin/skills/design-claude-hooks/SKILL.md` | dispatch | Claude Code plugin/.claude scope의 PreToolUse, PostToolUse, Stop, SessionStart hook 표준 설계 |
@@ -51,18 +51,18 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `design-embedding-search` | `plugin/skills/design-embedding-search/SKILL.md` | dispatch | BM25 + vector embedding + metadata filter + reranking 결합한 hybrid search 설계 |
 | `design-mcp-server` | `plugin/skills/design-mcp-server/SKILL.md` | dispatch | MCP(Model Context Protocol) server 설계 |
 | `detect-install-type` | `plugin/skills/detect-install-type/SKILL.md` | dispatch | [패턴 라이브러리] tool install type(global-git/local-git/vendored/package-manager/dev-symlink) detect + upgrade path |
-| `diagnose-bug` | `plugin/skills/diagnose-bug/SKILL.md` | dispatch | 버그를 증상 반응이 아닌 재현 가능한 원인 분석으로 해결 |
-| `dispatch-parallel-agents` | `plugin/skills/dispatch-parallel-agents/SKILL.md` | dispatch | feature/task를 worktree로 격리해 Sonnet worker agent에 병렬 분배하고 결과를 aggregate |
-| `explore-design-variants` | `plugin/skills/explore-design-variants/SKILL.md` | dispatch | N variants를 parallel 생성하고 structured feedback으로 iterate |
+| `diagnose-bug` | `plugin/skills/diagnose-bug/SKILL.md` | command + dispatch | 버그를 증상 반응이 아닌 재현 가능한 원인 분석으로 해결 |
+| `dispatch-parallel-agents` | `plugin/skills/dispatch-parallel-agents/SKILL.md` | command + dispatch | feature/task를 worktree로 격리해 Sonnet worker agent에 병렬 분배하고 결과를 aggregate |
+| `explore-design-variants` | `plugin/skills/explore-design-variants/SKILL.md` | command + dispatch | N variants를 parallel 생성하고 structured feedback으로 iterate |
 | `freeze-edit-scope` | `plugin/skills/freeze-edit-scope/SKILL.md` | dispatch | [패턴 라이브러리] session 동안 Edit/Write를 single directory로 lock (Read/Grep/Glob은 열어 둠) |
 | `guard-destructive-commands` | `plugin/skills/guard-destructive-commands/SKILL.md` | dispatch | [패턴 라이브러리] rm -rf, DROP TABLE, force push 등 destructive bash command 전 risk taxonomy + safe exception |
 | `guide-setup-wizard` | `plugin/skills/guide-setup-wizard/SKILL.md` | dispatch | [패턴 라이브러리] auto-detect → picker → verify pattern으로 credential/config setup flow 설계 |
 | `iterate-fix-verify` | `plugin/skills/iterate-fix-verify/SKILL.md` | dispatch | [패턴 라이브러리] finding 하나씩 fix → atomic commit → re-verify 반복 repair loop |
-| `measure-code-health` | `plugin/skills/measure-code-health/SKILL.md` | dispatch | project tool을 auto-detect해 typecheck/lint/test/deadcode/shell 결과를 0-10 weighted composite health dashboard로 |
+| `measure-code-health` | `plugin/skills/measure-code-health/SKILL.md` | command + dispatch | project tool을 auto-detect해 typecheck/lint/test/deadcode/shell 결과를 0-10 weighted composite health dashboard로 |
 | `monitor-regressions` | `plugin/skills/monitor-regressions/SKILL.md` | dispatch | [패턴 라이브러리] delta-based threshold + transient tolerance + per-page isolation으로 monitoring + regression detect |
 | `persist-learning-jsonl` | `plugin/skills/persist-learning-jsonl/SKILL.md` | dispatch | [패턴 라이브러리] JSONL append-only learning store data model + 누적/조회 패턴 (pattern/pitfall/preference taxonomy) |
 | `query-feature-registry` | `plugin/skills/query-feature-registry/SKILL.md` | dispatch | PRD 또는 feature candidate를 받아 feature-management-saas-mcp registry에서 유사 feature 검색해 reuse / adapt / inspire |
-| `restore-context` | `plugin/skills/restore-context/SKILL.md` | dispatch | context-save가 저장한 most recent work checkpoint를 cross-branch로 load한다 |
+| `restore-context` | `plugin/skills/restore-context/SKILL.md` | command + dispatch | context-save가 저장한 most recent work checkpoint를 cross-branch로 load한다 |
 | `review-ai-safety-liability` | `plugin/skills/review-ai-safety-liability/SKILL.md` | dispatch | AI 기반 기능의 책임 범위, 할루시네이션 리스크, 자동 의사결정 영향, content provenance, model output safeguards 검토 |
 | `review-architecture` | `plugin/skills/review-architecture/SKILL.md` | dispatch | 시스템 구조적 무결성, 모듈 결합도, 추상화 깊이(deep module), interface depth, locality, leverage를 상위 레벨에서 검토 |
 | `review-design` | `plugin/skills/review-design/SKILL.md` | dispatch | Designer-mode plan review — 각 design dimension을 0-10으로 score하고 reverse-path technique으로 10점 만들 path를 명시 |
@@ -77,14 +77,14 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `route-multi-platform` | `plugin/skills/route-multi-platform/SKILL.md` | archive | [ARCHIVE / 참조 전용] LLM이 직접 invoke 금지 |
 | `route-spec-to-code` | `plugin/skills/route-spec-to-code/SKILL.md` | archive | [ARCHIVE / 참조 전용] LLM이 직접 invoke 금지 |
 | `run-browser-qa` | `plugin/skills/run-browser-qa/SKILL.md` | dispatch | [패턴 라이브러리] browser automation QA 패턴 — snapshot diff, form testing, responsive check, dialog, accessibility |
-| `save-context` | `plugin/skills/save-context/SKILL.md` | dispatch | decisions, remaining work, git status를 checkpoint로 저장해 future session이 branch가 달라도 이어받게 한다 |
-| `setup-quality-gates` | `plugin/skills/setup-quality-gates/SKILL.md` | dispatch | 개발 환경에 husky + lint-staged + Prettier + typecheck + unit test + secret scan + commitlint를 pre-commit/pre-push에 |
+| `save-context` | `plugin/skills/save-context/SKILL.md` | command + dispatch | decisions, remaining work, git status를 checkpoint로 저장해 future session이 branch가 달라도 이어받게 한다 |
+| `setup-quality-gates` | `plugin/skills/setup-quality-gates/SKILL.md` | command + dispatch | 개발 환경에 husky + lint-staged + Prettier + typecheck + unit test + secret scan + commitlint를 pre-commit/pre-push에 |
 | `split-work-into-features` | `plugin/skills/split-work-into-features/SKILL.md` | dispatch | PRD를 받아 vertical slice 기반 재사용 가능한 feature 단위로 분해 |
-| `summarize-retro` | `plugin/skills/summarize-retro/SKILL.md` | dispatch | git history를 evidence-based weekly retrospective로 변환 — work types, hotspots, focus score, AI collaboration |
+| `summarize-retro` | `plugin/skills/summarize-retro/SKILL.md` | command + dispatch | git history를 evidence-based weekly retrospective로 변환 — work types, hotspots, focus score, AI collaboration |
 | `sync-release-docs` | `plugin/skills/sync-release-docs/SKILL.md` | dispatch | code change diff를 기준으로 affected docs를 audit하고 auto-update 또는 ask를 결정한다 |
 | `triage-work-items` | `plugin/skills/triage-work-items/SKILL.md` | dispatch | 이슈/feature/task 같은 work item의 우선순위 결정과 lifecycle state machine 운영 |
-| `validate-advanced-edge-idea` | `plugin/skills/validate-advanced-edge-idea/SKILL.md` | dispatch | validate-idea 통과 후 edge case, hidden assumption, second-order effect를 압박 인터뷰(grilling)로 박멸 |
-| `validate-idea` | `plugin/skills/validate-idea/SKILL.md` | dispatch | YC 스타일 아이디어 검증 인터뷰 — 6 forcing question으로 product idea를 stress-test |
+| `validate-advanced-edge-idea` | `plugin/skills/validate-advanced-edge-idea/SKILL.md` | command + dispatch | validate-idea 통과 후 edge case, hidden assumption, second-order effect를 압박 인터뷰(grilling)로 박멸 |
+| `validate-idea` | `plugin/skills/validate-idea/SKILL.md` | command + dispatch | YC 스타일 아이디어 검증 인터뷰 — 6 forcing question으로 product idea를 stress-test |
 | `write-changelog` | `plugin/skills/write-changelog/SKILL.md` | dispatch | [패턴 라이브러리] version bump + CHANGELOG release-summary format + voice rules + user-facing change summary |
 
 ---
