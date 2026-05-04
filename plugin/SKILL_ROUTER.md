@@ -33,7 +33,7 @@
 | 2 | **Cross-phase review sub-orchestrator** | `autoplan` | 어느 phase의 산출물(PRD / ADR / task plan)에든 호출 가능한 4-mode review pipeline. Phase orchestrator 안의 review stage로 공유 사용. 사용자 명시 호출 시 standalone 동작. |
 | 3 | **Stage skill (dual-mode)** | 각 phase 안의 stage skill | orchestrator 안에서 단계로도 호출되고, 사용자 명시 호출 시 standalone으로도 동작. 사용자가 stage 단독 명시 호출하면 orchestrator로 escalate 금지 (User Sovereignty). |
 | 4 | **Domain skill** | `build-with-tdd`, `diagnose-bug`, `run-browser-qa`, `auto-create-pr`, … | 특정 단계의 ritual workflow. 진입점이 아니라 진행 중 호출. |
-| 5 | **Pattern library** | `[패턴 라이브러리]` 태그 (`audit-live-devex`, `classify-qa-tiers`, `freeze-edit-scope`, …) | 다른 skill 내부에서 ambient 적용. 직접 dispatch 금지, command 노출 없음. |
+| 5 | **Pattern library** | `audit-live-devex`, `classify-qa-tiers`, `freeze-edit-scope`, `apply-builder-ethos`, `guard-destructive-commands`, `compose-safety-mode`, `detect-install-type`, `save-context`, `restore-context`, `persist-learning-jsonl`, `classify-review-risks`, `monitor-regressions` | 다른 skill 내부에서 ambient 적용. **plugin.json commands에 등재 금지. 직접 dispatch 금지.** |
 | 6 | **Archive** | `route-intent`, `route-multi-platform`, `route-spec-to-code` | `plugin/_archive/` 격리. dispatch / command 모두 금지. |
 
 ---
@@ -105,7 +105,35 @@
 
 ---
 
-## 5. 새 skill 추가 시 router 검토 체크리스트
+## 5. 노출된 커맨드 목록 (plugin.json commands)
+
+> 사용자가 `/buddy:<name>`으로 직접 호출할 수 있는 15개 커맨드.
+> 이 목록 외의 skill은 orchestrator 내부에서만 invoke된다.
+
+| 커맨드 | Priority | 용도 |
+|--------|----------|------|
+| `/buddy:status` | — | 현재 phase 확인 + 다음 커맨드 안내 |
+| `/buddy:concretize-idea` | P1 §1 | Idea → PRD |
+| `/buddy:define-features` | P1 §2 | Feature backlog |
+| `/buddy:design-system` | P1 §3 | Technical design |
+| `/buddy:plan-build` | P1 §4 | Implementation plan |
+| `/buddy:build-feature` | P1 §5 | Development |
+| `/buddy:verify-quality` | P1 §6 | Quality gate |
+| `/buddy:ship-release` | P1 §7 | Release |
+| `/buddy:iterate-product` | P1 §8 | Operate & iterate |
+| `/buddy:manage-lifecycle` | P1 §9 | Lifecycle |
+| `/buddy:autoplan` | P2 | Multi-phase plan review |
+| `/buddy:diagnose-bug` | P4 | Bug investigation |
+| `/buddy:audit-security` | P4 | Security review |
+| `/buddy:auto-create-pr` | P4 | PR creation |
+| `/buddy:build-with-tdd` | P4 | TDD standalone |
+
+**Rule**: plugin.json commands에 새 항목을 추가하려면 Priority ≤ P4이고
+이 테이블에 먼저 등재해야 한다. P5 (Pattern library) / P6 (Archive)는 영구 제외.
+
+---
+
+## 6. 새 skill 추가 시 router 검토 체크리스트
 
 새 skill을 `SKILLS.md`에 등재한 직후 다음을 확인 — 위반하면 이 문서에 항목 추가:
 
@@ -117,7 +145,7 @@
 
 ---
 
-## 6. 참조
+## 7. 참조
 
 - Skill 카탈로그 본문 → [`SKILLS.md`](./SKILLS.md)
 - Plugin manifest → [`.claude-plugin/plugin.json`](./.claude-plugin/plugin.json)

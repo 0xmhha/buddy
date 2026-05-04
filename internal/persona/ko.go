@@ -89,5 +89,12 @@ func koCatalog() map[Key]string {
 
 		// events
 		KeyEventsFollowFailed: "buddy: events follow 실패 (%v)",
+
+		// feature CLI
+		KeyFeatureUpserted:  "buddy: feature 저장했어 (%s).",
+		KeyFeatureDeleted:   "buddy: feature 삭제했어 (%s).",
+		KeyFeatureNotFound:  "buddy: feature를 못 찾겠어 (%s).",
+		KeyFeatureListEmpty: "buddy: 등록된 feature가 없어.",
+		KeyFeatureFailed:    "buddy: feature 작업 실패 (%v).",
 	}
 }

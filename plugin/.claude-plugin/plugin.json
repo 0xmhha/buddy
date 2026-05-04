@@ -6,5 +6,82 @@
     "name": "mhha"
   },
   "license": "Apache-2.0",
-  "homepage": "https://github.com/0xmhha/buddy"
+  "homepage": "https://github.com/0xmhha/buddy",
+  "commands": [
+    {
+      "name": "status",
+      "description": "현재 phase 확인 + 다음에 실행할 커맨드 안내. 막막할 때 먼저 실행.",
+      "skill": "status"
+    },
+    {
+      "name": "concretize-idea",
+      "description": "§1 Idea & Business Validation — idea를 PRD + 사업성 검증까지 구체화.",
+      "skill": "concretize-idea"
+    },
+    {
+      "name": "define-features",
+      "description": "§2 Feature Definition — PRD → actor 식별 → feature backlog 정의.",
+      "skill": "define-features"
+    },
+    {
+      "name": "design-system",
+      "description": "§3 Technical Design — feature backlog → 기술 설계 + API 계약 + infra 결정.",
+      "skill": "design-system"
+    },
+    {
+      "name": "plan-build",
+      "description": "§4 Implementation Plan — 기술 설계 → actor-track plan + task DAG 작성.",
+      "skill": "plan-build"
+    },
+    {
+      "name": "build-feature",
+      "description": "§5 Development — implementation plan → TDD 루프 + 병렬 agent dispatch + 구현 완료.",
+      "skill": "build-feature"
+    },
+    {
+      "name": "verify-quality",
+      "description": "§6 Quality Gate — 코드 완성 → test / lint / security / devex 전체 품질 검증.",
+      "skill": "verify-quality"
+    },
+    {
+      "name": "ship-release",
+      "description": "§7 Release — quality gate 통과 → PR 생성 + release 태깅 + changelog.",
+      "skill": "ship-release"
+    },
+    {
+      "name": "iterate-product",
+      "description": "§8 Operate & Iterate — production traffic → A/B 분석 + 인시던트 + 개선 루프.",
+      "skill": "iterate-product"
+    },
+    {
+      "name": "manage-lifecycle",
+      "description": "§9 Lifecycle — feature/product 노후화 관리 + 수명주기 결정.",
+      "skill": "manage-lifecycle"
+    },
+    {
+      "name": "autoplan",
+      "description": "어느 phase의 plan/PRD/설계 산출물이든 multi-angle 자동 리뷰 (scope→design→eng→devex).",
+      "skill": "autoplan"
+    },
+    {
+      "name": "diagnose-bug",
+      "description": "버그 재현 → 원인 → fix → regression test. 버그 발견 시 단독 실행.",
+      "skill": "diagnose-bug"
+    },
+    {
+      "name": "audit-security",
+      "description": "OWASP Top 10 + secrets + JWT + SQL injection 보안 취약점 점검.",
+      "skill": "audit-security"
+    },
+    {
+      "name": "auto-create-pr",
+      "description": "feature 브랜치 → PR 자동 생성 + description + label.",
+      "skill": "auto-create-pr"
+    },
+    {
+      "name": "build-with-tdd",
+      "description": "TDD red→green→refactor 단독 실행. 특정 feature/함수를 TDD로 구현할 때.",
+      "skill": "build-with-tdd"
+    }
+  ]
 }

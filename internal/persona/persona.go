@@ -127,6 +127,13 @@ const (
 
 	// events follow markers
 	KeyEventsFollowFailed Key = "events.follow_failed" // %v
+
+	// feature CLI
+	KeyFeatureUpserted  Key = "feature.upserted"   // %s = feature_id
+	KeyFeatureDeleted   Key = "feature.deleted"     // %s = feature_id
+	KeyFeatureNotFound  Key = "feature.not_found"   // %s = feature_id
+	KeyFeatureListEmpty Key = "feature.list_empty"
+	KeyFeatureFailed    Key = "feature.failed" // %v = err
 )
 
 // AllKeys returns every Key constant in declaration order. Used by the
@@ -208,6 +215,13 @@ func AllKeys() []Key {
 
 		// events
 		KeyEventsFollowFailed,
+
+		// feature CLI
+		KeyFeatureUpserted,
+		KeyFeatureDeleted,
+		KeyFeatureNotFound,
+		KeyFeatureListEmpty,
+		KeyFeatureFailed,
 	}
 }
 

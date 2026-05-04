@@ -141,6 +141,7 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newStatsCmd())
 	root.AddCommand(newEventsCmd())
 	root.AddCommand(newPurgeCmd())
+	root.AddCommand(newFeatureCmd())
 	// Strip cobra's default "<name> version " prefix: versionString() already
 	// starts with "buddy ", and the spec format would otherwise render as
 	// "buddy version buddy 0.1.0 (...)". The trailing newline matches cobra's
