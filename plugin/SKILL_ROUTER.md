@@ -107,29 +107,76 @@
 
 ## 5. 노출된 커맨드 목록 (plugin.json commands)
 
-> 사용자가 `/buddy:<name>`으로 직접 호출할 수 있는 15개 커맨드.
-> 이 목록 외의 skill은 orchestrator 내부에서만 invoke된다.
+> 사용자가 `/buddy:<name>`으로 직접 호출할 수 있는 27개 커맨드.
+> 9개 단계 진입점 + 1개 다각도 리뷰 + 3개 공통 도구 + 13개 단계별 세부 작업 + 1개 상태 확인 = 27.
+> 패턴 라이브러리와 보관 스킬은 manifest 에 노출하지 않는다.
 
-| 커맨드 | Priority | 용도 |
-|--------|----------|------|
-| `/buddy:status` | — | 현재 phase 확인 + 다음 커맨드 안내 |
-| `/buddy:concretize-idea` | P1 §1 | Idea → PRD |
-| `/buddy:define-features` | P1 §2 | Feature backlog |
-| `/buddy:design-system` | P1 §3 | Technical design |
-| `/buddy:plan-build` | P1 §4 | Implementation plan |
-| `/buddy:build-feature` | P1 §5 | Development |
-| `/buddy:verify-quality` | P1 §6 | Quality gate |
-| `/buddy:ship-release` | P1 §7 | Release |
-| `/buddy:iterate-product` | P1 §8 | Operate & iterate |
-| `/buddy:manage-lifecycle` | P1 §9 | Lifecycle |
-| `/buddy:autoplan` | P2 | Multi-phase plan review |
-| `/buddy:diagnose-bug` | P4 | Bug investigation |
-| `/buddy:audit-security` | P4 | Security review |
-| `/buddy:auto-create-pr` | P4 | PR creation |
-| `/buddy:build-with-tdd` | P4 | TDD standalone |
+> **9-phase 라이프사이클 단계 약칭** (이하 표에서 사용):
+> 1) 아이디어 구체화 / 2) Feature 정의 / 3) 기술 설계 / 4) 구현 계획 / 5) 개발 / 6) 품질 검증 / 7) 릴리즈 / 8) 운영·개선 / 9) 수명주기 관리.
 
-**Rule**: plugin.json commands에 새 항목을 추가하려면 Priority ≤ P4이고
-이 테이블에 먼저 등재해야 한다. P5 (Pattern library) / P6 (Archive)는 영구 제외.
+### 5.1 상태 확인 (1)
+
+| 커맨드 | 단계 | 용도 |
+|--------|------|------|
+| `/buddy:status` | 공통 | 현재 작업 단계 확인 + 다음에 실행할 명령 안내 |
+
+### 5.2 단계 진입점 (9)
+
+> 각 라이프사이클 단계의 시작 게이트. 진입 조건이 맞으면 해당 단계의 모든 작업을 자동 진행.
+
+| 커맨드 | 단계 | 용도 |
+|--------|------|------|
+| `/buddy:concretize-idea` | 1. 아이디어 구체화 | 검증 → 사업성 평가 → PRD 작성 |
+| `/buddy:define-features` | 2. Feature 정의 | PRD → actor / use case → feature backlog |
+| `/buddy:design-system` | 3. 기술 설계 | 기술 스택 / API 계약 / infra / 데이터 모델 |
+| `/buddy:plan-build` | 4. 구현 계획 | actor 별 task 분해 + 의존성 그래프 |
+| `/buddy:build-feature` | 5. 개발 | TDD 루프 + 병렬 worker agent |
+| `/buddy:verify-quality` | 6. 품질 검증 | 테스트 + 보안 + 컴플라이언스 |
+| `/buddy:ship-release` | 7. 릴리즈 | PR + 태깅 + canary + UAT |
+| `/buddy:iterate-product` | 8. 운영·개선 | A/B 분석 + 인시던트 + funnel |
+| `/buddy:manage-lifecycle` | 9. 수명주기 관리 | deprecation + 마이그레이션 + EOL |
+
+### 5.3 다각도 리뷰 (1)
+
+> 어느 단계든 plan / PRD / 설계 산출물이 생기면 호출 가능. 단일 단계 종속 없음.
+
+| 커맨드 | 단계 | 용도 |
+|--------|------|------|
+| `/buddy:autoplan` | 공통 (리뷰) | 산출물을 scope / design / engineering / DX 4개 관점으로 자동 리뷰 |
+
+### 5.4 공통 도구 (3)
+
+> 단계 종속 없음. 어디서든 호출 가능.
+
+| 커맨드 | 단계 | 용도 |
+|--------|------|------|
+| `/buddy:consult-codex` | 공통 | 외부 LLM (codex 등) 으로 second opinion |
+| `/buddy:save-context` | 공통 | 체크포인트 저장 (브랜치 무관 이어받기) |
+| `/buddy:restore-context` | 공통 | 체크포인트 복원 |
+
+### 5.5 단계별 세부 작업 (13)
+
+> 단계 진입점 안에서 자동 호출되거나, 사용자가 단독 호출 가능 (dual-mode).
+
+| 커맨드 | 단계 | 용도 |
+|--------|------|------|
+| `/buddy:validate-idea` | 1. 아이디어 구체화 | YC 스타일 검증 인터뷰 |
+| `/buddy:validate-advanced-edge-idea` | 1. 아이디어 구체화 | 엣지 케이스 / 숨은 가정 박멸 |
+| `/buddy:assess-business-viability` | 1. 아이디어 구체화 | 사업성 7차원 평가 |
+| `/buddy:define-product-spec` | 1. 아이디어 구체화 | PRD 고정 |
+| `/buddy:explore-design-variants` | 3. 기술 설계 | N개 설계 안 병렬 탐색 |
+| `/buddy:build-with-tdd` | 5. 개발 | TDD 루프 단독 실행 |
+| `/buddy:diagnose-bug` | 5. 개발 | 버그 재현 → 원인 → fix |
+| `/buddy:dispatch-parallel-agents` | 5. 개발 | worktree 격리 + worker 분배 |
+| `/buddy:audit-security` | 6. 품질 검증 | OWASP / secrets / JWT 점검 |
+| `/buddy:measure-code-health` | 6. 품질 검증 | 0-10 가중 점수 대시보드 |
+| `/buddy:auto-create-pr` | 7. 릴리즈 | PR 자동 생성 |
+| `/buddy:setup-quality-gates` | 7. 릴리즈 | pre-commit / pre-push 게이트 설치 |
+| `/buddy:summarize-retro` | 8. 운영·개선 | git history → 주간 회고 |
+
+> 단계 2 / 4 / 9 의 세부 작업 커맨드는 현재 0개 — 단계 진입점 안의 기존 stage skill 만 활성. 신규 작업은 [`docs/tasks.md`](../docs/tasks.md) A-1 참조.
+
+**규칙**: plugin.json `commands` 에 새 항목을 추가하려면 §2 의 도메인 우선순위 표에서 1~4 등급에 속해야 하고, 이 §5 의 적절한 sub-section 에 먼저 등재해야 한다. 패턴 라이브러리와 보관 스킬은 영구 비공개.
 
 ---
 
