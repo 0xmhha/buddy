@@ -1,5 +1,13 @@
 # Buddy 상용 제품 빌딩 스킬맵 초안
 
+> **STATUS — 2026-05-05 갱신**
+>
+> 이 문서의 11-stage 모델은 **9-phase multi-orchestrator 모델**(2026-05-04 spec)의 *입력 자료*다.
+> 라우팅·skill 카탈로그·command surface의 **현행 SSoT는** [`superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md), [`plugin/SKILL_ROUTER.md`](../plugin/SKILL_ROUTER.md), [`plugin/SKILLS.md`](../plugin/SKILLS.md).
+>
+> 이 문서는 (a) 11-stage 분석 사고 보존, (b) Matt skills 추출 후보 평가, (c) 신규 skill 명명 후보의 reference 로 유지된다.
+> 새 skill을 phase에 매핑할 때는 아래 [§0 11-stage → 9-phase 매핑](#0-11-stage--9-phase-매핑)을 먼저 본다.
+
 ## 목적
 
 `buddy` 프로젝트는 새로운 아이디어를 상용 수준의 제품으로 구체화하고, 구현, 테스트, 배포, 운영까지 지원하는 스킬셋을 모으는 것을 목표로 한다.
@@ -11,7 +19,27 @@
 - Buddy: `./ko`
 - Matt skills: `/Users/wm-it-22-00661/Work/github/study/ai/01.study/docs/projects/mattpocock-skills`
 
-## 전체 흐름
+## 0. 11-stage → 9-phase 매핑
+
+> 2026-05-04 spec의 결정 결과 11-stage가 9-phase로 압축되었다. 이 문서의 본문(§1~§11)을 읽을 때 다음 매핑으로 현행 phase를 식별한다.
+
+| 11-stage (이 문서) | → 9-phase (현행 SSoT) | Phase orchestrator | 압축 사유 |
+|------|---------------------|-------------------|---------|
+| §1 Idea Discovery | §1 Idea & Business Validation | `concretize-idea` | idea 검증과 사업성은 같은 의사결정 흐름 (PRD 직전) |
+| §2 Business Validation | §1 Idea & Business Validation | `concretize-idea` | 위와 합쳐짐 |
+| §3 Product Definition | §1 Idea & Business Validation 의 종착(PRD) + §2 진입 조건 | `concretize-idea` → `define-features` | PRD 자체는 §1 산출물, feature 분해는 §2 입력 |
+| §4 Feature Definition & Orchestration | **§2 Feature Definition & Backlog** | `define-features` | use case 분해(Q8=a)가 §2 첫 단계로 강제 |
+| §5 Architecture & Code Design | **§3 Technical Design** + **§4 Implementation Plan** | `design-system` + `plan-build` | 다년 락인(언어/DB/tenancy)과 분기/스프린트 task 분해는 의사결정 권한자가 다름 (spec §3.1 분리 근거) |
+| §6 Development | **§5 Development** | `build-feature` | 1:1 대응 |
+| §7 Debugging | §5 안의 `diagnose-bug` stage | `build-feature` | 별도 phase 가 아니라 §5 stage. 운영 중 bug는 §8 안에서 §5 재진입 |
+| §8 Testing & QA | **§6 Quality** | `verify-quality` | §9와 통합 |
+| §9 Security, Legal, Compliance | **§6 Quality** | `verify-quality` | test/security/legal 모두 release gate에 묶음 |
+| §10 Release & Deployment | **§7 Release & Beta** | `ship-release` | UAT/beta 분리(Q7=b) |
+| §11 Operations | **§8 Operate & Iterate** + **§9 Lifecycle Management** | `iterate-product` + `manage-lifecycle` | A/B·funnel·인시던트(§8) vs deprecation·EOL(§9) 분리 |
+
+> 9-phase에는 11-stage에 없던 **§4 Implementation Plan**(actor track 분해 + parallel exec)과 **§9 Lifecycle Management**(deprecation/EOL)가 신규로 도입됐다.
+
+## 전체 흐름 (11-stage 원본 — 분석용)
 
 상용 제품 빌딩 흐름은 아래 단계로 나눌 수 있다.
 
