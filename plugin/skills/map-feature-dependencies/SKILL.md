@@ -5,9 +5,9 @@ description: This skill should be used when the user wants to "map feature depen
 
 # map-feature-dependencies
 
-feature 간 선후 의존성 그래프를 작성한다. §2 `define-features`의 여덟 번째 stage.
+feature 간 선후 의존성 그래프를 작성한다. 2단계 `define-features`의 여덟 번째 stage.
 
-이 DAG가 §4 `plan-build`의 병렬 실행 계획 입력이 된다.
+이 DAG가 4단계 `plan-build`의 병렬 실행 계획 입력이 된다.
 
 ---
 
@@ -153,4 +153,4 @@ signup → checkout-flow → order-history = 7주
 
 → `split-work-into-features` — 큰 feature 분리 (필요 시)
 → `triage-work-items` — backlog 상태 머신 진입
-→ `plan-build` (§4) — feature dependency graph → actor track + task DAG 변환
+→ `plan-build` (4단계) — feature dependency graph → actor track + task DAG 변환

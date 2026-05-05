@@ -5,9 +5,9 @@ description: This skill should be used when the user wants to "compose features 
 
 # compose-feature-from-use-cases
 
-cross-actor use case를 묶어 feature를 정의한다. §2 `define-features`의 네 번째 stage.
+cross-actor use case를 묶어 feature를 정의한다. 2단계 `define-features`의 네 번째 stage.
 
-feature = 여러 actor의 use case 합성. 이 합성이 §3 infra 설계와 §4 구현 track 분리의 기반이 된다.
+feature = 여러 actor의 use case 합성. 이 합성이 3단계 infra 설계와 4단계 구현 track 분리의 기반이 된다.
 
 ---
 

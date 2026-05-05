@@ -1,48 +1,48 @@
 ---
 name: ship-release
-description: This skill should be used when the user wants to "ship the release", "deploy to production", "create a release", "run beta program", "setup canary deploy", "prepare launch", or has passed quality gates and is ready to release. Orchestrates §7 Release & Beta phase.
+description: This skill should be used when the user wants to "ship the release", "deploy to production", "create a release", "run beta program", "setup canary deploy", "prepare launch", or has passed quality gates and is ready to release. Orchestrates 7단계 Release & Beta phase.
 ---
 
-# ship-release — §7 Release & Beta Orchestrator
+# ship-release — 7단계 Release & Beta Orchestrator
 
-§7 라이프사이클 단계의 진입점. Quality gate pass → Tagged release + canary/UAT + GA.
+7단계 라이프사이클 단계의 진입점. Quality gate pass → Tagged release + canary/UAT + GA.
 
-**진입 조건**: §6 quality gate 통과 (QA report + security sign-off 완료).
+**진입 조건**: 6단계 quality gate 통과 (QA report + security sign-off 완료).
 **산출물**: Tagged release, release notes, canary/UAT pass, GA deployment.
-**다음 phase**: Production traffic 발생 → `iterate-product` (§8).
+**다음 phase**: Production traffic 발생 → `iterate-product` (8단계).
 
 ---
 
-## §7 내부 구조 (Q7=(b): Beta/UAT 분리)
+## 7단계 내부 구조 (Q7=(b): Beta/UAT 분리)
 
 ```
-ship-release (§7 phase orchestrator)
-├── §7.1 Release Preparation
-│   ├── stage 1: setup-quality-gates    (release gate 확인 — 이미 §5에서 설정했으면 skip)
+ship-release (7단계 phase orchestrator)
+├── 7-1 단계 Release Preparation
+│   ├── stage 1: setup-quality-gates    (release gate 확인 — 이미 5단계에서 설정했으면 skip)
 │   ├── stage 2: write-changelog        (version bump + CHANGELOG 업데이트)
 │   ├── stage 3: sync-release-docs      (doc drift audit + auto-update)
 │   └── stage 4: auto-create-pr         (PR 생성 + 리뷰 요청)
-├── §7.2 Beta / UAT (Q7=(b): 별도 sub-phase)
-│   ├── stage 5: [run-uat]              🆕 UAT orchestration
-│   └── stage 6: [run-beta-program]     🆕 클로즈드 베타 + 피드백 수집
-└── §7.3 GA Release
+├── 7-2 단계 Beta / UAT (Q7=(b): 별도 sub-phase)
+│   ├── stage 5: [run-uat]              UAT orchestration
+│   └── stage 6: [run-beta-program]     클로즈드 베타 + 피드백 수집
+└── 7-3 단계 GA Release
     ├── stage 7: automate-release-tagging  (semver auto-decision + git tag)
     ├── stage 8: guard-destructive-commands  (배포 전 위험 명령 가드)
     └── stage 9: compose-safety-mode       (max safety mode 합성)
 ```
 
-> 🆕 = 신규 작성 필요. 현재 orchestrator가 직접 수행.
+> 브라켓(`[name]`)으로 표시된 stage 는 신규 작성 필요. 현재 orchestrator 가 직접 수행.
 
 ---
 
 ## 실행 절차
 
-### §7.1 Release Preparation
+### 7-1 단계 Release Preparation
 
 **Stage 1: Quality Gate 확인**
 
 `setup-quality-gates` skill을 invoke해 release gate가 설정되어 있는지 확인한다.
-§5에서 이미 설정했으면 gate 통과 여부만 확인한다:
+5단계에서 이미 설정했으면 gate 통과 여부만 확인한다:
 - [ ] typecheck 통과
 - [ ] lint 통과
 - [ ] all tests 통과
@@ -64,7 +64,7 @@ ship-release (§7 phase orchestrator)
 
 `auto-create-pr` skill을 invoke해 commit → branch push → PR 생성을 자동화한다.
 
-### §7.2 Beta / UAT
+### 7-2 단계 Beta / UAT
 
 **Stage 5: UAT**
 
@@ -81,7 +81,7 @@ UAT를 수행한다 (`run-uat` skill 미존재 시 orchestrator가 직접 수행
 - 피드백 수집 채널 (형식: Slack DM / Google Form / email)
 - go/no-go 기준 (critical bug 0개, user satisfaction ≥ 4/5)
 
-### §7.3 GA Release
+### 7-3 단계 GA Release
 
 **Stage 7: Release Tagging**
 
@@ -100,7 +100,7 @@ UAT를 수행한다 (`run-uat` skill 미존재 시 orchestrator가 직접 수행
 
 ## Go-Live Readiness Checklist
 
-- [ ] §6 quality gate 전체 통과
+- [ ] 6단계 quality gate 전체 통과
 - [ ] CHANGELOG 작성 완료
 - [ ] Docs sync 완료
 - [ ] PR 승인됨
@@ -113,7 +113,7 @@ UAT를 수행한다 (`run-uat` skill 미존재 시 orchestrator가 직접 수행
 
 ## 다음 phase
 
-- `/buddy:iterate-product` — §8 Operate & Iterate (production traffic 발생 후)
+- `/buddy:iterate-product` — 8단계 Operate & Iterate (production traffic 발생 후)
 
 ---
 

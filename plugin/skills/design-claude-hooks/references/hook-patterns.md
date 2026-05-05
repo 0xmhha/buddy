@@ -6,7 +6,7 @@ buddy plugin에서 자주 사용하는 4가지 hook 패턴의 완전한 구현 �
 
 ## 패턴 1: freeze-edit-scope (PreToolUse guard)
 
-허가된 경로 외의 파일 편집을 차단. `build-feature` §5에서 actor-track 격리에 사용.
+허가된 경로 외의 파일 편집을 차단. `build-feature` 5단계에서 actor-track 격리에 사용.
 
 ### `~/.claude/hooks/freeze-scope.sh`
 

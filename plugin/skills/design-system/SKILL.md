@@ -1,22 +1,22 @@
 ---
 name: design-system
-description: This skill should be used when the user wants to "design the system", "choose tech stack", "design infrastructure", "design API", "design data model", "create ADR", "design architecture", or has a feature backlog ready and needs technical design. Orchestrates §3 Technical Design phase.
+description: This skill should be used when the user wants to "design the system", "choose tech stack", "design infrastructure", "design API", "design data model", "create ADR", "design architecture", or has a feature backlog ready and needs technical design. Orchestrates 3단계 Technical Design phase.
 ---
 
-# design-system — §3 Technical Design Orchestrator
+# design-system — 3단계 Technical Design Orchestrator
 
-§3 라이프사이클 단계의 진입점. Feature backlog (actor / use case / system boundary 포함) → Tech stack ADR + infra blueprint + API/data model.
+3단계 라이프사이클 단계의 진입점. Feature backlog (actor / use case / system boundary 포함) → Tech stack ADR + infra blueprint + API/data model.
 
-**진입 조건**: §2 feature backlog 확정 (actor + use case + system boundary 포함).
+**진입 조건**: 2단계 feature backlog 확정 (actor + use case + system boundary 포함).
 **산출물**: Tech stack ADR, infra topology diagram, API contract, data model schema.
-**다음 phase**: Technical design 확정 후 → `plan-build` (§4).
+**다음 phase**: Technical design 확정 후 → `plan-build` (4단계).
 
 ---
 
 ## Stage 흐름
 
 ```
-design-system (§3 phase orchestrator)
+design-system (3단계 phase orchestrator)
 ├── stage 1: map-use-cases-to-infra     (use case → infra component 브릿지)
 ├── stage 2: derive-system-topology     (actor 그래프 + use case → 시스템 토폴로지)
 ├── stage 3: define-tech-stack          (언어/프레임워크/DB 선택 — 락인 영향 평가)
@@ -29,7 +29,7 @@ design-system (§3 phase orchestrator)
 └── stage 10: autoplan                  (technical design 산출물 4-mode review)
 ```
 
-> 🆕 표시 stage는 신규 작성 필요. 현재는 orchestrator가 직접 수행.
+> 브라켓(`[name]`)으로 표시된 stage 는 신규 작성 필요. 현재는 orchestrator 가 직접 수행.
 
 ---
 
@@ -37,7 +37,7 @@ design-system (§3 phase orchestrator)
 
 ### Stage 1: Use Case → Infra 브릿지
 
-§2 feature spec의 actor system boundary를 실제 infra component로 매핑한다.
+2단계 feature spec의 actor system boundary를 실제 infra component로 매핑한다.
 
 예시:
 ```
@@ -156,7 +156,7 @@ ADR 포맷:
 
 ## 다음 phase
 
-- `/buddy:plan-build` — §4 Implementation Plan (권장)
+- `/buddy:plan-build` — 4단계 Implementation Plan (권장)
 
 ---
 

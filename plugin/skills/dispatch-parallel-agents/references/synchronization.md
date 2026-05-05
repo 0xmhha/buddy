@@ -24,7 +24,7 @@ frontend + backend 모두 시작 전 →
   POST /auth/signup 요청/응답 스키마 합의 (design-api-contract)
 ```
 
-**처리**: §3 design-system에서 API contract 먼저 확정 → 두 actor 동시 시작.
+**처리**: 3단계 design-system에서 API contract 먼저 확정 → 두 actor 동시 시작.
 
 ### Type C: 공유 인프라 의존
 DB 스키마, queue 토픽 등 인프라가 먼저 준비되어야 함.

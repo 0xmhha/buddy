@@ -1,10 +1,10 @@
 # Agent Dispatch 패턴 — actor-track별 병렬 실행
 
-§4 plan-build가 생성한 actor-track plan을 기반으로 Claude Code Agent tool을 병렬 분배하는 완전 절차.
+4단계 plan-build가 생성한 actor-track plan을 기반으로 Claude Code Agent tool을 병렬 분배하는 완전 절차.
 
 ---
 
-## 1. 입력 포맷 (§4 산출물)
+## 1. 입력 포맷 (4단계 산출물)
 
 `docs/actor-track-plan.yaml` 예시:
 

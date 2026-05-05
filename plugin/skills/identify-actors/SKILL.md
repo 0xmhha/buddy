@@ -5,7 +5,7 @@ description: This skill should be used when the user wants to "identify actors",
 
 # identify-actors
 
-시스템에 참여하는 모든 actor를 열거하고 분류한다. §2 `define-features`의 첫 번째 stage.
+시스템에 참여하는 모든 actor를 열거하고 분류한다. 2단계 `define-features`의 첫 번째 stage.
 
 feature는 **여러 actor의 use case 합성**이므로, actor 식별이 feature 정의의 선행 조건이다.
 

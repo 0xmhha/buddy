@@ -7,7 +7,7 @@ description: This skill should be used when the user says "we have an incident",
 
 프로덕션 인시던트를 구조적으로 대응한다. 영향 범위 확인 → 즉각 완화 → 근본 원인 조사 → Fix 배포 → 고객 커뮤니케이션 순서를 따른다.
 
-**§8 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
+**8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 
 ---
 
@@ -24,7 +24,7 @@ description: This skill should be used when the user says "we have an incident",
 
 ### Step 2: 영향 범위 확인 (10분 내)
 
-§2 use case 분해 기반으로 어느 actor가 영향받는지 확인:
+2단계 use case 분해 기반으로 어느 actor가 영향받는지 확인:
 
 ```
 영향 범위 체크:
@@ -72,7 +72,7 @@ nginx rate_limit_zone update --limit 10r/s
 
 ### Step 5: Fix 배포
 
-`build-feature` (§5) → `verify-quality` (§6 minimal) → `ship-release` (§7.3 fast path)
+`build-feature` (5단계) → `verify-quality` (6단계 minimal) → `ship-release` (7-3 단계 fast path)
 
 P0/P1의 경우 fast path:
 - unit test만 실행 (E2E skip 가능)

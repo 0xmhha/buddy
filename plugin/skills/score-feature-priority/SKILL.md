@@ -5,7 +5,7 @@ description: This skill should be used when the user wants to "prioritize featur
 
 # score-feature-priority
 
-RICE / ICE / MoSCoW 프레임워크로 feature 우선순위를 결정한다. §2 `define-features`의 일곱 번째 stage.
+RICE / ICE / MoSCoW 프레임워크로 feature 우선순위를 결정한다. 2단계 `define-features`의 일곱 번째 stage.
 
 ---
 

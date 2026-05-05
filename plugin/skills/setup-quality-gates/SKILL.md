@@ -254,7 +254,7 @@ verification:
 
 ## 9. Claude Code Hook 설치 (buddy 통합)
 
-§5 build-feature 진입 전, 또는 buddy plugin install 직후 Claude Code hook을 활성화한다.
+5단계 build-feature 진입 전, 또는 buddy plugin install 직후 Claude Code hook을 활성화한다.
 husky pre-commit gate와 독립적으로 동작 — Claude Code hook은 *AI 도구 호출* 레이어를 감싼다.
 
 ### 자동 설치 (권장)

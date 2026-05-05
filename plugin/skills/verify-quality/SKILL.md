@@ -1,22 +1,22 @@
 ---
 name: verify-quality
-description: This skill should be used when the user wants to "verify quality", "run QA", "audit security", "check code health", "review compliance", "run tests", "check before release", or has code ready and needs quality verification before release. Orchestrates §6 Quality (Test + Security + Compliance) phase.
+description: This skill should be used when the user wants to "verify quality", "run QA", "audit security", "check code health", "review compliance", "run tests", "check before release", or has code ready and needs quality verification before release. Orchestrates 6단계 Quality (Test + Security + Compliance) phase.
 ---
 
-# verify-quality — §6 Quality Orchestrator
+# verify-quality — 6단계 Quality Orchestrator
 
-§6 라이프사이클 단계의 진입점. Code complete → QA report + security/legal sign-off.
+6단계 라이프사이클 단계의 진입점. Code complete → QA report + security/legal sign-off.
 
-**진입 조건**: §5 code complete (모든 actor track task 완료).
+**진입 조건**: 5단계 code complete (모든 actor track task 완료).
 **산출물**: QA report, security audit result, legal/compliance sign-off, performance baseline.
-**다음 phase**: Quality gate pass → `ship-release` (§7).
+**다음 phase**: Quality gate pass → `ship-release` (7단계).
 
 ---
 
 ## Stage 흐름
 
 ```
-verify-quality (§6 phase orchestrator)
+verify-quality (6단계 phase orchestrator)
 ├── stage 1: classify-qa-tiers         (QA intensity 분류 — Quick/Standard/Exhaustive)
 ├── stage 2: test-per-actor-use-case   (actor별 통합 테스트)
 ├── stage 3: test-cross-actor-flow     (cross-actor E2E 테스트)
@@ -43,7 +43,7 @@ verify-quality (§6 phase orchestrator)
 
 ### Stage 2: Actor별 통합 테스트 (Use Case 기반)
 
-§2 feature spec의 per-actor use cases를 기준으로 actor별 통합 테스트를 설계하고 실행한다:
+2단계 feature spec의 per-actor use cases를 기준으로 actor별 통합 테스트를 설계하고 실행한다:
 
 - **user-actor** (frontend): E2E browser test (`run-browser-qa` invoke)
 - **system-actor** (backend): unit + integration test (API endpoint 기준)
@@ -51,7 +51,7 @@ verify-quality (§6 phase orchestrator)
 
 ### Stage 3: Cross-Actor 흐름 테스트
 
-§2 feature spec의 integration test_plan 기준으로 cross-actor 흐름을 테스트한다.
+2단계 feature spec의 integration test_plan 기준으로 cross-actor 흐름을 테스트한다.
 
 예시: `signup-email-password` full flow
 ```
@@ -110,8 +110,8 @@ form submit → backend validation → JWT issuance → email sending → click 
 
 ## 다음 phase
 
-- `/buddy:ship-release` — §7 Release (quality gate 통과 시)
-- `/buddy:build-feature` — §5 재진입 (quality gate 실패 시)
+- `/buddy:ship-release` — 7단계 Release (quality gate 통과 시)
+- `/buddy:build-feature` — 5단계 재진입 (quality gate 실패 시)
 
 ---
 

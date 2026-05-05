@@ -1,6 +1,6 @@
 # Actor-Track → Subagent 매핑
 
-§4 plan-build 산출물의 `system_boundary`를 기반으로 §5 build-feature에서
+4단계 plan-build 산출물의 `system_boundary`를 기반으로 5단계 build-feature에서
 어떤 subagent_type을 dispatch할지 결정하는 기준표.
 
 ---

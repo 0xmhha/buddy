@@ -5,9 +5,9 @@ description: This skill should be used when the user wants to "write a feature s
 
 # define-feature-spec
 
-feature의 완전한 명세서를 작성한다. §2 `define-features`의 다섯 번째 stage.
+feature의 완전한 명세서를 작성한다. 2단계 `define-features`의 다섯 번째 stage.
 
-§3 (infra), §4 (implementation), §6 (test), §8 (metric)의 입력 schema가 되는 핵심 artifact.
+3단계 (infra), 4단계 (implementation), 6단계 (test), 8단계 (metric)의 입력 schema가 되는 핵심 artifact.
 
 ---
 

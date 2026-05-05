@@ -236,7 +236,7 @@ test:       2  ( 4%)  ██
 
 ### 6. Hotspot
 Commit count 있는 top 5 파일. 우려 패턴 명시 플래그:
-> ⚠ `browse/src/server.ts` 8번 건드려짐 — 분할 필요 여부 조사.
+> 주의: `browse/src/server.ts` 8번 건드려짐 — 분할 필요 여부 조사.
 
 ### 7. Person별 Breakdown (team-aware)
 각 기여자에 대해 이 순서:

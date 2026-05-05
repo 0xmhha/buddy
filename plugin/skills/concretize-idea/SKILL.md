@@ -1,34 +1,34 @@
 ---
 name: concretize-idea
-description: This skill should be used when the user wants to "develop an idea", "build something new", "validate a startup idea", "turn an idea into a product", "concretize an idea", or starts with "I want to build X". Orchestrates §1 Idea & Business Validation phase — runs idea validation, business viability, competition analysis, customer segmentation, and PRD generation in sequence.
+description: This skill should be used when the user wants to "develop an idea", "build something new", "validate a startup idea", "turn an idea into a product", "concretize an idea", or starts with "I want to build X". Orchestrates 1단계 Idea & Business Validation phase — runs idea validation, business viability, competition analysis, customer segmentation, and PRD generation in sequence.
 ---
 
-# concretize-idea — §1 Idea & Business Validation Orchestrator
+# concretize-idea — 1단계 Idea & Business Validation Orchestrator
 
-§1 라이프사이클 단계의 진입점. idea/concept → PRD draft + business viability report 를 생성하는 멀티-stage 파이프라인.
+1단계 라이프사이클 단계의 진입점. idea/concept → PRD draft + business viability report 를 생성하는 멀티-stage 파이프라인.
 
 **진입 조건**: idea 또는 concept만 존재. 코드베이스 미존재 또는 상용 빌딩 시작 전.
 **산출물**: PRD draft, business viability report, market position summary.
-**다음 phase**: PRD 확정 후 → `define-features` (§2).
+**다음 phase**: PRD 확정 후 → `define-features` (2단계).
 
 ---
 
 ## Stage 흐름
 
 ```
-concretize-idea (§1 phase orchestrator)
+concretize-idea (1단계 phase orchestrator)
 ├── stage 1: validate-idea          (idea stress-test — 6 forcing questions)
 ├── stage 2: validate-advanced-edge-idea  (edge case / hidden assumption grilling)
 ├── stage 3: assess-business-viability  (7차원 사업성 평가)
-├── stage 4: [analyze-competition-and-substitutes]  🆕 경쟁/대체재 매트릭스
+├── stage 4: [analyze-competition-and-substitutes]  경쟁/대체재 매트릭스
 ├── stage 5: review-pricing-and-gtm  (pricing model + GTM channel 평가)
-├── stage 6: [map-customer-segments]  🆕 고객 세그먼트 + 구매자 분리
+├── stage 6: [map-customer-segments]  고객 세그먼트 + 구매자 분리
 ├── stage 7: define-product-spec    (PRD draft 생성)
 └── stage 8: autoplan               (PRD 4-mode review — cross-phase sub-orchestrator)
         └── invokes review-scope / review-engineering / review-design / review-devex
 ```
 
-> 🆕 = 신규 작성 필요 skill. 현재는 해당 단계를 orchestrator가 직접 수행.
+> 브라켓(`[name]`)으로 표시된 stage 는 신규 작성 필요. 현재는 해당 단계를 orchestrator 가 직접 수행.
 
 ---
 
@@ -91,7 +91,7 @@ PRD 필수 포함 항목:
 ## 산출물 형식
 
 ```markdown
-## §1 산출물 — {idea 이름}
+## 1단계 산출물 — {idea 이름}
 
 ### Idea Validation Summary
 - Core hypothesis: ...
@@ -127,7 +127,7 @@ Gate 없이 자동 진행하지 않는다.
 ## 다음 phase
 
 PRD 확정 후:
-- `/buddy:define-features` — §2 Feature Definition & Backlog (권장)
+- `/buddy:define-features` — 2단계 Feature Definition & Backlog (권장)
 - `/buddy:autoplan` — PRD 재검토가 필요하면 standalone으로 추가 review
 
 ---

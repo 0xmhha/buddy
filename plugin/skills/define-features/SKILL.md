@@ -1,34 +1,34 @@
 ---
 name: define-features
-description: This skill should be used when the user wants to "define features", "create feature backlog", "break down a PRD into features", "identify what to build", "map use cases", "define actors", or has a PRD ready and needs to plan implementation. Orchestrates §2 Feature Definition & Backlog phase — runs actor identification, use case mapping, system boundary analysis, and feature composition.
+description: This skill should be used when the user wants to "define features", "create feature backlog", "break down a PRD into features", "identify what to build", "map use cases", "define actors", or has a PRD ready and needs to plan implementation. Orchestrates 2단계 Feature Definition & Backlog phase — runs actor identification, use case mapping, system boundary analysis, and feature composition.
 ---
 
-# define-features — §2 Feature Definition & Backlog Orchestrator
+# define-features — 2단계 Feature Definition & Backlog Orchestrator
 
-§2 라이프사이클 단계의 진입점. PRD → feature backlog (actor / use case / system boundary 포함 feature spec 목록) 생성.
+2단계 라이프사이클 단계의 진입점. PRD → feature backlog (actor / use case / system boundary 포함 feature spec 목록) 생성.
 
-**진입 조건**: PRD 확정 (§1 산출물).
+**진입 조건**: PRD 확정 (1단계 산출물).
 **산출물**: Feature backlog — 각 feature는 actor list + per-actor use cases + system boundary + acceptance criteria + test_plan 포함.
-**다음 phase**: Feature backlog 확정 후 → `design-system` (§3).
+**다음 phase**: Feature backlog 확정 후 → `design-system` (3단계).
 
 ---
 
 ## 핵심 원칙 (Q8=(a))
 
-feature는 **여러 actor의 use case 합성**으로 정의된다. actor / use case / system boundary 매핑이 §2의 첫 작업이며, feature는 합성의 *결과*이지 입력이 아니다.
+feature는 **여러 actor의 use case 합성**으로 정의된다. actor / use case / system boundary 매핑이 2단계의 첫 작업이며, feature는 합성의 *결과*이지 입력이 아니다.
 
-use case 분해 없이 feature만 정의하면:
-- ❌ §3 infra 설계 시 어느 시스템이 무엇을 담당하는지 불명확
-- ❌ §4 actor별 병렬 implementation track 분배 불가
-- ❌ §6 actor별 통합 테스트 누락
-- ❌ §8 actor별 funnel metric 측정 불가
+use case 분해 없이 feature 만 정의하면:
+- 기술 설계 단계에서 어느 시스템이 무엇을 담당하는지 불명확 (infra 입력 부족)
+- 구현 계획 단계에서 actor 별 병렬 implementation track 분배 불가
+- 품질 검증 단계에서 actor 별 통합 테스트 누락
+- 운영·개선 단계에서 actor 별 funnel metric 측정 불가
 
 ---
 
 ## Stage 흐름
 
 ```
-define-features (§2 phase orchestrator)
+define-features (2단계 phase orchestrator)
 ├── stage 1: identify-actors            (actor 열거 — user/admin/system/3rd-party 분류)
 ├── stage 2: map-actor-use-cases        (actor별 use case 식별)
 ├── stage 3: map-use-case-to-system-boundary  (use case → 시스템 경계 매핑)
@@ -161,21 +161,21 @@ feature-C || feature-D (병렬 진행 가능)
 
 ## Cross-phase 파급 효과
 
-§2에서 생성된 actor / use case / system boundary는 다음 phase의 입력이 된다:
+2단계에서 생성된 actor / use case / system boundary는 다음 phase의 입력이 된다:
 
 | Phase | 활용 방식 |
 |-------|---------|
-| §3 Technical Design | actor system boundary → infra component 매핑 |
-| §4 Implementation Plan | actor별 implementation track = 병렬 worker 분배 단위 |
-| §6 Quality | actor별 통합 테스트 설계 (user E2E / system unit / 3rd-party contract) |
-| §8 Iterate | actor별 funnel metric (conversion / success rate / deliverability) |
+| 3단계 Technical Design | actor system boundary → infra component 매핑 |
+| 4단계 Implementation Plan | actor별 implementation track = 병렬 worker 분배 단위 |
+| 6단계 Quality | actor별 통합 테스트 설계 (user E2E / system unit / 3rd-party contract) |
+| 8단계 Iterate | actor별 funnel metric (conversion / success rate / deliverability) |
 
 ---
 
 ## 다음 phase
 
-- `/buddy:design-system` — §3 Technical Design (권장)
-- `/buddy:plan-build` — feature backlog가 크고 명확하면 §3를 건너뛰고 §4로 (소규모 프로젝트)
+- `/buddy:design-system` — 3단계 Technical Design (권장)
+- `/buddy:plan-build` — feature backlog가 크고 명확하면 3단계를 건너뛰고 4단계로 (소규모 프로젝트)
 
 ---
 

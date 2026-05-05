@@ -1,22 +1,22 @@
 ---
 name: build-feature
-description: This skill should be used when the user wants to "build a feature", "implement this", "start coding", "develop the feature", "write the code", or has an implementation plan ready and needs to execute it. Orchestrates §5 Development phase — manages TDD loops, parallel agent dispatch, and actor-track execution.
+description: This skill should be used when the user wants to "build a feature", "implement this", "start coding", "develop the feature", "write the code", or has an implementation plan ready and needs to execute it. Orchestrates 5단계 Development phase — manages TDD loops, parallel agent dispatch, and actor-track execution.
 ---
 
-# build-feature — §5 Development Orchestrator
+# build-feature — 5단계 Development Orchestrator
 
-§5 라이프사이클 단계의 진입점. Implementation plan (actor별 task track) → Working code per feature + unit/integration tests.
+5단계 라이프사이클 단계의 진입점. Implementation plan (actor별 task track) → Working code per feature + unit/integration tests.
 
-**진입 조건**: §4 implementation plan 확정 (task DAG + parallel execution plan).
+**진입 조건**: 4단계 implementation plan 확정 (task DAG + parallel execution plan).
 **산출물**: Working code per feature, unit tests, integration tests, PR-ready branch.
-**다음 phase**: Code complete → `verify-quality` (§6).
+**다음 phase**: Code complete → `verify-quality` (6단계).
 
 ---
 
 ## Stage 흐름
 
 ```
-build-feature (§5 phase orchestrator)
+build-feature (5단계 phase orchestrator)
 ├── stage 1: setup-development-environment  (quality gates + hooks 설정)
 ├── stage 2: dispatch-parallel-agents       (actor track별 병렬 agent 분배)
 │   ├── track A: build-with-tdd (frontend)
@@ -42,7 +42,7 @@ build-feature (§5 phase orchestrator)
 
 ### Stage 2: 병렬 Actor Track 실행
 
-§4 actor-track plan (`docs/actor-track-plan.yaml`)을 기반으로 `dispatch-parallel-agents` skill을 invoke해 actor track별로 worktree를 격리하고 병렬 agent를 분배한다.
+4단계 actor-track plan (`docs/actor-track-plan.yaml`)을 기반으로 `dispatch-parallel-agents` skill을 invoke해 actor track별로 worktree를 격리하고 병렬 agent를 분배한다.
 
 **subagent_type 결정**: `system_boundary` → subagent_type 매핑 기준표를 참조.
 → `references/actor-track-mapping.md`
@@ -162,7 +162,7 @@ feat(auth): add email/password signup endpoint
 - JWT issued with 24h expiry
 ```
 
-### §5 내 Commit 빈도
+### 5단계 내 Commit 빈도
 
 TDD 루프 기준:
 ```
@@ -189,7 +189,7 @@ actor track별로 최소 task 1개 완료 시 1 commit.
 
 ## 다음 phase
 
-- `/buddy:verify-quality` — §6 Quality (권장)
+- `/buddy:verify-quality` — 6단계 Quality (권장)
 
 ---
 

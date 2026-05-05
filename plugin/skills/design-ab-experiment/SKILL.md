@@ -7,7 +7,7 @@ description: This skill should be used when the user wants to "design an A/B tes
 
 A/B 실험을 통계적으로 유효하게 설계한다. 가설 → 표본 크기 → 대조군/실험군 → 측정 지표 → 실험 기간을 순서대로 정의한다.
 
-**§8 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
+**8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 
 ---
 
@@ -106,7 +106,7 @@ actor_segment: {어느 actor use case에 해당하는가}
 - [ ] Randomization unit이 결정됐는가?
 - [ ] 최소 7일 이상 실험 기간인가?
 - [ ] Feature flag로 rollback 가능한가?
-- [ ] §8 `iterate-product`의 actor funnel에 연결됐는가?
+- [ ] 8단계 `iterate-product`의 actor funnel에 연결됐는가?
 
 ---
 

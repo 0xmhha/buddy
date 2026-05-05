@@ -5,9 +5,9 @@ description: This skill should be used when the user wants to "generate improvem
 
 # generate-improvement-tasks
 
-§8 분석 결과(A/B 실험, funnel 분석, postmortem, 고객 피드백)를 actionable improvement task로 변환한다. 각 task는 §2 `define-features` 재진입의 입력이 된다.
+8단계 분석 결과(A/B 실험, funnel 분석, postmortem, 고객 피드백)를 actionable improvement task로 변환한다. 각 task는 2단계 `define-features` 재진입의 입력이 된다.
 
-**§8 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
+**8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 
 ---
 
@@ -31,7 +31,7 @@ improvement_task:
   id: {source}-{N}
   source: {ab_experiment / funnel / postmortem / customer_feedback / retro}
   
-  # §2 define-features 연결
+  # 2단계 define-features 연결
   actor: {어느 actor의 어느 use case가 약한가}
   use_case: {개선이 필요한 use case}
   system_boundary: {frontend-spa / backend-service / external-saas}
@@ -51,7 +51,7 @@ improvement_task:
   # 다음 행동
   next_action:
     type: {a_b_test / feature_change / bug_fix / design_change}
-    target_phase: {§2 define-features / §3 design-system / §5 build-feature}
+    target_phase: {2단계 define-features / 3단계 design-system / 5단계 build-feature}
     draft_spec:
       problem: {개선하려는 문제}
       proposed_solution: {제안 솔루션}
@@ -84,7 +84,7 @@ improvement_task:
     score: 653
   next_action:
     type: a_b_test
-    target_phase: §5 build-feature
+    target_phase: 5단계 build-feature
     draft_spec:
       problem: "비밀번호 요구사항이 제출 후에만 표시되어 UX 마찰 발생"
       proposed_solution: "입력 중 실시간 비밀번호 강도 indicator + 요구사항 체크리스트 표시"
@@ -103,17 +103,17 @@ improvement_task:
 | 3 | postmortem-001 | backend | retry logic | 180 | bug fix |
 ```
 
-### 5. §2 재진입 판단
+### 5. 2단계 재진입 판단
 
 각 task의 규모에 따라 진입 단계를 결정한다:
 
 | Task 유형 | 진입 단계 |
 |---------|---------|
-| 신규 use case 발견 | §2 `define-features` (처음부터) |
-| 기존 use case 변경 | §2 `define-features` (stage 5 `define-feature-spec`부터) |
-| UI/UX 변경만 | §5 `build-feature` |
-| Bug fix | §5 `build-feature` → `diagnose-bug` |
-| A/B test → Ship | §7 `ship-release` fast path |
+| 신규 use case 발견 | 2단계 `define-features` (처음부터) |
+| 기존 use case 변경 | 2단계 `define-features` (stage 5 `define-feature-spec`부터) |
+| UI/UX 변경만 | 5단계 `build-feature` |
+| Bug fix | 5단계 `build-feature` → `diagnose-bug` |
+| A/B test → Ship | 7단계 `ship-release` fast path |
 
 ---
 
@@ -128,10 +128,10 @@ improvement_task:
 
 {RICE score 내림차순 task 목록}
 
-### §2 재진입 필요 task
+### 2단계 재진입 필요 task
 {define-features 재진입이 필요한 task 목록}
 
-### 즉시 실행 가능 task (§5 이후)
+### 즉시 실행 가능 task (5단계 이후)
 {build-feature 또는 bug fix로 바로 처리 가능한 task}
 ```
 
@@ -139,6 +139,6 @@ improvement_task:
 
 ## 다음 단계
 
-- RICE score 상위 → `define-features` (§2) 또는 `design-ab-experiment`
-- Bug fix → `diagnose-bug` → `build-feature` (§5)
+- RICE score 상위 → `define-features` (2단계) 또는 `design-ab-experiment`
+- Bug fix → `diagnose-bug` → `build-feature` (5단계)
 - `triage-work-items` — backlog 상태 머신 진입

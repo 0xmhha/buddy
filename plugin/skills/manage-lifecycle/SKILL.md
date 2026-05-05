@@ -1,11 +1,11 @@
 ---
 name: manage-lifecycle
-description: This skill should be used when the user wants to "deprecate a feature", "sunset a product", "migrate customers away from X", "archive a feature", "spin off a feature as a product", or is managing the end-of-life of an existing feature or product. Orchestrates §9 Lifecycle Management phase.
+description: This skill should be used when the user wants to "deprecate a feature", "sunset a product", "migrate customers away from X", "archive a feature", "spin off a feature as a product", or is managing the end-of-life of an existing feature or product. Orchestrates 9단계 Lifecycle Management phase.
 ---
 
-# manage-lifecycle — §9 Lifecycle Management Orchestrator
+# manage-lifecycle — 9단계 Lifecycle Management Orchestrator
 
-§9 라이프사이클 단계의 진입점. Feature/product 노후화 → Deprecation notice + migration playbook + EOL.
+9단계 라이프사이클 단계의 진입점. Feature/product 노후화 → Deprecation notice + migration playbook + EOL.
 
 **진입 조건**: Feature 또는 product 노후화 감지 (usage decline, maintenance cost > value, strategic pivot).
 **산출물**: Deprecation notice, customer migration playbook, EOL documentation.
@@ -17,12 +17,12 @@ description: This skill should be used when the user wants to "deprecate a featu
 ## Stage 흐름
 
 ```
-manage-lifecycle (§9 phase orchestrator)
+manage-lifecycle (9단계 phase orchestrator)
 ├── stage 1: assess-lifecycle-status   (노후화 판단 기준 평가)
 ├── stage 2: deprecate-feature         (점진적 sunset 계획)
 ├── stage 3: migrate-customers         (강제 마이그레이션 플레이북)
 ├── stage 4: archive-product           (EOL 흐름 실행)
-└── stage 5: [spin-off-feature]        🆕 별도 제품으로 분리
+└── stage 5: [spin-off-feature]        별도 제품으로 분리
 ```
 
 ---

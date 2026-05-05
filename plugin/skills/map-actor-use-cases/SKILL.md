@@ -5,7 +5,7 @@ description: This skill should be used when the user wants to "map use cases", "
 
 # map-actor-use-cases
 
-actor별 use case를 식별한다. §2 `define-features`의 두 번째 stage.
+actor별 use case를 식별한다. 2단계 `define-features`의 두 번째 stage.
 
 UML use case diagram 등가 작업. actor 시점에서 시스템과의 상호작용을 동사+목적어 형태로 나열한다.
 
@@ -15,8 +15,8 @@ UML use case diagram 등가 작업. actor 시점에서 시스템과의 상호작
 
 1. **actor 시점**: "{actor}가 {동사} + {목적어}" 형태로 작성
 2. **독립성**: 각 use case는 actor 단독으로 식별 가능한 상호작용
-3. **측정 가능**: use case는 §6 QA에서 테스트 가능해야 함
-4. **현재 scope**: §8의 iteration에서 발견된 use case는 §2 재진입 시 추가
+3. **측정 가능**: use case는 6단계 QA에서 테스트 가능해야 함
+4. **현재 scope**: 8단계의 iteration에서 발견된 use case는 2단계 재진입 시 추가
 
 ---
 
@@ -95,7 +95,7 @@ actor_use_cases:
 
 - [ ] 각 use case가 단일 actor의 단일 상호작용인가?
 - [ ] Trigger와 outcome이 명확한가?
-- [ ] §6 QA에서 테스트 가능한가?
+- [ ] 6단계 QA에서 테스트 가능한가?
 - [ ] actor 간 중복이 없는가? (use case는 한 actor 소속)
 
 ---

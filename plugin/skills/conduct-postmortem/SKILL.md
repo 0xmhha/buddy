@@ -7,7 +7,7 @@ description: This skill should be used when the user wants to "conduct a postmor
 
 인시던트 종료 후 비난 없는(blameless) 포스트모템을 진행한다. 타임라인 재구성 → 5 Whys → 재발 방지 action items 순서로 진행한다.
 
-**§8 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
+**8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 **진행 시점**: 인시던트 해결 후 24-72시간 내. 기억이 생생할 때.
 
 ---

@@ -5,17 +5,17 @@ description: This skill should be used when the user wants to "analyze the funne
 
 # analyze-user-funnel
 
-§2 use case 분해 결과를 기반으로 actor별 전환/이탈을 분석한다. 어느 actor 단계에서 drop-off가 발생하는지 추적해 개선 우선순위를 결정한다.
+2단계 use case 분해 결과를 기반으로 actor별 전환/이탈을 분석한다. 어느 actor 단계에서 drop-off가 발생하는지 추적해 개선 우선순위를 결정한다.
 
-**§8 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
+**8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 
 ---
 
 ## Funnel 분석 절차
 
-### 1. §2 Use Case 기반 Funnel 정의
+### 1. 2단계 Use Case 기반 Funnel 정의
 
-§2 feature spec의 actor / use case를 기반으로 funnel 단계를 정의한다.
+2단계 feature spec의 actor / use case를 기반으로 funnel 단계를 정의한다.
 
 예시 (`signup-email-password` feature):
 ```yaml
@@ -161,4 +161,4 @@ Impact = drop-off_rate × stage_users × business_value_per_conversion
 
 - `generate-improvement-tasks` — 분석 결과 → improvement backlog 생성
 - `design-ab-experiment` — 개선 가설 검증
-- `define-features` (§2) — 구조적 변경이 필요한 경우 재진입
+- `define-features` (2단계) — 구조적 변경이 필요한 경우 재진입

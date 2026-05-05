@@ -7,7 +7,7 @@ description: This skill should be used when the user wants to "analyze A/B test 
 
 완료된 A/B 실험 결과를 분석하고 Ship / Revert / Continue 결정을 내린다. 통계적 유의성 + 실용적 유의성을 모두 검토한다.
 
-**§8 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
+**8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 
 ---
 
@@ -78,7 +78,7 @@ actor: email-verifier
 ```
 Ship (배포):
   조건: p-value < 0.05 AND effect ≥ MDE AND guardrail 악화 없음
-  행동: feature flag 100% 전환 → ship-release §7.3 fast path
+  행동: feature flag 100% 전환 → ship-release 7-3 단계 fast path
 
 Revert (롤백):
   조건: guardrail metric 유의미하게 악화 OR primary metric 악화 확인
@@ -132,6 +132,6 @@ No Result (결론 없음):
 
 ## 다음 단계
 
-- Ship → `ship-release` §7.3 fast path
+- Ship → `ship-release` 7-3 단계 fast path
 - Revert → `conduct-postmortem`
 - 결과 기반 개선 → `generate-improvement-tasks`

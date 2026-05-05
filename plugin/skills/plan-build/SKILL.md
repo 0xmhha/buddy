@@ -1,21 +1,21 @@
 ---
 name: plan-build
-description: This skill should be used when the user wants to "plan the implementation", "create a task plan", "decompose features into tasks", "plan parallel development", "create sprint plan", or has technical design ready and needs to create an ordered implementation plan. Orchestrates §4 Implementation Plan phase.
+description: This skill should be used when the user wants to "plan the implementation", "create a task plan", "decompose features into tasks", "plan parallel development", "create sprint plan", or has technical design ready and needs to create an ordered implementation plan. Orchestrates 4단계 Implementation Plan phase.
 ---
 
-# plan-build — §4 Implementation Plan Orchestrator
+# plan-build — 4단계 Implementation Plan Orchestrator
 
-§4 라이프사이클 단계의 진입점. §2 feature spec + §3 system topology → ordered task graph with dependencies + parallelization plan.
+4단계 라이프사이클 단계의 진입점. 2단계 feature spec + 3단계 system topology → ordered task graph with dependencies + parallelization plan.
 
-**진입 조건**: §3 technical design 확정 (ADR + API contract + data model).
+**진입 조건**: 3단계 technical design 확정 (ADR + API contract + data model).
 **산출물**: Actor별 ordered task list + dependency DAG + parallel execution plan + build timeline.
-**다음 phase**: Implementation plan 확정 후 → `build-feature` (§5).
+**다음 phase**: Implementation plan 확정 후 → `build-feature` (5단계).
 
 ---
 
-## §3/§4 분리 근거
+## 3단계/4단계 분리 근거
 
-| 항목 | §3 Technical Design | §4 Implementation Plan |
+| 항목 | 3단계 Technical Design | 4단계 Implementation Plan |
 |------|---------------------|----------------------|
 | 의사결정 권한자 | Architect / Tech Lead | Tech Lead / Eng Manager |
 | 시간 지평 | 다년 (락인 영향) | 분기/스프린트 |
@@ -27,7 +27,7 @@ description: This skill should be used when the user wants to "plan the implemen
 ## Stage 흐름
 
 ```
-plan-build (§4 phase orchestrator)
+plan-build (4단계 phase orchestrator)
 ├── stage 1: decompose-feature-to-actor-tracks  (feature → actor별 task track)
 ├── stage 2: decompose-track-to-tasks           (actor track → ordered task list)
 ├── stage 3: map-task-dependencies              (task DAG — actor 내부 + actor 간 contract)
@@ -45,7 +45,7 @@ plan-build (§4 phase orchestrator)
 
 ### Stage 1: Feature → Actor Track 분해
 
-§2 feature spec의 actor list를 기반으로 각 feature를 actor별 implementation track으로 분리한다.
+2단계 feature spec의 actor list를 기반으로 각 feature를 actor별 implementation track으로 분리한다.
 
 예시 (`signup-email-password` feature):
 ```
@@ -142,7 +142,7 @@ Week 3: Integration testing (cross-actor)
 
 ## 다음 phase
 
-- `/buddy:build-feature` — §5 Development (권장)
+- `/buddy:build-feature` — 5단계 Development (권장)
 - `/buddy:dispatch-parallel-agents` — 병렬 agent 분배를 즉시 시작할 때
 
 ---

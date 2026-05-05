@@ -31,13 +31,13 @@ type: skill
 
 후행 슬래시 없으면 `/Users/me/proj/src`는 다음을 **구별 못 한다**:
 
-- `/Users/me/proj/src/file.ts` ✅ 내부, 허용돼야
-- `/Users/me/proj/src-old/file.ts` ❌ 차단돼야, 그런데 prefix `/Users/me/proj/src`가 매칭!
+- `/Users/me/proj/src/file.ts` — 내부 파일, 허용되어야 함
+- `/Users/me/proj/src-old/file.ts` — 차단되어야 함. 그런데 prefix `/Users/me/proj/src` 가 매칭됨 (버그)
 
-후행 슬래시 있으면 `/Users/me/proj/src/`가 올바로 동작:
+후행 슬래시 있으면 `/Users/me/proj/src/` 가 올바로 동작:
 
-- `/Users/me/proj/src/file.ts` ✅ prefix로 시작
-- `/Users/me/proj/src-old/file.ts` ✅ 올바르게 prefix로 시작하지 않음
+- `/Users/me/proj/src/file.ts` — prefix 로 시작 (허용)
+- `/Users/me/proj/src-old/file.ts` — prefix 로 시작하지 않음 (올바르게 차단)
 
 작은 디테일이지만 큰 결과. 상태 파일 쓰기 전에 항상 후행 슬래시로 normalize.
 

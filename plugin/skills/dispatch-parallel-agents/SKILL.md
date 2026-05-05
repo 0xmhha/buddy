@@ -214,9 +214,9 @@ cleanup:
 - 후속: `iterate-fix-verify` (실패 worker fix loop)
 - 후속: `automate-release-tagging` (모든 worker 통합 후 release)
 
-## 9. Actor-Track Dispatch 절차 (§5 build-feature 연동)
+## 9. Actor-Track Dispatch 절차 (5단계 build-feature 연동)
 
-§4 plan-build의 actor-track plan을 입력으로 받아 실제 worktree + Agent를 분배하는 구체 절차.
+4단계 plan-build의 actor-track plan을 입력으로 받아 실제 worktree + Agent를 분배하는 구체 절차.
 
 ### Step 1. actor-track plan 읽기
 
