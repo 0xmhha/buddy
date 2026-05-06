@@ -26,9 +26,10 @@ router 가 사용하는 `${CLAUDE_PLUGIN_ROOT}` 는 buddy plugin install root �
 2. 1차 시도가 실패하거나 literal `${CLAUDE_PLUGIN_ROOT}` 가 그대로 노출되어 Read 가 안 풀리면 `Bash` 도구로 install root 를 발견한다:
     ```bash
     {
-      find "$HOME/.claude/plugins" -maxdepth 4 -type d -name buddy 2>/dev/null
+      find "$HOME/.claude/plugins" -maxdepth 4 -type d -name buddy 2>/dev/null \
+        | xargs -I{} sh -c 'test -f "{}/skills/router/SKILL.md" && echo "{}"'
       git -C . rev-parse --show-toplevel 2>/dev/null \
-        | xargs -I{} sh -c 'test -d "{}/plugin/skills/router" && echo "{}/plugin"'
+        | xargs -I{} sh -c 'test -f "{}/plugin/skills/router/SKILL.md" && echo "{}/plugin"'
     } | head -1
     ```
     출력된 경로를 BUDDY_ROOT 로 잡고, 본문에 등장하는 `${CLAUDE_PLUGIN_ROOT}/...` 의 `${CLAUDE_PLUGIN_ROOT}` 부분을 BUDDY_ROOT 로 치환해 동일 상대 경로로 재시도한다.
