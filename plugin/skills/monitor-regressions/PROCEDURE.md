@@ -1,9 +1,3 @@
----
-name: monitor-regressions
-description: "[패턴 라이브러리] delta-based threshold + transient tolerance + per-page isolation으로 monitoring과 regression detection 설계 (console err, perf, page fail). 직접 invoke보다 orchestrator가 import해 사용. 트리거: '회귀 모니터' / 'console err 추적' / 'perf 회귀' / 'page fail 감시'. 참조 위치: write-changelog 후 배포 모니터, triage-work-items 입력 소스, summarize-retro 데이터."
-type: skill
----
-
 # Snippet: Monitoring Patterns (Delta + Transient + Isolation)
 
 

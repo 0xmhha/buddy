@@ -1,9 +1,3 @@
----
-name: dispatch-parallel-agents
-description: "feature/task를 worktree로 격리해 Sonnet worker agent에 병렬 분배하고 결과를 aggregate. concurrency 제어, dependency 그래프 준수, 실패 격리, 결과 reconcile, 충돌 처리 표준화. 트리거: '병렬로 구현해' / '여러 feature 동시에' / 'worker 분배' / 'fan-out fan-in' / 'multi-agent dispatch' / 'agent에 분배해' / '병렬 작업'. 입력: feature spec set + dependency graph + concurrency limit + worker model. 출력: dispatch plan + per-worker briefs + aggregation policy + status board. 흐름: split-work-into-features/triage-work-items → dispatch-parallel-agents → auto-create-pr."
-type: skill
----
-
 # Dispatch Parallel Agents — Feature 병렬 분배 + Aggregate
 
 ## 1. 목적

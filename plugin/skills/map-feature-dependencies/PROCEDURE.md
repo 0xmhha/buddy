@@ -1,8 +1,3 @@
----
-name: map-feature-dependencies
-description: This skill should be used when the user wants to "map feature dependencies", "find what needs to be built first", "create a dependency graph", "sequence features", or needs to understand the order in which features must be built.
----
-
 # map-feature-dependencies
 
 feature 간 선후 의존성 그래프를 작성한다. 2단계 `define-features`의 여덟 번째 stage.

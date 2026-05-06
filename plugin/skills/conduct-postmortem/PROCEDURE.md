@@ -1,8 +1,3 @@
----
-name: conduct-postmortem
-description: This skill should be used when the user wants to "conduct a postmortem", "write an incident postmortem", "do a blameless postmortem", "analyze what went wrong", or has resolved an incident and needs to do a structured retrospective to prevent recurrence.
----
-
 # conduct-postmortem
 
 인시던트 종료 후 비난 없는(blameless) 포스트모템을 진행한다. 타임라인 재구성 → 5 Whys → 재발 방지 action items 순서로 진행한다.

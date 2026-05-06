@@ -1,9 +1,3 @@
----
-name: explore-design-variants
-description: "N variants를 parallel 생성하고 structured feedback으로 iterate. divergent 탐색 패턴 — 디자인뿐 아니라 copy/architecture option/naming brainstorm. 트리거: '디자인 옵션 보여줘' / '변형 brainstorm' / '다른 디자인 안' / 'shotgun 디자인' / 'design variants' / '여러 안 보여줘' / 'alternative designs'. 입력: 한 가지 시안 + 평가 차원. 출력: 3-5개 변형 + 각 trade-off. 흐름: review-design → explore-design-variants → consult-design-system."
-type: skill
----
-
 # Explore Design Variants — 병렬 Variant 탐색
 
 

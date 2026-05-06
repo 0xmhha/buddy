@@ -1,9 +1,3 @@
----
-name: save-context
-description: decisions, remaining work, git status를 checkpoint로 저장해 future session이 branch가 달라도 이어받게 한다. context switch, /clear, session end 전에 사용한다.
-type: skill
----
-
 # Context-Save — 작업 상태 체크포인트
 
 

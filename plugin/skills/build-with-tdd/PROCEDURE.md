@@ -1,9 +1,3 @@
----
-name: build-with-tdd
-description: "신규 기능을 red-green-refactor TDD 루프(test 먼저 → 실패 확인 → 최소 구현 → 통과 → 리팩터)로 구현. tracer bullet 우선, observable behavior 중심. 트리거: 'TDD로 가자' / '테스트 먼저 작성' / 'red-green-refactor' / 'tracer bullet' / 'failing test 먼저' / 'TDD 사이클' / 'behavior test'. 입력: feature spec 또는 acceptance criteria. 출력: passing test suite + 최소 구현 코드. 흐름: split-work-into-features/define-feature-spec → build-with-tdd → measure-code-health/run-browser-qa."
-type: skill
----
-
 # Build With TDD — Red-Green-Refactor 강제 루프
 
 ## 1. 목적

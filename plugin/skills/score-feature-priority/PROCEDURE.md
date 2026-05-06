@@ -1,8 +1,3 @@
----
-name: score-feature-priority
-description: This skill should be used when the user wants to "prioritize features", "score features", "rank the backlog", "decide what to build first", "apply RICE scoring", or needs to prioritize a list of features using a structured framework.
----
-
 # score-feature-priority
 
 RICE / ICE / MoSCoW 프레임워크로 feature 우선순위를 결정한다. 2단계 `define-features`의 일곱 번째 stage.

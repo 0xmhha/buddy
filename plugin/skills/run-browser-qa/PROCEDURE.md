@@ -1,9 +1,3 @@
----
-name: run-browser-qa
-description: "[패턴 라이브러리] browser automation QA 패턴 — snapshot diff, form testing, responsive checks, dialog handling, accessibility-tree interaction. 직접 invoke보다 orchestrator가 import해 사용. 트리거: '브라우저 QA' / 'playwright 패턴' / 'E2E QA' / '스냅샷 diff'. 참조 위치: classify-qa-tiers Exhaustive tier, 배포 전 검증, audit-live-devex."
-type: skill
----
-
 # Snippet: Browser QA Workflow Patterns
 
 

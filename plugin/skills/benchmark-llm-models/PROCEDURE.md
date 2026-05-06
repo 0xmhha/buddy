@@ -1,9 +1,3 @@
----
-name: benchmark-llm-models
-description: "[패턴 라이브러리] multi-provider LLM benchmark 패턴 (Claude/GPT/Gemini) — dry-run auth verification, provider selection UX, judge cost transparency. 직접 invoke보다 orchestrator가 import해 사용. 트리거: 'Claude/GPT/Gemini 벤치' / '모델 비교' / 'LLM 벤치마크' / 'model benchmark'. 참조 위치: monitor-regressions 페어, 모델 선택 검증."
-type: skill
----
-
 # Snippet: Dry-Run Pre-Flight + Cost Transparency
 
 

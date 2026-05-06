@@ -1,9 +1,3 @@
----
-name: triage-work-items
-description: "이슈/feature/task 같은 work item의 우선순위 결정과 lifecycle state machine 운영. 이슈는 needs-triage→ready-for-agent/human/wontfix→in-progress→resolved 순환. feature는 draft→candidate→ready→in-progress→implemented→verified→reusable→deprecated. 트리거: '어디까지 됐지?' / '이거 누가 봐?' / 'ready인지 봐줘' / 'triage 해줘' / 'wontfix 결정' / 'feature 상태 업데이트' / 'needs-info 처리'. 입력: bug report, monitor-regressions 출력, feature 후보, code health 위반. 출력: triage board + action plan + state 변경 ledger. 흐름: monitor-regressions/measure-code-health/split-work-into-features → triage-work-items → diagnose-bug/build-with-tdd."
-type: skill
----
-
 # Triage Work Items — Lifecycle State Machine 운영
 
 ## 1. 목적

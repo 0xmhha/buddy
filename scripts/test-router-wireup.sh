@@ -20,7 +20,7 @@ cd "$(git rev-parse --show-toplevel)"
 
 PLUGIN_JSON="plugin/.claude-plugin/plugin.json"
 SKILLS_DIR="plugin/skills"
-COMMANDS_DIR="plugin/commands/buddy"
+COMMANDS_DIR="plugin/commands"
 ROUTER_SKILL="plugin/skills/router/SKILL.md"
 
 # Composition commands are exempt from the "single mode" invariant — their
@@ -224,6 +224,27 @@ else
     fail "description drift detected:"
     for msg in "${drift_failures[@]}"; do
         echo "    - $msg"
+    done
+fi
+
+# --- Check 10: PROCEDURE.md files have no skill-shaped frontmatter ----------
+# Auto-discovery is keyed off YAML frontmatter shape (name + description).
+# After Phase 0', PROCEDURE.md files must NOT carry frontmatter so that only
+# router/SKILL.md is auto-discovered. Re-introducing frontmatter here would
+# revive the routing collision and the illusory token-reduction regression.
+bad_proc=()
+while IFS= read -r f; do
+    if [ "$(head -1 "$f")" = "---" ]; then
+        bad_proc+=("$f")
+    fi
+done < <(find "$SKILLS_DIR" -name PROCEDURE.md)
+
+if [ "${#bad_proc[@]}" -eq 0 ]; then
+    pass "no PROCEDURE.md has skill-shaped YAML frontmatter (auto-discovery off)"
+else
+    fail "${#bad_proc[@]} PROCEDURE.md files still have YAML frontmatter (auto-discovery active):"
+    for p in "${bad_proc[@]}"; do
+        echo "    - $p"
     done
 fi
 

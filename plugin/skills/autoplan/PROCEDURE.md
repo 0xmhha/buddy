@@ -1,9 +1,3 @@
----
-name: autoplan
-description: 자동 multi-stage 리뷰 파이프라인. 리뷰 스킬 (`review-scope` / `review-engineering` / `review-design` / `review-devex`)을 순차 chaining, 원칙 허용 시 auto-resolve, taste 결정만 사용자에게 노출. 단계별 handholding 없이 전체 리뷰 battery 실행에 사용.
-type: skill
----
-
 # Autoplan — Multi-Stage 리뷰 Orchestration
 
 <overview>

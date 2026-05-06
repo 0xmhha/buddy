@@ -1,9 +1,3 @@
----
-name: summarize-retro
-description: "git history를 evidence-based weekly retrospective로 변환 — work types, hotspots, focus score, AI collaboration, person별 praise. 트리거: '주간 retro 정리' / '이번 주 회고' / 'commit 분석 retro' / '팀 회고' / 'weekly retro 작성' / '회고 만들어줘' / '이번 sprint 회고'. 입력: git log, commit history, 이슈 트래커. 출력: 회고 보고서 (성과/문제/배움/액션). 흐름: monitor-regressions/persist-learning-jsonl → summarize-retro → triage-work-items."
-type: skill
----
-
 # Retro — 증거 기반 주간 회고
 
 

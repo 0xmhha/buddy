@@ -1,9 +1,3 @@
----
-name: review-license-and-ip-risk
-description: "프로젝트의 모든 의존성/asset/AI 생성 코드에 대한 라이선스 호환성, IP 출처, 상업 사용 가능성을 검토하고 risk register와 remediation list를 산출. 트리거: '라이선스 검토' / '상업 사용 가능해?' / 'copyleft 충돌 없어?' / 'AGPL 위험 있어?' / 'SBOM 만들어줘' / 'MIT랑 GPL 섞어 써도 돼?' / 'AI 생성 코드 라이선스 어떻게?'. 입력: 의존성 목록, asset, AI 생성 코드 인벤토리. 출력: SBOM + license risk register + remediation. 흐름: assess-business-viability/audit-security → review-license-and-ip-risk → define-product-spec/write-changelog."
-type: skill
----
-
 # Review License & IP Risk — 라이선스/IP 7단계 검증
 
 ## 1. 목적

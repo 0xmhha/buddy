@@ -1,9 +1,3 @@
----
-name: review-terms-policy-readiness
-description: "상용 출시 전 ToS(Terms of Service), Privacy Policy, AUP(Acceptable Use Policy), Refund Policy, Cookie Policy, DPA(Data Processing Agreement), SLA(Service Level Agreement) 7종 문서의 준비 상태와 일관성을 검토. 트리거: '이용약관 검토' / '개인정보처리방침 readiness' / '환불 정책 봐줘' / 'ToS 작성' / '쿠키 정책' / 'DPA 필요해?' / 'SLA 정의'. 입력: 제품 spec, pricing, 데이터 처리 방식, 대상 시장. 출력: 7종 문서 readiness checklist + gap list + 작성 우선순위. 흐름: review-pricing-and-gtm/review-privacy-data-risk → review-terms-policy-readiness → define-product-spec/write-changelog."
-type: skill
----
-
 # Review Terms and Policy Readiness — 7종 문서 출시 준비도 점검
 
 ## 1. 목적

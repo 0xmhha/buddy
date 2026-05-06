@@ -1,8 +1,3 @@
----
-name: define-feature-spec
-description: This skill should be used when the user wants to "write a feature spec", "define feature requirements", "create feature specification", "document a feature", or has a composed feature and needs to write a complete specification including actors, use cases, acceptance criteria, and test plans.
----
-
 # define-feature-spec
 
 feature의 완전한 명세서를 작성한다. 2단계 `define-features`의 다섯 번째 stage.

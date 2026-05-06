@@ -1,9 +1,3 @@
----
-name: design-billing-system
-description: "SaaS 결제 시스템 설계 — Stripe/Toss + point wallet + subscription tier + usage metering + invoice + dunning + revenue share + tax. 결제 보안, idempotency, webhook 정합성, refund 정책 표준화. 트리거: '결제 시스템 설계' / 'Stripe 통합' / 'point wallet 만들자' / 'subscription 모델' / '환불 정책' / 'usage metering' / 'revenue share 정산' / 'dunning flow'. 입력: pricing tier, 시장(KR/EU/US), 결제 provider, multi-tenant 요구. 출력: billing module spec + payment flow + webhook handler + reconciliation + tax. 흐름: review-pricing-and-gtm → design-billing-system → build-with-tdd."
-type: skill
----
-
 # Design Billing System — 결제 / 구독 / 정산 9 모듈 설계
 
 ## 1. 목적

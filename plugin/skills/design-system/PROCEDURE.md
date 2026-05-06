@@ -1,8 +1,3 @@
----
-name: design-system
-description: This skill should be used when the user wants to "design the system", "choose tech stack", "design infrastructure", "design API", "design data model", "create ADR", "design architecture", or has a feature backlog ready and needs technical design. Orchestrates 3단계 Technical Design phase.
----
-
 # design-system — 3단계 Technical Design Orchestrator
 
 3단계 라이프사이클 단계의 진입점. Feature backlog (actor / use case / system boundary 포함) → Tech stack ADR + infra blueprint + API/data model.

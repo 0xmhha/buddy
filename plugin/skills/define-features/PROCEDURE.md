@@ -1,8 +1,3 @@
----
-name: define-features
-description: This skill should be used when the user wants to "define features", "create feature backlog", "break down a PRD into features", "identify what to build", "map use cases", "define actors", or has a PRD ready and needs to plan implementation. Orchestrates 2단계 Feature Definition & Backlog phase — runs actor identification, use case mapping, system boundary analysis, and feature composition.
----
-
 # define-features — 2단계 Feature Definition & Backlog Orchestrator
 
 2단계 라이프사이클 단계의 진입점. PRD → feature backlog (actor / use case / system boundary 포함 feature spec 목록) 생성.

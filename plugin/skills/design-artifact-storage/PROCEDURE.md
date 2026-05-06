@@ -1,9 +1,3 @@
----
-name: design-artifact-storage
-description: "patch / git_bundle / template / package 같은 immutable artifact의 저장·검증·배포 설계. SHA-256 hash, author signature, signed download URL, security scan 결과 보존, immutable revisioning. feature-management-saas-mcp의 patch artifact 핵심. 트리거: 'artifact 저장 설계' / 'patch hash 검증' / 'signed URL' / 'immutable artifact' / 'object storage' / 'patch download 보안' / 'author signature'. 입력: artifact 종류 + 저장 backend + license 정책 + 다운로드 보안 요구. 출력: artifact pipeline + storage schema + verification flow + signed URL 발급. 흐름: design-mcp-server → design-artifact-storage → build-with-tdd."
-type: skill
----
-
 # Design Artifact Storage — Immutable Patch / Bundle / Template 저장소
 
 ## 1. 목적

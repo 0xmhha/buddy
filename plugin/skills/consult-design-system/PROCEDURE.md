@@ -1,9 +1,3 @@
----
-name: consult-design-system
-description: "research → synthesize → output pipeline으로 complete design system 생성. aesthetic, typography, color, spacing, motion tokens + 컴포넌트 hierarchy. 트리거: '디자인 시스템 제안' / '토큰 정의' / '컴포넌트 시스템 만들자' / 'design tokens' / 'spacing/color 시스템' / 'design system consult' / '디자인 시스템 컨설트'. 입력: 제품 컨텍스트, 브랜드, 기존 컴포넌트. 출력: design tokens + 컴포넌트 시스템 + 사용 가이드. 흐름: review-design → consult-design-system → 구현."
-type: skill
----
-
 # Design-Consultation — Research-Synthesize-Output 파이프라인
 
 

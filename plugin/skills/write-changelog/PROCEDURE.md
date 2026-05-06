@@ -1,9 +1,3 @@
----
-name: write-changelog
-description: "[패턴 라이브러리] version bump + CHANGELOG release-summary format + voice rules + user-facing change summary 작성 패턴. 직접 invoke보다 orchestrator가 import해 사용. 트리거: 'CHANGELOG 작성' / '릴리스 노트' / '버전 범프' / 'release 준비'. 참조 위치: critique-plan 후 ship 단계, sync-release-docs 페어, 배포 전 게이트."
-type: skill
----
-
 # Snippet: Version Bump + CHANGELOG Format
 
 

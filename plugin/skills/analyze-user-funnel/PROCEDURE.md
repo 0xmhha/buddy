@@ -1,8 +1,3 @@
----
-name: analyze-user-funnel
-description: This skill should be used when the user wants to "analyze the funnel", "find where users drop off", "analyze conversion rates", "track user flow", "measure actor-level metrics", or needs to understand where users are failing in a product flow.
----
-
 # analyze-user-funnel
 
 2단계 use case 분해 결과를 기반으로 actor별 전환/이탈을 분석한다. 어느 actor 단계에서 drop-off가 발생하는지 추적해 개선 우선순위를 결정한다.

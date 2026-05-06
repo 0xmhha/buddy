@@ -1,8 +1,3 @@
----
-name: generate-improvement-tasks
-description: This skill should be used when the user wants to "generate improvement tasks from analysis", "create backlog from experiment results", "convert insights to tasks", "turn postmortem action items into features", or has analysis results (A/B experiment, funnel, incident, customer feedback) and needs to convert them into actionable work items.
----
-
 # generate-improvement-tasks
 
 8단계 분석 결과(A/B 실험, funnel 분석, postmortem, 고객 피드백)를 actionable improvement task로 변환한다. 각 task는 2단계 `define-features` 재진입의 입력이 된다.

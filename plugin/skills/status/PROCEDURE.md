@@ -1,9 +1,3 @@
----
-name: status
-description: "This skill should be used when the user asks '지금 어디야?' / '다음에 뭐 해?' / '어떤 커맨드 써야 해?' / '진행 상황 알려줘' / '어느 phase야?' / 'what command next?' / 'where are we?' / 'show commands' / '커맨드 목록'. Detects the current lifecycle phase from available artifacts, shows what's done, what's blocked, and which /buddy command to run next."
-type: skill
----
-
 # Status — 현재 Phase + 다음 커맨드 안내
 
 사용자에게 **"지금 어디 있는지"**와 **"다음에 어떤 커맨드를 쓸지"**를 알려준다.

@@ -1,9 +1,3 @@
----
-name: audit-live-devex
-description: "[패턴 라이브러리] 빌드/배포된 live developer product를 실제로 따라 하며 TTHW timing, evidence, literal doc-following으로 DX audit. review-devex의 live companion. 트리거(orchestrator 본문에서 호출 시): 'build 후 라이브 감사' / 'post-build DX check' / '실제 사용해보면서 점검' / 'live devex 감사' / 'deployed 상태 감사'. 참조 위치: review-devex post-build 단계 / 배포 후 검증."
-type: skill
----
-
 # Snippet: Live DX Audit Checklist
 
 

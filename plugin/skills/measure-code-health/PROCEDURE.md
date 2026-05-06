@@ -1,9 +1,3 @@
----
-name: measure-code-health
-description: project tool을 auto-detect해 typecheck/lint/test/deadcode/shell 결과를 0-10 weighted composite health dashboard로 산출한다. refactor 전후나 weekly trend tracking에 사용한다.
-type: skill
----
-
 # Health — Composite 코드 품질 대시보드
 
 

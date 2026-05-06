@@ -1,9 +1,3 @@
----
-name: design-mcp-server
-description: "MCP(Model Context Protocol) server 설계. tool / resource / prompt 정의, transport(stdio/http/sse), authentication, error handling, schema validation, idempotency, observability를 표준화. feature-management-saas-mcp 같은 외부 통합 서버 구축 시 사용. 트리거: 'MCP 서버 만들자' / 'MCP tool 설계' / 'feature.query 같은 tool' / 'MCP resource 정의' / 'agent에 노출' / 'MCP transport' / 'tool schema 작성'. 입력: 노출할 capability, 클라이언트(Claude Code/Codex/Cursor), auth 정책, persistence 모델. 출력: MCP server spec + tool/resource catalog + transport + auth + error model. 흐름: split-work-into-features → design-mcp-server → build-with-tdd."
-type: skill
----
-
 # Design MCP Server — Tool/Resource/Prompt 표준 설계
 
 ## 1. 목적

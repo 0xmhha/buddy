@@ -1,8 +1,3 @@
----
-name: handle-incident
-description: This skill should be used when the user says "we have an incident", "production is down", "handle this outage", "something is broken in production", "users are reporting errors", or needs to coordinate an incident response in a structured way.
----
-
 # handle-incident
 
 프로덕션 인시던트를 구조적으로 대응한다. 영향 범위 확인 → 즉각 완화 → 근본 원인 조사 → Fix 배포 → 고객 커뮤니케이션 순서를 따른다.

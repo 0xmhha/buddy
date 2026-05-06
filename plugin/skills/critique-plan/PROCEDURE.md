@@ -1,9 +1,3 @@
----
-name: critique-plan
-description: Implementation plan에 대한 strategic critique (CEO/founder 페르소나). 17 strategic 사고 원칙 + 11 리뷰 섹션 + 4 모드 (EXPANSION/SELECTIVE/HOLD/REDUCTION); HOLD가 본 스킬의 본질 모드. 사용 트리거 — "이 계획 비평해줘", "plan 깨질 곳?", "구멍 찌르기", "plan critique 실행", "rollback 계획?", "edge case 검토", "observability 충분?", "보안 점검". 입력 — 다중 페이지 implementation plan (파일/클래스/migration 단계 명시). 출력 — CEO REVIEW SUMMARY (mode, top 3 issues, recommended path, accepted scope, deferred, NOT in scope, completion status). 자매 스킬 — `review-scope` (scope 형성 단계). 일반 흐름 — `validate-idea` → `review-scope` → `critique-plan`. `review-scope`에서 HOLD 신호 감지 시 위임받음.
-type: skill
----
-
 # Critique Plan — 전략적 Plan Critique
 
 ## 개요

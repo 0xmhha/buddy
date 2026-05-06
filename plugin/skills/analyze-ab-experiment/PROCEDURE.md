@@ -1,8 +1,3 @@
----
-name: analyze-ab-experiment
-description: This skill should be used when the user wants to "analyze A/B test results", "evaluate experiment results", "decide whether to ship from experiment", "check statistical significance", or has completed an A/B experiment and needs to make a ship/revert/continue decision.
----
-
 # analyze-ab-experiment
 
 완료된 A/B 실험 결과를 분석하고 Ship / Revert / Continue 결정을 내린다. 통계적 유의성 + 실용적 유의성을 모두 검토한다.

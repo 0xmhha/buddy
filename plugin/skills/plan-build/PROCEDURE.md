@@ -1,8 +1,3 @@
----
-name: plan-build
-description: This skill should be used when the user wants to "plan the implementation", "create a task plan", "decompose features into tasks", "plan parallel development", "create sprint plan", or has technical design ready and needs to create an ordered implementation plan. Orchestrates 4단계 Implementation Plan phase.
----
-
 # plan-build — 4단계 Implementation Plan Orchestrator
 
 4단계 라이프사이클 단계의 진입점. 2단계 feature spec + 3단계 system topology → ordered task graph with dependencies + parallelization plan.

@@ -1,9 +1,3 @@
----
-name: review-scope
-description: Creator 페르소나로 plan의 scope를 형성·결정하는 early-stage 리뷰. 4 모드 (SCOPE EXPANSION / SELECTIVE / HOLD / REDUCTION); HOLD는 `critique-plan`에 위임. 사용 트리거 — "이 계획 어디까지 빌드?", "scope 잡아줘", "10x 버전 뭐?", "이게 올바른 방향?", "더 크게 생각", "최소 버전은?". 입력 — `validate-idea`의 design document, 또는 1-paragraph 계획. 출력 — scope decision document (premise check, mode, dream state delta, alternatives, scope decisions table, accepted/NOT in scope). 자매 스킬 — `critique-plan` (이미 잠긴 plan의 stress-test 단계).
-type: skill
----
-
 # Review Scope — 초기 Planning Lens
 
 계획이 아직 형성 중일 때 사용하는 **founder/creator-mode** 리뷰. 완성된 계획을 stress-test하는 게 아니라 — 애초에 **올바른 계획**이 형성되고 있는지 확인하는 것.

@@ -1,9 +1,3 @@
----
-name: review-privacy-data-risk
-description: "PII / personal data / sensitive data의 수집·저장·처리·전송·삭제 lifecycle을 GDPR/PIPL/PIPA/HIPAA/COPPA 등 규제 frame으로 검토. data flow map + DPIA + breach response 산출. 트리거: '개인정보 검토' / 'PII 처리 봐줘' / 'GDPR 영향 평가' / 'data retention 정책' / '데이터 삭제 권리' / 'DPIA 필요해?' / 'cross-border data 전송'. 입력: 데이터 모델, data flow, 사용자 지역, 도메인(health/finance/minor). 출력: data inventory + DPIA + breach response + retention policy. 흐름: assess-business-viability → review-privacy-data-risk → define-product-spec/audit-security."
-type: skill
----
-
 # Review Privacy and Data Risk — 데이터 lifecycle 6단계 검증
 
 ## 1. 목적

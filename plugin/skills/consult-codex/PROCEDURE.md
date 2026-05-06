@@ -1,9 +1,3 @@
----
-name: consult-codex
-description: "독립 컨텍스트의 외부 LLM CLI(codex 등)를 호출해 review/challenge/consult 3 modes로 second opinion을 얻음. dual voice 합의 패스. 트리거: '외부 voice 받아줘' / '다른 LLM 의견' / '두 번째 의견' / 'dual voice로 가자' / 'codex와 논의' / '외부 컨텍스트 의견' / 'second opinion'. 입력: plan, critique, 의사결정 후보. 출력: 외부 LLM 응답 (single-voice degrade 가능). 흐름: autoplan dual voice / critique-plan에서 호출."
-type: skill
----
-
 # Codex — Multi-Mode 외부 Second-Opinion Wrapper
 
 

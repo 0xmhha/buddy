@@ -1,9 +1,3 @@
----
-name: classify-review-risks
-description: "[패턴 라이브러리] structural code review에서 반복적으로 놓치는 risk 11 category 분류 (SQL safety, LLM trust boundary, conditional side effects 등). anti-pattern scan checklist. 직접 invoke보다 orchestrator가 import해 사용. 트리거: '리뷰 리스크 분류' / '리뷰 risk 11개' / 'category 매핑' / '리뷰 카테고리'. 참조 위치: critique-plan §11 리뷰 섹션, review-engineering, review-architecture."
-type: skill
----
-
 # Snippet: 코드 리뷰 안티패턴 카테고리
 
 

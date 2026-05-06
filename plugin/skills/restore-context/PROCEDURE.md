@@ -1,9 +1,3 @@
----
-name: restore-context
-description: context-save가 저장한 most recent work checkpoint를 cross-branch로 load한다. /clear 이후, unfamiliar branch에서 재개할 때, "where was I" 질문에 사용한다.
-type: skill
----
-
 # Context-Restore — 체크포인트 자동 로드
 
 

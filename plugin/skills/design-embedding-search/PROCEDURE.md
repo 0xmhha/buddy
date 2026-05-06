@@ -1,9 +1,3 @@
----
-name: design-embedding-search
-description: "BM25 + vector embedding + metadata filter + reranking 결합한 hybrid search 설계. write-time embedding + read-time deterministic scoring으로 LLM 호출 최소화. 운영비 절감 + 정확도 양립. feature-management-saas-mcp의 feature.query 같은 semantic 검색 핵심. 트리거: 'embedding 검색 설계' / 'vector search 만들자' / 'BM25 + vector hybrid' / 'semantic 검색' / 'feature.query 구현' / '검색 정확도' / 'rerank 적용'. 입력: 검색 대상 entity + 검색 의도 + 운영비 예산 + 정확도 목표. 출력: index pipeline + query path + rerank 정책 + cost model + cache 전략. 흐름: design-mcp-server → design-embedding-search → build-with-tdd."
-type: skill
----
-
 # Design Embedding Search — Hybrid 검색 + 운영비 절감
 
 ## 1. 목적

@@ -1,9 +1,3 @@
----
-name: freeze-edit-scope
-description: "[패턴 라이브러리] session 동안 Edit/Write를 single directory로 lock (Read/Grep/Glob은 열어 둠). debugging/scoped refactor 중 unrelated code edit 차단. 직접 invoke보다 orchestrator가 import해 사용. 트리거: '디렉토리 잠궈' / 'scope freeze' / '범위 제한' / '외부 Edit 차단'. 참조 위치: 4 핵심 작업 중, compose-safety-mode 컴포넌트, diagnose-bug 격리."
-type: skill
----
-
 # Freeze — 디렉토리 범위 편집 잠금
 
 

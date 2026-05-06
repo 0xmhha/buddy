@@ -1,8 +1,3 @@
----
-name: map-actor-use-cases
-description: This skill should be used when the user wants to "map use cases", "define use cases per actor", "create use case diagram", "identify what each actor does", or has actors identified and needs to map what each actor does in the system.
----
-
 # map-actor-use-cases
 
 actor별 use case를 식별한다. 2단계 `define-features`의 두 번째 stage.

@@ -1,8 +1,3 @@
----
-name: iterate-product
-description: This skill should be used when the user wants to "run an A/B test", "analyze user behavior", "analyze funnels", "improve the product based on data", "handle an incident", "conduct a postmortem", "analyze user cohorts", "triage customer feedback", or is operating a product in production and wants to iterate. Orchestrates 8단계 Operate & Iterate phase — the primary loop for data-driven product improvement.
----
-
 # iterate-product — 8단계 Operate & Iterate Orchestrator
 
 8단계 라이프사이클 단계의 진입점. Production traffic → experiment results + improvement backlog → 2단계 loop.

@@ -1,9 +1,3 @@
----
-name: query-feature-registry
-description: "PRD 또는 feature candidate를 받아 feature registry(로컬 buddy DB 우선, 외부 MCP fallback)에서 유사 feature를 검색해 reuse / adapt / inspired-by / new 판단. 트리거: '비슷한 feature 있어?' / 'reuse 가능해?' / 'feature registry 검색' / '유사 구현 찾아줘' / 'feature 재사용' / 'registry query' / 'feature 저장해' / 'feature 목록 보여줘'. 입력: feature candidate (problem, interfaces, stack) + target product context. 출력: matched features + reuse_decision. 흐름: split-work-into-features → query-feature-registry → build-with-tdd."
-type: skill
----
-
 # Query Feature Registry — 로컬 DB 우선 + MCP Fallback
 
 ## 1. 목적

@@ -1,8 +1,3 @@
----
-name: build-feature
-description: This skill should be used when the user wants to "build a feature", "implement this", "start coding", "develop the feature", "write the code", or has an implementation plan ready and needs to execute it. Orchestrates 5단계 Development phase — manages TDD loops, parallel agent dispatch, and actor-track execution.
----
-
 # build-feature — 5단계 Development Orchestrator
 
 5단계 라이프사이클 단계의 진입점. Implementation plan (actor별 task track) → Working code per feature + unit/integration tests.

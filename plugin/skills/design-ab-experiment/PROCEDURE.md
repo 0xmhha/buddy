@@ -1,8 +1,3 @@
----
-name: design-ab-experiment
-description: This skill should be used when the user wants to "design an A/B test", "set up an experiment", "test a hypothesis", "split test", "run a controlled experiment", or needs to design a statistically valid experiment for a product change.
----
-
 # design-ab-experiment
 
 A/B 실험을 통계적으로 유효하게 설계한다. 가설 → 표본 크기 → 대조군/실험군 → 측정 지표 → 실험 기간을 순서대로 정의한다.

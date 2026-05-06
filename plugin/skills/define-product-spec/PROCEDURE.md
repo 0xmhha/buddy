@@ -1,9 +1,3 @@
----
-name: define-product-spec
-description: "아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정. Problem/Solution/User Stories/Success Criteria/Implementation Decisions/Out of Scope/feature 후보를 명문화. 트리거: 'PRD 작성' / '공식 명세 만들어줘' / 'PRD로 고정' / 'scope 확정해줘' / '유저스토리 작성' / '성공 기준 정의' / 'feature 후보 추출'. 입력: validate-idea/assess-business-viability/review-scope 통과 산출물. 출력: PRD Markdown + feature 후보 목록. 흐름: validate-idea → assess-business-viability → define-product-spec → split-work-into-features."
-type: skill
----
-
 # Define Product Spec — PRD 고정 인터뷰
 
 ## 1. 목적

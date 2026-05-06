@@ -1,9 +1,3 @@
----
-name: design-claude-hooks
-description: "Claude Code plugin/.claude scope의 PreToolUse, PostToolUse, Stop, SessionStart hook 표준 설계. matcher 패턴, JSON envelope 처리, decision schema (allow/ask/deny), idempotency, error handling, audit logging, hook composition. compose-safety-mode 확장. 트리거: 'hook 설계' / 'PreToolUse 추가' / 'PostToolUse formatter' / 'Stop audit' / 'SessionStart 설정' / 'hook 표준' / 'plugin hook'. 입력: 자동화 의도 (guard/format/audit/notify), 매칭 도구, decision 정책. 출력: hook scripts + settings.json wiring + audit log + composition map. 흐름: design-mcp-server/compose-safety-mode → design-claude-hooks → build-with-tdd."
-type: skill
----
-
 # Design Claude Hooks — Plugin Hook 표준 설계
 
 ## 1. 목적

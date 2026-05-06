@@ -1,9 +1,3 @@
----
-name: detect-install-type
-description: "[패턴 라이브러리] tool install type(global-git/local-git/vendored/package-manager/dev-symlink)을 detect하고 올바른 upgrade flow로 route. 직접 invoke보다 orchestrator가 import해 사용. 트리거: '설치 방식 감지' / '어떻게 설치됐어?' / 'install type' / '환경 감지'. 참조 위치: guide-setup-wizard 입력, 부트스트랩 1회, self-updating tool 작성 시."
-type: skill
----
-
 # Snippet: Install-Type Detection + Change Summary
 
 

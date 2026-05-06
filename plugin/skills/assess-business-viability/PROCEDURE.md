@@ -1,9 +1,3 @@
----
-name: assess-business-viability
-description: "아이디어가 사업으로 성립하는지 7차원(TAM/SAM/SOM, 고객-구매자, willingness-to-pay, GTM, 경쟁, unit economics, 규제)으로 평가하고 go/pivot/no-go 결정. 트리거: '이거 사업 되겠어?' / 'TAM 분석' / '사업성 검토' / '이 가격에 살 사람 있을까?' / 'go/no-go 결정' / 'unit economics 봐줘' / '비즈니스 모델 검증'. 입력: validate-idea 통과 후 아이디어. 출력: viability score + verdict + critical assumptions. 흐름: validate-idea → assess-business-viability → define-product-spec."
-type: skill
----
-
 # Assess Business Viability — 사업성 7차원 검증
 
 ## 1. 목적

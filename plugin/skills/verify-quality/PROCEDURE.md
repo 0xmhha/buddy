@@ -1,8 +1,3 @@
----
-name: verify-quality
-description: This skill should be used when the user wants to "verify quality", "run QA", "audit security", "check code health", "review compliance", "run tests", "check before release", or has code ready and needs quality verification before release. Orchestrates 6단계 Quality (Test + Security + Compliance) phase.
----
-
 # verify-quality — 6단계 Quality Orchestrator
 
 6단계 라이프사이클 단계의 진입점. Code complete → QA report + security/legal sign-off.

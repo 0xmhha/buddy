@@ -1,9 +1,3 @@
----
-name: split-work-into-features
-description: "PRD를 받아 vertical slice 기반 재사용 가능한 feature 단위로 분해. task가 아닌 feature(schema→API→UI→test 관통하는 응집 단위) 명세 작성. 트리거: 'feature로 쪼개줘' / 'vertical slice 분해' / 'PRD를 feature로' / '재사용 가능한 feature' / 'feature 분리' / '독립 단위로 쪼개' / 'FEAT-id 부여'. 입력: define-product-spec 출력 PRD + feature candidate 목록. 출력: feature_id 부여된 feature spec set + dependency graph. 흐름: define-product-spec → split-work-into-features → review-architecture/triage-work-items/build-with-tdd."
-type: skill
----
-
 # Split Work Into Features — Vertical Slice 분해
 
 ## 1. 목적

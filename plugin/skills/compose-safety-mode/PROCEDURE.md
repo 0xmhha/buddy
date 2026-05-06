@@ -1,9 +1,3 @@
----
-name: compose-safety-mode
-description: "[패턴 라이브러리 / META] guard-destructive-commands + freeze-edit-scope 같은 multiple safety hooks를 하나의 max safety mode로 compose. layered guardrail system 설계 패턴. 직접 invoke보다 orchestrator가 import해 사용. 트리거: 'safe mode 켜자' / 'careful + freeze' / '위험 작업 보호' / 'safety mode'. 참조 위치: autoplan/critique-plan 고위험 단계 권장, production 작업, billing/auth 코드 수정."
-type: skill
----
-
 # Snippet: Safety Mode Composition
 
 

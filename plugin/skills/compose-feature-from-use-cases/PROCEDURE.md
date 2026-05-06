@@ -1,8 +1,3 @@
----
-name: compose-feature-from-use-cases
-description: This skill should be used when the user wants to "compose features from use cases", "group use cases into features", "create feature definitions from actors", or has actor use cases mapped to system boundaries and needs to synthesize them into coherent features.
----
-
 # compose-feature-from-use-cases
 
 cross-actor use case를 묶어 feature를 정의한다. 2단계 `define-features`의 네 번째 stage.

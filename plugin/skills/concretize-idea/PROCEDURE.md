@@ -1,8 +1,3 @@
----
-name: concretize-idea
-description: This skill should be used when the user wants to "develop an idea", "build something new", "validate a startup idea", "turn an idea into a product", "concretize an idea", or starts with "I want to build X". Orchestrates 1단계 Idea & Business Validation phase — runs idea validation, business viability, competition analysis, customer segmentation, and PRD generation in sequence.
----
-
 # concretize-idea — 1단계 Idea & Business Validation Orchestrator
 
 1단계 라이프사이클 단계의 진입점. idea/concept → PRD draft + business viability report 를 생성하는 멀티-stage 파이프라인.

@@ -1,9 +1,3 @@
----
-name: validate-advanced-edge-idea
-description: "validate-idea 통과 후 edge case, hidden assumption, second-order effect를 압박 인터뷰(grilling)로 박멸. 5 차원: hidden_assumption, second_order_effect, failure_mode, market_edge, ethical_blind_spot. 트리거: '더 깊게 파보자' / '엣지 케이스 압박' / 'second-order effect 봐줘' / '숨은 가정 찾아' / '윤리 사각지대' / 'hidden assumption 검증' / 'real edge case'. 입력: validate-idea 통과 산출물 + sensitive 도메인 (SaaS/finance/health/AI). 출력: edge case map + assumption ledger + go/stop verdict + domain glossary. 흐름: validate-idea → validate-advanced-edge-idea → assess-business-viability/define-product-spec."
-type: skill
----
-
 # Validate Advanced Edge Idea — 압박 인터뷰 (Grilling)
 
 ## 1. 목적

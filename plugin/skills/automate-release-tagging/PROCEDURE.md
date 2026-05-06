@@ -1,9 +1,3 @@
----
-name: automate-release-tagging
-description: "merged PR set으로부터 semver auto-decision (breaking change 감지 → MAJOR, feat → MINOR, fix → PATCH), git tag 생성, GitHub Release publish, release branch 전략 관리, 이전 tag와의 비교 changelog 자동. 트리거: 'release 만들자' / '버전 태그 찍어' / 'GitHub Release 게시' / 'semver 결정' / 'release branch' / 'tag v1.2.0' / 'release publish'. 입력: base branch, 이전 tag, merged PR set, release notes 위치. 출력: semver verdict + git tag + GitHub Release + release branch (필요 시). 흐름: auto-create-pr/write-changelog → automate-release-tagging → design-deploy-strategy."
-type: skill
----
-
 # Automate Release Tagging — Semver 결정 + Tag + Release Publish
 
 ## 1. 목적

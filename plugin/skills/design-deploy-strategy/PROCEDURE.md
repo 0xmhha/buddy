@@ -1,9 +1,3 @@
----
-name: design-deploy-strategy
-description: "production 배포 전략 설계 — canary / blue-green / rolling / recreate 선택, env 분리 (dev/staging/prod), secret 관리, IaC (Terraform/Pulumi/k8s), rollback playbook, post-deploy smoke test 자동화. 트리거: '배포 전략 설계' / 'canary 배포' / 'rollback playbook' / 'env 관리' / 'IaC 작성' / 'k8s manifest' / 'production 배포'. 입력: 서비스 type (web/api/worker/static), 트래픽 패턴, downtime 허용, infra provider, SLA. 출력: deploy strategy + env matrix + IaC spec + rollback playbook + smoke test. 흐름: automate-release-tagging → design-deploy-strategy → monitor-regressions."
-type: skill
----
-
 # Design Deploy Strategy — 배포 5 차원 설계
 
 ## 1. 목적

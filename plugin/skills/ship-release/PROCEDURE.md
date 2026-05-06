@@ -1,8 +1,3 @@
----
-name: ship-release
-description: This skill should be used when the user wants to "ship the release", "deploy to production", "create a release", "run beta program", "setup canary deploy", "prepare launch", or has passed quality gates and is ready to release. Orchestrates 7단계 Release & Beta phase.
----
-
 # ship-release — 7단계 Release & Beta Orchestrator
 
 7단계 라이프사이클 단계의 진입점. Quality gate pass → Tagged release + canary/UAT + GA.

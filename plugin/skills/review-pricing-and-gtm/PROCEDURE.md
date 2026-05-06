@@ -1,9 +1,3 @@
----
-name: review-pricing-and-gtm
-description: "pricing model 설계와 GTM(Go-To-Market) channel 전략을 평가. tier 구조, willingness-to-pay 검증, channel-CAC fit, conversion funnel, expansion revenue, churn 방어 메커니즘 검토. 트리거: 'pricing tier 짜자' / '가격 모델 검토' / 'GTM 전략 봐줘' / 'channel 어디로 갈까' / 'conversion funnel 평가' / 'pricing 검증' / '확장 매출 설계'. 입력: assess-business-viability 출력 + 가격 가설 + 경쟁사 가격. 출력: pricing tier set + GTM playbook + funnel target + churn defense. 흐름: assess-business-viability → review-pricing-and-gtm → define-product-spec."
-type: skill
----
-
 # Review Pricing and GTM — 가격 모델과 출시 전략 검증
 
 ## 1. 목적

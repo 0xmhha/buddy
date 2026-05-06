@@ -1,8 +1,3 @@
----
-name: identify-actors
-description: This skill should be used when the user wants to "identify actors", "find who uses the system", "map stakeholders", "identify system participants", or is starting feature definition and needs to enumerate all actors in the system.
----
-
 # identify-actors
 
 시스템에 참여하는 모든 actor를 열거하고 분류한다. 2단계 `define-features`의 첫 번째 stage.

@@ -1,9 +1,3 @@
----
-name: classify-qa-tiers
-description: "[패턴 라이브러리] QA intensity를 Quick/Standard/Exhaustive 3 tiers로 분류 + fix→commit→re-verify loop + before/after health score. 직접 invoke보다 orchestrator가 import해 사용. 트리거: 'QA 강도 분류' / '테스트 깊이 결정' / 'QA tier' / 'Quick/Standard/Exhaustive'. 참조 위치: critique-plan 후 테스트 단계, autoplan QA 결정, run-browser-qa 깊이 선택."
-type: skill
----
-
 # Snippet: QA Tiers + Fix Loop
 
 

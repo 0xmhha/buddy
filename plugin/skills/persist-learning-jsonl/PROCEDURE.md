@@ -1,9 +1,3 @@
----
-name: persist-learning-jsonl
-description: "[패턴 라이브러리] JSONL append-only learning store data model + 누적/조회 패턴 (pattern/pitfall/preference taxonomy, latest-winner dedup, confidence ranking, cross-session retrieval). 직접 invoke보다 orchestrator가 import해 사용. 트리거: '학습 기록' / 'lesson learned 남겨' / 'JSONL 누적' / 'learning 저장'. 참조 위치: 모든 스킬의 prior learning 저장, autoplan/critique-plan/validate-idea 종료 시점, postmortem."
-type: skill
----
-
 # Snippet: JSONL 학습 저장소
 
 

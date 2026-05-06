@@ -1,9 +1,3 @@
----
-name: iterate-fix-verify
-description: "[패턴 라이브러리] finding 하나씩 fix → atomic commit → re-verify 반복 repair loop. before/after evidence + rollback safety 유지. 직접 invoke보다 orchestrator가 import해 사용. 트리거: '반복 수정' / 'iterative fix' / '수정 루프' / 'find-fix-verify'. 참조 위치: critique-plan 후 발견 이슈 수정, diagnose-bug fix 단계, build-with-tdd refactor."
-type: skill
----
-
 # Snippet: Iterative Fix-and-Verify Loop
 
 

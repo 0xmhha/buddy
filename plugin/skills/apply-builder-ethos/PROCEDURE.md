@@ -1,9 +1,3 @@
----
-name: apply-builder-ethos
-description: "Boil the Lake, Search Before Building, User Sovereignty 3 원칙을 주입해 AI collaboration project에 적용. completeness, search, human decision boundary 판단. 트리거: 'buddy 가치관 적용' / '기본 원칙대로 가자' / 'search before build 했어?' / 'lake 끓이지 마' / 'user sovereignty 지켜' / 'ethos 체크' / 'buddy 원칙'. 입력: plan, 작업 의도. 출력: ethos 위배 여부 + 보정 권고. 흐름: 모든 스킬에서 호출 가능 (가치관 base)."
-type: skill
----
-
 # Builder Ethos — AI 협업을 위한 3대 원칙
 
 

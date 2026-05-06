@@ -1,9 +1,3 @@
----
-name: guard-destructive-commands
-description: "[패턴 라이브러리] rm -rf, DROP TABLE, force push 등 destructive bash command 전 curated risk taxonomy + safe exceptions로 confirmation guard. 직접 invoke보다 orchestrator가 import해 사용. 트리거: 'rm -rf 가드' / 'DROP TABLE 막아' / 'force-push 차단' / 'be careful' / '위험 명령 가드'. 참조 위치: 4 핵심 작업 중, compose-safety-mode 컴포넌트, autoplan/critique-plan 고위험 단계."
-type: skill
----
-
 # Careful — 파괴적 명령 가드
 
 

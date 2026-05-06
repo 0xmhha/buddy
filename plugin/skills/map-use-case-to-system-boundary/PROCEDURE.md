@@ -1,8 +1,3 @@
----
-name: map-use-case-to-system-boundary
-description: This skill should be used when the user wants to "map use cases to systems", "assign system boundaries", "define which system handles what", "map responsibilities to services", or has use cases identified and needs to assign each to a specific system component.
----
-
 # map-use-case-to-system-boundary
 
 각 use case가 어느 시스템 경계에서 실행되는지 매핑한다. 2단계 `define-features`의 세 번째 stage.

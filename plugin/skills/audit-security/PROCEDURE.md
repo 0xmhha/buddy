@@ -1,9 +1,3 @@
----
-name: audit-security
-description: CSO-mode security audit을 수행한다. confidence-gated 8-category multi-scan으로 secrets, supply chain, CI/CD, LLM/AI threats, OWASP Top 10, STRIDE를 점검한다.
-type: skill
----
-
 # CSO — 신뢰도 게이팅 있는 보안 Audit
 
 

@@ -1,9 +1,3 @@
----
-name: review-ai-safety-liability
-description: "AI 기반 기능의 책임 범위, 할루시네이션 리스크, 자동 의사결정의 영향, content provenance, model output safeguards를 검토. high-risk 도메인(의료/법률/재무/안전)에서 사용자 피해 가능성 + 회사 liability 평가. 트리거: 'AI 책임 범위' / 'hallucination 리스크' / '자동 의사결정 검토' / 'AI safety 봐줘' / 'LLM 출력 책임' / 'AI 윤리' / 'content provenance'. 입력: AI 기능 spec, 사용 도메인, autonomous level, content type. 출력: liability matrix + safeguard list + disclosure plan + incident response. 흐름: validate-advanced-edge-idea → review-ai-safety-liability → define-product-spec/audit-security."
-type: skill
----
-
 # Review AI Safety and Liability — AI 책임 6차원 검증
 
 ## 1. 목적

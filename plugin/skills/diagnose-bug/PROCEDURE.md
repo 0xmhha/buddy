@@ -1,9 +1,3 @@
----
-name: diagnose-bug
-description: "버그를 증상 반응이 아닌 재현 가능한 원인 분석으로 해결. minimize repro → multiple hypothesis → targeted instrumentation → fix → regression test → original path 재검증. 트리거: '버그 디버깅' / '재현해줘' / 'minimal repro' / '왜 이런 현상?' / 'root cause 분석' / 'regression test 추가' / 'hypothesis 세워줘'. 입력: bug report, error log, 재현 시나리오. 출력: minimized repro + root cause + fix + regression test. 흐름: monitor-regressions/triage-work-items → diagnose-bug → iterate-fix-verify."
-type: skill
----
-
 # Diagnose Bug — 재현 기반 원인 분석 루프
 
 ## 1. 목적

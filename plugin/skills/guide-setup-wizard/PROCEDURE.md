@@ -1,9 +1,3 @@
----
-name: guide-setup-wizard
-description: "[패턴 라이브러리] auto-detect → picker → verify pattern으로 credential/config setup flow 설계. 가능한 option만 노출 + verification 후 success 선언. 직접 invoke보다 orchestrator가 import해 사용. 트리거: '설정 마법사' / '초기 설정 가이드' / 'setup wizard' / '셋업 도와줘'. 참조 위치: detect-install-type 페어, 부트스트랩 1회, 신규 사용자 onboarding."
-type: skill
----
-
 # Snippet: Interactive Setup Wizard Pattern
 
 

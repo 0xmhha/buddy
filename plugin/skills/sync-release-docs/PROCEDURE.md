@@ -1,9 +1,3 @@
----
-name: sync-release-docs
-description: code change diff를 기준으로 affected docs를 audit하고 auto-update 또는 ask를 결정한다. feature ship 후, release tag 전, docs drift가 의심될 때 사용한다.
-type: skill
----
-
 # Document Release — Diff 기반 문서 Sync
 
 

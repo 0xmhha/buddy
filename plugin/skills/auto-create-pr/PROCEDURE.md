@@ -1,9 +1,3 @@
----
-name: auto-create-pr
-description: "feature/task 완료 후 commit → branch push → PR 생성을 자동화. PR title/body 표준 (summary, test plan, screenshots, breaking change notice), reviewer 지정, label 자동 부여, 관련 issue 링크. 트리거: 'PR 만들어줘' / 'pull request 생성' / 'PR 자동화' / 'feature ship 준비' / '리뷰 요청' / 'PR description 작성' / 'auto PR'. 입력: feature_id + branch + 변경 file + acceptance criteria + 관련 issue. 출력: PR URL + status check 요약 + reviewer 지정. 흐름: build-with-tdd/dispatch-parallel-agents → auto-create-pr → automate-release-tagging."
-type: skill
----
-
 # Auto Create PR — PR 자동 생성 + 표준 description
 
 ## 1. 목적

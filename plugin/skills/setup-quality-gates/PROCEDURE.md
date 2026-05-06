@@ -1,9 +1,3 @@
----
-name: setup-quality-gates
-description: "개발 환경에 husky + lint-staged + Prettier + typecheck + unit test + secret scan + commitlint를 pre-commit / pre-push / CI 게이트로 설치. 8단계 quality gate cycle 자동화. 트리거: 'quality gate 설정' / 'husky 설치' / 'pre-commit 추가' / 'lint-staged 자동화' / '타입체크 강제' / 'CI 게이트' / 'secret scan 추가'. 입력: 프로젝트 stack(node/python/go/etc), 패키지 매니저, CI 시스템(GH Actions/CircleCI/etc). 출력: husky config + lint-staged config + pre-commit hooks + CI workflow. 흐름: define-product-spec → setup-quality-gates → build-with-tdd."
-type: skill
----
-
 # Setup Quality Gates — 8단계 검증 루프 자동화
 
 ## 1. 목적
