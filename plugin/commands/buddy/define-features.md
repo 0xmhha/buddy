@@ -11,8 +11,11 @@ argument-hint: "<PRD 경로 또는 제품 설명>"
 
 ## 실행 지시
 
-`Skill` 도구로 `define-features` skill을 호출하라. 사용자가 전달한 인자는 그대로 skill에 입력으로 넘긴다.
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
 
-```
-$ARGUMENTS
-```
+- mode: `single`
+- target PROCEDURE: `define-features`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

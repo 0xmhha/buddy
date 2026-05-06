@@ -11,8 +11,11 @@ argument-hint: "<feature 이름 또는 테스트 대상>"
 
 ## 실행 지시
 
-`Skill` 도구로 `verify-quality` skill을 호출하라.
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
 
-```
-$ARGUMENTS
-```
+- mode: `single`
+- target PROCEDURE: `verify-quality`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

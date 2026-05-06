@@ -11,8 +11,11 @@ argument-hint: "<릴리즈 버전 또는 릴리즈 설명>"
 
 ## 실행 지시
 
-`Skill` 도구로 `ship-release` skill을 호출하라.
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
 
-```
-$ARGUMENTS
-```
+- mode: `single`
+- target PROCEDURE: `ship-release`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

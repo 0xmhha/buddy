@@ -11,8 +11,9 @@ argument-hint: "<mode> <질의 또는 diff 경로>"
 
 `Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
 
+- mode: `single`
 - target PROCEDURE: `consult-codex`
 - 사용자 인자:
-  ```
-  $ARGUMENTS
-  ```
+    ```
+    $ARGUMENTS
+    ```

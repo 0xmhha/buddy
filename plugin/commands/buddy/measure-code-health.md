@@ -13,10 +13,11 @@ project tool을 auto-detect해 typecheck/lint/test/deadcode/shell 결과를 0-10
 
 ## 실행 지시
 
-`Skill` 도구로 `measure-code-health` skill을 호출하라. 사용자가 전달한 인자는 그대로 skill에 입력으로 넘긴다.
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
 
-```
-$ARGUMENTS
-```
-
-추가 컨텍스트가 필요하면 skill 본문이 요구하는 입력 항목을 사용자에게 물어본 뒤 진행한다.
+- mode: `single`
+- target PROCEDURE: `measure-code-health`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

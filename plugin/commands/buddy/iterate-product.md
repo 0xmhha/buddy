@@ -11,8 +11,11 @@ argument-hint: "<분석 대상 feature 또는 문제 설명>"
 
 ## 실행 지시
 
-`Skill` 도구로 `iterate-product` skill을 호출하라.
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
 
-```
-$ARGUMENTS
-```
+- mode: `single`
+- target PROCEDURE: `iterate-product`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```
