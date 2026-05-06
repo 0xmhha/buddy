@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Architecture: Single-Router Skill Dispatch
+
+플러그인의 78개 skill body 파일이 단일 auto-loaded `router` skill을 통해 lazy-load되도록 재구성됩니다.
+세션마다 항상 로드되던 skill metadata가 ~28KB → ~200 chars로 축소되어, turn당 약 7K 토큰을 사용자 작업에 회수합니다.
+
+### Changed
+
+- **Skill loading goes through a single router** — `plugin/skills/router/SKILL.md`이 유일한 auto-loaded entry point. 이전 78개 skill의 body 파일은 모두 `SKILL.md` → `PROCEDURE.md`로 rename되어 router가 필요 시점에만 lazy-load.
+- **Skill catalog 위치 이동** — `plugin/SKILLS.md` → `plugin/skills/router/references/skill-catalog.md`, `plugin/SKILL_ROUTER.md` → `plugin/skills/router/references/routing-rules.md`.
+
+### Added
+
+- **3개 신규 dispatch commands** — 기존 27개 lifecycle commands는 그대로 유지되고, 다음이 추가됨:
+  - `/buddy:run <skill> [args]` — 카탈로그의 임의 skill을 직접 호출 (전용 command가 없는 skill의 escape hatch)
+  - `/buddy:chain skill1,skill2,... -- args` — 순차 실행, 직전 단계의 출력이 다음 단계로 흐름
+  - `/buddy:parallel skill1,skill2,... -- args` — Agent dispatch 기반 병렬 실행, 결과는 집계되어 반환
+
+### Migration notes
+
+- 사용자 조치 불필요. 기존 27개 slash commands(`/buddy:status`, `/buddy:concretize-idea` 등)는 변경 없이 동작.
+- 플러그인 기여자: skill 추가/수정 시 catalog와 routing rules는 `plugin/skills/router/references/` 하위에서 갱신.
+
 ## [1.0.0] - 2026-05-04
 
 ### Architecture: 9-Phase Multi-Orchestrator Model

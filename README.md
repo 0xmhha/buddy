@@ -2,7 +2,7 @@
 
 A reliability and observability control plane for [Claude Code](https://claude.ai/code) sessions.
 
-Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 26 slash commands and 77 skills covering the full product development lifecycle.
+Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 30 slash commands and 78 skills covering the full product development lifecycle, dispatched through a single auto-loaded `router` skill.
 
 ```
               ┌──────────────────────────┐
@@ -21,7 +21,7 @@ Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failur
 | **State schema** | Zod-validated JSON state prevents corruption and schema drift |
 | **Task retry** | WAL-backed outbox ensures failed tasks are replayed, not dropped |
 | **Observability** | Unified token/cost/session/hook status via a single `stats` command |
-| **Claude Code plugin** | 9-phase lifecycle orchestrator, 26 `/buddy:*` commands, 77 skills |
+| **Claude Code plugin** | 9-phase lifecycle orchestrator, 30 `/buddy:*` commands, 78 skills behind one router |
 
 ---
 
@@ -148,6 +148,16 @@ Once the plugin is installed, the following commands are available in any Claude
 | §7 Release | `/buddy:ship-release`, `/buddy:auto-create-pr` |
 | §8 Operate | `/buddy:iterate-product`, `/buddy:analyze-ab-experiment` |
 | §9 Lifecycle | `/buddy:manage-lifecycle` |
+
+#### Router dispatch
+
+All skills are loaded lazily through a single auto-loaded `router` skill (`plugin/skills/router/SKILL.md`); the catalog and routing rules live at `plugin/skills/router/references/skill-catalog.md` and `plugin/skills/router/references/routing-rules.md`. The 27 lifecycle commands above keep working unchanged. Three additional commands give direct access to any catalog skill:
+
+| Command | Purpose |
+|---------|---------|
+| `/buddy:run <skill> [args]` | Invoke any catalog skill directly (escape hatch for skills without a dedicated command) |
+| `/buddy:chain skill1,skill2,... -- args` | Sequential composition — each skill receives the prior output |
+| `/buddy:parallel skill1,skill2,... -- args` | Parallel composition via Agent dispatch, with aggregated results |
 
 ---
 
