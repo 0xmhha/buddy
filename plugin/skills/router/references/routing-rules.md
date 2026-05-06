@@ -1,10 +1,10 @@
 # Buddy Plugin — Skill Router
 
 > **Lazy-load 문서.** 평상시 컨텍스트에 자동 포함되지 않는다.
-> [`SKILLS.md`](./SKILLS.md)의 description만 보고 skill 라우팅이 결정되는 경우에는 이 문서를 읽지 않는다 — 토큰을 아낀다.
+> [`skill-catalog.md`](./skill-catalog.md)의 description만 보고 skill 라우팅이 결정되는 경우에는 이 문서를 읽지 않는다 — 토큰을 아낀다.
 >
 > **이 문서를 읽어야 할 때 (4가지):**
-> 1. `SKILLS.md`에서 후보 skill이 2개 이상이고 우선순위가 명확하지 않을 때
+> 1. `skill-catalog.md`에서 후보 skill이 2개 이상이고 우선순위가 명확하지 않을 때
 > 2. 동일 trigger 경로(command / hook / dispatch)에 여러 skill이 매핑되어 있을 때
 > 3. Skill 호출 순서·체이닝이 필요한 워크플로우일 때
 > 4. 새 skill을 추가하면서 기존 skill과의 라우팅 충돌을 검토할 때
@@ -174,7 +174,7 @@
 | `/buddy:setup-quality-gates` | 7. 릴리즈 | pre-commit / pre-push 게이트 설치 |
 | `/buddy:summarize-retro` | 8. 운영·개선 | git history → 주간 회고 |
 
-> 단계 2 / 4 / 9 의 세부 작업 커맨드는 현재 0개 — 단계 진입점 안의 기존 stage skill 만 활성. 신규 작업은 [`docs/tasks.md`](../docs/tasks.md) A-1 참조.
+> 단계 2 / 4 / 9 의 세부 작업 커맨드는 현재 0개 — 단계 진입점 안의 기존 stage skill 만 활성. 신규 작업은 [`docs/tasks.md`](../../../../docs/tasks.md) A-1 참조.
 
 **규칙**: plugin.json `commands` 에 새 항목을 추가하려면 §2 의 도메인 우선순위 표에서 1~4 등급에 속해야 하고, 이 §5 의 적절한 sub-section 에 먼저 등재해야 한다. 패턴 라이브러리와 보관 스킬은 영구 비공개.
 
@@ -182,7 +182,7 @@
 
 ## 6. 새 skill 추가 시 router 검토 체크리스트
 
-새 skill을 `SKILLS.md`에 등재한 직후 다음을 확인 — 위반하면 이 문서에 항목 추가:
+새 skill을 `skill-catalog.md`에 등재한 직후 다음을 확인 — 위반하면 이 문서에 항목 추가:
 
 - [ ] 동일 command 이름이 이미 등재되어 있지 않다 (`/buddy:<name>` 충돌 X)
 - [ ] Description이 다른 skill의 description과 의미상 90% 이상 겹치지 않는다
@@ -194,9 +194,9 @@
 
 ## 7. 참조
 
-- Skill 카탈로그 본문 → [`SKILLS.md`](./SKILLS.md)
-- Plugin manifest → [`.claude-plugin/plugin.json`](./.claude-plugin/plugin.json)
-- 9-phase 라이프사이클 아키텍처 설계 → [`docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md`](../docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md)
-- 11-stage 상용 제품 빌딩 flow (참조용) → [`docs/skill-map.md`](../docs/skill-map.md)
-- Plugin scaffold spec → [`docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md`](../docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md)
-- Archive 스킬 → [`plugin/_archive/`](./_archive/)
+- Skill 카탈로그 본문 → [`skill-catalog.md`](./skill-catalog.md)
+- Plugin manifest → [`.claude-plugin/plugin.json`](../../../.claude-plugin/plugin.json)
+- 9-phase 라이프사이클 아키텍처 설계 → [`docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md`](../../../../docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md)
+- 11-stage 상용 제품 빌딩 flow (참조용) → [`docs/skill-map.md`](../../../../docs/skill-map.md)
+- Plugin scaffold spec → [`docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md`](../../../../docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md)
+- Archive 스킬 → [`plugin/_archive/`](../../../_archive/)

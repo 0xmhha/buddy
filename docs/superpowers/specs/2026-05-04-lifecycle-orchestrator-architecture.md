@@ -4,7 +4,7 @@
 > **Date**: 2026-05-04
 > **Scope**: 상용 제품 빌딩 풀 라이프사이클을 위한 buddy plugin skill/command/MCP 재구조화 제안.
 > **Replaces**: 2026-04-24 plugin scaffold 의 단일 orchestrator (`autoplan`) 가정.
-> **Related**: [`docs/skill-map.md`](../../skill-map.md), [`plugin/SKILL_ROUTER.md`](../../../plugin/SKILL_ROUTER.md), [`plugin/SKILLS.md`](../../../plugin/SKILLS.md).
+> **Related**: [`docs/skill-map.md`](../../skill-map.md), [`plugin/skills/router/references/routing-rules.md`](../../../plugin/skills/router/references/routing-rules.md), [`plugin/skills/router/references/skill-catalog.md`](../../../plugin/skills/router/references/skill-catalog.md).
 
 ---
 
@@ -540,8 +540,8 @@ updated_at: ...
 - 11-stage 상용 제품 빌딩 flow (이 문서의 9-phase 의 source) → [`docs/skill-map.md`](../../skill-map.md)
 - Feature Management SaaS / MCP 상세 (skill-map §4) → [`extracts/ko/feature-management-saas-mcp.md`](https://github.com/0xmhha/study/blob/main/docs/projects/buddy/extracts/ko/feature-management-saas-mcp.md) (외부 레포)
 - 현재 plugin scaffold spec → [`docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md`](./2026-04-24-buddy-plugin-architecture-design.md)
-- 현재 skill router → [`plugin/SKILL_ROUTER.md`](../../../plugin/SKILL_ROUTER.md)
-- 현재 skill catalog → [`plugin/SKILLS.md`](../../../plugin/SKILLS.md)
+- 현재 skill router → [`plugin/skills/router/references/routing-rules.md`](../../../plugin/skills/router/references/routing-rules.md)
+- 현재 skill catalog → [`plugin/skills/router/references/skill-catalog.md`](../../../plugin/skills/router/references/skill-catalog.md)
 
 ---
 

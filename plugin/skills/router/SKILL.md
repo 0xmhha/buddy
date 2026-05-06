@@ -89,5 +89,5 @@ Cross-phase 보조:
 2. 그 phase 의 orchestrator 를 기본 dispatch target 으로 둔다 — 사용자가 stage 단독을 명시하지 않은 한 orchestrator 우선.
 3. lazy-load 트리거:
    - 사용자 발화 또는 command name 이 위 9-phase 표의 entry-point skill 1개와 정확히 매칭되면 그 skill 을 dispatch — 인라인 표만으로 충분.
-   - 정확 매칭이 없거나, 사용자가 stage skill 명을 직접 언급하거나, command 가 9-phase orchestrator 가 아닌 stage·domain·pattern skill 을 target 으로 지정하면 → `Read ${CLAUDE_PLUGIN_ROOT}/SKILLS.md` 를 호출해 전체 카탈로그 확인.
-   - 라우팅이 2개 이상의 skill 사이에서 모호하면 → `Read ${CLAUDE_PLUGIN_ROOT}/SKILL_ROUTER.md` 의 §3 케이스별 결정 참조.
+   - 정확 매칭이 없거나, 사용자가 stage skill 명을 직접 언급하거나, command 가 9-phase orchestrator 가 아닌 stage·domain·pattern skill 을 target 으로 지정하면 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/skill-catalog.md` 를 호출해 전체 카탈로그 확인.
+   - 라우팅이 2개 이상의 skill 사이에서 모호하면 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/routing-rules.md` 의 §3 케이스별 결정 참조.
