@@ -285,12 +285,33 @@ plugin/
 
 ## Verification Log
 
-(Phase 6.2 에서 채움)
-
 - Baseline auto-loaded description chars: **28,125** (78 skills)
-- Post-refactor auto-loaded description chars: **<TBD>**
-- Reduction: **<TBD>%**
-- Smoke test results: **<TBD>**
+- Post-refactor auto-loaded description chars: **157** (router skill only)
+- Reduction: **99.44%**
+
+### Smoke trace (5 commands)
+
+각 명령의 wire-up을 정적으로 검증함 (live invocation은 별도 Claude Code 세션 필요).
+검증 항목: (a) command md 존재, (b) router 호출 + mode/target 명시, (c) plugin.json 의 `"skill": "router"`, (d) target PROCEDURE.md 존재.
+
+| Command | Mode | Target wire-up | Status |
+|---------|------|----------------|--------|
+| `/buddy:status` | single | `plugin/commands/buddy/status.md` (mode=single, target=`status`) → router → `plugin/skills/status/PROCEDURE.md` | OK |
+| `/buddy:concretize-idea` | single | `plugin/commands/buddy/concretize-idea.md` (mode=single, target=`concretize-idea`) → router → `plugin/skills/concretize-idea/PROCEDURE.md` | OK |
+| `/buddy:audit-security` | single | `plugin/commands/buddy/audit-security.md` (mode=single, target=`audit-security`) → router → `plugin/skills/audit-security/PROCEDURE.md` | OK |
+| `/buddy:chain` | chain | `plugin/commands/buddy/chain.md` (mode=chain, targets=콤마 분리) → router chain mode → 각 target 의 PROCEDURE.md 순차 Read & 실행. 예시 targets 검증: `validate-idea`, `assess-business-viability` PROCEDURE.md 모두 존재 | OK |
+| `/buddy:parallel` | parallel | `plugin/commands/buddy/parallel.md` (mode=parallel, targets=콤마 분리) → router parallel mode → Agent 도구로 target 별 subagent 디스패치 (각자 PROCEDURE.md Read & 실행). 예시 targets 검증: `review-engineering`, `review-design`, `review-scope` PROCEDURE.md 모두 존재 | OK |
+
+### Cross-cutting checks
+
+- `find plugin/skills -name SKILL.md` → 1 (router 만)
+- `find plugin/skills -name PROCEDURE.md` → 78
+- plugin.json 의 status/concretize-idea/audit-security/chain/parallel 모두 `"skill": "router"`
+
+### Notes
+
+- Live `/buddy:*` 호출은 plugin 이 reload 된 Claude Code 세션을 필요로 함; 본 trace 는 static wire-up 만 검증.
+- Phase 6.2 는 정적 분석 subagent 가 수행. 사용자는 merge 후 live smoke test (특히 chain·parallel mode 의 인자 분해 동작) 를 직접 수행할 것을 권장.
 
 ---
 
