@@ -1,6 +1,6 @@
 ---
 name: router
-description: "Buddy plugin internal router. Reads target PROCEDURE.md and executes its procedure. Invoked by all `/buddy:*` commands."
+description: "Use when a buddy command requests dispatch to a target PROCEDURE. Reads `${CLAUDE_PLUGIN_ROOT}/skills/<target>/PROCEDURE.md` and executes its instructions."
 type: skill
 ---
 
@@ -17,7 +17,7 @@ Buddy plugin 내부 라우터. 모든 `/buddy:*` slash command가 이 skill을 �
 
 수행 절차:
 
-1. `Read` 도구로 `plugin/skills/<name>/PROCEDURE.md` 파일을 로드한다.
+1. `Read` 도구로 `${CLAUDE_PLUGIN_ROOT}/skills/<name>/PROCEDURE.md` 파일을 로드한다. (`${CLAUDE_PLUGIN_ROOT}` 는 buddy plugin 설치 경로 — hardcode 금지)
 2. 로드한 PROCEDURE 본문을 그 자체로 실행 지시문으로 취급한다 — 사용자 인자를 PROCEDURE의 입력으로 사용한다.
 3. PROCEDURE가 요구하는 모든 단계를 누락 없이 수행한다.
 4. PROCEDURE 파일이 존재하지 않으면 즉시 에러 메시지를 반환하고 임의로 추론하지 않는다.
