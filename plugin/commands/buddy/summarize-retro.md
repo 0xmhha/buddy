@@ -1,5 +1,5 @@
 ---
-description: git history를 evidence-based weekly retrospective로 변환 — work types, hotspots, focus score, AI collaboration.
+description: git history 를 받아 증거 기반 주간 회고 작성 (작업 유형, hotspot, focus, AI 협업).
 argument-hint: "[<기간: 예 7d, 14d>]"
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: feature/task를 worktree로 격리해 Sonnet worker agent에 병렬 분배하고 결과를 aggregate.
+description: feature 또는 task 를 worktree 로 격리해 병렬 worker agent 에 분배하고 결과 집계.
 argument-hint: "<feature 목록 또는 plan 경로>"
 ---
 

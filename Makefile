@@ -1,4 +1,4 @@
-.PHONY: build test fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
+.PHONY: build test test-routing fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
 
 BIN     := bin/buddy
 BIN_MCP := bin/buddy-mcp
@@ -38,6 +38,13 @@ build:
 
 test:
 	go test -race -count=1 $(PKG)
+
+# test-routing verifies the buddy plugin router wire-up invariants
+# (SKILL.md/PROCEDURE.md counts, plugin.json command coverage, single-mode
+# target existence, description drift). Run before merging changes that
+# touch plugin/commands/buddy/, plugin/skills/, or plugin/.claude-plugin/.
+test-routing:
+	@bash scripts/test-router-wireup.sh
 
 fmt:
 	gofmt -s -w .

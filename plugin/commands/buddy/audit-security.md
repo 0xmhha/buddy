@@ -1,5 +1,5 @@
 ---
-description: CSO-mode 8-category 보안 감사 — secrets, supply chain, CI/CD, LLM/AI threats, OWASP Top 10, STRIDE.
+description: OWASP Top 10, secrets 노출, JWT, SQL injection 등 보안 취약점 점검.
 argument-hint: "[--scope <path>] [--severity <level>]"
 ---
 

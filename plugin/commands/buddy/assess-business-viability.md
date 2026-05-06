@@ -1,5 +1,5 @@
 ---
-description: 아이디어가 사업으로 성립하는지 7차원(TAM/SAM/SOM, 고객, WTP, GTM, 경쟁, unit economics, 규제)으로 평가.
+description: 사업성 7차원 평가 — 시장 규모, 가격 수용성, GTM, 경쟁, unit economics, 고객-구매자, 규제.
 argument-hint: "<아이디어 또는 PRD 경로>"
 ---
 

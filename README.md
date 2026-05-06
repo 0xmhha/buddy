@@ -178,8 +178,9 @@ Contributions are welcome. Please follow these steps:
 
 1. Fork the repository and create a feature branch from `main`.
 2. Run the test suite: `make test` (includes race detector).
-3. Keep changes focused — one logical change per PR.
-4. Open a pull request with a clear description of the problem and solution.
+3. If your change touches `plugin/`, also run `make test-routing` to verify the router wire-up.
+4. Keep changes focused — one logical change per PR.
+5. Open a pull request with a clear description of the problem and solution.
 
 For larger changes, open an issue first to discuss the approach.
 

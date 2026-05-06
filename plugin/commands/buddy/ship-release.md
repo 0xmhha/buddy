@@ -1,5 +1,5 @@
 ---
-description: §7 Release & Beta — quality gate pass → tagged release + canary/UAT + GA. changelog, doc sync, PR, UAT, release tagging을 포함.
+description: 릴리즈 단계 — 품질 검증 통과 후 PR 생성, 태깅, changelog, canary 배포, UAT.
 argument-hint: "<릴리즈 버전 또는 릴리즈 설명>"
 ---
 

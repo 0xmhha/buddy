@@ -1,5 +1,5 @@
 ---
-description: validate-idea 후속 — edge case, hidden assumption, second-order effect를 압박 인터뷰(grilling)로 박멸.
+description: 엣지 케이스, 숨은 가정, 2차 영향을 압박 인터뷰로 박멸. validate-idea 통과 후 심화 검증.
 argument-hint: "<validate-idea 산출물 또는 가설>"
 ---
 

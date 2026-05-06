@@ -1,5 +1,5 @@
 ---
-description: 외부 LLM CLI(codex 등)를 호출해 review / challenge / consult 3 modes로 second opinion 획득.
+description: 외부 LLM CLI (codex 등) 를 호출해 review / challenge / consult 3개 모드로 second opinion 획득.
 argument-hint: "<mode> <질의 또는 diff 경로>"
 ---
 

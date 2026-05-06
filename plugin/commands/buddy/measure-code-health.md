@@ -1,5 +1,5 @@
 ---
-description: project tool을 auto-detect해 typecheck/lint/test/deadcode/shell 결과를 0-10 weighted composite dashboard로.
+description: typecheck, lint, 테스트, 데드코드, shell 자동 감지 → 0-10 가중 점수 대시보드.
 argument-hint: [--baseline]
 ---
 

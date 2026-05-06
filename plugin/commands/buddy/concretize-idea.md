@@ -1,5 +1,5 @@
 ---
-description: §1 Idea & Business Validation — idea/concept → PRD draft + business viability report. validate-idea, assess-business-viability, define-product-spec, autoplan(review)을 순차 실행.
+description: 아이디어 구체화 단계 — 검증, 사업성 평가, PRD 작성까지 한 번에.
 argument-hint: "<아이디어 설명 또는 컨셉>"
 ---
 

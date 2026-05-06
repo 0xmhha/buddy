@@ -1,5 +1,5 @@
 ---
-description: §6 Quality — code complete → QA report + security/legal sign-off. actor별 통합 테스트, E2E, audit-security, measure-code-health, compliance review를 포함.
+description: 품질 검증 단계 — 코드 완성 후 테스트 / lint / 보안 / 컴플라이언스 통합 검증.
 argument-hint: "<feature 이름 또는 테스트 대상>"
 ---
 

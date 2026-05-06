@@ -1,5 +1,5 @@
 ---
-description: §4 Implementation Plan — technical design → ordered task graph + actor별 parallel execution plan. feature를 actor track으로 분해하고 task DAG와 build timeline을 생성.
+description: 구현 계획 단계 — 기술 설계를 받아 actor 별 task 분해 + 의존성 그래프 + 병렬 실행 계획 작성.
 argument-hint: "<feature backlog 또는 technical design 경로>"
 ---
 

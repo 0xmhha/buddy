@@ -1,5 +1,5 @@
 ---
-description: §3 Technical Design — feature backlog → tech stack ADR + infra blueprint + API contract + data model. use case → infra 브릿지, system topology, tech stack selection, ADR 작성, autoplan(review)을 포함.
+description: 기술 설계 단계 — feature backlog를 받아 기술 스택, API 계약, infra, 데이터 모델 결정.
 argument-hint: "<feature backlog 경로 또는 설계 대상>"
 ---
 

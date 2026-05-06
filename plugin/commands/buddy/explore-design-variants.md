@@ -1,5 +1,5 @@
 ---
-description: design variant N개를 parallel 생성하고 structured feedback으로 iterate.
+description: 여러 설계 안을 병렬로 생성하고 구조화된 피드백으로 반복 개선.
 argument-hint: "<디자인 컨텍스트> [--count N]"
 ---
 
