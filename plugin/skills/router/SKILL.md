@@ -18,6 +18,24 @@ Buddy plugin 내부 라우터. 모든 `/buddy:*` slash command가 이 skill을 �
 
 router 는 이 4 개 필드를 command md 의 invocation block 에서 읽고, 그 외 frontmatter 는 참조하지 않는다.
 
+## Path resolution
+
+router 가 사용하는 `${CLAUDE_PLUGIN_ROOT}` 는 buddy plugin install root 의 placeholder 다. 해당 경로 `Read` 시 다음 순서로 resolve 한다:
+
+1. `Read ${CLAUDE_PLUGIN_ROOT}/...` 를 그대로 시도. Claude Code runtime 이 placeholder 를 install path 로 substitute 하는 환경에서는 이 시도로 충분하다.
+2. 1차 시도가 실패하거나 literal `${CLAUDE_PLUGIN_ROOT}` 가 그대로 노출되어 Read 가 안 풀리면 `Bash` 도구로 install root 를 발견한다:
+    ```bash
+    {
+      find "$HOME/.claude/plugins" -maxdepth 4 -type d -name buddy 2>/dev/null
+      git -C . rev-parse --show-toplevel 2>/dev/null \
+        | xargs -I{} sh -c 'test -d "{}/plugin/skills/router" && echo "{}/plugin"'
+    } | head -1
+    ```
+    출력된 경로를 BUDDY_ROOT 로 잡고, 본문에 등장하는 `${CLAUDE_PLUGIN_ROOT}/...` 의 `${CLAUDE_PLUGIN_ROOT}` 부분을 BUDDY_ROOT 로 치환해 동일 상대 경로로 재시도한다.
+3. 두 시도 모두 실패하면 사용자에게 buddy plugin 설치 경로 확인을 요청하고 중단한다 — 임의 추론·다른 skill 대체 금지.
+
+이 절차는 router 본문에 등장하는 모든 `${CLAUDE_PLUGIN_ROOT}/...` 경로(예: `skills/<target>/PROCEDURE.md`, `skills/router/references/skill-catalog.md`, `skills/router/references/routing-rules.md`)에 동일하게 적용된다.
+
 ## How to dispatch (single)
 
 입력으로 다음을 받는다:
