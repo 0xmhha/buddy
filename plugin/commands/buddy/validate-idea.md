@@ -7,10 +7,6 @@ argument-hint: "<아이디어 1-3 paragraph>"
 
 YC 스타일 아이디어 검증 인터뷰 — 6 forcing question으로 product idea를 stress-test.
 
-이 command는 `validate-idea` skill을 즉시 invoke한다. 본 skill의 전체 절차·트리거·출력 포맷은 다음을 따른다:
-
-- Skill: `plugin/skills/validate-idea/SKILL.md`
-
 ## 실행 지시
 
 `Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:

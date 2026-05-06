@@ -7,10 +7,6 @@ argument-hint: "[--scope <path>] [--severity <level>]"
 
 CSO-mode 8-category 보안 감사 — secrets, supply chain, CI/CD, LLM/AI threats, OWASP Top 10, STRIDE.
 
-이 command는 `audit-security` skill을 즉시 invoke한다. 본 skill의 전체 절차·트리거·출력 포맷은 다음을 따른다:
-
-- Skill: `plugin/skills/audit-security/SKILL.md`
-
 ## 실행 지시
 
 `Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:

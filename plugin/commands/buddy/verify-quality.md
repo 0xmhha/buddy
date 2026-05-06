@@ -5,10 +5,6 @@ argument-hint: "<feature 이름 또는 테스트 대상>"
 
 # /buddy:verify-quality
 
-이 command는 `verify-quality` skill을 즉시 invoke한다.
-
-- Skill: `plugin/skills/verify-quality/SKILL.md`
-
 ## 실행 지시
 
 `Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:

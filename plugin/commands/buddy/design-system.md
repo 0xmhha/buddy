@@ -5,10 +5,6 @@ argument-hint: "<feature backlog 경로 또는 설계 대상>"
 
 # /buddy:design-system
 
-이 command는 `design-system` skill을 즉시 invoke한다.
-
-- Skill: `plugin/skills/design-system/SKILL.md`
-
 ## 실행 지시
 
 `Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
