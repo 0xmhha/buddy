@@ -155,5 +155,5 @@ improvement_task:
 
 ## 참조
 
-- Architecture spec: `docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md` §4 §8
+- Architecture spec: `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` §4 §8
 - 8단계 신규 필요 skill 목록: 동 문서 §4 §8 Gap

@@ -117,4 +117,4 @@ form submit → backend validation → JWT issuance → email sending → click 
 
 ## 참조
 
-- Architecture spec: `docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md` §4 §6
+- Architecture spec: `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` §4 §6

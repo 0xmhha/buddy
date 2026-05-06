@@ -162,5 +162,5 @@ ADR 포맷:
 
 ## 참조
 
-- Architecture spec: `docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md` §§3, §3.1
+- Architecture spec: `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` §§3, §3.1
 - Use case → infra 브릿지 설계: 동 문서 §4 §3

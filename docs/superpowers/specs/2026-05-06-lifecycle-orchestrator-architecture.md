@@ -1,10 +1,8 @@
-# Buddy Plugin — Lifecycle Orchestrator Architecture (Status Update)
+# Buddy Plugin — Lifecycle Orchestrator Architecture
 
-> **Status**: Status update of 2026-05-04 architecture spec
 > **Date**: 2026-05-06
-> **Scope**: 2026-05-04 lifecycle orchestrator 설계의 구현 현황 + 라우팅 리팩터(2026-05-06) 결과 반영.
-> **Supersedes**: [`2026-05-04-lifecycle-orchestrator-architecture.md`](./2026-05-04-lifecycle-orchestrator-architecture.md)
-> **Related**: [`docs/skill-map.md`](../../skill-map.md), [`plugin/skills/router/SKILL.md`](../../../plugin/skills/router/SKILL.md), [`plugin/skills/router/references/routing-rules.md`](../../../plugin/skills/router/references/routing-rules.md), [`plugin/skills/router/references/skill-catalog.md`](../../../plugin/skills/router/references/skill-catalog.md), [`docs/superpowers/plans/2026-05-06-skill-routing-refactor-plan.md`](../plans/2026-05-06-skill-routing-refactor-plan.md).
+> **Scope**: 9-phase lifecycle orchestrator 모델 + 단일-router 라우팅 인프라 + stage skill 구현 현황. plugin 의 architecture / routing / command surface 의 현행 SSoT.
+> **Related**: [`docs/skill-map.md`](../../skill-map.md), [`plugin/skills/router/SKILL.md`](../../../plugin/skills/router/SKILL.md), [`plugin/skills/router/references/routing-rules.md`](../../../plugin/skills/router/references/routing-rules.md), [`plugin/skills/router/references/skill-catalog.md`](../../../plugin/skills/router/references/skill-catalog.md).
 
 ---
 
@@ -296,13 +294,13 @@ Q2=(b) "dual-full" 결정에 따라 실제로는 14 개 제거 대신 보존:
 
 ## 9. 참조
 
-- 원본 architecture spec → [`2026-05-04-lifecycle-orchestrator-architecture.md`](./2026-05-04-lifecycle-orchestrator-architecture.md) (historical, this doc supersedes)
-- 라우팅 리팩터 plan → [`docs/superpowers/plans/2026-05-06-skill-routing-refactor-plan.md`](../plans/2026-05-06-skill-routing-refactor-plan.md)
 - 11-stage 상용 제품 빌딩 flow → [`docs/skill-map.md`](../../skill-map.md)
 - 현재 plugin scaffold spec → [`2026-04-24-buddy-plugin-architecture-design.md`](./2026-04-24-buddy-plugin-architecture-design.md)
 - 현재 skill router → [`plugin/skills/router/SKILL.md`](../../../plugin/skills/router/SKILL.md)
 - routing rules → [`plugin/skills/router/references/routing-rules.md`](../../../plugin/skills/router/references/routing-rules.md)
 - skill catalog → [`plugin/skills/router/references/skill-catalog.md`](../../../plugin/skills/router/references/skill-catalog.md)
+
+> 라우팅 리팩터 (78 SKILL.md → 1 router + 78 PROCEDURE.md, description 토큰 99.44% 감축) 는 git 히스토리 `b2627b1..b2f0ce1` (2026-05-06) 에 기록됨.
 
 ---
 

@@ -181,5 +181,5 @@ feature-C || feature-D (병렬 진행 가능)
 
 ## 참조
 
-- Architecture spec: `docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md` §§2, §3.4
+- Architecture spec: `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` §§2, §3.4
 - Feature spec 포맷 (확장): 동 문서 §3.4

@@ -195,4 +195,4 @@ actor track별로 최소 task 1개 완료 시 1 commit.
 
 ## 참조
 
-- Architecture spec: `docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md` §4 §5
+- Architecture spec: `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` §4 §5

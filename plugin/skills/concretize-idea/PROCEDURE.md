@@ -134,5 +134,5 @@ PRD 확정 후:
 
 ## 참조
 
-- Architecture spec: `docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md` §§1, §2.1
+- Architecture spec: `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` §§1, §2.1
 - autoplan 위치 설명: 동 문서 §2.1

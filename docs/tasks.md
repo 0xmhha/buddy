@@ -6,7 +6,7 @@
 > **SSoT 분담:**
 > - 이 문서: cross-track 작업 인벤토리 (실행 단위)
 > - [`roadmap.md`](./roadmap.md): Go CLI 트랙의 마일스톤 SSoT (M5/M6/v0.2/v0.3/v1.0)
-> - [`superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md): plugin 9-phase 아키텍처 SSoT
+> - [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md): plugin 9-phase 아키텍처 SSoT
 > - [`HANDOFF.md`](./HANDOFF.md): 세션 인계 가이드
 >
 > 작성일: 2026-05-05 / 상태: WORKING
@@ -27,7 +27,7 @@
 
 ### A-1. 9-phase stage skill 채우기 (Q3 순서: §8 → §1~§5 → 나머지)
 
-> 출처: [`spec §4 Stage Skill Gap`](./superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md#4-단계별-skill-군집화--gap-분석).
+> 출처: [`spec §4 Stage Skill Gap`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md#4-단계별-skill-군집화--gap-분석).
 > Q3=c→b: §8 iterate-product 먼저 채우고 → §1~§5 → §6/§7/§9.
 
 | Phase | 보유 | 누락 (작성 대상) |
@@ -58,7 +58,7 @@
 
 ### A-3. 카탈로그 정합성 — DONE (2026-05-05)
 
-> 출처: [`spec §10 Step 2`](./superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md#10-다음-단계).
+> 출처: [`spec §10 Step 2`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md#10-다음-단계).
 
 - [x] SKILL_ROUTER.md §2/§3 multi-orchestrator 모델 갱신 — 6 카테고리 우선순위 표 + 9-phase 라우팅 표 + 7 케이스 라우팅 결정
 - [x] SKILLS.md 카탈로그 재구성 — 9-phase 섹션 구조, phase orchestrator + cross-phase review + stage 분리. Trigger 컬럼이 이미 17 stage 커맨드를 `command + dispatch` 로 표기.
@@ -71,7 +71,7 @@
 
 ### A-4. dogfood — plugin
 
-- [ ] 실제 작은 프로젝트에 plugin install → phase orchestrator 동작 검증 ([`spec §10 Step 5`](./superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md#10-다음-단계))
+- [ ] 실제 작은 프로젝트에 plugin install → phase orchestrator 동작 검증 ([`spec §10 Step 5`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md#10-다음-단계))
 - 회수 결과 → A-1 우선순위 재정렬 입력
 
 ---
@@ -159,7 +159,7 @@
 
 - [`HANDOFF.md`](./HANDOFF.md) — 세션 인계 + 워크플로우 skill 분기
 - [`roadmap.md`](./roadmap.md) — Go CLI 마일스톤 SSoT
-- [`superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md) — plugin 9-phase 아키텍처 SSoT
+- [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) — plugin 9-phase 아키텍처 SSoT
 - [`superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md`](./superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md) — plugin scaffold 설계
 - [`v0.1-spec.md`](./v0.1-spec.md) — Go CLI v0.1 spec (LOCKED)
 - [`skill-map.md`](./skill-map.md) — 11-stage → 9-phase 매핑 (참조용)

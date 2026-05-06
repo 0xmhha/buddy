@@ -196,7 +196,7 @@
 
 - Skill 카탈로그 본문 → [`skill-catalog.md`](./skill-catalog.md)
 - Plugin manifest → [`.claude-plugin/plugin.json`](../../../.claude-plugin/plugin.json)
-- 9-phase 라이프사이클 아키텍처 설계 → [`docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md`](../../../../docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md)
+- 9-phase 라이프사이클 아키텍처 설계 → [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](../../../../docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md)
 - 11-stage 상용 제품 빌딩 flow (참조용) → [`docs/skill-map.md`](../../../../docs/skill-map.md)
 - Plugin scaffold spec → [`docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md`](../../../../docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md)
 - Archive 스킬 → [`plugin/_archive/`](../../../_archive/)

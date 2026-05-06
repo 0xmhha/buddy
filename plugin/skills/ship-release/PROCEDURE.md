@@ -119,4 +119,4 @@ UAT를 수행한다 (`run-uat` skill 미존재 시 orchestrator가 직접 수행
 
 ## 참조
 
-- Architecture spec: `docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md` §4 §7, §§8 Q7=(b)
+- Architecture spec: `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` §4 §7, §§8 Q7=(b)

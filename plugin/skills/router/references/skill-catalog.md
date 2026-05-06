@@ -190,6 +190,6 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 ## 5. 참조
 
 - 라우팅 결정이 모호하거나 skill 간 충돌이 있을 때 → [`routing-rules.md`](./routing-rules.md)
-- 9-phase 라이프사이클 아키텍처 설계 → [`docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md`](../../../../docs/superpowers/specs/2026-05-04-lifecycle-orchestrator-architecture.md)
+- 9-phase 라이프사이클 아키텍처 설계 → [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](../../../../docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md)
 - Plugin manifest → [`.claude-plugin/plugin.json`](../../../.claude-plugin/plugin.json)
 - Archive 스킬 → [`_archive/`](../../../_archive/)
