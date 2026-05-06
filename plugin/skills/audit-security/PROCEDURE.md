@@ -188,7 +188,7 @@ Compared to last audit ({date}):
 11. 공격자가 호스트나 프로토콜이 아니라 경로만 제어하는 SSRF.
 12. AI 대화의 user-message 위치의 사용자 content.
 13. 신뢰 안 된 입력 처리 안 하는 코드의 정규식 복잡성.
-14. `*.md` 문서의 보안 우려. **예외:** AI agent 스킬 파일 (예: `SKILL.md`, `agent.md`)은 실행 prompt 코드이지 문서 아님. 코드로 취급.
+14. `*.md` 문서의 보안 우려. **예외:** AI agent 스킬 파일 (예: `PROCEDURE.md`, `SKILL.md`, `agent.md`)은 실행 prompt 코드이지 문서 아님. 코드로 취급.
 15. 누락 audit 로그 — 로깅 부재는 그 자체가 취약점 아님.
 16. 비보안 context의 insecure randomness (UI element ID).
 17. 같은 initial-setup PR에서 commit AND 제거된 Git 히스토리 시크릿.

@@ -1,6 +1,6 @@
 # Audit Security — 8 스캔 카테고리 상세
 
-> 본 파일은 `audit-security` 스킬의 detailed reference입니다. 메인 SKILL.md에서 참조하며, on-demand 로드됩니다.
+> 본 파일은 `audit-security` 스킬의 detailed reference입니다. 메인 PROCEDURE.md에서 참조하며, on-demand 로드됩니다.
 
 ## 1. Secrets Archaeology
 
