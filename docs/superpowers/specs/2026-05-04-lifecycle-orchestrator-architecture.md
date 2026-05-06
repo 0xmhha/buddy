@@ -1,6 +1,6 @@
 # Buddy Plugin — Lifecycle Orchestrator Architecture (Draft)
 
-> **Status**: Draft for review
+> **Status**: ⚠ Historical — superseded by [`2026-05-06-lifecycle-orchestrator-architecture.md`](./2026-05-06-lifecycle-orchestrator-architecture.md). 본 문서는 설계 의도의 historical 기록으로만 유지하며, 구현 현황 / 잔여 작업은 2026-05-06 spec 을 따른다.
 > **Date**: 2026-05-04
 > **Scope**: 상용 제품 빌딩 풀 라이프사이클을 위한 buddy plugin skill/command/MCP 재구조화 제안.
 > **Replaces**: 2026-04-24 plugin scaffold 의 단일 orchestrator (`autoplan`) 가정.
