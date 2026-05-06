@@ -10,16 +10,16 @@
 
 ## Strategy
 
-| Phase | 주제 | 범위 | 형태 |
-|-------|------|------|------|
-| **Phase 0** | Foundation stabilization | description drift 정리 + CI smoke test 자동화 | 본 plan 에서 detailed task 로 실행 |
-| **Phase 1** | §3 Technical Design 핵심 stage | `define-tech-stack`, `design-data-model`, `design-api-contract`, `write-adr` (4 skills) | 별도 plan |
-| **Phase 2** | §4 Implementation Plan stage | `decompose-feature-to-actor-tracks`, `decompose-track-to-tasks`, `map-task-dependencies`, `plan-parallel-execution`, `define-acceptance-test-plan`, `estimate-build-timeline` (6 skills) | 별도 plan |
-| **Phase 3** | §7 Release safety nets | `setup-canary-deploy`, `setup-feature-flags`, `setup-rollback-runbook`, `run-uat`, `run-beta-program`, `prepare-launch-checklist`, `setup-incident-paging` (7 skills) | 별도 plan |
-| **Phase 4** | §6 Use-case 테스트 stage | `test-per-actor-use-case`, `test-cross-actor-flow` (2 skills) | 별도 plan |
-| **Phase 5** | §8 데이터 분석 보강 | `analyze-feature-adoption`, `analyze-user-cohort`, `analyze-actor-failure-rate`, `analyze-cost-anomaly`, `triage-customer-support-ticket`, `analyze-customer-feedback-corpus`, `audit-error-budget` (7 skills) | 별도 plan |
-| **Phase 6** | §9 Lifecycle stage | `deprecate-feature`, `migrate-customers`, `archive-product`, `spin-off-feature` (4 skills) | 별도 plan |
-| **Phase 7** *(deferred)* | §1 customer/market + §3 부가 design + §5 부가 build + §6 부가 audit + MCP | ~28 skills + 2 MCPs | 1년 또는 단기 commercial pivot 시 trigger |
+| Phase | 주제 | 범위 | 형태 | 상태 |
+|-------|------|------|------|------|
+| **Phase 0** | Foundation stabilization | description drift 정리 + CI smoke test 자동화 | 본 plan 에서 detailed task 로 실행 | ✅ commit `5bdf263` (Task 0.1 + 0.2). Task 0.3 live smoke test 사용자 수동 수행 필요 |
+| **Phase 1** | §3 Technical Design 핵심 stage | `define-tech-stack`, `design-data-model`, `design-api-contract`, `write-adr` (4 skills) | 별도 plan | ⏳ |
+| **Phase 2** | §4 Implementation Plan stage | `decompose-feature-to-actor-tracks`, `decompose-track-to-tasks`, `map-task-dependencies`, `plan-parallel-execution`, `define-acceptance-test-plan`, `estimate-build-timeline` (6 skills) | 별도 plan | ⏳ |
+| **Phase 3** | §7 Release safety nets | `setup-canary-deploy`, `setup-feature-flags`, `setup-rollback-runbook`, `run-uat`, `run-beta-program`, `prepare-launch-checklist`, `setup-incident-paging` (7 skills) | 별도 plan | ⏳ |
+| **Phase 4** | §6 Use-case 테스트 stage | `test-per-actor-use-case`, `test-cross-actor-flow` (2 skills) | 별도 plan | ⏳ |
+| **Phase 5** | §8 데이터 분석 보강 | `analyze-feature-adoption`, `analyze-user-cohort`, `analyze-actor-failure-rate`, `analyze-cost-anomaly`, `triage-customer-support-ticket`, `analyze-customer-feedback-corpus`, `audit-error-budget` (7 skills) | 별도 plan | ⏳ |
+| **Phase 6** | §9 Lifecycle stage | `deprecate-feature`, `migrate-customers`, `archive-product`, `spin-off-feature` (4 skills) | 별도 plan | ⏳ |
+| **Phase 7** *(deferred)* | §1 customer/market + §3 부가 design + §5 부가 build + §6 부가 audit + MCP | ~28 skills + 2 MCPs | 1년 또는 단기 commercial pivot 시 trigger | ⏳ |
 
 **진행 원칙:**
 - Phase 0 종료 후 Phase 1 plan 작성 → 실행 → Phase 2 plan 작성 → … 의 순서.
