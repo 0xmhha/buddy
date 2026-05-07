@@ -48,7 +48,9 @@ plan-build (4단계 phase orchestrator)
 
 ### Stage 2: Actor Track → Task List
 
-각 actor track을 ordered task list로 분해한다.
+`decompose-track-to-tasks` skill 을 invoke 한다 — 각 track 을 atomic task (single PR scope) 로 분해. naming convention + acceptance criteria + diff size + internal dependency edge 강제. 산출물은 `map-task-dependencies` 의 입력.
+
+호출 형태: `/buddy:decompose-track-to-tasks "<track table 또는 feature>"`
 
 Task 필수 속성:
 ```yaml

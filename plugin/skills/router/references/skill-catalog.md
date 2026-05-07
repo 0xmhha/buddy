@@ -99,6 +99,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
 | `decompose-feature-to-actor-tracks` | command + dispatch | feature → actor 별 implementation track 분해 (frontend/backend/3rd-party/data) — Q8=(a) cascade 의 §4 진입점 |
+| `decompose-track-to-tasks` | command + dispatch | actor track → ordered task list (atomic, 1 PR scope, verifiable acceptance, diff size 추정) |
 
 ### §5 Stage Skills — Development
 
