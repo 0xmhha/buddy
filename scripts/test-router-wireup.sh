@@ -3,8 +3,13 @@
 #
 # This script enforces structural invariants of the buddy plugin's router-based
 # dispatch model so that future PRs cannot accidentally break the routing
-# topology (e.g. by reintroducing per-command skill stubs or by leaving
-# orphaned commands without a target PROCEDURE).
+# topology (e.g. by reintroducing per-command skill stubs, leaving orphaned
+# commands without a target PROCEDURE, or putting commands at a path Claude
+# Code does not auto-discover from).
+#
+# Source of truth for slash commands is plugin/commands/*.md (auto-discovered).
+# plugin.json must NOT carry a `commands` field — Claude Code's plugin schema
+# rejects it (see commit log for the validation failure that motivated this).
 #
 # Run manually:    bash scripts/test-router-wireup.sh
 # Run via Make:    make test-routing
@@ -27,9 +32,6 @@ ROUTER_SKILL="plugin/skills/router/SKILL.md"
 # target PROCEDURE is determined dynamically from $ARGUMENTS, not hardcoded.
 COMPOSITION_COMMANDS=("run" "chain" "parallel")
 
-# Aggregate failures so we can report all problems in one run instead of
-# bailing on the first one. Each FAIL line is printed immediately for
-# locality with its check; the summary shows the total at the end.
 PASS_COUNT=0
 FAIL_COUNT=0
 FAILURES=()
@@ -78,53 +80,44 @@ else
     fail "expected 78 PROCEDURE.md files, found $procedure_count"
 fi
 
-# --- Check 3: All plugin.json commands route through router -----------------
-# A command with skill != "router" would bypass the dispatcher and break the
-# uniform routing model. Should always be 0.
-non_router_count=$(jq '[.commands[] | select(.skill != "router")] | length' "$PLUGIN_JSON")
-if [ "$non_router_count" = "0" ]; then
-    pass "all plugin.json commands route through 'router' skill"
+# --- Check 3: plugin.json must NOT declare a `commands` field ----------------
+# Claude Code's plugin schema does not accept a commands array (verified via
+# `claude plugin validate`). Slash commands are auto-discovered from
+# plugin/commands/*.md — adding commands to plugin.json breaks installation.
+if jq -e 'has("commands")' "$PLUGIN_JSON" > /dev/null 2>&1; then
+    fail "plugin.json must not contain a 'commands' field — slash commands are auto-discovered from $COMMANDS_DIR/"
 else
-    fail "expected 0 non-router commands; found $non_router_count"
-    jq -r '.commands[] | select(.skill != "router") | "  - \(.name) -> \(.skill)"' "$PLUGIN_JSON" || true
+    pass "plugin.json has no 'commands' field (slash commands auto-discovered)"
 fi
 
-# --- Check 4: plugin.json command count >= 30 (defensive lower bound) -------
-# The current public surface is 30; this guards against accidental command
+# --- Check 4: command md count >= 30 (defensive lower bound) ----------------
+# Current public surface is 30; this guards against accidental command
 # deletion. Adding new commands is fine.
-command_count=$(jq '.commands | length' "$PLUGIN_JSON")
-if [ "$command_count" -ge 30 ]; then
-    pass "plugin.json command count is $command_count (>= 30)"
+command_md_count=$(find "$COMMANDS_DIR" -mindepth 1 -maxdepth 1 -name "*.md" | wc -l | tr -d ' ')
+if [ "$command_md_count" -ge 30 ]; then
+    pass "command md count is $command_md_count (>= 30)"
 else
-    fail "plugin.json command count is $command_count, expected >= 30"
+    fail "command md count is $command_md_count, expected >= 30"
 fi
 
-# --- Check 5: every plugin.json command has a corresponding md file ---------
-missing_files=()
-while IFS= read -r name; do
-    if [ ! -f "$COMMANDS_DIR/$name.md" ]; then
-        missing_files+=("$name")
-    fi
-done < <(jq -r '.commands[].name' "$PLUGIN_JSON")
-
-if [ "${#missing_files[@]}" -eq 0 ]; then
-    pass "every plugin.json command has a matching md file in $COMMANDS_DIR/"
+# --- Check 5: command md files live at $COMMANDS_DIR/<name>.md (no nesting) -
+# Nested directories (e.g. plugin/commands/buddy/<name>.md) cause Claude Code
+# to surface commands as /<plugin>:<dir>:<name> instead of /<plugin>:<name>.
+nested_count=$(find "$COMMANDS_DIR" -mindepth 2 -name "*.md" | wc -l | tr -d ' ')
+if [ "$nested_count" = "0" ]; then
+    pass "no nested command md files (slash names won't get extra namespace prefix)"
 else
-    fail "missing command md files for: ${missing_files[*]}"
+    fail "$nested_count command md files are nested under $COMMANDS_DIR/ subdirs:"
+    find "$COMMANDS_DIR" -mindepth 2 -name "*.md"
 fi
 
-# --- Check 6: every single-mode command targets an existing PROCEDURE ------
-# Composition commands (run/chain/parallel) are exempt — they resolve targets
-# dynamically. All others must declare a literal `target PROCEDURE: \`X\``
-# and `mode: \`single\`` and the referenced PROCEDURE.md must exist.
+# --- Check 6: every non-composition command md targets an existing PROCEDURE
+# Each single-mode command md must declare both `mode: \`single\`` and
+# `target PROCEDURE: \`<X>\``, and the referenced PROCEDURE.md must exist.
 single_mode_failures=()
-while IFS= read -r name; do
+while IFS= read -r md_file; do
+    name=$(basename "$md_file" .md)
     if is_composition "$name"; then
-        continue
-    fi
-    md_file="$COMMANDS_DIR/$name.md"
-    if [ ! -f "$md_file" ]; then
-        # already reported in check 5
         continue
     fi
     if ! grep -qF 'mode: `single`' "$md_file"; then
@@ -137,18 +130,17 @@ while IFS= read -r name; do
         single_mode_failures+=("$name: missing 'target PROCEDURE: \`<X>\`' line")
         continue
     fi
-    # The run.md command uses `$ARGUMENTS` as a dynamic placeholder — already
-    # filtered above, but defensively skip non-static targets.
     if [ "$target" = "\$ARGUMENTS" ]; then
+        # composition-style dynamic target — should have been filtered above
         continue
     fi
     if [ ! -f "$SKILLS_DIR/$target/PROCEDURE.md" ]; then
         single_mode_failures+=("$name: target PROCEDURE '$target' not found at $SKILLS_DIR/$target/PROCEDURE.md")
     fi
-done < <(jq -r '.commands[].name' "$PLUGIN_JSON")
+done < <(find "$COMMANDS_DIR" -mindepth 1 -maxdepth 1 -name "*.md")
 
 if [ "${#single_mode_failures[@]}" -eq 0 ]; then
-    pass "every single-mode command targets an existing PROCEDURE"
+    pass "every non-composition command md targets an existing PROCEDURE"
 else
     fail "single-mode command target issues:"
     for msg in "${single_mode_failures[@]}"; do
@@ -180,7 +172,27 @@ else
     done
 fi
 
-# --- Check 8: router/SKILL.md description length is bounded ------------------
+# --- Check 8: every command md invokes the router skill ---------------------
+# A command md whose body does not invoke `router` would either route
+# through a different skill or fall through to fuzzy auto-matching. Ensures
+# the dispatch contract is uniform.
+no_router_failures=()
+while IFS= read -r md_file; do
+    if ! grep -qE '`?router`?' "$md_file"; then
+        no_router_failures+=("$md_file")
+    fi
+done < <(find "$COMMANDS_DIR" -mindepth 1 -maxdepth 1 -name "*.md")
+
+if [ "${#no_router_failures[@]}" -eq 0 ]; then
+    pass "every command md invokes the 'router' skill"
+else
+    fail "${#no_router_failures[@]} command md files don't reference 'router':"
+    for f in "${no_router_failures[@]}"; do
+        echo "    - $f"
+    done
+fi
+
+# --- Check 9: router/SKILL.md description length is bounded -----------------
 # Sanity bound to prevent reverting to per-skill description bloat. Current
 # length is ~170 chars; cap at 250 leaves headroom for legitimate edits.
 desc_line=$(grep -E '^description:' "$ROUTER_SKILL" | head -1)
@@ -191,47 +203,11 @@ else
     fail "router/SKILL.md description length $desc_len out of bounds (1..250)"
 fi
 
-# --- Check 9: description drift between plugin.json and md frontmatter ------
-# Each plugin.json command's description must byte-match the corresponding
-# md file's frontmatter `description:` value. Catches Task 0.1-style drift
-# from sneaking back in.
-drift_failures=()
-while IFS= read -r name; do
-    md_file="$COMMANDS_DIR/$name.md"
-    if [ ! -f "$md_file" ]; then
-        continue
-    fi
-    json_desc=$(jq -r --arg n "$name" '.commands[] | select(.name == $n) | .description' "$PLUGIN_JSON")
-    # Extract the description line from the md frontmatter, stripping the
-    # `description: ` prefix and surrounding double quotes if present.
-    md_desc=$(awk '
-        /^---[[:space:]]*$/ { in_fm = !in_fm; next }
-        in_fm && /^description:/ {
-            sub(/^description:[[:space:]]*/, "")
-            sub(/^"/, ""); sub(/"$/, "")
-            print
-            exit
-        }
-    ' "$md_file")
-    if [ "$json_desc" != "$md_desc" ]; then
-        drift_failures+=("$name: plugin.json='$json_desc' vs md='$md_desc'")
-    fi
-done < <(jq -r '.commands[].name' "$PLUGIN_JSON")
-
-if [ "${#drift_failures[@]}" -eq 0 ]; then
-    pass "plugin.json descriptions match md frontmatter descriptions"
-else
-    fail "description drift detected:"
-    for msg in "${drift_failures[@]}"; do
-        echo "    - $msg"
-    done
-fi
-
 # --- Check 10: PROCEDURE.md files have no skill-shaped frontmatter ----------
 # Auto-discovery is keyed off YAML frontmatter shape (name + description).
-# After Phase 0', PROCEDURE.md files must NOT carry frontmatter so that only
-# router/SKILL.md is auto-discovered. Re-introducing frontmatter here would
-# revive the routing collision and the illusory token-reduction regression.
+# PROCEDURE.md files must NOT carry frontmatter so that only router/SKILL.md
+# is auto-discovered. Re-introducing frontmatter here would revive the
+# routing collision and the illusory token-reduction regression.
 bad_proc=()
 while IFS= read -r f; do
     if [ "$(head -1 "$f")" = "---" ]; then
