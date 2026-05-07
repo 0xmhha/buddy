@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] — 2026-05-07
+
+### Added
+
+- **§4 Implementation Plan 6 stage skills** — Phase 2 of stage-buildout-plan:
+  - `/buddy:decompose-feature-to-actor-tracks` — feature → actor 별 implementation track 분해 + cross-track contracts + Independence Matrix
+  - `/buddy:decompose-track-to-tasks` — actor track → atomic task list (1 PR scope, verifiable acceptance, diff size 추정)
+  - `/buddy:map-task-dependencies` — task DAG (internal + cross-actor edges) + cycle 감지 + critical path + parallel-safe levels
+  - `/buddy:plan-parallel-execution` — worker batch + sync points + bottleneck mitigation (AI agent + human worker mix)
+  - `/buddy:define-acceptance-test-plan` — per-actor (unit/integration/contract) + cross-actor (E2E) test plan + test infra + acceptance gate
+  - `/buddy:estimate-build-timeline` — critical path 기반 calendar timeline + CI (best/expected/p90/worst) + risk buffer
+- **권장 chain 패턴** — `/buddy:chain decompose-feature-to-actor-tracks,decompose-track-to-tasks,map-task-dependencies,plan-parallel-execution,define-acceptance-test-plan,estimate-build-timeline -- "<feature>"` 로 §4 일괄 합성
+
+### Changed
+
+- **`plan-build` orchestrator** stage 흐름에 6 신규 skill 매핑 + chain 패턴 + autoplan-extended chain 추가
+- **`scripts/test-router-wireup.sh`** PROCEDURE.md count invariant 82 → 88
+
+### Migration notes
+
+- 기존 34 commands 변경 없음. 6 신규 commands 추가 — 총 40 commands.
+- Q8=(a) cascade 의 §4 채움 완료 — §2 use case → §3 system boundary → §4 actor track → §5 actor 별 implementation 의 4-단계 chain 의 §4 가 본 release 로 활성화.
+
 ## [1.0.2] — 2026-05-07
 
 ### Added
