@@ -23,16 +23,40 @@
 
 ```
 plan-build (4단계 phase orchestrator)
-├── stage 1: decompose-feature-to-actor-tracks  (feature → actor별 task track)
-├── stage 2: decompose-track-to-tasks           (actor track → ordered task list)
-├── stage 3: map-task-dependencies              (task DAG — actor 내부 + actor 간 contract)
-├── stage 4: plan-parallel-execution            (actor track별 병렬 worker 분배)
-├── stage 5: define-acceptance-test-plan        (actor별 + cross-actor 완료 기준)
-├── stage 6: estimate-build-timeline            (의존성 + 병렬도 → 일정 합성)
-└── stage 7: autoplan                           (task plan 4-mode review)
+├── stage 1: decompose-feature-to-actor-tracks  [Done] feature → actor별 task track
+├── stage 2: decompose-track-to-tasks           [Done] actor track → ordered task list
+├── stage 3: map-task-dependencies              [Done] task DAG — actor 내부 + actor 간 contract
+├── stage 4: plan-parallel-execution            [Done] actor track별 병렬 worker 분배
+├── stage 5: define-acceptance-test-plan        [Done] actor별 + cross-actor 완료 기준
+├── stage 6: estimate-build-timeline            [Done] 의존성 + 병렬도 → 일정 합성
+└── stage 7: autoplan                           [Done] task plan 4-mode review
 ```
 
-> 모든 stage는 신규 작성 필요. 현재 orchestrator가 직접 수행.
+> Phase 2 (v1.0.3) 에서 stage 1~6 모두 구현 완료. autoplan 은 cross-phase review sub-orchestrator (기존).
+
+## 권장 호출 패턴 (Phase 2 핵심 6 skill chain)
+
+§4 plan-build 작업은 다음 chain 으로 일괄 cover:
+
+```bash
+# 단일 feature 의 §4 plan 일괄 합성
+/buddy:chain decompose-feature-to-actor-tracks,decompose-track-to-tasks,map-task-dependencies,plan-parallel-execution,define-acceptance-test-plan,estimate-build-timeline -- "<feature 이름 또는 spec 경로>"
+```
+
+각 step 의 산출물이 다음 step 의 입력으로 cascade:
+- **Track 분해** → cross-track contracts 와 Independence Matrix 가 후속 task DAG 의 cross-actor edge 출처
+- **Task 분해** → atomic task list + acceptance criteria 가 DAG node + verify gate 입력
+- **DAG** → critical path + parallel-safe levels 가 worker batch 입력
+- **Parallel plan** → batch + sync points 가 calendar timeline 입력
+- **Acceptance test plan** → §6 verify-quality 입력
+- **Timeline** → §7 ship-release commit date
+
+마지막에 `autoplan` 으로 4-mode review (review-scope / review-engineering / review-design / review-devex):
+
+```bash
+# review 까지 chain
+/buddy:chain decompose-feature-to-actor-tracks,decompose-track-to-tasks,map-task-dependencies,plan-parallel-execution,define-acceptance-test-plan,estimate-build-timeline,autoplan -- "<feature>"
+```
 
 ---
 
