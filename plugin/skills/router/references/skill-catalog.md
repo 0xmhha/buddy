@@ -88,6 +88,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `define-tech-stack` | command + dispatch | 기술 스택 결정 — language/framework/DB/runtime/hosting 8+ 차원을 alternatives 비교 + 5년 lock-in 정량 평가로 evidence-based 결정 |
 | `design-data-model` | command + dispatch | 데이터 모델 설계 — entity 매핑, read/write 패턴 분류, normalization 결정, index 전략, zero-downtime migration plan |
 | `design-api-contract` | command + dispatch | API 계약 설계 — REST/GraphQL/RPC 선택, actor → operation 매핑, schema, error taxonomy, versioning 정책, contract test 전략 |
+| `write-adr` | command + dispatch | Architecture Decision Record 작성 — 표준 7 섹션 (Status/Context/Decision/Consequences/Alternatives/References) + supersede 체인 + Index 갱신 |
 | `consult-codex` | command + dispatch | 독립 컨텍스트의 외부 LLM CLI(codex 등)를 호출해 review/challenge/consult 3 modes로 second opinion을 얻음 |
 | `consult-design-system` | dispatch | research → synthesize → output pipeline으로 complete design system 생성 |
 | `explore-design-variants` | command + dispatch | N variants를 parallel 생성하고 structured feedback으로 iterate |

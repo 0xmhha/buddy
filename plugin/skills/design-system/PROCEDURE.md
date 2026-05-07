@@ -121,28 +121,13 @@ RBAC / ABAC / 멀티테넌트 격리 전략을 결정한다.
 
 ### Stage 9: ADR 작성
 
-각 주요 결정에 대해 Architecture Decision Record를 작성한다.
+`write-adr` skill 을 invoke 한다 — 각 주요 결정 (Stage 3 tech stack, Stage 4 API contract, Stage 5 data model, Stage 6 auth model 등) 을 표준 7 섹션 (Status/Context/Decision/Consequences/Alternatives/References) 양식으로 영속화 + supersede 체인 + Index 갱신.
 
-ADR 포맷:
-```markdown
-# ADR-{N}: {결정 제목}
+호출 형태:
+- 결정 skill 후 chain (권장): `/buddy:chain define-tech-stack,write-adr -- "<feature>"` — 결정 즉시 영속화
+- 단독: `/buddy:write-adr "<title 또는 결정 요약>"` — ad-hoc / retrospective ADR
 
-**Status**: Accepted
-**Date**: {ISO date}
-**Deciders**: {이름}
-
-## Context
-{결정이 필요한 배경}
-
-## Decision
-{내린 결정}
-
-## Rationale
-{이유 + 대안 비교}
-
-## Consequences
-{영향: 긍정 / 부정}
-```
+본 stage 의 산출물은 `docs/adr/NNNN-<slug>.md` + `docs/adr/README.md` Index 갱신. 미래의 maintainer / 신규 팀원이 "왜 이 결정을 했는지" 를 ADR 1 파일로 재구성 가능하게 보장.
 
 ### Stage 10: autoplan Review
 
