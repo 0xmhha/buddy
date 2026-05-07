@@ -66,16 +66,15 @@ actor 그래프와 use case 흐름을 기반으로 시스템 토폴로지를 도
 
 ### Stage 4: API Contract
 
-actor 간 경계 = API 경계 원칙으로 API를 설계한다.
+`design-api-contract` skill 을 invoke 한다 — actor 간 경계 = API 경계 원칙으로 REST/GraphQL/RPC 선택 + actor 매핑 + schema + error taxonomy + versioning + contract test 전략까지 contract-first 강제.
 
-필수 포함:
-- Endpoint 목록 (method, path, request/response schema)
-- Authentication method
-- Error response format
-- Rate limiting 정책
-- Versioning 전략
+호출 형태:
+- 단독: `/buddy:design-api-contract "<endpoint set>"`
+- chain (권장): `/buddy:chain design-api-contract,write-adr -- "<endpoint set>"`
 
-`design-embedding-search` skill을 invoke해 검색 API가 필요하면 embedding + hybrid search를 설계한다.
+검색 API 가 필요하면 본 stage 후 `design-embedding-search` 를 invoke 해 embedding + hybrid search 를 설계.
+
+본 stage 의 결정은 §4 plan-build 의 actor track 분배, §5 build-feature 의 contract-first codegen, §6 verify-quality 의 contract test, §7 ship-release 의 breaking change gate 로 cascade.
 
 ### Stage 5: Data Model
 
