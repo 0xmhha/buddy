@@ -135,29 +135,54 @@ Full CLI reference: [`docs/v0.1-spec.md §7`](./docs/v0.1-spec.md).
 
 ### Claude Code plugin — slash commands
 
-Once the plugin is installed, the following commands are available in any Claude Code session:
+Once the plugin is installed, 30 slash commands are available in any Claude Code session, all dispatched through the single auto-loaded `router` skill.
 
-| Phase | Command |
-|-------|---------|
-| §1 Idea | `/buddy:concretize-idea`, `/buddy:validate-idea` |
-| §2 Features | `/buddy:define-features`, `/buddy:map-actor-use-cases` |
-| §3 Design | `/buddy:design-system`, `/buddy:explore-design-variants` |
-| §4 Plan | `/buddy:plan-build`, `/buddy:autoplan` |
-| §5 Build | `/buddy:build-feature`, `/buddy:build-with-tdd` |
-| §6 Quality | `/buddy:verify-quality`, `/buddy:audit-security` |
-| §7 Release | `/buddy:ship-release`, `/buddy:auto-create-pr` |
-| §8 Operate | `/buddy:iterate-product`, `/buddy:analyze-ab-experiment` |
-| §9 Lifecycle | `/buddy:manage-lifecycle` |
+#### Phase orchestrators (9 — pipeline entry points)
 
-#### Router dispatch
+| Phase | Command | Purpose |
+|-------|---------|---------|
+| §1 | `/buddy:concretize-idea`   | Idea → PRD + business viability |
+| §2 | `/buddy:define-features`   | Feature backlog + actor / use case mapping |
+| §3 | `/buddy:design-system`     | Tech stack ADR + API contract + data model |
+| §4 | `/buddy:plan-build`        | Implementation plan + parallel execution graph |
+| §5 | `/buddy:build-feature`     | TDD loop + parallel agent dispatch |
+| §6 | `/buddy:verify-quality`    | Test / lint / security / compliance gate |
+| §7 | `/buddy:ship-release`      | PR + tag + changelog + canary |
+| §8 | `/buddy:iterate-product`   | A/B + funnel + incident + improvement backlog |
+| §9 | `/buddy:manage-lifecycle`  | Deprecation + migration + EOL |
 
-All skills are loaded lazily through a single auto-loaded `router` skill (`plugin/skills/router/SKILL.md`); the catalog and routing rules live at `plugin/skills/router/references/skill-catalog.md` and `plugin/skills/router/references/routing-rules.md`. The 27 lifecycle commands above keep working unchanged. Three additional commands give direct access to any catalog skill:
+#### Stage skills (called inside orchestrators or standalone)
+
+| Phase | Commands |
+|-------|----------|
+| §1 | `/buddy:validate-idea`, `/buddy:validate-advanced-edge-idea`, `/buddy:assess-business-viability`, `/buddy:define-product-spec` |
+| §3 | `/buddy:explore-design-variants` |
+| §5 | `/buddy:build-with-tdd`, `/buddy:diagnose-bug`, `/buddy:dispatch-parallel-agents` |
+| §6 | `/buddy:audit-security`, `/buddy:measure-code-health` |
+| §7 | `/buddy:auto-create-pr`, `/buddy:setup-quality-gates` |
+| §8 | `/buddy:summarize-retro` |
+
+#### Cross-phase tools
 
 | Command | Purpose |
 |---------|---------|
-| `/buddy:run <skill> [args]` | Invoke any catalog skill directly (escape hatch for skills without a dedicated command) |
-| `/buddy:chain skill1,skill2,... -- args` | Sequential composition — each skill receives the prior output |
+| `/buddy:status`          | Detect current phase from repo artifacts + suggest next command |
+| `/buddy:autoplan`        | 4-mode review pipeline (scope / engineering / design / devex) on any plan / PRD / ADR |
+| `/buddy:consult-codex`   | Second opinion via external LLM CLI |
+| `/buddy:save-context`    | Checkpoint git state + decisions + remaining tasks |
+| `/buddy:restore-context` | Restore most recent saved checkpoint |
+
+#### Router dispatch (composition)
+
+| Command | Purpose |
+|---------|---------|
+| `/buddy:run <skill> [args]`                | Invoke any catalog skill directly (escape hatch for skills without a dedicated command) |
+| `/buddy:chain skill1,skill2,... -- args`    | Sequential composition — each skill receives the prior output |
 | `/buddy:parallel skill1,skill2,... -- args` | Parallel composition via Agent dispatch, with aggregated results |
+
+#### Architecture
+
+All slash commands route through a single auto-loaded `router` skill (`plugin/skills/router/SKILL.md`). The catalog and routing rules live at `plugin/skills/router/references/skill-catalog.md` and `plugin/skills/router/references/routing-rules.md`. This keeps always-loaded skill metadata to one description (~170 chars) regardless of how many procedures exist — new procedures can be added without inflating session context.
 
 ---
 
