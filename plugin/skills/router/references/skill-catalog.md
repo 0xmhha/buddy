@@ -103,6 +103,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `map-task-dependencies` | command + dispatch | task DAG — internal + cross-actor edges, cycle 감지, critical path, parallel-safe levels |
 | `plan-parallel-execution` | command + dispatch | worker batch + sync points — capability fit + critical path 우선 + bottleneck 식별, AI agent 통합 |
 | `define-acceptance-test-plan` | command + dispatch | per-actor (unit/integration/contract) + cross-actor (E2E flow) test plan + test infra 결정 + acceptance gate |
+| `estimate-build-timeline` | command + dispatch | critical path 기반 calendar timeline + CI (best/expected/p90/worst) + risk buffer + holiday 반영 |
 
 ### §5 Stage Skills — Development
 

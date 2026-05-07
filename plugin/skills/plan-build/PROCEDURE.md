@@ -120,12 +120,17 @@ integration:
 
 ### Stage 6: 빌드 타임라인
 
-의존성과 병렬도를 고려해 일정을 합성한다.
+`estimate-build-timeline` skill 을 invoke 한다 — task DAG + batch schedule + per-task duration → calendar timeline 합성. confidence interval (best/expected/p90/worst) + risk buffer + holiday/availability 반영.
+
+호출 형태: `/buddy:estimate-build-timeline "<DAG / batch / start date>"`
+
+산출물 예시 (간이):
 
 ```
-Week 1: Track A (frontend) + Track B (backend) 병렬 시작
-Week 2: Track C (3rd-party) — backend API 확정 후 가능
-Week 3: Integration testing (cross-actor)
+Critical path: 25 real-h (frontend track 의 main flow)
+p50 (expected): 5 calendar days
+p90 (commit 권장): 7 calendar days
+Worst: 9 days (known risk: 3rd-party API uncertainty)
 ```
 
 ### Stage 7: autoplan Review
