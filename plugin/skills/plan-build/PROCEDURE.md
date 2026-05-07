@@ -103,7 +103,11 @@ synchronization_points:
 
 ### Stage 5: Acceptance Test Plan
 
-actor별 + cross-actor 완료 기준을 정의한다.
+`define-acceptance-test-plan` skill 을 invoke 한다 — per-actor (unit/integration/contract) + cross-actor (E2E flow) test plan + test infra 결정 + acceptance gate. §6 verify-quality 의 입력.
+
+호출 형태: `/buddy:define-acceptance-test-plan "<feature 또는 task DAG>"`
+
+산출물 예시 (간이):
 
 ```yaml
 per_actor:
