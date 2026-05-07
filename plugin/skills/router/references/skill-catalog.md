@@ -96,7 +96,9 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 
 ### §4 Stage Skills — Implementation Plan
 
-> 현재 단계별 stage skill은 `plan-build` orchestrator가 직접 수행. 신규 stage skill은 추후 추가.
+| Skill name | Trigger | When to use (1줄) |
+|------------|---------|------------------|
+| `decompose-feature-to-actor-tracks` | command + dispatch | feature → actor 별 implementation track 분해 (frontend/backend/3rd-party/data) — Q8=(a) cascade 의 §4 진입점 |
 
 ### §5 Stage Skills — Development
 

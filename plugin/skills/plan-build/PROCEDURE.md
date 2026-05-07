@@ -40,24 +40,11 @@ plan-build (4단계 phase orchestrator)
 
 ### Stage 1: Feature → Actor Track 분해
 
-2단계 feature spec의 actor list를 기반으로 각 feature를 actor별 implementation track으로 분리한다.
+`decompose-feature-to-actor-tracks` skill 을 invoke 한다 — §3 design 산출물 (tech stack / data model / API contract) + §2 feature spec 의 actor / use case / system boundary 를 입력으로 actor 별 implementation track 으로 분해. cross-track contract 식별 + Independence Matrix + Track Outputs 로 후속 stage 의 입력 schema 생성.
 
-예시 (`signup-email-password` feature):
-```
-Track A: frontend-actor (Next.js)
-  - signup form component
-  - validation feedback UI
-  - success redirect flow
-
-Track B: backend-actor (Go auth-service)
-  - credentials validation endpoint
-  - password hashing (bcrypt)
-  - JWT issuance
-
-Track C: 3rd-party-actor (SendGrid)
-  - verification email template
-  - webhook handler for click confirmation
-```
+호출 형태:
+- 단독: `/buddy:decompose-feature-to-actor-tracks "<feature>"`
+- chain (권장): Stage 1~6 일괄 — 본 phase 끝의 권장 chain 패턴 참조
 
 ### Stage 2: Actor Track → Task List
 
