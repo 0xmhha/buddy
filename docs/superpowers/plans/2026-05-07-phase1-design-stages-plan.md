@@ -35,12 +35,25 @@
 
 ## PROCEDURE.md 공통 템플릿
 
+> **Reference 학습 적용** (2026-05-07): 4 reference repo (`skill/superpowers`, `skill/awesome-claude-skills`, `harness/everything-claude-code`, `system-prompt/.../claude-opus-4.7.md`) 분석 결과 다음 4 enhancement 가 template 에 반영됨:
+> - **A. Anti-slop opener (§0)** — superpowers/AGENTS.md "94% PR 거절률" 패턴. skill 시작에서 명시적 STOP gate.
+> - **B. Explicit output structure (§6)** — Opus 4.7 default = prose minimal formatting. skill 이 explicit 하게 table/structured 요구해야 모델이 구조화 출력함.
+> - **C. Engineering posture (§4)** — review-engineering 류의 "input 자체를 challenge, 입장 취함, hedge 금지" posture 명시. AI sycophancy 방지.
+> - **D. Verification gate (§11)** — verification-before-completion 패턴. 완료 선언 전 self-check checklist.
+
 새 stage skill 의 `plugin/skills/<name>/PROCEDURE.md` 는 **frontmatter 없이** 다음 구조:
 
 ```markdown
 # <skill-name> — <한 줄 부제>
 
-<1-2 문단 도입: 이 skill 이 어떤 의사결정을 강제하고 산출물이 무엇인지>
+## 0. STOP — 시작 전 읽기
+
+이 skill 은 <가장 흔한 실패 모드> 를 방지하기 위한 절차다. 다음 anti-pattern 이 발견되면 즉시 중단:
+- <anti-pattern 1: 예 "사용자 입력을 그대로 stack 결정으로 채택">
+- <anti-pattern 2: 예 "alternatives 검토 없이 단일 후보만 평가">
+- <anti-pattern 3: 예 "lock-in cost 정량 평가 생략">
+
+§5 의 모든 단계를 누락 없이 수행하라. skip 시 산출물의 신뢰도가 무너진다.
 
 ## 1. 목적
 
@@ -50,47 +63,67 @@
 
 - <트리거 조건 1>
 - <트리거 조건 2>
-- ...
 
 ## 3. 입력 (Inputs)
 
 ### 필수
 - <required input 1>
-- ...
 
 ### 선택
 - <optional input 1>
-- ...
 
 ### 입력이 부족할 때 forcing question
 - "<질문 1>"
-- ...
 
-## 4. 핵심 원칙 (Principles)
+## 4. 핵심 원칙 (Principles + Posture)
 
+이 skill 의 운영 posture:
+- **입장 취함, hedge 금지** — 모든 결정에 추천 + 근거 + 변경 조건 명시. "둘 다 가능" 같은 fence-sitting 금지.
+- **사용자 입력을 challenge** — 모호하거나 evidence 부족하면 forcing question 으로 push back.
+- **Specificity 강제** — "fast", "scalable" 같은 카테고리 답변 거부, 숫자·조건·검증 방법 요구.
+
+도메인 원칙:
 1. <원칙 1>
-2. ...
+2. <원칙 2>
 
 ## 5. 단계 (Phases)
 
 ### Phase 1. <단계명>
 1. <step>
-2. ...
 
 ### Phase 2. <단계명>
-1. ...
+1. <step>
 
 ## 6. 산출물 형식 (Output format)
 
-\`\`\`<lang>
-<산출물 schema 또는 template>
+> **Note**: Opus 4.7 / Sonnet 4.6 의 default 는 prose 출력. 다음 구조를 **명시적으로 요구**해야 모델이 structured 출력함.
+
+다음 형식으로 출력하라 (요약 / prose 변환 금지, 모든 섹션 채우기 강제):
+
+\`\`\`markdown
+## <skill-name> Output
+
+### Summary
+<핵심 3 줄 요약>
+
+### Decisions Table
+| Dimension | Selected | Alternatives Considered | Rationale | Lock-in Cost |
+|-----------|----------|-------------------------|-----------|--------------|
+| ... | ... | ... | ... | ... |
+
+### Risk Register
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| ... | ... | ... | ... |
+
+### Next Step
+<구체 action — 1줄>
 \`\`\`
 
 ## 7. Cross-phase cascade
 
 이 skill 의 산출물이 다음 phase 의 어떤 input 으로 흘러가는지:
 - §<N>: <어떤 입력으로>
-- §<M>: <어떤 입력으로>
 
 ## 8. 다음 skill (next in stage flow)
 
@@ -99,15 +132,24 @@
 ## 9. 다른 skill 과의 경계 (충돌 방지)
 
 - vs `<adjacent skill>`: <어떻게 다른지 1줄>
-- vs `<adjacent skill>`: <...>
 
 ## 10. 중요 규칙
 
 - <invariant 1>
-- <invariant 2>
+
+## 11. Verification gate — 완료 선언 전 self-check
+
+다음 체크가 모두 yes 여야 절차 완료 보고:
+- [ ] §5 의 모든 phase 가 누락 없이 실행됨
+- [ ] §6 의 output 섹션이 모두 채워졌고 prose 로 변환되지 않음
+- [ ] §4 의 posture (입장 / specificity / challenge) 가 적용됨 — hedge 표현 없음
+- [ ] §0 의 anti-pattern 들이 산출물에 등장하지 않음
+- [ ] (skill-specific 검증 항목 추가)
+
+하나라도 no 면 해당 단계로 돌아가 보강 후 재검증. user 에게 incomplete 산출물을 "충분하다" 고 보고하지 말 것.
 ```
 
-각 section 의 **§9 (충돌 방지)** 가 핵심 — router 가 fuzzy 매칭 시 이 skill 이 다른 skill 보다 우선해야 할 케이스를 명시.
+각 section 의 **§9 (충돌 방지)** 가 핵심 — router 가 fuzzy 매칭 시 이 skill 이 다른 skill 보다 우선해야 할 케이스를 명시. **§0 (STOP) + §11 (Verification)** 는 reference 학습 기반 신규 — anti-slop 강제.
 
 ## Command md template (slash command 노출)
 
@@ -320,3 +362,18 @@ Phase 1 통과 후:
 - 대상: `decompose-feature-to-actor-tracks`, `decompose-track-to-tasks`, `map-task-dependencies`, `plan-parallel-execution`, `define-acceptance-test-plan`, `estimate-build-timeline`
 
 본 Phase 1 의 PROCEDURE.md template 가 Phase 2 의 작성 비용을 크게 줄여줄 것 (예상).
+
+---
+
+## Reference repos 학습 — 별도 plan 후보 (Phase 1 외)
+
+본 Phase 1 plan 에는 PROCEDURE.md template 강화로 4 enhancement (anti-slop, output structure, posture, verification gate) 만 반영. 더 큰 reference 학습은 별도 plan 으로 분리:
+
+| Enhancement | Source | 영향 범위 | Plan 우선순위 |
+|------------|--------|----------|--------------|
+| **plugin/agents/ 채우기** | `harness/everything-claude-code/agents/` (10+ specialized agents — architect, code-explorer, code-reviewer 등) | buddy 전체 | High — `plugin/agents/` 가 비어있음. agent 도구가 buddy 내부에서도 활용 가능 |
+| **Context modes (dev/research/review)** | `harness/everything-claude-code/contexts/` | buddy 전체 | Mid — phase orchestrator 가 context mode 와 결합되면 더 정밀한 동작 |
+| **AGENTS.md anti-slop guide** | `skill/superpowers/AGENTS.md` | buddy contributor 가이드 | Mid — buddy 자체에 contribute 하는 AI agent 들의 품질 강제 |
+| **Process skills missing in buddy** | `skill/superpowers/skills/` (writing-plans, verification-before-completion 등 14 process skill 비교) | buddy stage skill catalog | Low — 일부는 buddy 가 다른 형태로 보유, 직접 매핑은 검증 필요 |
+
+이 항목들은 Phase 1 완료 후 별도 plan 으로 평가·작성.
