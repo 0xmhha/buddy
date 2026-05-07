@@ -79,7 +79,15 @@ actor 간 경계 = API 경계 원칙으로 API를 설계한다.
 
 ### Stage 5: Data Model
 
-스키마 / 마이그레이션 / 인덱싱을 설계한다.
+`design-data-model` skill 을 invoke 한다 — entity 매핑 + read/write 패턴 분류 + normalization 결정 + index 전략 + zero-downtime migration plan 까지 production 변경 비용을 사전 평가.
+
+호출 형태:
+- 단독: `/buddy:design-data-model "<entity 또는 sub-domain>"`
+- chain (권장): `/buddy:chain design-data-model,write-adr -- "<entity>"`
+
+본 stage 의 결정은 Stage 4 (API Contract) 의 resource 매핑, §5 build-feature 의 ORM model 구현, §7 ship-release 의 migration 절차로 cascade 된다.
+
+산출물 예시 (DDL + index 근거 포함):
 
 ```sql
 -- 예시 포맷

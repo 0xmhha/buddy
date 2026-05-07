@@ -86,6 +86,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `design-embedding-search` | dispatch | BM25 + vector embedding + metadata filter + reranking 결합한 hybrid search 설계 |
 | `design-mcp-server` | dispatch | MCP(Model Context Protocol) server 설계 |
 | `define-tech-stack` | command + dispatch | 기술 스택 결정 — language/framework/DB/runtime/hosting 8+ 차원을 alternatives 비교 + 5년 lock-in 정량 평가로 evidence-based 결정 |
+| `design-data-model` | command + dispatch | 데이터 모델 설계 — entity 매핑, read/write 패턴 분류, normalization 결정, index 전략, zero-downtime migration plan |
 | `consult-codex` | command + dispatch | 독립 컨텍스트의 외부 LLM CLI(codex 등)를 호출해 review/challenge/consult 3 modes로 second opinion을 얻음 |
 | `consult-design-system` | dispatch | research → synthesize → output pipeline으로 complete design system 생성 |
 | `explore-design-variants` | command + dispatch | N variants를 parallel 생성하고 structured feedback으로 iterate |
