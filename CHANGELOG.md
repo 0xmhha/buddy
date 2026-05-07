@@ -7,27 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-05-07
+
 ### Architecture: Single-Router Skill Dispatch
 
-플러그인의 78개 skill body 파일이 단일 auto-loaded `router` skill을 통해 lazy-load되도록 재구성됩니다.
-세션마다 항상 로드되던 skill metadata가 ~28KB → ~200 chars로 축소되어, turn당 약 7K 토큰을 사용자 작업에 회수합니다.
+플러그인의 78개 skill body 파일이 단일 auto-loaded `router` skill을 통해 lazy-load되도록 재구성됩니다. 세션마다 항상 로드되던 skill metadata가 ~28KB → ~200 chars로 축소되어, turn당 약 7K 토큰을 사용자 작업에 회수합니다.
 
 ### Changed
 
-- **Skill loading goes through a single router** — `plugin/skills/router/SKILL.md`이 유일한 auto-loaded entry point. 이전 78개 skill의 body 파일은 모두 `SKILL.md` → `PROCEDURE.md`로 rename되어 router가 필요 시점에만 lazy-load.
+- **Skill loading goes through a single router** — `plugin/skills/router/SKILL.md` 가 유일한 auto-loaded entry point. 이전 78개 skill 의 body 파일은 `SKILL.md` → `PROCEDURE.md` 로 rename 되었고 YAML frontmatter 도 제거되어 더 이상 자동 발견되지 않습니다 (rename 만으로는 발견이 멈추지 않았기 때문).
 - **Skill catalog 위치 이동** — `plugin/SKILLS.md` → `plugin/skills/router/references/skill-catalog.md`, `plugin/SKILL_ROUTER.md` → `plugin/skills/router/references/routing-rules.md`.
+- **Slash command 경로 평탄화** — `plugin/commands/buddy/<name>.md` → `plugin/commands/<name>.md`. 이전 nested 구조는 슬래시를 `/buddy:buddy:<name>` 형태로 노출시켜 `/buddy:<name>` 호출이 안 됐습니다.
+- **Command md description 정렬** — 26개 command md frontmatter description 을 plugin.json 의 plain-language register 와 byte-identical 정렬.
+- **Parallel mode dispatch 패턴 변경** — fresh subagent 의 권한 boundary 제약 때문에 router (parent) 가 모든 PROCEDURE.md 를 읽고 본문을 subagent prompt 에 embed 하도록 수정.
 
 ### Added
 
-- **3개 신규 dispatch commands** — 기존 27개 lifecycle commands는 그대로 유지되고, 다음이 추가됨:
-  - `/buddy:run <skill> [args]` — 카탈로그의 임의 skill을 직접 호출 (전용 command가 없는 skill의 escape hatch)
+- **3개 신규 dispatch commands** — 기존 27개 lifecycle commands 는 변경 없이 유지되고, 다음이 추가됨:
+  - `/buddy:run <skill> [args]` — 카탈로그의 임의 skill 을 직접 호출 (전용 command 가 없는 skill 의 escape hatch)
   - `/buddy:chain skill1,skill2,... -- args` — 순차 실행, 직전 단계의 출력이 다음 단계로 흐름
-  - `/buddy:parallel skill1,skill2,... -- args` — Agent dispatch 기반 병렬 실행, 결과는 집계되어 반환
+  - `/buddy:parallel skill1,skill2,... -- args` — Agent dispatch 기반 병렬 실행, 결과 집계
+- **`/buddy:status` command md 추가** — 이전엔 plugin.json 에 등록되어 있었으나 md 파일이 누락되어 있던 gap 보완.
+- **Router CI smoke test** — `scripts/test-router-wireup.sh` + Makefile target `test-routing`. 10개 invariant 검증.
+- **README slash command 카탈로그** — 30개 명령 모두 phase orchestrator / stage skill / cross-phase tool / dispatch composition 4개 그룹으로 분류해 표로 정리.
+
+### Fixed
+
+- **plugin.json `commands` 필드 제거** — Claude Code 의 plugin schema 가 거부하는 필드. 슬래시는 `plugin/commands/*.md` 자동 발견이라 manifest 에 선언 불필요. 이전 commands 배열 때문에 plugin install 이 실패하던 문제 해결.
+- **`${CLAUDE_PLUGIN_ROOT}` path resolution fallback** — runtime substitution 이 안 되는 환경 대비 Bash 기반 install root 발견 절차 추가.
 
 ### Migration notes
 
-- 사용자 조치 불필요. 기존 27개 slash commands(`/buddy:status`, `/buddy:concretize-idea` 등)는 변경 없이 동작.
-- 플러그인 기여자: skill 추가/수정 시 catalog와 routing rules는 `plugin/skills/router/references/` 하위에서 갱신.
+- 사용자 조치 불필요. 기존 27개 slash commands (`/buddy:status`, `/buddy:concretize-idea` 등) 는 변경 없이 동작.
+- 플러그인 기여자: 새 skill 은 `plugin/skills/<name>/PROCEDURE.md` 로 작성 (frontmatter 없이), catalog 와 routing rules 는 `plugin/skills/router/references/` 하위에서 갱신.
 
 ## [1.0.0] - 2026-05-04
 
