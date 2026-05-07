@@ -54,15 +54,15 @@ actor 그래프와 use case 흐름을 기반으로 시스템 토폴로지를 도
 
 ### Stage 3: Tech Stack 선택
 
-언어 / 프레임워크 / DB 선택에서 **락인 영향**을 반드시 평가한다.
+`define-tech-stack` skill 을 invoke 한다 — 언어 / 프레임워크 / DB / cache / queue / hosting / observability / CI 8+ 차원을 alternatives 비교 + cross-차원 호환성 매트릭스 + 5년 lock-in 정량 평가로 evidence-based 결정. 산출물은 Decisions Table + Risk Register + ADR draft handoff.
 
-선택 기준 매트릭스:
-| 항목 | 옵션 A | 옵션 B | 락인 비용 | 추천 |
-|------|--------|--------|---------|------|
-| Backend | Go | Node.js | 낮음 | ... |
-| DB | PostgreSQL | MongoDB | 중간 | ... |
+호출 형태:
+- 단독: `/buddy:define-tech-stack "<feature backlog 또는 워크로드>"`
+- chain (권장): `/buddy:chain define-tech-stack,write-adr -- "<feature>"` — 결정 즉시 ADR 영속화
 
-`consult-codex` skill로 second opinion을 얻는다.
+본 stage 의 결정은 Stage 4 (API Contract) 의 backend framework 제약, Stage 5 (Data Model) 의 DB 제약, Stage 8 (배포 전략) 의 hosting/runtime 제약으로 cascade 된다.
+
+`consult-codex` skill 로 second opinion 을 추가로 얻을 수 있다 (high-stakes 결정 시).
 
 ### Stage 4: API Contract
 
