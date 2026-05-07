@@ -82,9 +82,12 @@ Critical path를 식별한다: 전체 feature의 완료를 block하는 task 체�
 
 ### Stage 4: 병렬 실행 계획
 
-actor track 간 독립성을 활용해 병렬 worker 분배 계획을 작성한다.
+`plan-parallel-execution` skill 을 invoke 한다 — DAG (Stage 3) + worker capability matrix → batch schedule + sync points + bottleneck mitigation. AI agent (`dispatch-parallel-agents`) 와 인간 worker 혼합 plan.
 
-`dispatch-parallel-agents` skill과 연동 가능한 형식으로 작성:
+호출 형태: `/buddy:plan-parallel-execution "<DAG 또는 feature>"`
+
+산출물 예시 (간이 형태 — 실제는 batch schedule + worker capability matrix + sync points 표):
+
 ```yaml
 parallel_tracks:
   - track: frontend
@@ -93,12 +96,9 @@ parallel_tracks:
   - track: backend
     worker: agent-2
     tasks: [backend-1, backend-2, backend-3]
-  - track: 3rd-party-integration
-    worker: agent-3
-    tasks: [3rdparty-1, backend-3]
 synchronization_points:
   - after: [backend-1]
-    before: [frontend-2]  # API contract 확정 후 frontend 구현 가능
+    before: [frontend-2]
 ```
 
 ### Stage 5: Acceptance Test Plan

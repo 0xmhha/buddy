@@ -101,6 +101,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `decompose-feature-to-actor-tracks` | command + dispatch | feature → actor 별 implementation track 분해 (frontend/backend/3rd-party/data) — Q8=(a) cascade 의 §4 진입점 |
 | `decompose-track-to-tasks` | command + dispatch | actor track → ordered task list (atomic, 1 PR scope, verifiable acceptance, diff size 추정) |
 | `map-task-dependencies` | command + dispatch | task DAG — internal + cross-actor edges, cycle 감지, critical path, parallel-safe levels |
+| `plan-parallel-execution` | command + dispatch | worker batch + sync points — capability fit + critical path 우선 + bottleneck 식별, AI agent 통합 |
 
 ### §5 Stage Skills — Development
 
