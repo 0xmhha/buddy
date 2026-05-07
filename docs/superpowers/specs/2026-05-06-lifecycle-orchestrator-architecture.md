@@ -14,7 +14,7 @@
 | **Slash commands** | 17 → 12 (재정의 권장) → 26 (Q2=b 채택) | **30 commands** — 27 lifecycle commands + 3 신규 dispatch commands (`run` / `chain` / `parallel`). status command md 누락 보완. |
 | **Routing files** | `plugin/SKILLS.md`, `plugin/SKILL_ROUTER.md` (top-level) | **`plugin/skills/router/references/`** 하위로 이동 — `skill-catalog.md`, `routing-rules.md`. router skill 의 lazy-load reference 로 통합. |
 | **9-phase orchestrator 구현** | 미정 (신규 작성 필요) | **9/9 모두 구현** — `concretize-idea`, `define-features`, `design-system`, `plan-build`, `build-feature`, `verify-quality`, `ship-release`, `iterate-product`, `manage-lifecycle` 전부 PROCEDURE.md 존재. |
-| **§4 gap skill (🆕) 67 개** | 모두 미구현 | **13 개 구현됨**, 54 개 pending (§4 status 표 참조). |
+| **§4 gap skill (당초 67 개) 진행** | 모두 미구현 | **17 개 구현됨** (13 기존 + 4 Phase 1: define-tech-stack / design-data-model / design-api-contract / write-adr), 50 개 pending (§4 status 표 참조). |
 | **MCP** | 7 개 설계 필요 (Q4=c "보류") | 보류 상태 유지. buddy MCP 핵심 controlplane (doctor / feature_* / stats) 만 동작 중. |
 | **archive** | _archive 격리 (Q5=b) | 현 상태 유지. `route-intent`, `route-multi-platform`, `route-spec-to-code` 3개 격리됨. |
 
@@ -48,10 +48,10 @@
 
 | 목표 | 상태 |
 |------|-----|
-| Multi-orchestrator 모델 채택 | ✅ 9 phase orchestrator 전부 구현 |
-| Phase 자율성 + stage dual-mode | ✅ skill-catalog.md 에 priority 표 반영 |
-| 상용 누락 영역 (UAT / 인시던트 / A/B / 코호트 / 피드백 / EOL) | 🟡 §8 의 design-ab-experiment / analyze-ab-experiment / handle-incident / conduct-postmortem 등 핵심 skill 구현. cohort / feedback corpus / cost anomaly 등 보강 필요 |
-| 풀 사이클 단일 plugin 지원 | 🟡 §1~§9 orchestrator 모두 존재. stage 채움 진행 중 (§4 참조) |
+| Multi-orchestrator 모델 채택 | [Done] 9 phase orchestrator 전부 구현 |
+| Phase 자율성 + stage dual-mode | [Done] skill-catalog.md 에 priority 표 반영 |
+| 상용 누락 영역 (UAT / 인시던트 / A/B / 코호트 / 피드백 / EOL) | [Partial] §8 의 design-ab-experiment / analyze-ab-experiment / handle-incident / conduct-postmortem 등 핵심 skill 구현. cohort / feedback corpus / cost anomaly 등 보강 필요 |
+| 풀 사이클 단일 plugin 지원 | [Partial] §1~§9 orchestrator 모두 존재. stage 채움 진행 중 (§4 참조) |
 
 ---
 
@@ -82,15 +82,15 @@
 
 | Phase | Orchestrator | 진입 조건 | 산출물 | 상태 |
 |-------|-------------|----------|--------|-----|
-| §1 Idea & Business Validation | `concretize-idea` | idea/concept | PRD draft + business viability report | ✅ orchestrator 존재. stage 일부 보강 필요 |
-| §2 Feature Definition & Backlog | `define-features` | PRD 확정 | Feature backlog (use case 분해 포함) | ✅ orchestrator + actor/use-case stage 5/5 존재 |
-| §3 Technical Design | `design-system` | Feature backlog | Tech stack ADR, infra blueprint, API/data model | 🟡 orchestrator 존재. 핵심 design-* stage skill 다수 pending (§4 참조) |
-| §4 Implementation Plan | `plan-build` | Technical design | Ordered task graph + parallelization plan | 🟡 orchestrator 존재. decompose-* / map-task-dependencies / estimate-* pending |
-| §5 Development | `build-feature` | Implementation plan | Working code + tests | ✅ orchestrator + TDD/parallel-agent stage 다수 존재 |
-| §6 Quality | `verify-quality` | Code complete | QA report + security/legal sign-off | 🟡 orchestrator + 보안/리뷰 stage 존재. test-per-actor / test-cross-actor / load / a11y / cost / chaos pending |
-| §7 Release & Beta | `ship-release` | Quality gate pass | Tagged release, canary/UAT pass, GA | 🟡 orchestrator + auto-create-pr / release-tagging 존재. canary / feature-flags / rollback / UAT / beta pending |
-| §8 Operate & Iterate | `iterate-product` | Production traffic | Experiment results, improvement backlog | 🟡 orchestrator + AB / funnel / incident / postmortem / improvement-tasks 존재. cohort / feedback-corpus / cost / SLO pending |
-| §9 Lifecycle Management | `manage-lifecycle` | Feature/product 노후화 | Deprecation, migration, EOL | 🟡 orchestrator 존재. deprecate-feature / migrate-customers / archive-product / spin-off-feature pending |
+| §1 Idea & Business Validation | `concretize-idea` | idea/concept | PRD draft + business viability report | [Done] orchestrator 존재. stage 일부 보강 필요 |
+| §2 Feature Definition & Backlog | `define-features` | PRD 확정 | Feature backlog (use case 분해 포함) | [Done] orchestrator + actor/use-case stage 5/5 존재 |
+| §3 Technical Design | `design-system` | Feature backlog | Tech stack ADR, infra blueprint, API/data model | [Partial] orchestrator + 핵심 4 stage (define-tech-stack / design-data-model / design-api-contract / write-adr) 구현 (Phase 1 완료, v1.0.2). 부수 design-* (auth-model / observability / tenant-model 등) 5+ 개 pending — §4 참조 |
+| §4 Implementation Plan | `plan-build` | Technical design | Ordered task graph + parallelization plan | [Partial] orchestrator 존재. decompose-* / map-task-dependencies / estimate-* pending |
+| §5 Development | `build-feature` | Implementation plan | Working code + tests | [Done] orchestrator + TDD/parallel-agent stage 다수 존재 |
+| §6 Quality | `verify-quality` | Code complete | QA report + security/legal sign-off | [Partial] orchestrator + 보안/리뷰 stage 존재. test-per-actor / test-cross-actor / load / a11y / cost / chaos pending |
+| §7 Release & Beta | `ship-release` | Quality gate pass | Tagged release, canary/UAT pass, GA | [Partial] orchestrator + auto-create-pr / release-tagging 존재. canary / feature-flags / rollback / UAT / beta pending |
+| §8 Operate & Iterate | `iterate-product` | Production traffic | Experiment results, improvement backlog | [Partial] orchestrator + AB / funnel / incident / postmortem / improvement-tasks 존재. cohort / feedback-corpus / cost / SLO pending |
+| §9 Lifecycle Management | `manage-lifecycle` | Feature/product 노후화 | Deprecation, migration, EOL | [Partial] orchestrator 존재. deprecate-feature / migrate-customers / archive-product / spin-off-feature pending |
 
 ### 3.1 §3 / §4 분리 근거 (불변)
 
@@ -114,17 +114,17 @@ Q8=(a) 채택 결과: §2 의 첫 단계는 actor 식별 → use case 매핑 →
 
 ```
 define-features (§2 phase orchestrator)
-├── ✅ stage 1: identify-actors
-├── ✅ stage 2: map-actor-use-cases
-├── ✅ stage 3: map-use-case-to-system-boundary
-├── ✅ stage 4: compose-feature-from-use-cases
-├── ✅ stage 5: define-feature-spec
-├── ✅ stage 6: query-feature-registry
-├── ✅ stage 7: score-feature-priority
-├── ✅ stage 8: map-feature-dependencies
-├── ✅ stage 9: split-work-into-features
-├── ✅ stage 10: triage-work-items
-└── ⏳ stage 11: estimate-feature-effort (pending — story point/t-shirt sizing)
+├── [Done] stage 1: identify-actors
+├── [Done] stage 2: map-actor-use-cases
+├── [Done] stage 3: map-use-case-to-system-boundary
+├── [Done] stage 4: compose-feature-from-use-cases
+├── [Done] stage 5: define-feature-spec
+├── [Done] stage 6: query-feature-registry
+├── [Done] stage 7: score-feature-priority
+├── [Done] stage 8: map-feature-dependencies
+├── [Done] stage 9: split-work-into-features
+├── [Done] stage 10: triage-work-items
+└── [Pending] stage 11: estimate-feature-effort (pending — story point/t-shirt sizing)
 ```
 
 §2 는 1 개 stage 보강 외에는 완성. cross-phase cascade 활용 (use case 분해 결과가 §3 infra / §4 implementation / §6 test / §8 metric 의 입력 schema 가 됨) 은 §3~§8 stage 보강 진행에 따라 자연스럽게 활성화됨.
@@ -133,88 +133,88 @@ define-features (§2 phase orchestrator)
 
 ## 4. 단계별 Skill 군집화 + Gap 분석 (현황)
 
-> ✅ = 구현됨 (PROCEDURE.md 존재)
-> ⏳ = 미구현, 신규 작성 필요
-> 🔄 = 명칭 변경/통합되어 다른 skill 로 흡수됨
+> [Done] = 구현됨 (PROCEDURE.md 존재)
+> [Pending] = 미구현, 신규 작성 필요
+> [Renamed] = 명칭 변경/통합되어 다른 skill 로 흡수됨
 
 ### §1 `concretize-idea`
 
-**구현됨**: ✅ `validate-idea`, ✅ `validate-advanced-edge-idea`, ✅ `assess-business-viability`, ✅ `review-pricing-and-gtm`, ✅ `define-product-spec`, ✅ `apply-builder-ethos`, ✅ `autoplan` (review sub-orchestrator), ✅ `review-scope`, ✅ `critique-plan`.
+**구현됨**: [Done] `validate-idea`, [Done] `validate-advanced-edge-idea`, [Done] `assess-business-viability`, [Done] `review-pricing-and-gtm`, [Done] `define-product-spec`, [Done] `apply-builder-ethos`, [Done] `autoplan` (review sub-orchestrator), [Done] `review-scope`, [Done] `critique-plan`.
 
 **Pending (상용 필수)**:
-- ⏳ `analyze-competition-and-substitutes` — 경쟁/대체재 매트릭스
-- ⏳ `map-customer-segments` — 고객 세그먼트와 구매자 분리
-- ⏳ `map-jobs-to-be-done` — JTBD 프레임 인터뷰
-- ⏳ `analyze-market-size` — TAM/SAM/SOM 정량화
-- ⏳ `conduct-customer-interview` — 인터뷰 스크립트 + 합성
+- [Pending] `analyze-competition-and-substitutes` — 경쟁/대체재 매트릭스
+- [Pending] `map-customer-segments` — 고객 세그먼트와 구매자 분리
+- [Pending] `map-jobs-to-be-done` — JTBD 프레임 인터뷰
+- [Pending] `analyze-market-size` — TAM/SAM/SOM 정량화
+- [Pending] `conduct-customer-interview` — 인터뷰 스크립트 + 합성
 
 ### §2 `define-features` — Use Case Mapping & Feature Definition
 
-**구현됨**: ✅ `identify-actors`, ✅ `map-actor-use-cases`, ✅ `map-use-case-to-system-boundary`, ✅ `compose-feature-from-use-cases`, ✅ `define-feature-spec`, ✅ `score-feature-priority`, ✅ `map-feature-dependencies`, ✅ `query-feature-registry`, ✅ `triage-work-items`, ✅ `split-work-into-features`.
+**구현됨**: [Done] `identify-actors`, [Done] `map-actor-use-cases`, [Done] `map-use-case-to-system-boundary`, [Done] `compose-feature-from-use-cases`, [Done] `define-feature-spec`, [Done] `score-feature-priority`, [Done] `map-feature-dependencies`, [Done] `query-feature-registry`, [Done] `triage-work-items`, [Done] `split-work-into-features`.
 
 **Pending**:
-- ⏳ `estimate-feature-effort` — story point / t-shirt sizing
+- [Pending] `estimate-feature-effort` — story point / t-shirt sizing
 
 ### §3 `design-system`
 
-**구현됨**: ✅ `review-architecture`, ✅ `review-engineering`, ✅ `review-design`, ✅ `review-devex`, ✅ `design-artifact-storage`, ✅ `design-billing-system`, ✅ `design-claude-hooks`, ✅ `design-deploy-strategy`, ✅ `design-embedding-search`, ✅ `design-mcp-server`, ✅ `consult-codex`, ✅ `consult-design-system`, ✅ `explore-design-variants`, ✅ `autoplan` (review).
+**구현됨 (Phase 1 + 기존)**: [Done] `define-tech-stack`, [Done] `design-data-model`, [Done] `design-api-contract`, [Done] `write-adr`, [Done] `review-architecture`, [Done] `review-engineering`, [Done] `review-design`, [Done] `review-devex`, [Done] `design-artifact-storage`, [Done] `design-billing-system`, [Done] `design-claude-hooks`, [Done] `design-deploy-strategy`, [Done] `design-embedding-search`, [Done] `design-mcp-server`, [Done] `consult-codex`, [Done] `consult-design-system`, [Done] `explore-design-variants`, [Done] `autoplan` (review).
 
 **Pending (use case → infra 브릿지)**:
-- ⏳ `map-use-cases-to-infra` — actor system boundary → 실제 infra component
-- ⏳ `derive-system-topology` — actor 그래프 → 시스템 토폴로지
+- [Pending] `map-use-cases-to-infra` — actor system boundary → 실제 infra component
+- [Pending] `derive-system-topology` — actor 그래프 → 시스템 토폴로지
 
-**Pending (상용 큰 누락)**:
-- ⏳ `define-tech-stack`, ⏳ `design-data-model`, ⏳ `design-api-contract`, ⏳ `design-event-schema`, ⏳ `design-auth-model`, ⏳ `design-observability`, ⏳ `design-secret-management`, ⏳ `design-tenant-model`, ⏳ `design-i18n-strategy`, ⏳ `design-accessibility-baseline`, ⏳ `write-adr`
+**Pending (상용 부수 design-*)**:
+- [Pending] `design-event-schema`, [Pending] `design-auth-model`, [Pending] `design-observability`, [Pending] `design-secret-management`, [Pending] `design-tenant-model`, [Pending] `design-i18n-strategy`, [Pending] `design-accessibility-baseline`
 
 ### §4 `plan-build`
 
-**구현됨**: ✅ orchestrator (`plan-build`), ✅ `autoplan` 호출 가능.
+**구현됨**: [Done] orchestrator (`plan-build`), [Done] `autoplan` 호출 가능.
 
 **Pending (큰 gap)**:
-- ⏳ `decompose-feature-to-actor-tracks`, ⏳ `decompose-track-to-tasks`, ⏳ `map-task-dependencies`, ⏳ `plan-parallel-execution`, ⏳ `define-acceptance-test-plan`, ⏳ `estimate-build-timeline`
+- [Pending] `decompose-feature-to-actor-tracks`, [Pending] `decompose-track-to-tasks`, [Pending] `map-task-dependencies`, [Pending] `plan-parallel-execution`, [Pending] `define-acceptance-test-plan`, [Pending] `estimate-build-timeline`
 
 ### §5 `build-feature`
 
-**구현됨**: ✅ `build-with-tdd`, ✅ `iterate-fix-verify`, ✅ `freeze-edit-scope`, ✅ `dispatch-parallel-agents`, ✅ `diagnose-bug`, ✅ `consult-codex`.
+**구현됨**: [Done] `build-with-tdd`, [Done] `iterate-fix-verify`, [Done] `freeze-edit-scope`, [Done] `dispatch-parallel-agents`, [Done] `diagnose-bug`, [Done] `consult-codex`.
 
 **Pending**:
-- ⏳ `generate-from-api-contract`, ⏳ `generate-tests-from-spec`, ⏳ `pair-program-loop`, ⏳ `refactor-with-rename-trace`, ⏳ `update-docs-with-code`
+- [Pending] `generate-from-api-contract`, [Pending] `generate-tests-from-spec`, [Pending] `pair-program-loop`, [Pending] `refactor-with-rename-trace`, [Pending] `update-docs-with-code`
 
 ### §6 `verify-quality`
 
-**구현됨**: ✅ `classify-qa-tiers`, ✅ `run-browser-qa`, ✅ `monitor-regressions`, ✅ `audit-security`, ✅ `audit-live-devex`, ✅ `measure-code-health`, ✅ `classify-review-risks`, ✅ `review-ai-safety-liability`, ✅ `review-privacy-data-risk`, ✅ `review-license-and-ip-risk`, ✅ `review-terms-policy-readiness`.
+**구현됨**: [Done] `classify-qa-tiers`, [Done] `run-browser-qa`, [Done] `monitor-regressions`, [Done] `audit-security`, [Done] `audit-live-devex`, [Done] `measure-code-health`, [Done] `classify-review-risks`, [Done] `review-ai-safety-liability`, [Done] `review-privacy-data-risk`, [Done] `review-license-and-ip-risk`, [Done] `review-terms-policy-readiness`.
 
 **Pending (use case 기반)**:
-- ⏳ `test-per-actor-use-case`, ⏳ `test-cross-actor-flow`
+- [Pending] `test-per-actor-use-case`, [Pending] `test-cross-actor-flow`
 
 **Pending (상용 발표 전 필수)**:
-- ⏳ `run-load-test`, ⏳ `audit-accessibility`, ⏳ `audit-i18n-coverage`, ⏳ `audit-cost-efficiency`, ⏳ `chaos-test`, ⏳ `audit-test-coverage-meaningful`
+- [Pending] `run-load-test`, [Pending] `audit-accessibility`, [Pending] `audit-i18n-coverage`, [Pending] `audit-cost-efficiency`, [Pending] `chaos-test`, [Pending] `audit-test-coverage-meaningful`
 
 ### §7 `ship-release`
 
-**구현됨**: ✅ `setup-quality-gates`, ✅ `auto-create-pr`, ✅ `automate-release-tagging`, ✅ `sync-release-docs`, ✅ `write-changelog`, ✅ `guard-destructive-commands`, ✅ `compose-safety-mode`.
+**구현됨**: [Done] `setup-quality-gates`, [Done] `auto-create-pr`, [Done] `automate-release-tagging`, [Done] `sync-release-docs`, [Done] `write-changelog`, [Done] `guard-destructive-commands`, [Done] `compose-safety-mode`.
 
 **Pending (상용 배포 안전망)**:
-- ⏳ `setup-canary-deploy`, ⏳ `setup-feature-flags`, ⏳ `setup-rollback-runbook`, ⏳ `run-uat`, ⏳ `run-beta-program`, ⏳ `prepare-launch-checklist`, ⏳ `setup-incident-paging`
+- [Pending] `setup-canary-deploy`, [Pending] `setup-feature-flags`, [Pending] `setup-rollback-runbook`, [Pending] `run-uat`, [Pending] `run-beta-program`, [Pending] `prepare-launch-checklist`, [Pending] `setup-incident-paging`
 
 ### §8 `iterate-product` (사용자 명시 영역)
 
-**구현됨**: ✅ `monitor-regressions`, ✅ `save-context`, ✅ `restore-context`, ✅ `summarize-retro`, ✅ `persist-learning-jsonl`, ✅ `design-ab-experiment`, ✅ `analyze-ab-experiment`, ✅ `analyze-user-funnel`, ✅ `generate-improvement-tasks`, ✅ `handle-incident`, ✅ `conduct-postmortem`.
+**구현됨**: [Done] `monitor-regressions`, [Done] `save-context`, [Done] `restore-context`, [Done] `summarize-retro`, [Done] `persist-learning-jsonl`, [Done] `design-ab-experiment`, [Done] `analyze-ab-experiment`, [Done] `analyze-user-funnel`, [Done] `generate-improvement-tasks`, [Done] `handle-incident`, [Done] `conduct-postmortem`.
 
 **Pending**:
-- ⏳ `analyze-feature-adoption`, ⏳ `analyze-user-cohort`, ⏳ `analyze-actor-failure-rate`, ⏳ `analyze-cost-anomaly`, ⏳ `triage-customer-support-ticket`, ⏳ `analyze-customer-feedback-corpus`, ⏳ `audit-error-budget`
+- [Pending] `analyze-feature-adoption`, [Pending] `analyze-user-cohort`, [Pending] `analyze-actor-failure-rate`, [Pending] `analyze-cost-anomaly`, [Pending] `triage-customer-support-ticket`, [Pending] `analyze-customer-feedback-corpus`, [Pending] `audit-error-budget`
 
 ### §9 `manage-lifecycle` (상용 장기운영)
 
-**구현됨**: ✅ orchestrator only (`manage-lifecycle`).
+**구현됨**: [Done] orchestrator only (`manage-lifecycle`).
 
 **Pending**:
-- ⏳ `deprecate-feature`, ⏳ `migrate-customers`, ⏳ `archive-product`, ⏳ `spin-off-feature`
+- [Pending] `deprecate-feature`, [Pending] `migrate-customers`, [Pending] `archive-product`, [Pending] `spin-off-feature`
 
 ### Cross-cutting
 
-- ✅ `apply-builder-ethos`, ✅ `detect-install-type`, ✅ `guide-setup-wizard`, ✅ `benchmark-llm-models`
-- 🔄 archive 3개 (`route-intent`, `route-multi-platform`, `route-spec-to-code`) — `plugin/_archive/` 격리됨
+- [Done] `apply-builder-ethos`, [Done] `detect-install-type`, [Done] `guide-setup-wizard`, [Done] `benchmark-llm-models`
+- [Renamed] archive 3개 (`route-intent`, `route-multi-platform`, `route-spec-to-code`) — `plugin/_archive/` 격리됨
 
 ---
 
@@ -232,15 +232,15 @@ Q4=(c) 결정에 따라 MCP 작성 보류. 현재 buddy MCP control plane (docto
 
 ## 6. Command Gate (현황)
 
-### 6.1 Phase orchestrator commands (9, ✅ 모두 등록)
+### 6.1 Phase orchestrator commands (9, [Done] 모두 등록)
 
 `/buddy:concretize-idea`, `/buddy:define-features`, `/buddy:design-system`, `/buddy:plan-build`, `/buddy:build-feature`, `/buddy:verify-quality`, `/buddy:ship-release`, `/buddy:iterate-product`, `/buddy:manage-lifecycle`.
 
-### 6.2 Cross-cutting utility commands (3, ✅ 등록)
+### 6.2 Cross-cutting utility commands (3, [Done] 등록)
 
 `/buddy:save-context`, `/buddy:restore-context`, `/buddy:consult-codex`.
 
-### 6.3 Stage / Domain commands (15, ✅ 등록)
+### 6.3 Stage / Domain commands (15, [Done] 등록)
 
 Q2=(b) "dual-full" 결정에 따라 실제로는 14 개 제거 대신 보존:
 `/buddy:validate-idea`, `/buddy:validate-advanced-edge-idea`, `/buddy:assess-business-viability`, `/buddy:define-product-spec`, `/buddy:autoplan`, `/buddy:explore-design-variants`, `/buddy:dispatch-parallel-agents`, `/buddy:build-with-tdd`, `/buddy:diagnose-bug`, `/buddy:audit-security`, `/buddy:measure-code-health`, `/buddy:auto-create-pr`, `/buddy:setup-quality-gates`, `/buddy:summarize-retro`, `/buddy:status`.
@@ -268,12 +268,12 @@ Q2=(b) "dual-full" 결정에 따라 실제로는 14 개 제거 대신 보존:
 
 | 항목 | 잔여 수량 | 비고 |
 |------|---------|------|
-| Stage skill 신규 작성 | **54** | §1 (5), §2 (1), §3 (13), §4 (6), §5 (5), §6 (8), §7 (7), §8 (7), §9 (4), 합계 56 — §3.4 의 use-case 관련은 완료되어 실제 잔여는 54 |
+| Stage skill 신규 작성 | **50** | §1 (5), §2 (1), §3 (9 — 4 Phase 1 완료 후 잔여), §4 (6), §5 (5), §6 (8), §7 (7), §8 (7), §9 (4), 합계 52 — §3.4 use-case 완료 + Phase 1 4 skill 완료 후 실제 잔여 50 |
 | In-house MCP | 2 | feature-management-mcp 부분 구현됨, analytics-mcp 미착수 |
 | 외부 SaaS MCP 어댑터 | 5 | monitoring/support/cost/billing/feature-flag |
-| Command 정렬 | ✅ 완료 | 30 commands 모두 router 통한 dispatch |
-| 라우팅 인프라 | ✅ 완료 | router/SKILL.md, references/, dispatch contract |
-| 문서 | ✅ 부분 완료 | skill-catalog / routing-rules / spec / plan / README / CHANGELOG 갱신 완료 |
+| Command 정렬 | [Done] 완료 | 34 commands 모두 router 통한 dispatch (Phase 1 의 4 신규 포함) |
+| 라우팅 인프라 | [Done] 완료 | router/SKILL.md, references/, dispatch contract |
+| 문서 | [Done] 부분 완료 | skill-catalog / routing-rules / spec / plan / README / CHANGELOG 갱신 완료 |
 
 ---
 
@@ -281,14 +281,14 @@ Q2=(b) "dual-full" 결정에 따라 실제로는 14 개 제거 대신 보존:
 
 | Q | 채택 | 결과 |
 |---|------|------|
-| Q1: 9-phase 모델 | (a) 9-phase 그대로 | ✅ 9 orchestrator 모두 구현 |
-| Q2: Command 재정의 | (b) dual full | ✅ 30 commands (9 phase + 3 utility + 15 stage + 3 dispatch) |
-| Q3: skill 작성 우선순위 | (c) §8 → (b) §1~§5 | 🟡 §8 핵심 stage 구현됨. §1~§5 보강 진행 중 |
-| Q4: MCP 우선순위 | (c) MCP 보류 | ✅ 보류 유지 — buddy MCP control plane 만 동작 |
-| Q5: archive 처리 | (b) `_archive/` 격리 | ✅ 3개 격리됨 |
-| Q6: autoplan 위치 | (a) cross-phase review sub-orchestrator | ✅ 적용됨 — §1 stage 8 / §3 review / §4 review 로 호출 |
-| Q7: phase 추가 | (b) §7.5 Beta/UAT 분리 | 🟡 orchestrator 분리 미구현 — `run-uat` / `run-beta-program` stage 만 §7 안에서 pending |
-| Q8: Use case 분해 | (a) §2 첫 단계 강제 | ✅ 5 stage skill 모두 구현, feature spec 의 actor / use_cases / system_boundary 필드 적용 |
+| Q1: 9-phase 모델 | (a) 9-phase 그대로 | [Done] 9 orchestrator 모두 구현 |
+| Q2: Command 재정의 | (b) dual full | [Done] 30 commands (9 phase + 3 utility + 15 stage + 3 dispatch) |
+| Q3: skill 작성 우선순위 | (c) §8 → (b) §1~§5 | [Partial] §8 핵심 stage 구현됨. §1~§5 보강 진행 중 |
+| Q4: MCP 우선순위 | (c) MCP 보류 | [Done] 보류 유지 — buddy MCP control plane 만 동작 |
+| Q5: archive 처리 | (b) `_archive/` 격리 | [Done] 3개 격리됨 |
+| Q6: autoplan 위치 | (a) cross-phase review sub-orchestrator | [Done] 적용됨 — §1 stage 8 / §3 review / §4 review 로 호출 |
+| Q7: phase 추가 | (b) §7.5 Beta/UAT 분리 | [Partial] orchestrator 분리 미구현 — `run-uat` / `run-beta-program` stage 만 §7 안에서 pending |
+| Q8: Use case 분해 | (a) §2 첫 단계 강제 | [Done] 5 stage skill 모두 구현, feature spec 의 actor / use_cases / system_boundary 필드 적용 |
 
 ---
 
