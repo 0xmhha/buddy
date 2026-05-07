@@ -12,19 +12,40 @@
 
 ```
 design-system (3단계 phase orchestrator)
-├── stage 1: map-use-cases-to-infra     (use case → infra component 브릿지)
-├── stage 2: derive-system-topology     (actor 그래프 + use case → 시스템 토폴로지)
-├── stage 3: define-tech-stack          (언어/프레임워크/DB 선택 — 락인 영향 평가)
-├── stage 4: design-api-contract        (REST/GraphQL/RPC 계약 — actor 간 경계 = API 경계)
-├── stage 5: design-data-model          (스키마/마이그레이션/인덱싱)
-├── stage 6: design-auth-model          (RBAC/ABAC, 멀티테넌트 격리)
-├── stage 7: design-observability       (로깅/메트릭/트레이싱 표준)
+├── stage 1: [map-use-cases-to-infra]   (use case → infra component 브릿지)
+├── stage 2: [derive-system-topology]   (actor 그래프 + use case → 시스템 토폴로지)
+├── stage 3: define-tech-stack          ✓ 언어/프레임워크/DB 선택 — 락인 영향 평가
+├── stage 4: design-api-contract        ✓ REST/GraphQL/RPC 계약 — actor 간 경계 = API 경계
+├── stage 5: design-data-model          ✓ 스키마/마이그레이션/인덱싱
+├── stage 6: [design-auth-model]        (RBAC/ABAC, 멀티테넌트 격리)
+├── stage 7: [design-observability]     (로깅/메트릭/트레이싱 표준)
 ├── stage 8: [design-deploy-strategy]   (배포 전략 — canary/blue-green/rolling)
-├── stage 9: write-adr                  (Architecture Decision Record)
-└── stage 10: autoplan                  (technical design 산출물 4-mode review)
+├── stage 9: write-adr                  ✓ Architecture Decision Record
+└── stage 10: autoplan                  ✓ technical design 산출물 4-mode review
 ```
 
-> 브라켓(`[name]`)으로 표시된 stage 는 신규 작성 필요. 현재는 orchestrator 가 직접 수행.
+> ✓ = 구현된 skill. 브라켓(`[name]`)은 미구현 — orchestrator 가 임시로 직접 수행.
+
+## 권장 호출 패턴 (Phase 1 핵심 4 skill chain)
+
+대부분의 §3 작업은 다음 chain 으로 cover 가능:
+
+```bash
+# 단일 feature 의 §3 결정 + 영속화 일괄
+/buddy:chain define-tech-stack,design-data-model,design-api-contract,write-adr -- "<feature 요약>"
+```
+
+각 step 의 산출물이 다음 step 입력으로 흘러:
+- **Stack 결정** (`define-tech-stack`) → DB / framework 선택을 후속 step 의 제약으로 전달
+- **Data model** (`design-data-model`) → entity / schema / migration plan 을 API resource 매핑 입력으로 전달
+- **API contract** (`design-api-contract`) → resource / operation / error / versioning 을 ADR 입력으로 전달
+- **ADR** (`write-adr`) → 위 3 결정을 표준 양식으로 영속화 (`docs/adr/NNNN-*.md`)
+
+각 결정마다 별도 ADR 가 필요하면 4개 사이에 write-adr 를 끼워 넣는 형태:
+
+```bash
+/buddy:chain define-tech-stack,write-adr,design-data-model,write-adr,design-api-contract,write-adr -- "<feature>"
+```
 
 ---
 
