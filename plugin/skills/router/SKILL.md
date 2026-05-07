@@ -70,16 +70,25 @@ Trigger: command md 가 `mode: chain` 과 `targets: name1, name2, name3` (또는
 
 Trigger: command md 가 `mode: parallel` 과 `targets: name1, name2, name3` 을 전달한 경우.
 
+**왜 parent-reads pattern**: fresh subagent 는 부모의 runtime 권한 grant 를 상속하지 않는다 (Claude Code security 설계 — parent 가 subagent 에게 임의 권한 escalation 못 함). 따라서 `${CLAUDE_PLUGIN_ROOT}/skills/...` 같이 user 가 parent 에게만 승인한 경로는 subagent 가 직접 Read 할 수 없다. router (parent) 가 모든 PROCEDURE.md 를 읽고 본문을 prompt 에 embed 해 dispatch.
+
 수행 절차:
 
 1. `targets` 문자열을 콤마(`,`)로 분리해 리스트로 만든다. 각 이름의 앞뒤 공백을 trim 한다. 빈 토큰은 제거한다.
-2. 각 target 마다 `Agent` 도구로 fresh subagent 를 하나씩 디스패치한다 (`subagent_type: general-purpose`). 각 subagent 에게 다음을 전달한다:
-   - 지시: `${CLAUDE_PLUGIN_ROOT}/skills/<their-target>/PROCEDURE.md` 를 `Read` 로 로드해 본문 절차를 그대로 수행할 것.
-   - 공유 사용자 인자(원본 `$ARGUMENTS`).
-   - 제약: 다른 target 의 작업물·파일을 수정하지 말 것. 자기 결과만 보고로 반환할 것.
-3. 모든 subagent 가 완료될 때까지 대기한다. 각 subagent 는 자기 PROCEDURE 의 실행 리포트를 반환한다.
-4. 결과 집계: target 별로 그룹핑해 결과를 제시한다. 그 후 cross-target 관찰(상호 모순, 공통 finding, 시너지)이 있으면 별도 단락으로 합성한다.
-5. 어느 subagent 가 PROCEDURE 부재로 실패하면 그 target 만 실패로 표기하고, 나머지 결과는 그대로 보고한다 — 전체 중단 금지.
+2. **router 가 직접 각 target 의 PROCEDURE 를 Read** 한다 (parent 권한 사용):
+   - 각 target 에 대해 `Read ${CLAUDE_PLUGIN_ROOT}/skills/<target>/PROCEDURE.md` 호출
+   - 결과 본문을 메모리에 보관 (subagent prompt 에 embed 할 용도)
+   - PROCEDURE 가 부재하면 그 target 만 "missing PROCEDURE" 로 표기, 나머지는 진행 — 전체 중단 금지
+3. 각 target 마다 `Agent` 도구로 fresh subagent 를 하나씩 디스패치 (`subagent_type: general-purpose`). 각 subagent 에게 다음을 전달한다:
+   - **PROCEDURE 본문 (parent 가 step 2 에서 읽은 것)** 을 prompt 안에 직접 embed
+   - 지시: "다음은 `<target>` skill 의 PROCEDURE 본문이다. 이를 그대로 실행 지시문으로 취급해 모든 단계를 수행하라."
+   - 공유 사용자 인자 (원본 `$ARGUMENTS`)
+   - 제약: subagent 는 file Read 시도 금지 — 모든 절차는 prompt 안에 들어 있음. 다른 target 의 작업물·파일 수정 금지. 자기 결과만 보고로 반환.
+4. 모든 subagent 가 완료될 때까지 대기. 각 subagent 는 자기 PROCEDURE 의 실행 리포트를 반환.
+5. 결과 집계: target 별로 그룹핑해 결과 제시. 그 후 cross-target 관찰 (상호 모순, 공통 finding, 시너지) 이 있으면 별도 단락으로 합성.
+6. step 2 에서 missing PROCEDURE 로 표기된 target 들은 결과 섹션 끝에 명시 — 전체 중단 금지.
+
+**Token 비용 주의**: PROCEDURE 본문이 큰 경우 (예: review-engineering 700+ lines) subagent dispatch prompt 가 그만큼 커진다. parallel mode 는 원래 review/audit 처럼 동시 다발 분석에 적합한 패턴이라 이 비용은 의도된 trade-off 임. 만약 dispatch 비용이 일관되게 부담된다면 user 의 `~/.claude/settings.json` 에 `permissions.allow: ["Read(${CLAUDE_PLUGIN_ROOT}/**)"]` 추가로 subagent 가 직접 Read 가능하게 만들 수 있고, 이 경우 router 가 step 2 를 skip 해도 된다 (advanced setup, plugin install 만으로는 자동 안됨).
 
 ## Skill index
 
