@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] — 2026-05-07
+
+### Added
+
+- **§3 Technical Design 핵심 4 stage skill** — Phase 1 of stage-buildout-plan:
+  - `/buddy:define-tech-stack` — 언어 / 프레임워크 / DB / runtime / hosting 8+ 차원을 alternatives 비교 + 5년 lock-in 정량 평가로 evidence-based 결정
+  - `/buddy:design-data-model` — entity 매핑 + read/write 패턴 분류 + normalization 결정 + index 전략 + zero-downtime migration plan
+  - `/buddy:design-api-contract` — REST/GraphQL/RPC/Webhook style 결정 + actor → operation 매핑 + schema-first + error taxonomy + versioning 정책 + contract test 전략
+  - `/buddy:write-adr` — 표준 7 섹션 ADR (Title/Status/Context/Decision/Consequences positive+negative+neutral/Alternatives/References) + supersede 체인 + Index 갱신
+- **권장 chain 패턴** — `/buddy:chain define-tech-stack,design-data-model,design-api-contract,write-adr -- "<feature>"` 로 §3 일괄 처리
+
+### Changed
+
+- **PROCEDURE.md 공통 template 강화** — reference repo 학습 (skill/superpowers, harness/everything-claude-code, claude-opus-4.7 system prompt) 적용:
+  - §0 STOP gate (anti-slop, superpowers AGENTS.md 패턴)
+  - §4 engineering posture (입장 / specificity / challenge — review-engineering 패턴)
+  - §6 explicit output schema (Opus 4.7 prose default 보정)
+  - §11 verification gate (verification-before-completion 패턴)
+- **`design-system` orchestrator** stage 흐름에 4 신규 skill 매핑 + 권장 chain 패턴 추가
+- **`scripts/test-router-wireup.sh`** PROCEDURE.md count invariant 78 → 82
+
+### Migration notes
+
+- 기존 30개 slash commands 변경 없음. 4 신규 commands (`define-tech-stack`, `design-data-model`, `design-api-contract`, `write-adr`) 추가 — 총 34 commands.
+- §3 미구현 stage 5개 (`map-use-cases-to-infra`, `derive-system-topology`, `design-auth-model`, `design-observability`, `design-deploy-strategy`) 는 별도 plan 으로 후속 Phase.
+
 ## [1.0.1] — 2026-05-07
 
 ### Architecture: Single-Router Skill Dispatch
