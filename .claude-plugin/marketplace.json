@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "buddy",
-      "description": "9-phase multi-orchestrator model: idea → business validation → design → build → quality → release → A/B iterate → lifecycle. 77 skills, 26 commands.",
+      "description": "9-phase multi-orchestrator model: idea → business validation → design → build → quality → release → A/B iterate → lifecycle. 78 procedures behind a single router skill, 30 slash commands (run/chain/parallel for ad-hoc composition).",
       "version": "1.0.0",
       "source": "./plugin",
       "author": {
