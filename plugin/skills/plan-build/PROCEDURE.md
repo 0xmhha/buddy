@@ -64,6 +64,12 @@ acceptance: {완료 판단 기준}
 
 ### Stage 3: Task Dependency DAG
 
+`map-task-dependencies` skill 을 invoke 한다 — internal (intra-track) + cross-actor (contract-based) edges 통합 + cycle 감지 + critical path 계산 + parallel-safe levels 식별.
+
+호출 형태: `/buddy:map-task-dependencies "<task list 또는 feature>"`
+
+이전 stage 와의 차이:
+
 actor 내부 의존성과 actor 간 contract 의존성을 DAG로 표현한다.
 
 ```
