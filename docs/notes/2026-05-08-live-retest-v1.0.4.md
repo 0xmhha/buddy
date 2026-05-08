@@ -1,8 +1,8 @@
 # Live Retest — v1.0.4 + v1.0.5 (Phase 1+2+3+4 Cascade)
 
 **Date:** 2026-05-08
-**Plugin versions tested:** v1.0.4 (single-mode), v1.0.4 (chain-mode subset), v1.0.4 cache verified
-**Total skills under test:** 17 (Phase 1: 4 + Phase 2: 6 + Phase 3: 7 — Phase 4: 2 not retested as they shipped in v1.0.5 after this session)
+**Plugin versions tested:** v1.0.4 (single-mode 17 + chain-mode 2-skill subset), v1.0.5 (Phase 4 신규 2-skill single-mode)
+**Total skills under test:** **19** (Phase 1: 4 + Phase 2: 6 + Phase 3: 7 + Phase 4: 2)
 
 ## Methodology
 
@@ -50,6 +50,13 @@ cascade context: **synthetic SaaS auth service v1.0.0** scenario (4 eng team, AW
 | 16 | `prepare-launch-checklist` | 10/10 | Phase 3 의 6 skill 산출물 모두 통합 (canary / flags / rollback / paging / UAT / beta) |
 | 17 | `setup-incident-paging` | 11/11 | 4-eng team + AWS alarm 9 source 통합 |
 
+### Phase 4 (§6 Use-case Test) — 2/2 PASS (v1.0.5 cache 검증 완료)
+
+| # | Skill | §11 self-check | cascade 일관성 |
+|---|-------|----------------|----------------|
+| 18 | `test-per-actor-use-case` | 9/9 | define-acceptance-test-plan 의 ~340 test plan → 39 use case × 210 test, line 89% / critical 100%, infra 7/7 active |
+| 19 | `test-cross-actor-flow` | 10/10 | per-actor pass = prerequisite, 13 flow (8 critical + 5 edge) × 2 browser × retry = 26/26 pass, edge coverage 13/13 user-facing (100%), contract drift 0 (Pact + Schemathesis + oasdiff), flake 2/13 timing-related (acceptable) |
+
 ### Chain mode mechanism — 2-skill verification PASS
 
 `/buddy:chain define-tech-stack,write-adr -- "<test>"` 실행:
@@ -67,10 +74,10 @@ cascade context: **synthetic SaaS auth service v1.0.0** scenario (4 eng team, AW
 
 ### Pass — routing infrastructure 검증 완료
 
-- **17/17 single-mode dispatch** 모두 router → PROCEDURE Read → 본문 실행 → §6 structured output → §11 self-check pass
-- **cache path resolution** (`/Users/.../1.0.4/skills/<target>/PROCEDURE.md`) 모두 정상 (literal placeholder substitution 또는 absolute path resolve 양쪽 모두 작동)
+- **19/19 single-mode dispatch** 모두 router → PROCEDURE Read → 본문 실행 → §6 structured output → §11 self-check pass
+- **cache path resolution** (`/Users/.../1.0.4/...` + `/Users/.../1.0.5/...`) 모두 정상 — version bump (1.0.4 → 1.0.5) 시 substitution 자동 갱신 확인
 - **chain mode** 의 cross-step output passing 정상 작동 (parent context 가 prior step 산출물 보존, next step 이 reference)
-- **PROCEDURE template (§0~§11 12 sections)** 모든 17 skill 에 일관 적용 — 각 skill 의 §11 self-check 정량적으로 측정 가능
+- **PROCEDURE template (§0~§11 12 sections)** 모든 19 skill 에 일관 적용 — 각 skill 의 §11 self-check 정량적으로 측정 가능
 
 ### cascade integrity 검증
 
@@ -108,9 +115,9 @@ prepare-launch-checklist (23 row / 91% green / decision: go)
 
 각 step 의 산출물이 다음 step 의 입력으로 정확히 매핑됨 (예: define-tech-stack 의 Fargate 결정 → setup-canary-deploy 의 ALB weighted target group 메커니즘 / design-data-model 의 expand-contract → setup-rollback-runbook 의 schema migration safety matrix).
 
-### v1.0.5 추가 검증 (post-retest)
+### v1.0.5 Phase 4 검증 (완료)
 
-Phase 4 의 2 신규 skill (test-per-actor-use-case / test-cross-actor-flow) 은 retest session 직후 v1.0.5 로 추가됨 — Q8=(a) cascade 닫는 마지막 puzzle piece. 별도 retest 미수행 (이전 17 skill 과 동일 PROCEDURE template + routing 메커니즘이라 회귀 위험 낮음). 다음 session 진입 시 retest 권장.
+Phase 4 의 2 신규 skill (test-per-actor-use-case / test-cross-actor-flow) v1.0.5 cache 에서 retest 완료 (위 표 # 18-19). cascade 정합: per-actor pass → cross-actor 진입 prerequisite 정상 enforce. Q8=(a) 5-단계 chain (use case → system → actor track → build → test) 의 마지막 layer (§6 test) 가 routing 가능 상태로 검증됨.
 
 ## Issues identified
 
@@ -158,11 +165,10 @@ claude plugin update buddy@buddy   # → 1.0.5
 
 ## Next session entry points
 
-다음 session 진입 시 옵션:
+v1.0.5 Phase 4 retest 완료 — Phase 1+2+3+4 모두 stable. 다음 session 옵션:
 
-1. **v1.0.5 신규 2 skill retest** — Phase 4 의 2 skill 동작 검증
-2. **Phase 5 extension 진입** — Phase 7 re-evaluation doc 의 8 skill (load / a11y / cost / event-schema / auth-model / tenant-model / map-use-cases-to-infra / derive-system-topology) 작성
-3. **Production traffic 발생 후 Phase 5 (§8 데이터 분석 7 skill)** — production analytics gap 채움
-4. **deferred 유지 + 다른 영역** — buddy 외 별도 트랙 (외부 SaaS MCP 어댑터, MCP 단계 등)
+1. **Phase 5 extension 진입** — Phase 7 re-evaluation doc 의 8 skill (load / a11y / cost / event-schema / auth-model / tenant-model / map-use-cases-to-infra / derive-system-topology) 작성
+2. **Production traffic 발생 후 Phase 5 (§8 데이터 분석 7 skill)** — production analytics gap 채움
+3. **deferred 유지 + 다른 영역** — buddy 외 별도 트랙 (외부 SaaS MCP 어댑터, MCP 단계 등)
 
-권고 (Phase 7 re-eval 의 결론): **Option 1 retest 후 사용자 결정**.
+권고 (Phase 7 re-eval 의 결론): v1.0.5 milestone stable, 다음 진입 trigger 가 발생할 때 Phase 5 extension 결정.
