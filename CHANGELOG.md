@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] — 2026-05-08
+
+### Added
+
+- **§6 Use-case test 2 stage skills** — Phase 4 of stage-buildout-plan, completes Q8=(a) cascade:
+  - `/buddy:test-per-actor-use-case` — actor 단위 통합 테스트 (frontend Playwright E2E + Vitest component, backend Vitest+testcontainers integration, 3rd-party Pact contract). per-actor coverage gap 0 maintain. layer × actor × use case 매트릭스 + gap report → §4 회귀 trigger.
+  - `/buddy:test-cross-actor-flow` — multi-actor flow E2E (signup → email → verify → login → me chain). real component chain (Playwright + LocalStack + SES simulator + miniredis + testcontainers + Pact broker 동시 active). cross-actor edge coverage 100% + contract drift detection (Pact + Schemathesis + oasdiff).
+- **권장 chain 패턴** — `/buddy:chain test-per-actor-use-case,test-cross-actor-flow,measure-code-health -- "<feature>"` 로 §6 use-case test layer 일괄.
+
+### Changed
+
+- **`verify-quality` orchestrator** stage 2 + stage 3 의 inline 설명을 본 skill 호출로 redirect, [Done] marker 추가.
+- **`scripts/test-router-wireup.sh`** PROCEDURE.md count invariant 95 → 97.
+- **`marketplace.json` description** "95 procedures / 47 commands" → "97 procedures / 49 commands".
+
+### Migration notes
+
+- 기존 47 commands 변경 없음. 2 신규 commands 추가 — 총 49 commands.
+- Q8=(a) cascade 완성: §2 use case → §3 system → §4 actor track → §5 build → **§6 actor-별 + cross-actor test** 의 5-단계 chain 이 본 release 로 닫힘.
+- §6 verify-quality orchestrator 는 backward-compat — 기존 호출 패턴 동작, stage 2/3 가 inline 설명에서 actual skill invoke 로 upgrade.
+
 ## [1.0.4] — 2026-05-08
 
 ### Added
