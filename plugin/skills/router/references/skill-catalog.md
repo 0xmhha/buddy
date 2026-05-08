@@ -148,6 +148,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `setup-feature-flags` | command + dispatch | feature flag system 설계 + kill switch + targeting rule + flag lifecycle (cleanup) 정책 |
 | `setup-rollback-runbook` | command + dispatch | rollback decision tree (언제 rollback / 언제 forward fix) + 실행 절차 + verification — incident response 의 핵심 도구 |
 | `prepare-launch-checklist` | command + dispatch | launch readiness 17+ 항목 gate (engineering/security/ops/product/legal/cost) — GA 직전 cross-functional final check |
+| `setup-incident-paging` | command + dispatch | on-call rotation + escalation policy + alert wiring + runbook 인덱스 — production incident first response 구조 |
 
 ### §8 Stage Skills — Operate & Iterate
 
