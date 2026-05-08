@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] — 2026-05-08
+
+### Added
+
+- **§3 Cascade bridge 2 stage skills** — Phase 5 extension Cluster C, Q8=(a) cascade §2→§3 transition layer:
+  - `/buddy:map-use-cases-to-infra` — actor × use case × infra bidirectional matrix + cross-actor shared ownership + compliance scope (encryption / RLS / audit retention / GDPR). silent gap 채움 — 이 layer 없으면 §3 design 이 actor model 과 disconnect.
+  - `/buddy:derive-system-topology` — actor 그래프 + infra 매핑 → 시스템 토폴로지 자동 도출 (mermaid + JSON). 7 edge type (sync/async/db-W/db-R/cache/admin/observability) + 4 trust boundary layer + violation check.
+- **권장 chain 패턴** — `/buddy:chain define-tech-stack,map-use-cases-to-infra,derive-system-topology,design-data-model,design-api-contract,write-adr -- "<project>"` 로 §3 cascade 일괄.
+
+### Changed
+
+- **`design-system` orchestrator** stage 1 (use case → infra) + stage 2 (topology) 의 inline 설명을 본 skill 호출로 redirect, [Done] marker 추가.
+- **`scripts/test-router-wireup.sh`** PROCEDURE.md count invariant 97 → 99.
+- **`marketplace.json` description** "97 procedures / 49 commands" → "99 procedures / 51 commands".
+
+### Migration notes
+
+- 기존 49 commands 변경 없음. 2 신규 commands 추가 — 총 51 commands.
+- Q8=(a) cascade §2→§3 transition 의 silent gap 채워짐 — 후속 design-data-model / design-api-contract / decompose-feature-to-actor-tracks 가 명시 mapping layer 위에서 작동.
+
 ## [1.0.5] — 2026-05-08
 
 ### Added
