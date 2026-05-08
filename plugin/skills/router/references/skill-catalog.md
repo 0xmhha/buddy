@@ -143,6 +143,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `guard-destructive-commands` | dispatch | [패턴 라이브러리] rm -rf, DROP TABLE, force push 등 destructive bash command 전 risk taxonomy + safe exception |
 | `compose-safety-mode` | dispatch | [패턴 라이브러리 / META] guard-destructive-commands + freeze-edit-scope 같은 multiple safety hooks를 max safety mode로 합성 |
 | `run-uat` | command + dispatch | UAT scenario 실행 + go/no-go 판단 — designated stakeholder 가 critical flow 를 verify, evidence + sign-off 수집 |
+| `run-beta-program` | command + dispatch | 클로즈드 beta cohort (5-20 early adopter) 운영 + structured 피드백 + GA gating |
 
 ### §8 Stage Skills — Operate & Iterate
 
