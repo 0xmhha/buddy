@@ -9,7 +9,7 @@
 > - [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md): plugin 9-phase 아키텍처 SSoT
 > - [`HANDOFF.md`](./HANDOFF.md): 세션 인계 가이드
 >
-> 작성일: 2026-05-05 / 상태: WORKING
+> 작성일: 2026-05-05 / 최종 갱신: 2026-05-08 (v1.0.5 — Phase 1+2+3+4 Done 반영) / 상태: WORKING
 
 ---
 
@@ -17,32 +17,38 @@
 
 | 트랙 | 상태 | 마지막 release |
 |------|------|---------------|
-| **Plugin** (Claude Code plugin scaffold + 9-phase orchestrator) | ACTIVE | v1.0.0 (2026-05-04) |
-| **Go CLI** (hook reliability monitor) | PAUSED | v0.1.0 (2026-04-26) |
+| **Plugin** (9-phase orchestrator + 97 procedures) | ACTIVE — Phase 1+2+3+4 Done, Q8=(a) cascade 완성 | v1.0.5 (2026-05-08) |
+| **Go CLI** (hook reliability monitor) | PAUSED — dogfood feedback 대기 | v0.1.0 (2026-04-26) |
 | **Housekeeping** | ad-hoc | — |
 
 ---
 
 ## A. Plugin 트랙
 
-### A-1. 9-phase stage skill 채우기 (Q3 순서: §8 → §1~§5 → 나머지)
+### A-1. 9-phase stage skill 채우기 (v1.0.5 기준)
 
 > 출처: [`spec §4 Stage Skill Gap`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md#4-단계별-skill-군집화--gap-분석).
-> Q3=c→b: §8 iterate-product 먼저 채우고 → §1~§5 → §6/§7/§9.
+> Phase 1+2+3+4 (v1.0.2~v1.0.5) 완료 — Q8=(a) cascade 5-단계 chain (use case → system → actor track → build → test) 완성.
+> 잔여는 Phase 7 deferred re-evaluation 의 Cluster A/B/C/D/E/F/G/H 분류 참조.
 
-| Phase | 보유 | 누락 (작성 대상) |
-|-------|------|-----------------|
-| §1 concretize-idea | validate-idea, validate-advanced-edge-idea, assess-business-viability, review-pricing-and-gtm, define-product-spec | `analyze-competition-and-substitutes`, `map-customer-segments`, `map-jobs-to-be-done`, `analyze-market-size`, `conduct-customer-interview` |
-| §2 define-features | identify-actors, map-actor-use-cases, map-use-case-to-system-boundary, compose-feature-from-use-cases, define-feature-spec, score-feature-priority, map-feature-dependencies, split-work-into-features, query-feature-registry, triage-work-items | `estimate-feature-effort` (story point / t-shirt sizing) |
-| §3 design-system | review-architecture, review-engineering, review-design, review-devex, design-* (6), consult-codex, consult-design-system, explore-design-variants | `map-use-cases-to-infra`, `derive-system-topology`, `define-tech-stack`, `design-data-model`, `design-api-contract`, `design-event-schema`, `design-auth-model`, `design-observability`, `design-secret-management`, `design-tenant-model`, `design-i18n-strategy`, `design-accessibility-baseline`, `write-adr` |
-| §4 plan-build | (orchestrator만) | `decompose-feature-to-actor-tracks`, `decompose-track-to-tasks`, `map-task-dependencies`, `plan-parallel-execution`, `define-acceptance-test-plan`, `estimate-build-timeline` |
-| §5 build-feature | build-with-tdd, iterate-fix-verify, freeze-edit-scope, dispatch-parallel-agents, diagnose-bug, consult-codex | `generate-from-api-contract`, `generate-tests-from-spec`, `pair-program-loop`, `refactor-with-rename-trace`, `update-docs-with-code` |
-| §6 verify-quality | classify-qa-tiers, run-browser-qa, monitor-regressions, audit-security, audit-live-devex, measure-code-health, classify-review-risks, review-{ai-safety,privacy,license,terms} | `test-per-actor-use-case`, `test-cross-actor-flow`, `run-load-test`, `audit-accessibility`, `audit-i18n-coverage`, `audit-cost-efficiency`, `chaos-test`, `audit-test-coverage-meaningful` |
-| §7 ship-release | setup-quality-gates, auto-create-pr, automate-release-tagging, sync-release-docs, write-changelog, guard-destructive-commands, compose-safety-mode | `setup-canary-deploy`, `setup-feature-flags`, `setup-rollback-runbook`, `run-uat`, `run-beta-program`, `prepare-launch-checklist`, `setup-incident-paging`, **§7.5 Beta/UAT 분리 (Q7=b)** |
-| §8 iterate-product | design-ab-experiment, analyze-ab-experiment, analyze-user-funnel, generate-improvement-tasks, handle-incident, conduct-postmortem, monitor-regressions, summarize-retro, save-context, restore-context, persist-learning-jsonl | `analyze-feature-adoption`, `analyze-user-cohort`, `analyze-actor-failure-rate`, `analyze-cost-anomaly`, `triage-customer-support-ticket`, `analyze-customer-feedback-corpus`, `audit-error-budget` |
-| §9 manage-lifecycle | (orchestrator만) | `deprecate-feature`, `migrate-customers`, `archive-product`, `spin-off-feature` |
+| Phase | 보유 | 누락 잔여 | Phase 7 Cluster |
+|-------|------|-----------|-----------------|
+| §1 concretize-idea | validate-idea, validate-advanced-edge-idea, assess-business-viability, review-pricing-and-gtm, define-product-spec | `analyze-competition-and-substitutes`, `map-customer-segments`, `map-jobs-to-be-done`, `analyze-market-size`, `conduct-customer-interview` (5) | Cluster E — conditional |
+| §2 define-features | identify-actors + 9 stage skill | `estimate-feature-effort` (1 small) | low priority |
+| §3 design-system | review-* (4), design-* (6 기존), consult-*, explore-design-variants, **define-tech-stack ✓ v1.0.2**, **design-data-model ✓ v1.0.2**, **design-api-contract ✓ v1.0.2**, **write-adr ✓ v1.0.2** | `map-use-cases-to-infra`, `derive-system-topology` (Cluster C — **HIGH cascade value**), `design-event-schema`, `design-auth-model`, `design-tenant-model` (Cluster B — **MEDIUM**), `design-observability`, `design-secret-management`, `design-i18n-strategy`, `design-accessibility-baseline` (Cluster B residual — conditional) (9) | Cluster B + C |
+| §4 plan-build | **6 stage 모두 ✓ v1.0.3** (decompose-feature-to-actor-tracks / decompose-track-to-tasks / map-task-dependencies / plan-parallel-execution / define-acceptance-test-plan / estimate-build-timeline) | **0 잔여** | Done |
+| §5 build-feature | build-with-tdd, iterate-fix-verify, freeze-edit-scope, dispatch-parallel-agents, diagnose-bug, consult-codex | `generate-from-api-contract`, `generate-tests-from-spec`, `pair-program-loop`, `refactor-with-rename-trace`, `update-docs-with-code` (5) | Cluster D — low priority (IDE/codegen 도구로 대체 가능) |
+| §6 verify-quality | 11 기존 + **test-per-actor-use-case ✓ v1.0.5**, **test-cross-actor-flow ✓ v1.0.5** | `run-load-test`, `audit-accessibility`, `audit-cost-efficiency` (Cluster A — **HIGH immediate**), `audit-i18n-coverage`, `chaos-test`, `audit-test-coverage-meaningful` (3 conditional) (6) | Cluster A — high |
+| §7 ship-release | 7 기존 + **setup-canary-deploy ✓ v1.0.4**, **setup-feature-flags ✓ v1.0.4**, **setup-rollback-runbook ✓ v1.0.4**, **run-uat ✓ v1.0.4**, **run-beta-program ✓ v1.0.4**, **prepare-launch-checklist ✓ v1.0.4**, **setup-incident-paging ✓ v1.0.4** | **0 잔여**. Q7=(b) §7.5 분리 = §7 안의 7-2/7-3 stage 로 흡수 결정 (별도 phase 미채택) | Done |
+| §8 iterate-product | design-ab-experiment, analyze-ab-experiment, analyze-user-funnel, generate-improvement-tasks, handle-incident, conduct-postmortem, monitor-regressions, summarize-retro, save-context, restore-context, persist-learning-jsonl | `analyze-feature-adoption`, `analyze-user-cohort`, `analyze-actor-failure-rate`, `analyze-cost-anomaly`, `triage-customer-support-ticket`, `analyze-customer-feedback-corpus`, `audit-error-budget` (7) | Cluster F — production traffic 의존 |
+| §9 manage-lifecycle | (orchestrator만) | `deprecate-feature`, `migrate-customers`, `archive-product`, `spin-off-feature` (4) | Cluster G — 1년+ deferred |
 
-**총 누락 약 60+개.** 작업 단위는 phase별 PR로 묶는 게 자연스러워.
+**총 잔여: 37 skill** (Phase 1+2+3+4 의 15 Done 차감). 자세한 cluster 분류 + immediate value 분석은 [`Phase 7 deferred re-evaluation`](./superpowers/plans/2026-05-08-phase7-deferred-reevaluation.md).
+
+**Phase 5 extension 후보 (immediate value, 8 skill):**
+- Cluster A (§6 audit): `run-load-test`, `audit-accessibility`, `audit-cost-efficiency` — launch checklist 보강
+- Cluster B (§3 design): `design-event-schema`, `design-auth-model`, `design-tenant-model` — SaaS 공통 패턴
+- Cluster C (§3 cascade bridge): `map-use-cases-to-infra`, `derive-system-topology` — Q8=(a) cascade §2→§3 정합 layer
 
 ### A-2. buddy MCP server (M-1 진행 중)
 
@@ -145,13 +151,17 @@
 
 ---
 
-## 우선순위 권장
+## 우선순위 권장 (v1.0.5 기준 갱신)
 
-1. **A-1 §1~§5 stage skill** — Q3 순서대로 채우기 (가장 큰 작업, 60+ skill)
-2. **A-4 plugin dogfood** — 실 프로젝트에 install → 마찰 회수 → A-1/A-2 우선순위 재정렬
-3. **A-2 buddy MCP feature.* tools** — feature registry 작업과 짝 맞춤
-4. **B-1 Go CLI dogfood feedback** — 사용자 페이스
-5. 나머지는 위 4개 결과 입력 받고 결정
+1. **Phase 5 extension Cluster C** — `map-use-cases-to-infra`, `derive-system-topology` (Q8=(a) cascade §2→§3 정합 — silent gap 채움)
+2. **Phase 5 extension Cluster A** — `run-load-test`, `audit-accessibility`, `audit-cost-efficiency` (launch checklist Performance/a11y/Cost row 보강)
+3. **Phase 5 extension Cluster B** — `design-event-schema`, `design-auth-model`, `design-tenant-model` (SaaS 공통 패턴)
+4. **A-4 plugin dogfood** — 실 프로젝트 install → orchestrator 동작 검증
+5. **A-2 buddy MCP feature.* tools** — Q4 결정 trigger 발생 시 (feature registry 작업)
+6. **B-1 Go CLI dogfood feedback** — 사용자 페이스
+7. **deferred (production traffic / 1년+ 운영 후)** — Cluster F (§8 데이터 7) + Cluster G (§9 4)
+
+자세한 priority 분석 + critical path: [`Phase 7 deferred re-evaluation`](./superpowers/plans/2026-05-08-phase7-deferred-reevaluation.md).
 
 ---
 
