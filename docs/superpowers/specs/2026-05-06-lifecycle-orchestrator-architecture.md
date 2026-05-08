@@ -84,11 +84,11 @@
 |-------|-------------|----------|--------|-----|
 | §1 Idea & Business Validation | `concretize-idea` | idea/concept | PRD draft + business viability report | [Done] orchestrator 존재. stage 일부 보강 필요 |
 | §2 Feature Definition & Backlog | `define-features` | PRD 확정 | Feature backlog (use case 분해 포함) | [Done] orchestrator + actor/use-case stage 5/5 존재 |
-| §3 Technical Design | `design-system` | Feature backlog | Tech stack ADR, infra blueprint, API/data model | [Partial] orchestrator + 핵심 4 stage (define-tech-stack / design-data-model / design-api-contract / write-adr) 구현 (Phase 1 완료, v1.0.2). 부수 design-* (auth-model / observability / tenant-model 등) 5+ 개 pending — §4 참조 |
-| §4 Implementation Plan | `plan-build` | Technical design | Ordered task graph + parallelization plan | [Partial] orchestrator 존재. decompose-* / map-task-dependencies / estimate-* pending |
+| §3 Technical Design | `design-system` | Feature backlog | Tech stack ADR, infra blueprint, API/data model | [Partial] orchestrator + 핵심 4 stage (define-tech-stack / design-data-model / design-api-contract / write-adr) 구현 (Phase 1 완료, v1.0.2). 부수 design-* (auth-model / observability / tenant-model 등) 5+ 개 pending — Phase 7 deferred |
+| §4 Implementation Plan | `plan-build` | Technical design | Ordered task graph + parallelization plan | [Done] orchestrator + 6 stage (decompose-feature-to-actor-tracks / decompose-track-to-tasks / map-task-dependencies / plan-parallel-execution / define-acceptance-test-plan / estimate-build-timeline) 모두 구현 (Phase 2 완료, v1.0.3) |
 | §5 Development | `build-feature` | Implementation plan | Working code + tests | [Done] orchestrator + TDD/parallel-agent stage 다수 존재 |
-| §6 Quality | `verify-quality` | Code complete | QA report + security/legal sign-off | [Partial] orchestrator + 보안/리뷰 stage 존재. test-per-actor / test-cross-actor / load / a11y / cost / chaos pending |
-| §7 Release & Beta | `ship-release` | Quality gate pass | Tagged release, canary/UAT pass, GA | [Partial] orchestrator + auto-create-pr / release-tagging 존재. canary / feature-flags / rollback / UAT / beta pending |
+| §6 Quality | `verify-quality` | Code complete | QA report + security/legal sign-off | [Partial] orchestrator + 보안/리뷰 stage 존재 + use-case test 2 stage (test-per-actor-use-case / test-cross-actor-flow) 구현 (Phase 4 완료, v1.0.5). load / a11y / i18n / cost / chaos / mutation 6 보강 pending — Phase 7 deferred |
+| §7 Release & Beta | `ship-release` | Quality gate pass | Tagged release, canary/UAT pass, GA | [Done] orchestrator + 14 stage (release prep 4 + safety nets 5 + UAT/beta 2 + GA 3) 모두 구현. Phase 3 완료 (v1.0.4) — canary / feature-flags / rollback / UAT / beta / launch-checklist / incident-paging 7 신규 stage 추가 |
 | §8 Operate & Iterate | `iterate-product` | Production traffic | Experiment results, improvement backlog | [Partial] orchestrator + AB / funnel / incident / postmortem / improvement-tasks 존재. cohort / feedback-corpus / cost / SLO pending |
 | §9 Lifecycle Management | `manage-lifecycle` | Feature/product 노후화 | Deprecation, migration, EOL | [Partial] orchestrator 존재. deprecate-feature / migrate-customers / archive-product / spin-off-feature pending |
 
@@ -168,10 +168,9 @@ define-features (§2 phase orchestrator)
 
 ### §4 `plan-build`
 
-**구현됨**: [Done] orchestrator (`plan-build`), [Done] `autoplan` 호출 가능.
+**구현됨**: [Done] orchestrator (`plan-build`), [Done] `autoplan` 호출 가능, [Done] `decompose-feature-to-actor-tracks`, [Done] `decompose-track-to-tasks`, [Done] `map-task-dependencies`, [Done] `plan-parallel-execution`, [Done] `define-acceptance-test-plan`, [Done] `estimate-build-timeline` (Phase 2 완료, v1.0.3).
 
-**Pending (큰 gap)**:
-- [Pending] `decompose-feature-to-actor-tracks`, [Pending] `decompose-track-to-tasks`, [Pending] `map-task-dependencies`, [Pending] `plan-parallel-execution`, [Pending] `define-acceptance-test-plan`, [Pending] `estimate-build-timeline`
+**Pending**: 없음 — §4 핵심 stage 완성.
 
 ### §5 `build-feature`
 
@@ -182,20 +181,16 @@ define-features (§2 phase orchestrator)
 
 ### §6 `verify-quality`
 
-**구현됨**: [Done] `classify-qa-tiers`, [Done] `run-browser-qa`, [Done] `monitor-regressions`, [Done] `audit-security`, [Done] `audit-live-devex`, [Done] `measure-code-health`, [Done] `classify-review-risks`, [Done] `review-ai-safety-liability`, [Done] `review-privacy-data-risk`, [Done] `review-license-and-ip-risk`, [Done] `review-terms-policy-readiness`.
-
-**Pending (use case 기반)**:
-- [Pending] `test-per-actor-use-case`, [Pending] `test-cross-actor-flow`
+**구현됨**: [Done] `classify-qa-tiers`, [Done] `run-browser-qa`, [Done] `monitor-regressions`, [Done] `audit-security`, [Done] `audit-live-devex`, [Done] `measure-code-health`, [Done] `classify-review-risks`, [Done] `review-ai-safety-liability`, [Done] `review-privacy-data-risk`, [Done] `review-license-and-ip-risk`, [Done] `review-terms-policy-readiness`, [Done] `test-per-actor-use-case`, [Done] `test-cross-actor-flow` (Phase 4 완료, v1.0.5).
 
 **Pending (상용 발표 전 필수)**:
 - [Pending] `run-load-test`, [Pending] `audit-accessibility`, [Pending] `audit-i18n-coverage`, [Pending] `audit-cost-efficiency`, [Pending] `chaos-test`, [Pending] `audit-test-coverage-meaningful`
 
 ### §7 `ship-release`
 
-**구현됨**: [Done] `setup-quality-gates`, [Done] `auto-create-pr`, [Done] `automate-release-tagging`, [Done] `sync-release-docs`, [Done] `write-changelog`, [Done] `guard-destructive-commands`, [Done] `compose-safety-mode`.
+**구현됨**: [Done] `setup-quality-gates`, [Done] `auto-create-pr`, [Done] `automate-release-tagging`, [Done] `sync-release-docs`, [Done] `write-changelog`, [Done] `guard-destructive-commands`, [Done] `compose-safety-mode`, [Done] `setup-canary-deploy`, [Done] `setup-feature-flags`, [Done] `setup-rollback-runbook`, [Done] `run-uat`, [Done] `run-beta-program`, [Done] `prepare-launch-checklist`, [Done] `setup-incident-paging` (Phase 3 완료, v1.0.4).
 
-**Pending (상용 배포 안전망)**:
-- [Pending] `setup-canary-deploy`, [Pending] `setup-feature-flags`, [Pending] `setup-rollback-runbook`, [Pending] `run-uat`, [Pending] `run-beta-program`, [Pending] `prepare-launch-checklist`, [Pending] `setup-incident-paging`
+**Pending**: 없음 — §7 핵심 + 안전망 stage 완성. orchestrator 9 → 14 stage 확장.
 
 ### §8 `iterate-product` (사용자 명시 영역)
 
@@ -268,12 +263,12 @@ Q2=(b) "dual-full" 결정에 따라 실제로는 14 개 제거 대신 보존:
 
 | 항목 | 잔여 수량 | 비고 |
 |------|---------|------|
-| Stage skill 신규 작성 | **50** | §1 (5), §2 (1), §3 (9 — 4 Phase 1 완료 후 잔여), §4 (6), §5 (5), §6 (8), §7 (7), §8 (7), §9 (4), 합계 52 — §3.4 use-case 완료 + Phase 1 4 skill 완료 후 실제 잔여 50 |
+| Stage skill 신규 작성 | **35** | Phase 1+2+3+4 완료 후 잔여 — §1 (5), §2 (1 small), §3 부가 (9), §5 부가 (5), §6 부가 (6 — load/a11y/i18n/cost/chaos/mutation), §8 (7), §9 (4) — 모두 Phase 7 deferred 또는 별도 commercial trigger |
 | In-house MCP | 2 | feature-management-mcp 부분 구현됨, analytics-mcp 미착수 |
 | 외부 SaaS MCP 어댑터 | 5 | monitoring/support/cost/billing/feature-flag |
-| Command 정렬 | [Done] 완료 | 34 commands 모두 router 통한 dispatch (Phase 1 의 4 신규 포함) |
+| Command 정렬 | [Done] 완료 | 49 commands (v1.0.5 기준) 모두 router 통한 dispatch — Phase 1 (+4) + Phase 2 (+6) + Phase 3 (+7) + Phase 4 (+2) |
 | 라우팅 인프라 | [Done] 완료 | router/SKILL.md, references/, dispatch contract |
-| 문서 | [Done] 부분 완료 | skill-catalog / routing-rules / spec / plan / README / CHANGELOG 갱신 완료 |
+| 문서 | [Done] 부분 완료 | skill-catalog / routing-rules / spec / plan / README / CHANGELOG 갱신 완료 (v1.0.5 까지) |
 
 ---
 
@@ -283,12 +278,12 @@ Q2=(b) "dual-full" 결정에 따라 실제로는 14 개 제거 대신 보존:
 |---|------|------|
 | Q1: 9-phase 모델 | (a) 9-phase 그대로 | [Done] 9 orchestrator 모두 구현 |
 | Q2: Command 재정의 | (b) dual full | [Done] 30 commands (9 phase + 3 utility + 15 stage + 3 dispatch) |
-| Q3: skill 작성 우선순위 | (c) §8 → (b) §1~§5 | [Partial] §8 핵심 stage 구현됨. §1~§5 보강 진행 중 |
+| Q3: skill 작성 우선순위 | (c) §8 → (b) §1~§5 | [Partial] §3 / §4 / §6 use-case test / §7 safety net 모두 핵심 완료 (Phase 1-4). §1 / §3 부가 / §5 부가 / §6 보강 / §8 보강 / §9 Phase 7 deferred |
 | Q4: MCP 우선순위 | (c) MCP 보류 | [Done] 보류 유지 — buddy MCP control plane 만 동작 |
 | Q5: archive 처리 | (b) `_archive/` 격리 | [Done] 3개 격리됨 |
 | Q6: autoplan 위치 | (a) cross-phase review sub-orchestrator | [Done] 적용됨 — §1 stage 8 / §3 review / §4 review 로 호출 |
-| Q7: phase 추가 | (b) §7.5 Beta/UAT 분리 | [Partial] orchestrator 분리 미구현 — `run-uat` / `run-beta-program` stage 만 §7 안에서 pending |
-| Q8: Use case 분해 | (a) §2 첫 단계 강제 | [Done] 5 stage skill 모두 구현, feature spec 의 actor / use_cases / system_boundary 필드 적용 |
+| Q7: phase 추가 | (b) §7.5 Beta/UAT 분리 | [Done] §7 안의 7-2 / 7-3 단계로 흡수 — run-uat + run-beta-program 신규 (Phase 3, v1.0.4). 별도 phase 분리 미채택 (현재 stage 분류로 충분 판단) |
+| Q8: Use case 분해 | (a) §2 첫 단계 강제 | [Done] §2 5 stage + §4 actor track 분해 6 stage + §6 use-case test 2 stage 완성 — Q8=(a) cascade 5-단계 chain (use case → system → actor track → build → test) 완전 활성화 (Phase 4, v1.0.5) |
 
 ---
 
