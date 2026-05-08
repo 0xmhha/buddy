@@ -2,7 +2,7 @@
 
 A reliability and observability control plane for [Claude Code](https://claude.ai/code) sessions.
 
-Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 30 slash commands and 78 skills covering the full product development lifecycle, dispatched through a single auto-loaded `router` skill.
+Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 49 slash commands and 97 skills covering the full product development lifecycle, dispatched through a single auto-loaded `router` skill.
 
 ```
               ┌──────────────────────────┐
@@ -21,7 +21,7 @@ Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failur
 | **State schema** | Zod-validated JSON state prevents corruption and schema drift |
 | **Task retry** | WAL-backed outbox ensures failed tasks are replayed, not dropped |
 | **Observability** | Unified token/cost/session/hook status via a single `stats` command |
-| **Claude Code plugin** | 9-phase lifecycle orchestrator, 30 `/buddy:*` commands, 78 skills behind one router |
+| **Claude Code plugin** | 9-phase lifecycle orchestrator, 49 `/buddy:*` commands, 97 skills behind one router |
 
 ---
 
@@ -135,7 +135,7 @@ Full CLI reference: [`docs/v0.1-spec.md §7`](./docs/v0.1-spec.md).
 
 ### Claude Code plugin — slash commands
 
-Once the plugin is installed, 30 slash commands are available in any Claude Code session, all dispatched through the single auto-loaded `router` skill.
+Once the plugin is installed, 49 slash commands are available in any Claude Code session, all dispatched through the single auto-loaded `router` skill.
 
 #### Phase orchestrators (9 — pipeline entry points)
 
@@ -156,10 +156,11 @@ Once the plugin is installed, 30 slash commands are available in any Claude Code
 | Phase | Commands |
 |-------|----------|
 | §1 | `/buddy:validate-idea`, `/buddy:validate-advanced-edge-idea`, `/buddy:assess-business-viability`, `/buddy:define-product-spec` |
-| §3 | `/buddy:explore-design-variants` |
+| §3 | `/buddy:explore-design-variants`, `/buddy:define-tech-stack`, `/buddy:design-data-model`, `/buddy:design-api-contract`, `/buddy:write-adr` |
+| §4 | `/buddy:decompose-feature-to-actor-tracks`, `/buddy:decompose-track-to-tasks`, `/buddy:map-task-dependencies`, `/buddy:plan-parallel-execution`, `/buddy:define-acceptance-test-plan`, `/buddy:estimate-build-timeline` |
 | §5 | `/buddy:build-with-tdd`, `/buddy:diagnose-bug`, `/buddy:dispatch-parallel-agents` |
-| §6 | `/buddy:audit-security`, `/buddy:measure-code-health` |
-| §7 | `/buddy:auto-create-pr`, `/buddy:setup-quality-gates` |
+| §6 | `/buddy:audit-security`, `/buddy:measure-code-health`, `/buddy:test-per-actor-use-case`, `/buddy:test-cross-actor-flow` |
+| §7 | `/buddy:auto-create-pr`, `/buddy:setup-quality-gates`, `/buddy:setup-canary-deploy`, `/buddy:setup-feature-flags`, `/buddy:setup-rollback-runbook`, `/buddy:run-uat`, `/buddy:run-beta-program`, `/buddy:prepare-launch-checklist`, `/buddy:setup-incident-paging` |
 | §8 | `/buddy:summarize-retro` |
 
 #### Cross-phase tools
