@@ -144,6 +144,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `compose-safety-mode` | dispatch | [패턴 라이브러리 / META] guard-destructive-commands + freeze-edit-scope 같은 multiple safety hooks를 max safety mode로 합성 |
 | `run-uat` | command + dispatch | UAT scenario 실행 + go/no-go 판단 — designated stakeholder 가 critical flow 를 verify, evidence + sign-off 수집 |
 | `run-beta-program` | command + dispatch | 클로즈드 beta cohort (5-20 early adopter) 운영 + structured 피드백 + GA gating |
+| `setup-canary-deploy` | command + dispatch | canary deploy 단계 비율 + metric gate + auto-promote / rollback 정책 — staged rollout 으로 blast radius 제한 |
 
 ### §8 Stage Skills — Operate & Iterate
 
