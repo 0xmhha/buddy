@@ -120,9 +120,10 @@ routing infrastructure 안정. PROCEDURE template 일관성. cache resolution �
 
 ## Push checklist
 
-다음 commit 들 push 대기 (origin/main 와 ahead 22 commits):
+다음 commit 들 push 대기 (origin/main 와 ahead **10 commits** — Phase 4 + Phase 3 wiring + spec/README/plan/notes 문서):
 
 ```
+db749c2 docs(notes): record v1.0.4 live retest results (17/17 PASS) + push checklist
 c94a3f4 docs(plans): add Phase 7 (deferred) re-evaluation — 8 skill Phase 5 extension candidate identified
 aae813e docs(README): update plugin command count + add Phase 1-4 stage commands (v1.0.5)
 264554b docs(spec): update Phase 1-4 completion status (v1.0.5) — Q8=(a) cascade closed
@@ -131,24 +132,9 @@ b582e15 feat(skill): wire test-per-actor + test-cross-actor stages into verify-q
 f8f7a65 feat(skill): add test-cross-actor-flow §6 stage skill
 d898127 feat(skill): add test-per-actor-use-case §6 stage skill
 29c8e3b docs(plans): add Phase 4 §6 use-case test stages plan (2 skills)
-92608dd release: v1.0.4 (Phase 3 §7 release safety nets — 7 new stage skills)
-a5f18a6 feat(skill): wire 7 new Phase 3 §7 safety net skills into ship-release orchestrator
-0a5908f feat(skill): add setup-incident-paging §7 stage skill
-16df0ed feat(skill): add prepare-launch-checklist §7 stage skill
-4c1b82c feat(skill): add setup-rollback-runbook §7 stage skill
-e6dd5c9 feat(skill): add setup-feature-flags §7 stage skill
-090b1d6 feat(skill): add setup-canary-deploy §7 stage skill
-1161b6e feat(skill): add run-beta-program §7 stage skill
-d1cae80 feat(skill): add run-uat §7 stage skill
-4582f15 docs(plans): add Phase 3 §7 release safety nets plan (7 skills)
-defb244 release: v1.0.3 (Phase 4 plan-build 6 stage skills)
-12733e9 feat(skill): wire 6 new Phase 4 stages into plan-build orchestrator
-ad53dda feat(skill): add estimate-build-timeline Phase 4 stage skill
-6c123a5 feat(skill): add define-acceptance-test-plan Phase 4 stage skill
-dc2cc17 feat(skill): add plan-parallel-execution Phase 4 stage skill
 ```
 
-(이전 세션의 v1.0.3 commits 포함 — 사용자 직접 push 약속)
+(이전 세션의 Phase 3 v1.0.4 commit set 은 origin/main 에 이미 푸시되어 있음. v1.0.5 + 문서 commits 10 건이 본 session 의 push 대상.)
 
 사용자 직접 수행 명령:
 
