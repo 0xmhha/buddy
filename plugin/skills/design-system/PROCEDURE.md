@@ -17,8 +17,10 @@ design-system (3단계 phase orchestrator)
 ├── stage 3: define-tech-stack          [Done] 언어/프레임워크/DB 선택 — 락인 영향 평가
 ├── stage 4: design-api-contract        [Done] REST/GraphQL/RPC 계약 — actor 간 경계 = API 경계
 ├── stage 5: design-data-model          [Done] 스키마/마이그레이션/인덱싱
-├── stage 6: [design-auth-model]        (RBAC/ABAC, 멀티테넌트 격리) — Phase 5 ext Cluster B candidate
-├── stage 7: [design-observability]     (로깅/메트릭/트레이싱 표준) — Phase 5 ext candidate
+├── stage 5a: design-event-schema       [Done] async event schema-first — design-api-contract sync gap 보강
+├── stage 6: design-auth-model          [Done] 5 axis (authn/session/authz/federation/MFA) — RBAC + JWT + SAML + WebAuthn
+├── stage 6a: design-tenant-model       [Done] multi-tenant 격리 — shared (RLS) vs schema-per vs DB-per + 3 layer defense
+├── stage 7: [design-observability]     (로깅/메트릭/트레이싱 표준) — partially covered by define-tech-stack OTel decision + Phase 5 ext candidate
 ├── stage 8: [design-deploy-strategy]   (배포 전략 — canary/blue-green/rolling) — partially covered by setup-canary-deploy (§7)
 ├── stage 9: write-adr                  [Done] Architecture Decision Record
 └── stage 10: autoplan                  [Done] technical design 산출물 4-mode review

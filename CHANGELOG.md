@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.8] — 2026-05-08
+
+### Added
+
+- **§3 SaaS pattern 3 design skills** — Phase 5 extension Cluster B, common SaaS design layer:
+  - `/buddy:design-event-schema` — async event schema-first design (producer/consumer contract + versioning + DLQ + idempotency). design-api-contract 의 sync-only gap 보강.
+  - `/buddy:design-auth-model` — OAuth2 / JWT / SAML / SSO / RBAC 다층 결정 — 5 axis (authn / session / authz / federation / MFA) integrated design.
+  - `/buddy:design-tenant-model` — multi-tenant 격리 전략 (shared RLS vs schema-per vs DB-per) + 3 layer defense in depth + onboarding/offboarding cost + compliance scope.
+- **권장 chain 패턴** — `/buddy:chain design-event-schema,design-auth-model,design-tenant-model,write-adr -- "<project>"` 로 SaaS pattern 일괄.
+
+### Changed
+
+- **`design-system` orchestrator** stage 5a (event-schema) + stage 6 (auth-model) + stage 6a (tenant-model) 추가 — bracket pending → [Done].
+- **`scripts/test-router-wireup.sh`** PROCEDURE.md count invariant 102 → 105.
+- **`marketplace.json` description** "102 procedures / 54 commands" → "105 procedures / 57 commands".
+
+### Migration notes
+
+- 기존 54 commands 변경 없음. 3 신규 commands 추가 — 총 57 commands.
+- Phase 5 extension Cluster A (v1.0.7) + B (v1.0.8) + C (v1.0.6) 8 skill 모두 완성 — Phase 7 deferred re-evaluation 의 immediate-value 후보 8 모두 commercial-grade implementation.
+
 ## [1.0.7] — 2026-05-08
 
 ### Added
