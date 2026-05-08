@@ -120,6 +120,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
 | `classify-qa-tiers` | dispatch | [패턴 라이브러리] QA intensity를 Quick/Standard/Exhaustive 3 tiers로 분류 + fix→commit→re-verify loop |
+| `test-per-actor-use-case` | command + dispatch | actor 의 use case 단위 통합 테스트 — frontend(E2E), backend(integration), 3rd-party(contract). per-actor coverage gap 0 maintain |
 | `run-browser-qa` | dispatch | [패턴 라이브러리] browser automation QA 패턴 — snapshot diff, form testing, responsive check, dialog, accessibility |
 | `monitor-regressions` | dispatch | [패턴 라이브러리] delta-based threshold + transient tolerance + per-page isolation으로 monitoring + regression detect |
 | `audit-security` | command + dispatch | CSO-mode security audit을 수행한다 |
