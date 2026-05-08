@@ -2,18 +2,31 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-04-27 (1단계 plugin scaffold 진입 — Go CLI 트랙은 별개 보류)
+**Last updated:** 2026-05-08 (Plugin v1.0.5 — Phase 1+2+3+4 Done, Q8=(a) cascade 완성)
 
 ## 트랙 상태
 
-> 이 repo는 두 트랙이 공존한다. **현재 능동 트랙은 1단계.**
+> 이 repo는 두 트랙이 공존한다. **현재 능동 트랙은 Plugin.**
 
 | 트랙 | 상태 | 위치 | Entry doc |
 |------|------|------|----------|
-| **1단계 — Claude Code plugin scaffold** (skills/hooks/MCP/commands/agents/rules를 `~/.claude/`에 install) | 🟢 ACTIVE — scaffold 골격 시작 | `plugin/`, `docs/superpowers/` | [`docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md`](./superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md) |
-| **Go CLI (hook reliability monitor)** v0.1.0 released | 🟡 PAUSED — 별개 트랙, 나중에 사용 예정 | `cmd/`, `internal/`, `archive/ts-poc/` | 이 HANDOFF §1~12 (이하 본문은 Go CLI 트랙 기준) |
+| **Plugin — 9-phase orchestrator** (97 procedures, 49 commands, single-router dispatch) | 🟢 ACTIVE — v1.0.5 released, Phase 1+2+3+4 Done. 다음 후보: Phase 5 extension Cluster A/B/C (8 skill) | `plugin/`, `docs/superpowers/` | [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) |
+| **Go CLI (hook reliability monitor)** v0.1.0 released | 🟡 PAUSED — dogfood feedback 대기, 별개 트랙 | `cmd/`, `internal/`, `archive/ts-poc/` | 이 HANDOFF §1~12 (이하 본문은 Go CLI 트랙 기준) |
 
-**5단계 비전:** 1) Plugin install → 2) TUI 상위 레이어(`ai-m` 류) → 3) 설정/세션 관리 툴(`claude-code-organizer` 류) → 4) Dashboard + 칸반 → 5) 4단계에 1~3단계가 모두 녹아듦.
+**Plugin 트랙 진행 상태 (2026-05-08):**
+
+| Phase | 상태 | Release | Skill count |
+|-------|------|---------|-------------|
+| Phase 0 (foundation: routing infra + CI) | ✅ Done | v1.0.0 | 78 baseline |
+| Phase 1 (§3 Technical Design 4) | ✅ Done | v1.0.2 | +4 |
+| Phase 2 (§4 Implementation Plan 6) | ✅ Done | v1.0.3 | +6 |
+| Phase 3 (§7 Release Safety Nets 7) | ✅ Done | v1.0.4 | +7 |
+| Phase 4 (§6 Use-case Test 2) | ✅ Done | v1.0.5 | +2 |
+| **Total** | **97 procedures / 49 commands / 14 ship-release stages** | v1.0.5 | 97 |
+| Phase 5 ext (Cluster A+B+C, 8) | ⏳ candidate | next | +8 |
+| Phase 5/6/7 deferred (≥31) | ⏳ deferred | n/a | — |
+
+**5단계 비전:** 1) Plugin install ✅ → 2) TUI 상위 레이어(`ai-m` 류) → 3) 설정/세션 관리 툴(`claude-code-organizer` 류) → 4) Dashboard + 칸반 → 5) 4단계에 1~3단계가 모두 녹아듦.
 
 ---
 
