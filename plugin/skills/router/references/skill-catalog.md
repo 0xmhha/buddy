@@ -70,6 +70,13 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `query-feature-registry` | dispatch | PRD 또는 feature candidate를 받아 feature-management-saas-mcp registry에서 유사 feature 검색해 reuse / adapt / inspire |
 | `triage-work-items` | dispatch | 이슈/feature/task 같은 work item의 우선순위 결정과 lifecycle state machine 운영 |
 
+### §3 Stage Skills — Technical Design (cascade bridges)
+
+| Skill name | Trigger | When to use (1줄) |
+|------------|---------|------------------|
+| `map-use-cases-to-infra` | command + dispatch | actor × use case → infra component bidirectional matrix + cross-actor shared ownership + compliance scope (Q8=(a) cascade §2→§3 transition) |
+| `derive-system-topology` | command + dispatch | actor 그래프 + infra 매핑 → 시스템 토폴로지 자동 도출 — service / data flow / trust boundary diagram (mermaid + JSON) |
+
 ### §3 Stage Skills — Technical Design
 
 | Skill name | Trigger | When to use (1줄) |
