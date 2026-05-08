@@ -1,8 +1,8 @@
-# Live Retest — v1.0.4 + v1.0.5 (Phase 1+2+3+4 Cascade)
+# Live Retest — v1.0.4 + v1.0.5 + v1.0.8 (Phase 1-4 + Phase 5 ext Cascade)
 
 **Date:** 2026-05-08
-**Plugin versions tested:** v1.0.4 (single-mode 17 + chain-mode 2-skill subset), v1.0.5 (Phase 4 신규 2-skill single-mode)
-**Total skills under test:** **19** (Phase 1: 4 + Phase 2: 6 + Phase 3: 7 + Phase 4: 2)
+**Plugin versions tested:** v1.0.4 (single-mode 17 + chain-mode 2-skill subset), v1.0.5 (Phase 4 신규 2-skill single-mode), v1.0.8 (Phase 5 ext 8 skill single-mode)
+**Total skills under test:** **27** (Phase 1: 4 + Phase 2: 6 + Phase 3: 7 + Phase 4: 2 + Phase 5 ext: 8)
 
 ## Methodology
 
@@ -57,6 +57,19 @@ cascade context: **synthetic SaaS auth service v1.0.0** scenario (4 eng team, AW
 | 18 | `test-per-actor-use-case` | 9/9 | define-acceptance-test-plan 의 ~340 test plan → 39 use case × 210 test, line 89% / critical 100%, infra 7/7 active |
 | 19 | `test-cross-actor-flow` | 10/10 | per-actor pass = prerequisite, 13 flow (8 critical + 5 edge) × 2 browser × retry = 26/26 pass, edge coverage 13/13 user-facing (100%), contract drift 0 (Pact + Schemathesis + oasdiff), flake 2/13 timing-related (acceptable) |
 
+### Phase 5 ext (Cluster A + B + C) — 8/8 PASS (v1.0.8 cache 검증 완료)
+
+| # | Skill | Cluster | §11 self-check | cascade 일관성 |
+|---|-------|---------|----------------|----------------|
+| 20 | `map-use-cases-to-infra` | C (cascade bridge) | 10/10 | 4 actor × 12 use case × 13 infra component, forward + reverse 매트릭스, over-engineering 0, compliance 4 area |
+| 21 | `derive-system-topology` | C (cascade bridge) | 9/9 | 17 nodes + 22 edges + 4 trust layer + 0 boundary violation, mermaid + JSON 둘 다 산출 |
+| 22 | `run-load-test` | A (launch readiness) | 10/10 | 4 시나리오 (sustained / soak / spike / stress) all green, breaking point 420 RPS @ RDS conn pool, headroom 320% |
+| 23 | `audit-accessibility` | A (launch readiness) | 9/9 | WCAG 2.1 AA 19/21 (94%), 1 serious (V-001 focus trap, 24h hotfix) + 3 moderate post-launch backlog, NVDA + VoiceOver 5/7 green |
+| 24 | `audit-cost-efficiency` | A (launch readiness) | 10/10 | $1,278/mo (51% budget), $/MAU $0.128, gross margin 91%, savings $545/mo (-43%) via RI + Compute SP + right-sizing |
+| 25 | `design-event-schema` | B (SaaS pattern) | 10/10 | 6 event (3 v1 + 3 future v2), JSON Schema + Glue Registry, at-least-once + per-event idempotency, 3 DLQ |
+| 26 | `design-auth-model` | B (SaaS pattern) | 10/10 | 5 axis (JWT RS256 + argon2id + RBAC + WorkOS Enterprise SAML + WebAuthn MFA), tier-gated federation + MFA |
+| 27 | `design-tenant-model` | B (SaaS pattern) | 11/11 | hybrid (Shared RLS + Enterprise DB-per opt-in), 3 layer defense, max scale 100k tenant + Enterprise dedicated, 5 compliance scope |
+
 ### Chain mode mechanism — 2-skill verification PASS
 
 `/buddy:chain define-tech-stack,write-adr -- "<test>"` 실행:
@@ -74,10 +87,10 @@ cascade context: **synthetic SaaS auth service v1.0.0** scenario (4 eng team, AW
 
 ### Pass — routing infrastructure 검증 완료
 
-- **19/19 single-mode dispatch** 모두 router → PROCEDURE Read → 본문 실행 → §6 structured output → §11 self-check pass
-- **cache path resolution** (`/Users/.../1.0.4/...` + `/Users/.../1.0.5/...`) 모두 정상 — version bump (1.0.4 → 1.0.5) 시 substitution 자동 갱신 확인
+- **27/27 single-mode dispatch** 모두 router → PROCEDURE Read → 본문 실행 → §6 structured output → §11 self-check pass
+- **cache path resolution** (`/Users/.../1.0.4/...` + `/Users/.../1.0.5/...` + `/Users/.../1.0.8/...`) 모두 정상 — version bump (1.0.4 → 1.0.5 → 1.0.8) 시 substitution 자동 갱신 확인
 - **chain mode** 의 cross-step output passing 정상 작동 (parent context 가 prior step 산출물 보존, next step 이 reference)
-- **PROCEDURE template (§0~§11 12 sections)** 모든 19 skill 에 일관 적용 — 각 skill 의 §11 self-check 정량적으로 측정 가능
+- **PROCEDURE template (§0~§11 12 sections)** 모든 27 skill 에 일관 적용 — 각 skill 의 §11 self-check 정량적으로 측정 가능
 
 ### cascade integrity 검증
 
@@ -118,6 +131,17 @@ prepare-launch-checklist (23 row / 91% green / decision: go)
 ### v1.0.5 Phase 4 검증 (완료)
 
 Phase 4 의 2 신규 skill (test-per-actor-use-case / test-cross-actor-flow) v1.0.5 cache 에서 retest 완료 (위 표 # 18-19). cascade 정합: per-actor pass → cross-actor 진입 prerequisite 정상 enforce. Q8=(a) 5-단계 chain (use case → system → actor track → build → test) 의 마지막 layer (§6 test) 가 routing 가능 상태로 검증됨.
+
+### v1.0.8 Phase 5 ext 검증 (완료)
+
+Phase 5 extension 의 8 신규 skill (Cluster A 3 + B 3 + C 2) v1.0.8 cache 에서 retest 완료 (위 표 # 20-27).
+
+cascade 정합 매트릭스:
+- **Cluster C (§3 cascade bridge)**: §2 → §3 transition silent gap 채움. map-use-cases-to-infra 의 actor × infra matrix → derive-system-topology 의 토폴로지 자동 도출. 후속 design-data-model / design-api-contract / design-event-schema 가 edge type filter 로 자기 영역 추출.
+- **Cluster A (§6 launch readiness)**: prepare-launch-checklist 의 yellow row (Performance / a11y / Cost) 가 본 3 skill 의 evidence-based 산출로 green 가능. run-load-test breaking point + audit-accessibility WCAG 94% + audit-cost-efficiency 51% budget 모두 정량.
+- **Cluster B (§3 SaaS pattern)**: design-api-contract sync gap → design-event-schema async 보강. define-tech-stack JWT/argon2id → design-auth-model 5 axis. design-data-model RLS → design-tenant-model 3 layer defense.
+
+전체 27 skill cascade integrity 검증: 합성 SaaS auth scenario 의 모든 산출이 일관된 의사결정 chain (§1 idea → §2 use case → §3 design → §4 plan → §5 build → §6 test → §7 release) 형성, decision drift 0.
 
 ## Issues identified
 
@@ -165,10 +189,12 @@ claude plugin update buddy@buddy   # → 1.0.5
 
 ## Next session entry points
 
-v1.0.5 Phase 4 retest 완료 — Phase 1+2+3+4 모두 stable. 다음 session 옵션:
+v1.0.8 Phase 5 ext 8 skill retest 완료 — Phase 1+2+3+4+5ext 모두 stable. 27 skill cascade integrity 검증 완료. 다음 session 옵션:
 
-1. **Phase 5 extension 진입** — Phase 7 re-evaluation doc 의 8 skill (load / a11y / cost / event-schema / auth-model / tenant-model / map-use-cases-to-infra / derive-system-topology) 작성
-2. **Production traffic 발생 후 Phase 5 (§8 데이터 분석 7 skill)** — production analytics gap 채움
-3. **deferred 유지 + 다른 영역** — buddy 외 별도 트랙 (외부 SaaS MCP 어댑터, MCP 단계 등)
+1. **Plugin dogfood 실 프로젝트** — buddy plugin 을 actual SaaS 프로젝트에 install → orchestrator 동작 + cascade 산출 검증 (synthetic 외 production-like)
+2. **Go CLI dogfood feedback 수집** — v0.1.0 release binary 사용 후 v0.2 dashboard UX (TUI vs web) + v0.3 task tracker 통합 결정 입력
+3. **buddy MCP feature.* tools** — Q4=(c) 보류 결정 변경 시 5 tool (query / store / update / link_code / export_patch) 작성
+4. **Phase 5 deferred 잔여 진입 (production traffic 발생 후)** — §8 데이터 분석 7 skill (analyze-feature-adoption / analyze-user-cohort / analyze-actor-failure-rate / analyze-cost-anomaly / triage-customer-support-ticket / analyze-customer-feedback-corpus / audit-error-budget)
+5. **§9 Lifecycle 4 skill (1년+ 운영 후)** — deprecate-feature / migrate-customers / archive-product / spin-off-feature
 
-권고 (Phase 7 re-eval 의 결론): v1.0.5 milestone stable, 다음 진입 trigger 가 발생할 때 Phase 5 extension 결정.
+권고: v1.0.8 milestone 완성 — 8 skill commercial-grade implementation 도달. 다음 진입 trigger 가 (a) 실 프로젝트 dogfood (가장 가치 큼), (b) Go CLI dogfood feedback (사용자 페이스), (c) production traffic (§8 진입) 중 발생할 때.
