@@ -146,6 +146,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `run-beta-program` | command + dispatch | 클로즈드 beta cohort (5-20 early adopter) 운영 + structured 피드백 + GA gating |
 | `setup-canary-deploy` | command + dispatch | canary deploy 단계 비율 + metric gate + auto-promote / rollback 정책 — staged rollout 으로 blast radius 제한 |
 | `setup-feature-flags` | command + dispatch | feature flag system 설계 + kill switch + targeting rule + flag lifecycle (cleanup) 정책 |
+| `setup-rollback-runbook` | command + dispatch | rollback decision tree (언제 rollback / 언제 forward fix) + 실행 절차 + verification — incident response 의 핵심 도구 |
 
 ### §8 Stage Skills — Operate & Iterate
 
