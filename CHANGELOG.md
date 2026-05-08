@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] — 2026-05-08
+
+### Added
+
+- **§7 Release & Beta 7 safety net stage skills** — Phase 3 of stage-buildout-plan:
+  - `/buddy:run-uat` — UAT scenario 실행 + go/no-go 판단 (designated stakeholder + evidence + sign-off)
+  - `/buddy:run-beta-program` — 클로즈드 5-20 cohort + structured 피드백 + GA gating + post-beta cleanup
+  - `/buddy:setup-canary-deploy` — canary 단계 (≥3) + dwell time + metric gate + auto-promote/rollback + platform 별 implementation
+  - `/buddy:setup-feature-flags` — flag system 결정 + 4 taxonomy + kill switch + targeting + 90d cleanup SLA + governance
+  - `/buddy:setup-rollback-runbook` — decision tree + platform 별 step-by-step + schema migration safety + verification + post-mortem trigger
+  - `/buddy:prepare-launch-checklist` — 6 axis × 17+ row cross-functional readiness gate + go/conditional/no-go 권고
+  - `/buddy:setup-incident-paging` — on-call rotation + severity 4 분류 + escalation policy + alert routing matrix + runbook index + drill cadence
+- **권장 chain 패턴** — `/buddy:chain setup-feature-flags,setup-canary-deploy,setup-rollback-runbook,setup-incident-paging,prepare-launch-checklist -- "<project>"` 로 §7-2 (Pre-Launch Safety Nets) 일괄 합성
+
+### Changed
+
+- **`ship-release` orchestrator** stage 흐름 9 → 14 stage 로 확장 (Phase 3 신규 7 + 기존 7), 7-2 단계 (Pre-Launch Safety Nets) 신설, 7-3 (Beta/UAT) 의 bracketed pending 해소
+- **`scripts/test-router-wireup.sh`** PROCEDURE.md count invariant 88 → 95
+- **`marketplace.json` description** "78 procedures / 30 commands" → "95 procedures / 47 commands"
+
+### Migration notes
+
+- 기존 40 commands 변경 없음. 7 신규 commands 추가 — 총 47 commands.
+- §7 ship-release orchestrator 의 호출 패턴은 backward-compat. 기존 9 stage chain 도 동작하며, 신규 5 safety net stage 는 production launch 시 옵션으로 추가 호출.
+- 각 신규 skill 은 read-only on production (plan / runbook / checklist / decision 산출). 실제 deploy / paging / flag toggle 자동화는 §5 build-feature 의 별도 task 로 처리.
+
 ## [1.0.3] — 2026-05-07
 
 ### Added

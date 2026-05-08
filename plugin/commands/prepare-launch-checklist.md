@@ -1,5 +1,5 @@
 ---
-description: launch readiness 17+ 항목 gate (6 axis: engineering/security/ops/product/legal/cost) — GA 직전 cross-functional final check.
+description: "launch readiness 17+ 항목 gate (6 axis - engineering/security/ops/product/legal/cost) — GA 직전 cross-functional final check."
 argument-hint: "<feature name> v<version>"
 ---
 
