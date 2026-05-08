@@ -1,8 +1,18 @@
 # Buddy Plugin Architecture — Design Spec
 
+> **⚠ DEPRECATED — superseded 2026-05-04 by native plugin marketplace pivot.**
+>
+> 본 문서는 bash 기반 scaffold (`curl | bash` install + `~/.buddy/` symlink + `lib/bash/` helpers + `vendor/` MCP binaries + `tests/bash/` bats) 설계였으나 **Claude Code native plugin marketplace** (`claude plugin install buddy@buddy`) 방식으로 pivot 되어 미실행됨.
+>
+> **현행 SSoT**: [`2026-05-06-lifecycle-orchestrator-architecture.md`](./2026-05-06-lifecycle-orchestrator-architecture.md) — 9-phase orchestrator + single-router dispatch + 97 procedures (v1.0.5 기준).
+>
+> **현행 install 경로**: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` — bash scaffold scripts (install.sh / uninstall.sh / update.sh / doctor.sh / lib/bash/* / vendor/*) 모두 미작성, 의도적 미실행.
+>
+> 본 문서는 (a) pivot 이전 design 사고 보존, (b) bash-based 분배 옵션 검토 시 reference 로 유지.
+
 - **Date**: 2026-04-24
-- **Status**: Draft (awaiting user review before implementation plan)
-- **Scope**: Bootstrap scaffold for a personal Claude Code plugin named `buddy`, distributed via GitHub + `curl | bash`.
+- **Status**: ~~Draft~~ DEPRECATED (2026-05-04 native plugin marketplace pivot)
+- **Scope**: ~~Bootstrap scaffold for a personal Claude Code plugin named `buddy`, distributed via GitHub + `curl | bash`.~~ Pivoted to native plugin marketplace.
 
 ## 1. Summary
 

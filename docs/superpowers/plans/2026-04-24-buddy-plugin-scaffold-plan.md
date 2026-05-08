@@ -1,14 +1,22 @@
 # Buddy Plugin Scaffold Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **⚠ DEPRECATED — UNEXECUTED (94 checkboxes 모두 unchecked).**
+>
+> 본 plan 은 bash-based scaffold (curl | bash + symlink + lib/bash + vendor + bats tests) 구현을 위한 task list 였으나 2026-05-04 **Claude Code native plugin marketplace** 채택으로 pivot, 미실행 상태로 남음. install.sh / uninstall.sh / update.sh / doctor.sh / scripts/release/* / lib/bash/ / vendor/ / tests/bash/ 모두 미작성.
+>
+> **현행 plan SSoT**: [`2026-05-06-stage-buildout-plan.md`](./2026-05-06-stage-buildout-plan.md) — 9-phase stage skill buildout (Phase 1-4 v1.0.5 까지 Done).
+>
+> 본 문서는 (a) bash 분배 옵션 사고 보존, (b) 향후 native plugin 외 분배 채널 검토 시 reference 로 유지.
 
-**Goal:** Build the distribution scaffold for the `buddy` Claude Code plugin (install/update/uninstall/doctor + CI), producing a v0.1.0 release with empty payload slots ready to receive curated components.
+> **For agentic workers:** REQUIRED SUB-SKILL: ~~Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task.~~ DEPRECATED — 본 plan 은 미실행, native plugin marketplace 사용.
 
-**Architecture:** Single GitHub repo cloned to `~/.buddy/` by a `curl | bash` installer. Components deploy to `~/.claude/` via symlinks (commands/agents/skills/rules) and jq-based JSON merges (hooks/mcp). A runtime metadata ledger (`~/.claude/.buddy-metadata.json`) drives precise uninstall.
+**Goal:** ~~Build the distribution scaffold for the `buddy` Claude Code plugin (install/update/uninstall/doctor + CI), producing a v0.1.0 release with empty payload slots ready to receive curated components.~~ Superseded by native plugin marketplace.
 
-**Tech Stack:** Bash 4+, jq, git, bats-core (testing), GitHub Actions (CI).
+**Architecture:** ~~Single GitHub repo cloned to `~/.buddy/` by a `curl | bash` installer. Components deploy to `~/.claude/` via symlinks (commands/agents/skills/rules) and jq-based JSON merges (hooks/mcp). A runtime metadata ledger (`~/.claude/.buddy-metadata.json`) drives precise uninstall.~~ Pivoted — native plugin marketplace handles install via `claude plugin install`.
 
-**Spec:** `docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md`
+**Tech Stack:** ~~Bash 4+, jq, git, bats-core (testing), GitHub Actions (CI).~~ DEPRECATED.
+
+**Spec:** ~~`docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md`~~ (also DEPRECATED — see [stage-buildout-plan](./2026-05-06-stage-buildout-plan.md)).
 
 ---
 
