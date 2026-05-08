@@ -12,19 +12,19 @@
 
 ```
 design-system (3단계 phase orchestrator)
-├── stage 1: [map-use-cases-to-infra]   (use case → infra component 브릿지)
-├── stage 2: [derive-system-topology]   (actor 그래프 + use case → 시스템 토폴로지)
-├── stage 3: define-tech-stack          ✓ 언어/프레임워크/DB 선택 — 락인 영향 평가
-├── stage 4: design-api-contract        ✓ REST/GraphQL/RPC 계약 — actor 간 경계 = API 경계
-├── stage 5: design-data-model          ✓ 스키마/마이그레이션/인덱싱
-├── stage 6: [design-auth-model]        (RBAC/ABAC, 멀티테넌트 격리)
-├── stage 7: [design-observability]     (로깅/메트릭/트레이싱 표준)
-├── stage 8: [design-deploy-strategy]   (배포 전략 — canary/blue-green/rolling)
-├── stage 9: write-adr                  ✓ Architecture Decision Record
-└── stage 10: autoplan                  ✓ technical design 산출물 4-mode review
+├── stage 1: map-use-cases-to-infra     [Done] use case → infra component bidirectional matrix + cross-actor shared ownership + compliance scope
+├── stage 2: derive-system-topology     [Done] actor 그래프 + infra 매핑 → 시스템 토폴로지 (mermaid + JSON) + trust boundary
+├── stage 3: define-tech-stack          [Done] 언어/프레임워크/DB 선택 — 락인 영향 평가
+├── stage 4: design-api-contract        [Done] REST/GraphQL/RPC 계약 — actor 간 경계 = API 경계
+├── stage 5: design-data-model          [Done] 스키마/마이그레이션/인덱싱
+├── stage 6: [design-auth-model]        (RBAC/ABAC, 멀티테넌트 격리) — Phase 5 ext Cluster B candidate
+├── stage 7: [design-observability]     (로깅/메트릭/트레이싱 표준) — Phase 5 ext candidate
+├── stage 8: [design-deploy-strategy]   (배포 전략 — canary/blue-green/rolling) — partially covered by setup-canary-deploy (§7)
+├── stage 9: write-adr                  [Done] Architecture Decision Record
+└── stage 10: autoplan                  [Done] technical design 산출물 4-mode review
 ```
 
-> ✓ = 구현된 skill. 브라켓(`[name]`)은 미구현 — orchestrator 가 임시로 직접 수행.
+> [Done] = v1.0.6 기준 구현 완료. 브라켓(`[name]`)은 미구현 — Phase 5 extension Cluster B 후보 또는 orchestrator 가 임시로 직접 수행.
 
 ## 권장 호출 패턴 (Phase 1 핵심 4 skill chain)
 
@@ -51,27 +51,29 @@ design-system (3단계 phase orchestrator)
 
 ## 실행 절차
 
-### Stage 1: Use Case → Infra 브릿지
+### Stage 1: Use Case → Infra 매핑
 
-2단계 feature spec의 actor system boundary를 실제 infra component로 매핑한다.
+`map-use-cases-to-infra` skill 을 invoke 한다 — §2 feature spec 의 actor × use case × system boundary 를 §3 의 actual infra component 로 매핑. 산출물: actor × infra bidirectional matrix + cross-actor shared ownership + compliance scope (encryption / RLS / audit retention / GDPR). 후속 stage 의 입력 schema.
 
-예시:
-```
-frontend-spa → Next.js + Vercel CDN
-backend-auth-service → Go service + PostgreSQL
-external-saas (SendGrid) → SendGrid SDK + webhook handler
-```
+호출 형태:
+- 단독: `/buddy:map-use-cases-to-infra "<project name>"`
+- chain (권장): `/buddy:chain define-tech-stack,map-use-cases-to-infra,derive-system-topology,design-data-model,design-api-contract,write-adr -- "<project>"`
 
-`design-mcp-server` skill을 invoke해 MCP 연동이 필요한 external SaaS를 식별한다.
+본 stage 가 Q8=(a) cascade 의 §2 → §3 transition 을 명시 layer 로 채워 silent gap 차단. 산출물의 cross-actor shared infra ownership 이 §4 plan-build 의 cross-track contract 의 source.
 
-### Stage 2: 시스템 토폴로지
+`design-mcp-server` skill을 invoke해 MCP 연동이 필요한 external SaaS 를 추가 식별 (해당 시).
 
-actor 그래프와 use case 흐름을 기반으로 시스템 토폴로지를 도식화한다:
-- sync / async 통신 구분
-- request/response vs event-driven 관계
-- 데이터 흐름 방향
+### Stage 2: 시스템 토폴로지 자동 도출
 
-`explore-design-variants` skill을 invoke해 토폴로지 후보를 2-3개 생성하고 trade-off를 비교한다.
+`derive-system-topology` skill 을 invoke 한다 — Stage 1 의 actor × infra matrix 를 입력으로 시스템 토폴로지 자동 도출. 산출물: service map + data flow + trust boundary diagram (mermaid + JSON 둘 다). edge type 7 분류 (sync API / async event / DB W / DB R / cache / admin / observability), trust boundary 4 layer (public / VPC public / VPC private / DB subnet), boundary violation check.
+
+호출 형태:
+- 단독: `/buddy:derive-system-topology "<project>"`
+- chain: 위 권장 chain 의 일부
+
+본 stage 의 산출물은 (a) human-readable mermaid (시스템 한 화면 이해), (b) machine-readable JSON (후속 design-* skill 이 edge type filter 로 자기 영역 추출). 후속 design-data-model 은 db-write/db-read edge, design-api-contract 는 sync-api edge 만 필터링.
+
+`explore-design-variants` skill 을 invoke해 토폴로지 후보 2-3 개 생성 + trade-off 비교 (high-stakes 의 경우).
 
 ### Stage 3: Tech Stack 선택
 
