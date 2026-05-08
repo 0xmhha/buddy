@@ -76,10 +76,10 @@ fi
 # removed without updating tests or docs. Bump this count when Phase 1 Tasks
 # 1.2 / 1.3 / 1.4 land (→ 80, 81, 82).
 procedure_count=$(find "$SKILLS_DIR" -name PROCEDURE.md | wc -l | tr -d ' ')
-if [ "$procedure_count" = "91" ]; then
-    pass "PROCEDURE.md count is 91"
+if [ "$procedure_count" = "92" ]; then
+    pass "PROCEDURE.md count is 92"
 else
-    fail "expected 91 PROCEDURE.md files, found $procedure_count"
+    fail "expected 92 PROCEDURE.md files, found $procedure_count"
 fi
 
 # --- Check 3: plugin.json must NOT declare a `commands` field ----------------
