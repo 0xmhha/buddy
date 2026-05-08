@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.7] — 2026-05-08
+
+### Added
+
+- **§6 Launch readiness 3 audit skills** — Phase 5 extension Cluster A, prepare-launch-checklist evidence source:
+  - `/buddy:run-load-test` — sustained + soak + spike + stress 4 시나리오 + breaking point + capacity headroom + cost projection. SLA commitment 근거.
+  - `/buddy:audit-accessibility` — WCAG 2.1 AA + axe + Lighthouse + manual screen reader (NVDA/VoiceOver) — ADA / EAA / KR 장애인차별금지법 compliance + 4 principle audit.
+  - `/buddy:audit-cost-efficiency` — Infracost + per-component breakdown + unit economics ($/MAU) + waste detection (5 category) + savings recommendation (RI / Savings Plan / right-sizing).
+- **권장 chain 패턴** — `/buddy:chain run-load-test,audit-accessibility,audit-cost-efficiency,prepare-launch-checklist -- "<project> v<version>"` 로 launch readiness 일괄.
+
+### Changed
+
+- **`verify-quality` orchestrator** stage 3a/3b/3c (load / a11y / cost) 추가, launch readiness layer 명시.
+- **`scripts/test-router-wireup.sh`** PROCEDURE.md count invariant 99 → 102.
+- **`marketplace.json` description** "99 procedures / 51 commands" → "102 procedures / 54 commands".
+
+### Migration notes
+
+- 기존 51 commands 변경 없음. 3 신규 commands 추가 — 총 54 commands.
+- prepare-launch-checklist 의 yellow row (Performance / a11y / Cost) 가 본 release 의 audit skill 산출로 evidence-based green 가능.
+
 ## [1.0.6] — 2026-05-08
 
 ### Added

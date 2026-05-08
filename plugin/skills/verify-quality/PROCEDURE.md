@@ -15,6 +15,9 @@ verify-quality (6단계 phase orchestrator)
 ├── stage 1: classify-qa-tiers         [Done] QA intensity 분류 — Quick/Standard/Exhaustive
 ├── stage 2: test-per-actor-use-case   [Done] actor별 통합 테스트 — frontend(E2E)/backend(integration)/3rd-party(contract). per-actor coverage gap 0.
 ├── stage 3: test-cross-actor-flow     [Done] cross-actor E2E — multi-actor chain full-stack 검증 + edge coverage + contract drift detection
+├── stage 3a: run-load-test            [Done] sustained + soak + spike + stress 4 시나리오 + breaking point + capacity headroom (launch readiness)
+├── stage 3b: audit-accessibility      [Done] WCAG 2.1 AA + axe + Lighthouse + manual screen reader (ADA / EAA / KR compliance)
+├── stage 3c: audit-cost-efficiency    [Done] Infracost + unit economics + waste detection + RI/SP savings (Cost & Business gate)
 ├── stage 4: run-browser-qa            [Done] UI/UX + accessibility browser 테스트
 ├── stage 5: audit-security            (보안 감사 — CSO 모드)
 ├── stage 6: measure-code-health       (code health dashboard — 0-10)
