@@ -78,6 +78,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `derive-system-topology` | command + dispatch | actor 그래프 + infra 매핑 → 시스템 토폴로지 자동 도출 — service / data flow / trust boundary diagram (mermaid + JSON) |
 | `design-event-schema` | command + dispatch | async event schema-first 설계 — producer/consumer contract + versioning + DLQ + idempotency. design-api-contract sync-only gap 보강 |
 | `design-auth-model` | command + dispatch | OAuth2 / JWT / SAML / SSO / RBAC 다층 결정 — 5 axis (auth / session / authz / federation / MFA) integrated design |
+| `design-tenant-model` | command + dispatch | multi-tenant 격리 전략 — shared (RLS) vs schema-per vs DB-per + 3 layer defense + onboarding cost + compliance scope |
 
 ### §3 Stage Skills — Technical Design
 
