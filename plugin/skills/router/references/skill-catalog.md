@@ -131,6 +131,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `test-cross-actor-flow` | command + dispatch | cross-actor flow E2E — multi-actor chain (signup→email→verify→login 등) full-stack 검증. edge coverage + contract drift detection |
 | `run-load-test` | command + dispatch | sustained + soak + spike + stress 4 시나리오 + breaking point + capacity headroom — launch 직전 SLA 근거 |
 | `audit-accessibility` | command + dispatch | WCAG 2.1 AA + axe + Lighthouse + manual screen reader 통합 a11y 감사 — ADA / EAA / KR 장애인차별금지법 compliance |
+| `audit-cost-efficiency` | command + dispatch | Infracost + per-component breakdown + unit economics ($/MAU) + waste detection + RI/SP savings recommendation |
 | `run-browser-qa` | dispatch | [패턴 라이브러리] browser automation QA 패턴 — snapshot diff, form testing, responsive check, dialog, accessibility |
 | `monitor-regressions` | dispatch | [패턴 라이브러리] delta-based threshold + transient tolerance + per-page isolation으로 monitoring + regression detect |
 | `audit-security` | command + dispatch | CSO-mode security audit을 수행한다 |
