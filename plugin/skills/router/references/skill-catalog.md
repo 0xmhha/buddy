@@ -77,6 +77,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `map-use-cases-to-infra` | command + dispatch | actor × use case → infra component bidirectional matrix + cross-actor shared ownership + compliance scope (Q8=(a) cascade §2→§3 transition) |
 | `derive-system-topology` | command + dispatch | actor 그래프 + infra 매핑 → 시스템 토폴로지 자동 도출 — service / data flow / trust boundary diagram (mermaid + JSON) |
 | `design-event-schema` | command + dispatch | async event schema-first 설계 — producer/consumer contract + versioning + DLQ + idempotency. design-api-contract sync-only gap 보강 |
+| `design-auth-model` | command + dispatch | OAuth2 / JWT / SAML / SSO / RBAC 다층 결정 — 5 axis (auth / session / authz / federation / MFA) integrated design |
 
 ### §3 Stage Skills — Technical Design
 
