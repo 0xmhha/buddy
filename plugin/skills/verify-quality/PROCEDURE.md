@@ -12,10 +12,10 @@
 
 ```
 verify-quality (6단계 phase orchestrator)
-├── stage 1: classify-qa-tiers         (QA intensity 분류 — Quick/Standard/Exhaustive)
-├── stage 2: test-per-actor-use-case   (actor별 통합 테스트)
-├── stage 3: test-cross-actor-flow     (cross-actor E2E 테스트)
-├── stage 4: run-browser-qa            (UI/UX + accessibility browser 테스트)
+├── stage 1: classify-qa-tiers         [Done] QA intensity 분류 — Quick/Standard/Exhaustive
+├── stage 2: test-per-actor-use-case   [Done] actor별 통합 테스트 — frontend(E2E)/backend(integration)/3rd-party(contract). per-actor coverage gap 0.
+├── stage 3: test-cross-actor-flow     [Done] cross-actor E2E — multi-actor chain full-stack 검증 + edge coverage + contract drift detection
+├── stage 4: run-browser-qa            [Done] UI/UX + accessibility browser 테스트
 ├── stage 5: audit-security            (보안 감사 — CSO 모드)
 ├── stage 6: measure-code-health       (code health dashboard — 0-10)
 ├── stage 7: monitor-regressions       (regression baseline 확인)
@@ -38,22 +38,21 @@ verify-quality (6단계 phase orchestrator)
 
 ### Stage 2: Actor별 통합 테스트 (Use Case 기반)
 
-2단계 feature spec의 per-actor use cases를 기준으로 actor별 통합 테스트를 설계하고 실행한다:
+`test-per-actor-use-case` skill 을 invoke 한다 — §2 feature spec 의 per-actor use cases 를 기준으로 actor 별 적합 layer (frontend → Playwright E2E + Vitest component, backend → Vitest + testcontainers integration, 3rd-party → Pact contract) 로 통합 테스트 실행. 산출물: actor × use case × test status 매트릭스 + coverage % + gap report. coverage gap 발견 시 §4 `define-acceptance-test-plan` 회귀.
 
-- **user-actor** (frontend): E2E browser test (`run-browser-qa` invoke)
-- **system-actor** (backend): unit + integration test (API endpoint 기준)
-- **3rd-party-actor**: contract test (실제 SaaS 응답 schema 검증)
+호출 형태: `/buddy:test-per-actor-use-case "<feature> v<version>"`
 
 ### Stage 3: Cross-Actor 흐름 테스트
 
-2단계 feature spec의 integration test_plan 기준으로 cross-actor 흐름을 테스트한다.
+`test-cross-actor-flow` skill 을 invoke 한다 — §4 task DAG 의 cross-actor edge + define-acceptance-test-plan 의 cross-actor flow section 을 기준으로 multi-actor 협업 flow (signup → email → verify → login → me 같은 chain) full-stack 검증. test-per-actor-use-case pass 가 prerequisite. real component chain (Playwright + LocalStack + SES simulator + miniredis + testcontainers + Pact broker) 동시 active 검증.
 
-예시: `signup-email-password` full flow
-```
-form submit → backend validation → JWT issuance → email sending → click confirmation → login success
-```
+호출 형태: `/buddy:test-cross-actor-flow "<feature> v<version>"`
 
-`run-browser-qa` skill을 invoke해 browser automation으로 전체 흐름을 검증한다.
+산출물: flow × actor list × test status, integration evidence (trace.zip / video / screenshot), cross-actor edge coverage matrix, contract drift detection (Pact + Schemathesis + oasdiff). 권장 chain:
+
+```bash
+/buddy:chain test-per-actor-use-case,test-cross-actor-flow,measure-code-health -- "<feature> v<version>"
+```
 
 ### Stage 4: Browser QA
 
