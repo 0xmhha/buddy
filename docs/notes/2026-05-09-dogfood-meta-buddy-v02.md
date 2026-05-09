@@ -19,8 +19,10 @@
 |-------|------|--------|----------|
 | status | ✅ | "현재 phase = §1 진입 직전" 판단 | F-1 |
 | §1 concretize-idea | ✅ | plan §1.1~§1.7 (condensed, autoplan skip) | F-2, F-3, F-4, F-5 |
-| §2 define-features | ⏸ | (다음 세션) | — |
-| §3 design-system | 🟡 진입 | plan §3.1 (cascade chain 식별, SaaS pattern 미적용 판단) | (다음 세션 진행) |
+| §2 define-features | ✅ | plan §2.1~§2.4 (5 actor / 5 use case / 6 feature / DAG depth 매핑) | F-6 |
+| §3 design-system | ✅ | plan §3.1 (cascade 5 stage 적용) + §3.2 (D-1 = TUI 채택, ADR-002 proposed) + §3.3 (ai-m 패턴 차용 분류) + §3.4 (trigger-driven backlog 4건) + §3.5 (ADR draft) | F-7, F-8 |
+| §4 plan-build | ⏸ | (다음 세션 — F1~F6 actor track 분해 + task DAG + parallel exec) | — |
+| §5 build-feature | ⏸ | (다음 세션 이후) | — |
 | §4 plan-build | ⏸ | (다음 세션) | — |
 | §5 build-feature | ⏸ | (다음 세션 이후) | — |
 | §6 verify-quality | ⏸ | — | — |
@@ -101,9 +103,67 @@
 
 **fix 우선순위:** Mid (다음 세션 §2 entry 에서 결과적 신호 확인 후 결정).
 
+### F-6: §2 PROCEDURE 가 *single-actor* 케이스에 9 stage 모두 강제
+
+**관찰:**
+- §2 PROCEDURE 의 stage 6~10 (query-feature-registry / score-feature-priority RICE/ICE/MoSCoW / map-feature-dependencies / split-work-into-features / triage-work-items) 은 다중 stakeholder + 백로그 운영 가정.
+- v0.2 같은 single-user OSS 도구 backlog 에서는 RICE 같은 priority framework 가 over-engineering. MoSCoW 만으로 충분.
+- query-feature-registry 는 buddy 자체에 registry 미존재라 자동 skip — PROCEDURE 가 "registry 부재 시 skip" 명시 안 함.
+
+**확신도:** Mid.
+
+**제안:** §2 PROCEDURE.md 에 단순 케이스 가이드 — single-actor / single-user / no-registry 시 stage 1-5 + stage 7 (MoSCoW only) 만 적용. F-2, F-4 와 묶어 "PROCEDURE 의 condensed/full 모드 분기" 단일 fix 후보.
+
+**fix 우선순위:** Low (현 우회로 충분).
+
+### F-7: 외부 reference (ai-m 같은 precedent) 차용 절차가 PROCEDURE 어디에도 명시 안 됨
+
+**관찰:**
+- §3 design-system 진행 시 사용자가 `0xmhha/ai-m` 을 reference 로 지정 — TUI vs web 결정의 직접 입력.
+- §3 PROCEDURE 본문은 *internal* design 만 가정 (define-tech-stack, map-use-cases-to-infra 등 5 stage 모두 *결정* 자체에 집중, *외부 precedent 차용* 절차 없음).
+- 결과: orchestrator (이번엔 manual) 가 reference repo 를 ad-hoc 로 탐색해 패턴 추출. 절차 무재현성.
+
+**확신도:** High (이번 cycle 에서 직접 관찰 — ai-m 탐색이 §3.3 의 "차용 가능 ai-m 패턴" 표로 산출되기까지 정형 절차 없이 ad-hoc).
+
+**제안 (택 1):**
+- (a) §3 PROCEDURE 에 stage 0 신설: `survey-precedents` — 사용자에게 reference repo / paper / 제품 입력받아 design 입력으로 반영.
+- (b) cross-cutting skill `survey-design-precedents` 신설 (Cluster B residual 4 와 별개) — 모든 design phase 에서 호출 가능.
+- (c) 본 마찰만 기록하고 deferred — 차용은 사용자가 reference 를 명시할 때만 발생. orchestrator 가 자동 precedent 검색하면 노이즈 + IP 위험.
+
+**fix 우선순위:** Mid — meta-dogfood 가 외부 reference 사용 케이스를 노출. 다른 dogfood 사용자도 자기 도메인의 precedent 를 자연스럽게 사용할 가능성 높음.
+
+### F-8: §3 SaaS pattern 3 stage (event/auth/tenant) 가 *적용 안 됨* 명시 없이 silent skip
+
+**관찰:**
+- v1.0.8 에서 추가된 design-event-schema / design-auth-model / design-tenant-model 은 SaaS pattern 가정 (multi-tenant async event-driven backend).
+- v0.2 같은 OSS 단일 머신 도구는 *세 stage 모두 N/A*.
+- §3 design-system PROCEDURE 가 이 3 stage 를 cascade 의 *기본 chain* 으로 포함 — N/A 판단 절차 없음. orchestrator 가 manual 로 "OSS 단일 머신 → SaaS pattern 미적용" 결론.
+
+**확신도:** Mid.
+
+**제안:** §3 PROCEDURE 에 *applicability check* 한 줄 — "SaaS pattern stage 는 multi-tenant 또는 async event-driven 일 때만 적용. Decision 1 의 §1.4 business viability 의 segmentation 결과를 입력으로." F-7 과 묶어 single fix.
+
+**fix 우선순위:** Low.
+
 ---
 
-## 3. 다음 세션 entry point
+## 3. ai-m 차용 평가 (Wave 2 추가 산출물)
+
+| 패턴 | 차용 결정 | 위치 (v0.2 plan) |
+|------|---------|------------------|
+| `bubbletea + lipgloss` TUI stack | ✅ 채택 (D-1 결정) | §3.1.1 + §3.2 |
+| `internal/llm/backend/` interface + 2 impls | ✅ 부분 (`sessions.Lister` 1 impl, 2번째는 trigger-driven) | §3.3 |
+| `internal/server/server.go` websocket 서버 | ❌ deferred (v1.0+ trigger-driven `BUDDY-D-WEB`) | §3.3, §3.4 |
+| `apps/desktop/` Electron app | ❌ N/A (single-binary 정책 + non-goal) | §3.3, §3.4 |
+| `STATUS.md` "Resolved + Trigger-driven backlog" 단일 문서 | 🟡 차용 가치 (A-1 SSoT polish 후보, deferred) | §3.3 |
+| `--restart` policy / `--persistent` reattach | ❌ N/A v0.2 (v0.3+ task DAG 영역) | §3.3 |
+| `fsnotify` file watcher | ✅ 채택 (UC-4 입력) | §3.1.1 |
+
+**Net 결과**: ai-m 의 **stack 선택** + **interface abstraction 패턴** + **trigger-driven backlog 철학** 3개 차용. **세션 자체 관리** 영역은 책임 경계 (buddy = 세션 관찰, ai-m = 세션 운영) 따라 분리 유지.
+
+---
+
+## 4. 다음 세션 entry point
 
 1. 본 ledger §1 표에서 ⏳ 항목 중 첫 번째 (§1 concretize-idea) PROCEDURE.md를 읽어 v0.2 PRD 섹션 작성.
 2. 진행하면서 마찰 발견 시 §2 ledger 에 F-N 으로 추가.
@@ -112,7 +172,7 @@
 
 ---
 
-## 4. 검증 evidence (A-4.1)
+## 5. 검증 evidence (A-4.1)
 
 - `claude plugin list` (N-1 closure §4.2): `buddy 1.0.8 enabled`
 - `~/.claude/plugins/marketplaces/buddy/plugin/commands/*.md` = 57 files all with `disable-model-invocation: true`
