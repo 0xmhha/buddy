@@ -22,7 +22,7 @@
 | §2 define-features | ✅ | plan §2.1~§2.4 (5 actor / 5 use case / 6 feature / DAG depth 매핑) | F-6 |
 | §3 design-system | ✅ | plan §3.1 (cascade 5 stage 적용) + §3.2 (D-1 = TUI 채택, ADR-002 proposed) + §3.3 (ai-m 패턴 차용 분류) + §3.4 (trigger-driven backlog 4건) + §3.5 (ADR draft) | F-7, F-8 |
 | §4 plan-build | ✅ | plan §4.1~§4.7 (3 implementation tracks / 24 atomic tasks / DAG critical path 7.75h / 8 batch schedule / acceptance test plan / timeline p50=5d p90=8d / autoplan skip) | F-9 |
-| §5 build-feature | ⏸ | (다음 라운드 — batch B1 진입) | — |
+| §5 build-feature | 🟡 진행 중 | B1 — core-1 ✅ (migration v3 sessions table + 4 test green) + i18n-1 partial (sample 5/57 + 톤 가이드 — 사용자 confirm 대기) | F-10 |
 | §6 verify-quality | ⏸ | (§4.5 acceptance test plan 이 입력, SaaS audit 부분 적용) | — |
 | §7 ship-release | ⏸ | (v0.1 release.yml 재사용 + sessions migration + binary size check) | — |
 | §4 plan-build | ⏸ | (다음 세션) | — |
@@ -163,6 +163,22 @@
 - (c) 단어 그대로 유지하되 §4 PROCEDURE 첫 문단에 "여기서 actor 는 §2 의 actor (user/system) 와 다른 차원의 *implementation domain*" 명시.
 
 **fix 우선순위:** Mid (변경 비용 낮음 — (c) 로는 PROCEDURE 한 문단 추가만, (a)/(b) 는 큰 명명 작업이라 trigger-driven 으로 deferred).
+
+### F-10: `build-with-tdd` 의 "red → green" 단일 사이클이 *기존 test contract* 와 cascade 되는 변경에 부족
+
+**관찰:**
+- core-1 진행 시 red 단계에 3 test fail 식별 (`TestOpen_CreatesAllTables`, `TestOpen_SessionsTable_HasV02Columns` 신규, `TestOpen_RecordsLatestSchemaVersion`).
+- migration version 3 추가 후 4번째 test (`TestOpen_IsIdempotentAcrossReopens`) 가 *2 차 red* 로 노출됨 — schema_version row count 가 2 → 3 으로 cascade.
+- i18n-1 sample 추가 후 *3 차 red* — `TestSetLocale_ChangesActive` (KeyInstallDone fallback 가정) + `TestML_FallbackToKO_WhenENMissing` 2 test 가 새로 fail.
+- `build-with-tdd` PROCEDURE 의 "red → green → refactor" 사이클이 *단일 behavior* 가정. *기존 test contract* 와의 cascade 는 별도 사이클 필요.
+
+**확신도:** High (이번 batch 진행 중 직접 관찰 — single TDD 사이클 안에 *2 차/3 차 red* 가 surface).
+
+**제안:**
+- `build-with-tdd` PROCEDURE 에 한 줄 추가: "변경이 *기존 test contract* (counts, version assertions, fallback assumptions 등) 에 cascade 되는 경우 *iterate red-green*. 처음 red 단계에 변경 영향 받는 모든 test 를 grep 으로 미리 식별하라."
+- 또는 별도 stage skill `audit-test-contract-cascade` (Cluster A residual `audit-test-coverage-meaningful` 와 묶음 가능).
+
+**fix 우선순위:** Mid — 다른 dogfood 사용자가 *기존 codebase 에 새 feature 추가* 시 같은 마찰 겪을 가능성 높음.
 
 ---
 

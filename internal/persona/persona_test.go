@@ -39,20 +39,32 @@ func TestM_FillsArgs(t *testing.T) {
 
 // TestML_FallbackToKO_WhenENMissing verifies the explicit-locale form falls
 // back to the ko entry when en doesn't have the key — the v0.2 i18n migration
-// path (en map starts empty in v0.1).
+// path (en map starts partially populated; unfilled keys still resolve via
+// ko). KeyUninstallNothingRegistered is intentionally not in the v0.2 sample
+// tracer, so it exercises the fallback branch.
 func TestML_FallbackToKO_WhenENMissing(t *testing.T) {
-	got := ML(LocaleEN, KeyInstallDone)
-	assert.Equal(t, "buddy: 등록 완료. 이제 옆에서 보고 있을게.", got)
+	got := ML(LocaleEN, KeyUninstallNothingRegistered)
+	assert.Equal(t, "buddy: 등록된 게 없어. 그대로 둘게.", got)
 }
 
-// TestSetLocale_ChangesActive sets en as active. Because the en map is empty
-// in v0.1, M() still returns ko via fallback — proving the fallback path is
-// wired through both the active-locale and the explicit-locale entry points.
+// TestSetLocale_ChangesActive sets en as active and verifies both paths the
+// catalog can resolve through:
+//   - filled en key → en template returned directly (KeyInstallDone is part
+//     of the v0.2 sample tracer in en.go).
+//   - unfilled en key → ko fallback still wired (KeyUninstallNothingRegistered
+//     hasn't been translated yet, so M() resolves through ko).
 func TestSetLocale_ChangesActive(t *testing.T) {
 	resetLocale(t)
 	require.NoError(t, SetLocale(LocaleEN))
 	assert.Equal(t, LocaleEN, ActiveLocale())
-	assert.Equal(t, "buddy: 등록 완료. 이제 옆에서 보고 있을게.", M(KeyInstallDone))
+	assert.Equal(t,
+		"buddy: hooked up. i'll keep an eye on things now.",
+		M(KeyInstallDone),
+	)
+	assert.Equal(t,
+		"buddy: 등록된 게 없어. 그대로 둘게.",
+		M(KeyUninstallNothingRegistered),
+	)
 }
 
 // TestSetLocale_UnknownLocale_FallsBackToKO verifies an unknown locale string

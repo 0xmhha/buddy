@@ -76,6 +76,25 @@ var migrations = []migration{
 			CREATE INDEX idx_features_updated ON features(updated_at);
 		`,
 	},
+	{
+		version: 3,
+		sql: `
+			CREATE TABLE sessions (
+				id                   TEXT    PRIMARY KEY,
+				pid                  INTEGER,
+				transcript_path      TEXT    NOT NULL,
+				started_at           INTEGER NOT NULL,
+				last_active          INTEGER NOT NULL,
+				total_input_tokens   INTEGER NOT NULL DEFAULT 0,
+				total_output_tokens  INTEGER NOT NULL DEFAULT 0,
+				total_cache_read     INTEGER NOT NULL DEFAULT 0,
+				total_cache_create   INTEGER NOT NULL DEFAULT 0,
+				last_offset          INTEGER NOT NULL DEFAULT 0
+			);
+			CREATE INDEX idx_sessions_last_active     ON sessions(last_active);
+			CREATE INDEX idx_sessions_transcript_path ON sessions(transcript_path);
+		`,
+	},
 }
 
 // RunMigrations applies every migration whose version is greater than the
