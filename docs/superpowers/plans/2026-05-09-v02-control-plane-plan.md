@@ -181,9 +181,228 @@ Claude Code 사용자는 *동시에 여러 세션*을 띄우는 패턴이 흔하
 
 ---
 
-## §4~§7 — 다음 세션 이후
+## §4 Implementation Plan
 
-(skip)
+> 출처 walkthrough: [`plugin/skills/plan-build/PROCEDURE.md`](../../../plugin/skills/plan-build/PROCEDURE.md) (7 stage). Stage 1~6 [Done] v1.0.3, Stage 7 autoplan = cross-phase review.
+> **Term clarification (F-9):** §2 의 *actor* (user/system/3rd-party) ≠ §4 의 *actor track* (implementation domain: core/ui/i18n). 같은 단어, 다른 차원. v0.2 single-user 도구지만 implementation domain track 으로는 자연스럽게 분해됨.
+
+### 4.1 Implementation tracks (stage 1: decompose-feature-to-actor-tracks)
+
+| Track | 범위 | 보유 feature |
+|-------|------|-------------|
+| **core** | Go backend logic (daemon 확장, store, queries) | F1 Session discovery, F2 Transcript reader, F3 Multi-session stats, F4 Cost estimate |
+| **ui** | TUI 코드 (`internal/ui/dashboard/`) | F5 Dashboard UI |
+| **i18n** | locale 카탈로그 + subcommand wiring (cross-cutting) | F6 i18n full split |
+
+**Cross-track contracts**:
+- core ↔ ui: `sessions.Lister` / `Reader` interface (Go), `pricing.Estimator` interface, `queries.SessionStats` 결과 struct
+- i18n ↔ all: `persona.T(key, args)` 함수 — 모든 user-facing 메시지 통과 (M5 카탈로그 패턴 재사용)
+
+**Independence Matrix** (3×3):
+
+| | core | ui | i18n |
+|----|------|------|------|
+| **core** | — | exposes interfaces | uses persona.T |
+| **ui** | consumes interfaces | — | uses persona.T |
+| **i18n** | self-contained | — | — |
+
+i18n 은 다른 track 에 *block 없이* 진행 가능 (cross-cutting key 추가만). core / ui 는 interface 시점 (F1 합의 후) 에서 cross-track 동기화.
+
+### 4.2 Atomic tasks (stage 2: decompose-track-to-tasks)
+
+**core track** (15 tasks):
+
+| task_id | title | depends | est. h |
+|---------|-------|---------|--------|
+| core-1 | sessions table migration SQL | — | 0.5 |
+| core-2 | Session struct + Lister interface | core-1 | 0.5 |
+| core-3 | fsLister impl (`~/.claude/sessions/*.json` + `projects/**/*.jsonl` scan) | core-2 | 2 |
+| core-4 | fsLister unit tests | core-3 | 1 |
+| core-5 | TokenUsage struct (v0.1 §6.1 schema 재사용 확인) | — | 0.25 |
+| core-6 | transcript Reader interface + offset 보존 시그니처 | core-2, core-5 | 0.5 |
+| core-7 | Reader.Tail impl (증분 read, line-buffered) | core-6 | 2 |
+| core-8 | Reader integration test (synthetic JSONL fixture) | core-7 | 1 |
+| core-9 | sessions × hook_events × token_usage join 쿼리 | core-1, core-7 | 1 |
+| core-10 | `buddy sessions list` subcommand | core-3, core-9 | 1 |
+| core-11 | `buddy sessions show <id>` subcommand | core-9 | 1 |
+| core-12 | pricing table embed (`internal/pricing/anthropic.go`) | — | 0.5 |
+| core-13 | `pricing.Estimate(usage) Cost` 함수 + unit test | core-12, core-5 | 0.75 |
+| core-14 | stats 출력에 cost column 추가 (단일 세션) | core-13 | 0.5 |
+| core-15 | daemon fsnotify watcher (transcript change 감지) | core-7 | 2 |
+
+**ui track** (5 tasks):
+
+| task_id | title | depends | est. h |
+|---------|-------|---------|--------|
+| ui-1 | bubbletea Model + view skeleton (`internal/ui/dashboard/`) | core-2 (interface contract) | 1.5 |
+| ui-2 | session list view (lipgloss table) | ui-1, core-3 | 2 |
+| ui-3 | per-session drill view (token / cost / hook health) | ui-2, core-9, core-13 | 2.5 |
+| ui-4 | 1Hz refresh tick + fsnotify-driven invalidate | ui-2, core-15 | 1 |
+| ui-5 | keybinding (`q` quit, `↑/↓` select, `Enter` drill, `r` refresh) | ui-3 | 0.75 |
+
+**i18n track** (4 tasks):
+
+| task_id | title | depends | est. h |
+|---------|-------|---------|--------|
+| i18n-1 | `internal/persona/en.go` map 채우기 (모든 ko key 의 en pair) | — | 2 |
+| i18n-2 | `queries.ErrInvalidLimit/Window` → 카탈로그 이전 | — | 1 |
+| i18n-3 | `config.ValidationError.Reason` bullet 렌더링 wiring | — | 1 |
+| i18n-4 | subcommand `--config` 인지 locale 해석 (root `PersistentPreRunE`) | — | 1 |
+
+**Total**: 24 atomic tasks, 25.75 ideal-h core / 7.75 ideal-h ui / 5 ideal-h i18n = **~38.5 ideal-h**.
+
+### 4.3 Task DAG (stage 3: map-task-dependencies)
+
+```
+i18n track (independent, no cross-track edge):
+  i18n-1 ──┐
+  i18n-2 ──┤── (parallel, no dependencies)
+  i18n-3 ──┤
+  i18n-4 ──┘
+
+core track + ui track (cross-track contract via interfaces):
+
+  core-1 ──→ core-2 ──┬──→ core-3 ──→ core-4
+                     │
+                     │   ┌──────────→ ui-1 ──→ ui-2 ──→ ui-3 ──→ ui-5
+                     │   │                       ▲       ▲
+                     ▼   │                       │       │
+  core-5 ──→ core-6 ──→ core-7 ──→ core-8        │       │
+                          │                       │       │
+                          ├──→ core-9 ────────────┴───────┤
+                          │                               │
+                          └──→ core-15 ──→ ui-4           │
+                                                          │
+  core-12 ──→ core-13 ──→ core-14 ──────────────────────────┘
+```
+
+**Critical path** (longest dependency chain):
+
+`core-1 → core-2 → core-6 → core-7 → core-9 → ui-3 → ui-5` = 0.5 + 0.5 + 0.5 + 2 + 1 + 2.5 + 0.75 = **7.75 ideal-h**.
+
+**Parallel-safe levels** (작업 가능 동시점):
+
+- L0 (no deps): core-1, core-5, core-12, i18n-1, i18n-2, i18n-3, i18n-4
+- L1 (after L0): core-2, core-13
+- L2: core-3, core-6
+- L3: core-4, core-7, ui-1
+- L4: core-8, core-9, core-14, core-15
+- L5: core-10, core-11, ui-2
+- L6: ui-3, ui-4
+- L7: ui-5
+
+7 levels, 단일 head start 시 핵심 dependency chain.
+
+### 4.4 Parallel execution plan (stage 4)
+
+**Worker capability matrix**:
+
+| Worker | core | ui | i18n |
+|--------|------|------|------|
+| Human (사용자) | ✅ | ✅ | ✅ |
+| AI agent (dispatch-parallel-agents) | ✅ (interface 작성, unit test) | △ (TUI 시각 검증 어려움) | ✅ (mechanical key copy) |
+
+**Batch schedule** (single human + occasional agent dispatch):
+
+| Batch | 동시 작업 | 시점 | 산출 |
+|-------|----------|------|------|
+| B1 | core-1 + i18n-1 (agent dispatch) | Day 1 AM | sessions table + en map filled |
+| B2 | core-2 + core-5 + core-12 | Day 1 PM | structs + interfaces 락인 |
+| B3 | core-3 + core-13 (agent) | Day 2 AM | fsLister + pricing func |
+| B4 | core-6 + core-7 + i18n-2/3/4 (agent) | Day 2 PM | Reader impl + i18n wiring |
+| B5 | core-4 + core-8 + ui-1 | Day 3 AM | tests pass + TUI skeleton |
+| B6 | core-9 + core-15 + ui-2 | Day 3 PM | join 쿼리 + watcher + list view |
+| B7 | core-10 + core-11 + core-14 + ui-4 | Day 4 AM | sessions subcommand + cost column + refresh tick |
+| B8 | ui-3 + ui-5 | Day 4 PM | drill view + keybinding |
+
+**Sync points**:
+- After B2 (interfaces 락인) → ui track 진입 안전
+- After B4 (Reader 동작) → core-9 / core-15 진입 안전
+- After B6 (sessions subcommand) → manual smoke test 가능
+- After B8 (전체) → §6 verify-quality 진입
+
+**Bottleneck**: ui track (single human, AI 대체 약함). B6~B8 의 ui 작업이 critical path 의 마지막 30%. 완화: ui-1 skeleton 을 B3 으로 당기면 critical path 1 batch 단축 가능 — 단, core-2 interface 가 락인된 후라 B2 종료 후 B3 이 가능. 현재 plan 이 이미 그 패턴.
+
+### 4.5 Acceptance test plan (stage 5)
+
+**Per-track**:
+
+| Track | 단위 | 검증 방법 | gate |
+|-------|------|----------|------|
+| core | unit | `go test -race -count=2 ./internal/sessions/... ./internal/pricing/...` | ≥90% line coverage on new code, race clean |
+| core | integration | synthetic JSONL fixture (transcript 1 세션 / 2 세션 / 3 세션 시나리오) | sessions list / show 출력 expected match |
+| ui | manual | 실제 Claude Code 세션 1+2+3개 띄우고 `buddy dashboard` | session 표시 정확, drill enter / quit 동작 |
+| ui | bubbletea testlib | model state machine 테스트 (input → state transition) | 4 keybinding 모두 정상 |
+| i18n | locale matrix | `buddy --locale en stats` / `--locale ko` 비교 | en/ko 메시지 모두 정상, fallback chain 동작 |
+
+**Cross-track E2E**:
+
+- "활성 Claude Code 세션 ≥2개 환경에서 `buddy dashboard` 한 번에 모든 세션의 token / cost / hook health 표시" — `roadmap.md §4 Acceptance` 와 동일.
+- "임의 시점 cost estimate 가 Anthropic console 실제 청구액과 ±5% 이내" — pricing table 정확도 의존, sanity check.
+
+**Acceptance gate** (§7 ship-release 직전):
+- `go test -race -count=2 ./...` clean (15 → 16 packages)
+- `go vet ./...` clean
+- `gofmt -l .` empty
+- manual TUI smoke 통과 (multi-session)
+- 단일 cost estimate 가 ±5% 이내 (sanity)
+
+### 4.6 Build timeline (stage 6)
+
+**Inputs**:
+- Total ideal-h: ~38.5
+- Critical path ideal-h: 7.75
+- Parallelism: single human + occasional AI agent dispatch (~30% effective speedup on parallel-safe batches)
+- Working hours/day: 4~8 (사용자 페이스, dogfood 트랙이라 변동 큼)
+
+**Estimates** (calendar days):
+
+| Confidence | Days | 근거 |
+|-----------|------|------|
+| Best (p20) | **3 days** | 8h/day, agent dispatch 활용 최대화, 마찰 없음 |
+| Expected (p50) | **5 days** | 5-6h/day, B7~B8 ui drill view 1 batch slip 가정 |
+| Commit (p90) | **8 days** | 4h/day, ui drill 2 batch slip + Anthropic transcript schema 변동 1 cycle |
+| Worst | **12 days** | bubbletea TUI 학습 곡선 (사용자 첫 TUI 작성 가정 시) + cost table 변동 1회 |
+
+**Risk buffer**:
+- p50 → p90 = 3 days slack (60%) — TUI 첫 작성 / fsnotify edge case 흡수
+- p90 → worst = 4 days slack (50%) — schema breakage 등 unknown unknowns
+
+**Critical risks**:
+1. **Anthropic transcript JSONL schema 변경** (F-7 의 ai-m precedent 도 동일 risk). 완화: schema validation + fail-soft.
+2. **bubbletea TUI 학습 곡선** (이전 미경험 시). 완화: ai-m `internal/ui/views/` 참조.
+3. **cost table 단가 drift**. 완화: pricing table 을 별도 file 로, release 시 갱신.
+
+### 4.7 autoplan review (stage 7)
+
+§4 plan 산출 후 autoplan 4-mode review 권장 시점:
+- review-scope: F1~F6 가 v0.2 scope 안에 머무는가? (현재 답: yes — F6 i18n 은 M5 deferred 회수, 나머지 5 는 roadmap §4 정합)
+- review-engineering: critical path 7.75 ideal-h 의 정확성? (TUI 작업이 7.75h 안에 끝날지 검증 필요)
+- review-design: TUI UX 설계 (D-1 결정 영속화 여부) — ADR-002 Proposed → Accepted 전환 trigger 확인
+- review-devex: developer-facing 산출 (`buddy sessions list/show`, `buddy dashboard`) — CLI ergonomics 검토
+
+**현재 cycle 에서는 autoplan 호출 skip** — Wave 2 의 main 산출은 *cycle 검증 + 마찰 회수*, autoplan 은 §4 본격 구현 진입 직전 별도 cycle 권장.
+
+---
+
+## §5 Development — 다음 라운드
+
+> 출처 walkthrough 예정: [`plugin/skills/build-feature/PROCEDURE.md`](../../../plugin/skills/build-feature/PROCEDURE.md). §4 의 batch B1 부터 본격 진입. TDD loop (`build-with-tdd`) + 병렬 agent dispatch (`dispatch-parallel-agents`) + 디버깅 (`diagnose-bug`) 조합.
+
+(다음 라운드에서 batch 별 진행 로그)
+
+---
+
+## §6 Quality — 다음 라운드 이후
+
+> §4.5 acceptance test plan 이 §6 verify-quality 의 입력. SaaS pattern audit 3 stage (load / a11y / cost-efficiency) 는 v0.2 OSS 단일 머신 도구라 *부분 적용*: load 는 transcript 다중 세션 burst 테스트, a11y / cost-efficiency 는 N/A.
+
+---
+
+## §7 Release — 다음 라운드 이후
+
+> v0.1 의 release workflow (`release.yml`) 재사용. v0.2 신규 = sessions migration + pricing table embed + TUI binary size check (~12-15MB 추정, bubbletea + lipgloss 추가).
+> Phase 3 safety nets (canary / feature flags / rollback) 는 OSS 단일 머신이라 *대부분 N/A*. 적용 가능: `setup-rollback-runbook` (manual rollback — git revert + previous binary download).
 
 ---
 

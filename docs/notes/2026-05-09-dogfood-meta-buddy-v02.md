@@ -21,8 +21,10 @@
 | §1 concretize-idea | ✅ | plan §1.1~§1.7 (condensed, autoplan skip) | F-2, F-3, F-4, F-5 |
 | §2 define-features | ✅ | plan §2.1~§2.4 (5 actor / 5 use case / 6 feature / DAG depth 매핑) | F-6 |
 | §3 design-system | ✅ | plan §3.1 (cascade 5 stage 적용) + §3.2 (D-1 = TUI 채택, ADR-002 proposed) + §3.3 (ai-m 패턴 차용 분류) + §3.4 (trigger-driven backlog 4건) + §3.5 (ADR draft) | F-7, F-8 |
-| §4 plan-build | ⏸ | (다음 세션 — F1~F6 actor track 분해 + task DAG + parallel exec) | — |
-| §5 build-feature | ⏸ | (다음 세션 이후) | — |
+| §4 plan-build | ✅ | plan §4.1~§4.7 (3 implementation tracks / 24 atomic tasks / DAG critical path 7.75h / 8 batch schedule / acceptance test plan / timeline p50=5d p90=8d / autoplan skip) | F-9 |
+| §5 build-feature | ⏸ | (다음 라운드 — batch B1 진입) | — |
+| §6 verify-quality | ⏸ | (§4.5 acceptance test plan 이 입력, SaaS audit 부분 적용) | — |
+| §7 ship-release | ⏸ | (v0.1 release.yml 재사용 + sessions migration + binary size check) | — |
 | §4 plan-build | ⏸ | (다음 세션) | — |
 | §5 build-feature | ⏸ | (다음 세션 이후) | — |
 | §6 verify-quality | ⏸ | — | — |
@@ -144,6 +146,23 @@
 **제안:** §3 PROCEDURE 에 *applicability check* 한 줄 — "SaaS pattern stage 는 multi-tenant 또는 async event-driven 일 때만 적용. Decision 1 의 §1.4 business viability 의 segmentation 결과를 입력으로." F-7 과 묶어 single fix.
 
 **fix 우선순위:** Low.
+
+### F-9: §2 *actor* (user/system/3rd-party) 와 §4 *actor track* (frontend/backend/3rd-party = implementation domain) 의 단어 충돌
+
+**관찰:**
+- §2 PROCEDURE 의 actor 분류: user / system / 3rd-party / external-tool — *use case 합성*의 차원.
+- §4 PROCEDURE 의 actor track: frontend / backend / 3rd-party — *implementation domain*의 차원.
+- 같은 *actor* 단어가 두 phase 에서 다른 의미. cascade 진행 시 user 가 어떤 차원의 actor 인지 매번 추론 필요.
+- v0.2 같은 single-actor (CLI user 1명) 도구 케이스에서는 §4 의 implementation domain track 으로 자연스럽게 분해 가능 (core / ui / i18n) — *§2 의 actor 차원과 무관*.
+
+**확신도:** High (이번 cycle 진행 중 직접 마찰 — §4 진입 시 "v0.2 가 single-actor 인데 actor track 분해를 어떻게 하지?" 1차 질문 필요).
+
+**제안:**
+- (a) §4 PROCEDURE 의 *actor track* 을 *implementation track* 으로 rename. 단어 충돌 해소.
+- (b) 또는 §2 PROCEDURE 의 actor 를 *role* 로 rename, §4 의 actor track 유지. 단, §2 stage 1 skill 명 `identify-actors` 도 영향.
+- (c) 단어 그대로 유지하되 §4 PROCEDURE 첫 문단에 "여기서 actor 는 §2 의 actor (user/system) 와 다른 차원의 *implementation domain*" 명시.
+
+**fix 우선순위:** Mid (변경 비용 낮음 — (c) 로는 PROCEDURE 한 문단 추가만, (a)/(b) 는 큰 명명 작업이라 trigger-driven 으로 deferred).
 
 ---
 
