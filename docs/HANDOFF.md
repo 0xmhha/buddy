@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-08 (Plugin v1.0.5 — Phase 1+2+3+4 Done, Q8=(a) cascade 완성)
+**Last updated:** 2026-05-09 (Plugin v1.0.8 — Phase 1+2+3+4+5ext Done + N-1 closure (ADR-001) 적용)
 
 ## 트랙 상태
 
@@ -10,10 +10,10 @@
 
 | 트랙 | 상태 | 위치 | Entry doc |
 |------|------|------|----------|
-| **Plugin — 9-phase orchestrator** (97 procedures, 49 commands, single-router dispatch) | 🟢 ACTIVE — v1.0.5 released, Phase 1+2+3+4 Done. 다음 후보: Phase 5 extension Cluster A/B/C (8 skill) | `plugin/`, `docs/superpowers/` | [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) |
+| **Plugin — 9-phase orchestrator** (105 procedures, 57 commands, single-router dispatch) | 🟢 ACTIVE — v1.0.8 released, Phase 1+2+3+4+5ext Done + N-1 closed. 다음 후보: A-4 plugin dogfood (실 SaaS 프로젝트 install) | `plugin/`, `docs/superpowers/` | [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) |
 | **Go CLI (hook reliability monitor)** v0.1.0 released | 🟡 PAUSED — dogfood feedback 대기, 별개 트랙 | `cmd/`, `internal/`, `archive/ts-poc/` | 이 HANDOFF §1~12 (이하 본문은 Go CLI 트랙 기준) |
 
-**Plugin 트랙 진행 상태 (2026-05-08):**
+**Plugin 트랙 진행 상태 (2026-05-09):**
 
 | Phase | 상태 | Release | Skill count |
 |-------|------|---------|-------------|
@@ -22,9 +22,12 @@
 | Phase 2 (§4 Implementation Plan 6) | ✅ Done | v1.0.3 | +6 |
 | Phase 3 (§7 Release Safety Nets 7) | ✅ Done | v1.0.4 | +7 |
 | Phase 4 (§6 Use-case Test 2) | ✅ Done | v1.0.5 | +2 |
-| **Total** | **97 procedures / 49 commands / 14 ship-release stages** | v1.0.5 | 97 |
-| Phase 5 ext (Cluster A+B+C, 8) | ⏳ candidate | next | +8 |
-| Phase 5/6/7 deferred (≥31) | ⏳ deferred | n/a | — |
+| Phase 5 ext Cluster C (§3 cascade bridge 2) | ✅ Done | v1.0.6 | +2 |
+| Phase 5 ext Cluster A (§6 launch readiness 3) | ✅ Done | v1.0.7 | +3 |
+| Phase 5 ext Cluster B (§3 SaaS pattern 3) | ✅ Done | v1.0.8 | +3 |
+| **N-1 closure** (ADR-001: `disable-model-invocation: true` × 57 commands) | ✅ Done | (no version bump) | — |
+| **Total** | **105 procedures / 57 commands / 14 ship-release stages** | v1.0.8 | 105 |
+| Phase 5/6/7 deferred (29) | ⏳ deferred | n/a | — |
 
 **5단계 비전:** 1) Plugin install ✅ → 2) TUI 상위 레이어(`ai-m` 류) → 3) 설정/세션 관리 툴(`claude-code-organizer` 류) → 4) Dashboard + 칸반 → 5) 4단계에 1~3단계가 모두 녹아듦.
 
@@ -228,7 +231,10 @@ v0.1.0 release 가 끝났으므로 dogfood feedback 은 **v0.2 / v0.3 우선순�
 | `docs/roadmap.md` | M6 이후 무엇을 할지 결정할 때 |
 | `docs/v0.1-spec.md` | M1~M5 구현 의도/invariant 확인 |
 | `docs/decision-1-schema-fields.md` | hook event schema 왜 이렇게 결정됐는지 |
+| `docs/tasks.md` | cross-track 작업 인벤토리 (Wave 우선순위 + 잔여 29 skill cluster) |
 | `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` | plugin 9-phase 아키텍처 현행 SSoT |
+| `docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md` | ADR-001 — N-1 closure (commands에 `disable-model-invocation: true` 강제) |
+| `docs/notes/2026-05-09-handoff-N1-closure.md` | N-1 closure handoff (가장 최신 세션 인계) |
 | `DOGFOOD.md` | 사용자가 본인 머신에 install할 때 안내 |
 | `docs/dogfood-feedback-template.md` | 며칠 사용 후 회고 템플릿 |
 | `archive/ts-poc/` | TS PoC 자산 (참조용, *사용 X*) |
@@ -286,9 +292,10 @@ rm -rf $SANDBOX
 - ~~`docs/roadmap.md` 8 open question 인덱스 추가~~ ✅ 이 HANDOFF.md §5 에 통합.
 - ~~Versioned binary~~ ✅ M6 T3.
 - ~~Cross-compile + release workflow~~ ✅ M6 T1+T2.
-- **`cmd/buddy/main.go` 분할 (685 lines):** v0.1.0 release 후 685 lines. v0.2 새 명령 추가 전에 install/daemon/doctor/stats/events/hookwrap 도 sibling으로 옮기면 좋음.
-- **모듈 path:** `github.com/wm-it-22-00661/buddy` — 이전 머신 잔재. 현재 origin인 `github.com/0xmhha/buddy` 와 일치시키려면 모든 import 경로 일괄 변경 필요. v0.2 cleanup 후보.
-- **gofmt drift 한 번 정리:** `gofmt -l .`이 가끔 비어있지 않으면 한 commit으로 정리 (현재는 clean).
+- ~~Plugin command context bloat (N-1)~~ ✅ ADR-001 (`disable-model-invocation: true` × 57 commands, commit `ca99762`). **신규 command 추가 시 이 컨벤션 강제** — `plugin/commands/*.md` 모든 신규 파일은 frontmatter에 `disable-model-invocation: true`를 포함해야 한다.
+- **`cmd/buddy/main.go` 분할 (685 lines):** v0.1.0 release 후 685 lines. v0.2 새 명령 추가 전에 install/daemon/doctor/stats/events/hookwrap 도 sibling으로 옮기면 좋음. ([`tasks.md`](./tasks.md) C-1)
+- **모듈 path:** `github.com/wm-it-22-00661/buddy` — 이전 머신 잔재. 현재 origin인 `github.com/0xmhha/buddy` 와 일치시키려면 모든 import 경로 일괄 변경 필요. v0.2 cleanup 후보. ([`tasks.md`](./tasks.md) C-2)
+- **gofmt drift 한 번 정리:** `gofmt -l .`이 가끔 비어있지 않으면 한 commit으로 정리 (현재는 clean). ([`tasks.md`](./tasks.md) C-3)
 
 ---
 
