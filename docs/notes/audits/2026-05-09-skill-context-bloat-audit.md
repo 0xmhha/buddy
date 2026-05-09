@@ -172,3 +172,104 @@ Phase prefix (`§N <category>: ...`) 컨벤션을 57개 모두 적용:
   - **Low prediction:** Claude Code 가 frontmatter 를 fully indexed 형태가 아니라 hash-only 또는 prefix-only 로 처리할 가능성 — 그 경우 description 길이가 의미 없어짐
   - **None.**
 </Fact-based Answer>
+
+---
+
+## 9. Addendum (2026-05-09) — Hypothesis verification + new findings
+
+> WebFetch sources:
+> - https://code.claude.com/docs/en/plugins
+> - https://code.claude.com/docs/en/skills (primary — definitive)
+> - https://code.claude.com/docs/en/plugins-reference
+
+### 9.1 §4.3 가설 — 결론 확정
+
+**가설 A 확정 (description-only baseline indexing).** 인용:
+
+> "In a regular session, **skill descriptions are loaded into context** so Claude knows what's available, but **full skill content only loads when invoked**." — `/en/skills`
+
+→ 가설 B (전체 파일 baseline) 기각, 가설 C 와 일치.
+
+**예외 1건:** Subagent 내부에서 `preload skills` 사용 시 full body 가 inject. buddy 사용 패턴엔 무관.
+
+### 9.2 신규 발견 — `disable-model-invocation: true`
+
+skill frontmatter 옵션. 적용 시 동작:
+
+| 옵션 | Description in baseline context | User /명령 가능 | Claude auto-invoke |
+|------|------------------------------:|--------------:|-------------------:|
+| (default) | YES | YES | YES |
+| `disable-model-invocation: true` | **NO (0 token)** | YES | NO |
+
+인용:
+
+> "`disable-model-invocation: true`: Only you can invoke the skill. Use this for workflows with side effects or that you want to control timing... **Description not in context**, full skill loads when you invoke" — `/en/skills`
+
+### 9.3 신규 발견 — 8,000 char hard budget
+
+> "All skill names are always included, but if you have many skills, descriptions are shortened to fit the character budget, which **scales dynamically at 1% of the context window, with a fallback of 8,000 characters**." — `/en/skills`
+
+> "each entry's combined `description` and `when_to_use` text is **capped at 1,536 characters**" — `/en/skills`
+
+함의:
+- buddy 의 description 합 4,887 chars 는 8,000 budget 내 → 잘림 없음
+- 다만 다른 plugin 과 합산 시 budget 잠식 → **다른 plugin 사용자에게 buddy 가 description 점유 60% 가량** 의미
+- Skill 이름은 무조건 포함 (`SLASH_COMMAND_TOOL_CHAR_BUDGET` env var 로 조정 가능)
+
+### 9.4 §5 Quick Win 재평가
+
+| Quick Win | 절감 (revised) | 적용 가능성 | 비고 |
+|-----------|-------------:|----------|------|
+| **A** Top 10 단축 | **~230 token** (실측) | ✅ APPLIED commit `350f2e3` | 4887→4319 chars |
+| **B** 전체 description 단축 | ~750 token | 분리 PR 가능 | A 가 흡수 가능한 부분 일부 있음 |
+| **C** Body slim | ~0 token (baseline) / **invocation 시에만** | Lower priority | baseline 에 영향 X |
+| **Z (NEW)** `disable-model-invocation: true` 일괄 적용 | **~1,725 token** (4319 chars / 2.5) | ⚠️ 사용자 승인 필요 | description 전체를 baseline 에서 제거 |
+
+### 9.5 Quick Win Z — design implication
+
+buddy 의 single-router 패턴(57 commands 가 모두 router 의 thin dispatch endpoint)에선 **Claude 가 commands 를 직접 auto-invoke 하지 않아야 정상**. Auto-invocation 은 router skill 의 권한이지 commands 의 권한이 아님.
+
+따라서 **모든 commands 에 `disable-model-invocation: true` 적용은 설계 의도와 일치**. 사용자 동작에 영향 없음:
+- `/buddy:concretize-idea` user invoke → 정상
+- 사용자가 "I have an idea" 같은 자연어 입력 시 Claude 가 router skill 을 통해 routing → 정상 (router 는 model-invocable 유지)
+- Claude 가 직접 `/buddy:concretize-idea` 를 auto-fire 하는 시나리오는 buddy 설계상 부재
+
+### 9.6 §6 Decision tree — REVISED
+
+```
+가설 A 확정 (description-only baseline)
+├─ Quick Win A → APPLIED (commit 350f2e3, ~230 token)
+├─ Quick Win Z (disable-model-invocation × 57) → 추천 (~1,725 token, design-aligned)
+│   └─ 적용 시 Quick Win A 의 ~230 token 흡수됨 (descriptions 가 더 이상 baseline 에 없음)
+├─ Quick Win B (전체 description 단축) → Z 적용 시 무의미
+└─ Quick Win C (body slim) → invocation 시에만 절감 효과 → low priority
+```
+
+### 9.7 ADR 후보
+
+다음 결정을 영속화 권장:
+
+1. **buddy commands 설계 원칙**: 모든 plugin/commands/*.md 는 user-explicit dispatch endpoint. Claude auto-invocation 은 router skill 만 담당.
+2. **Frontmatter 컨벤션**: 모든 commands 에 `disable-model-invocation: true` 표준화.
+3. **Description 정책**: 비록 baseline 에서 제거되더라도 user 가 `/` 메뉴에서 보는 라벨로서 의미 있으므로 유지하되 ≤80 chars 가이드라인.
+4. **Body 정책**: invocation 시 cumulative cost 가 의미 있으므로 thin invocation stub (1줄) 컨벤션 (Quick Win C 는 효과 작지만 적용 가치 있음).
+
+### 9.8 다음 액션
+
+1. 사용자 승인 후 Quick Win Z 적용 (57 files, sed 1회) + 사후 router skill 동작 검증
+2. ADR 작성 (`docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md`)
+3. (Optional) Quick Win C body slim — invocation 시 cumulative cost 절감
+
+<Fact-based Answer>
+- **Fact:**
+  - WebFetch 검증: skill description 은 매 prompt baseline 에 포함, full body 는 invocation 시에만 로드
+  - `disable-model-invocation: true` 옵션이 description 도 baseline 에서 제거함 (인용 검증)
+  - 8,000 char hard budget (1,536 chars/entry cap) 존재
+  - Quick Win A 적용 결과: 4,887 → 4,319 chars (-568 chars / ~230 tokens)
+
+- **Your Opinion:**
+  - **High prediction:** Quick Win Z 적용이 buddy 설계 의도와 일치하며 ~1,725 token 절감 — 핵심 권장
+  - **Mid prediction:** Body slim (Quick Win C) 은 baseline 영향 없으나 invocation 누적 비용 절감엔 가치 있음
+  - **Low prediction:** Claude Code 가 향후 bundle/cache 변화로 plugin loading 정책을 바꿀 가능성 — ADR 로 영속화하는 게 변경 감지에 유리
+  - **None.**
+</Fact-based Answer>
