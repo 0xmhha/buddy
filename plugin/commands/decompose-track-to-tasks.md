@@ -1,5 +1,5 @@
 ---
-description: actor track → ordered task list (atomic units, single PR scope, verifiable acceptance, sized for 1 worker × short period).
+description: actor track → ordered atomic task list (single PR scope, 1 worker).
 argument-hint: "<track table 입력 또는 feature 이름>"
 ---
 

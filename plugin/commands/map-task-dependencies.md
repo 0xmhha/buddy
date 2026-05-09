@@ -1,5 +1,5 @@
 ---
-description: task DAG 작성 — internal (intra-track) + cross-actor (contract-based) edges + cycle 감지 + critical path + parallel-safe levels.
+description: task DAG 작성 — intra-track + cross-actor edges + cycle 감지 + critical path.
 argument-hint: "<task list 입력 또는 feature 이름>"
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: Architecture Decision Record 작성 — context/decision/consequences/alternatives 표준 양식으로 의사결정 영속화 + supersede 체인 + Index 갱신.
+description: Architecture Decision Record 작성 — 표준 양식 + supersede 체인 + Index 갱신.
 argument-hint: "<title 또는 결정 요약>"
 ---
 

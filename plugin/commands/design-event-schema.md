@@ -1,5 +1,5 @@
 ---
-description: async event schema-first 설계 — producer/consumer contract + versioning + DLQ + idempotency. design-api-contract 의 sync-only gap 보강.
+description: async event schema-first 설계 — producer/consumer + versioning + DLQ + idempotency.
 argument-hint: "<project name>"
 ---
 

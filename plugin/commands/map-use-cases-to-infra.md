@@ -1,5 +1,5 @@
 ---
-description: actor system boundary → infra component 매핑 — Q8=(a) cascade 의 §2→§3 transition layer. 산출물은 actor × infra bidirectional matrix + cross-actor shared ownership + compliance scope.
+description: actor → infra component 매핑 — actor × infra matrix + ownership + compliance scope.
 argument-hint: "<project name>"
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: Infracost monthly + per-component breakdown + unit economics ($/MAU) + waste detection + savings recommendation (RI / Savings Plan / right-sizing).
+description: Infracost + unit economics ($/MAU) + waste detection + savings recommendation.
 argument-hint: "<project name> v<version>"
 ---
 

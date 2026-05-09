@@ -1,5 +1,5 @@
 ---
-description: cross-actor flow E2E test — multi-actor chain (signup→email→verify→login 등) full-stack 검증. cross-actor edge coverage + contract drift detection.
+description: cross-actor flow E2E test — multi-actor chain 검증 + contract drift detection.
 argument-hint: "<feature name> v<version>"
 ---
 
