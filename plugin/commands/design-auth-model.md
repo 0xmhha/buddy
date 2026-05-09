@@ -1,6 +1,7 @@
 ---
 description: OAuth2 / JWT / SAML / SSO / RBAC 다층 결정 — 5 axis (auth / session / authz / federation / MFA) integrated design.
 argument-hint: "<project name>"
+disable-model-invocation: true
 ---
 
 # /buddy:design-auth-model

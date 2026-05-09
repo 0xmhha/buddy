@@ -1,6 +1,7 @@
 ---
 description: 클로즈드 beta cohort (5-20 early adopter) 운영 + structured 피드백 + GA gating — UAT 후 GA 직전 안전망.
 argument-hint: "<feature name> v<version>"
+disable-model-invocation: true
 ---
 
 # /buddy:run-beta-program

@@ -1,6 +1,7 @@
 ---
 description: actor track → ordered atomic task list (single PR scope, 1 worker).
 argument-hint: "<track table 입력 또는 feature 이름>"
+disable-model-invocation: true
 ---
 
 # /buddy:decompose-track-to-tasks

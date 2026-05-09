@@ -1,6 +1,7 @@
 ---
 description: sustained + soak + spike + stress 4 시나리오 실행 + breaking point 식별 + capacity headroom 측정. production launch 직전 SLA 근거 확보.
 argument-hint: "<project name> v<version>"
+disable-model-invocation: true
 ---
 
 # /buddy:run-load-test

@@ -1,6 +1,7 @@
 ---
 description: husky, lint-staged, Prettier, typecheck, 단위 테스트, 시크릿 스캔, commitlint 를 pre-commit / pre-push 에 설치.
 argument-hint: [--strict]
+disable-model-invocation: true
 ---
 
 # /buddy:setup-quality-gates

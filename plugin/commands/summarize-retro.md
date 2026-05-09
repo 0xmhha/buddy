@@ -1,6 +1,7 @@
 ---
 description: git history 를 받아 증거 기반 주간 회고 작성 (작업 유형, hotspot, focus, AI 협업).
 argument-hint: "[<기간: 예 7d, 14d>]"
+disable-model-invocation: true
 ---
 
 # /buddy:summarize-retro

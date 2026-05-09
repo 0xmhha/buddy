@@ -1,6 +1,7 @@
 ---
 description: feature flag system 설계 + kill switch + targeting rule + flag lifecycle (cleanup) 정책.
 argument-hint: "<project name>"
+disable-model-invocation: true
 ---
 
 # /buddy:setup-feature-flags

@@ -1,6 +1,7 @@
 ---
 description: cross-actor flow E2E test — multi-actor chain 검증 + contract drift detection.
 argument-hint: "<feature name> v<version>"
+disable-model-invocation: true
 ---
 
 # /buddy:test-cross-actor-flow

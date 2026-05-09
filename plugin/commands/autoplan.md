@@ -1,6 +1,7 @@
 ---
 description: 기존 plan / PRD / 설계 산출물을 받아 scope, design, engineering, developer experience 4개 관점으로 자동 리뷰.
 argument-hint: "<plan 경로 또는 설명>"
+disable-model-invocation: true
 ---
 
 # /buddy:autoplan

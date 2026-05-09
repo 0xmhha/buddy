@@ -1,6 +1,7 @@
 ---
 description: 엣지 케이스, 숨은 가정, 2차 영향을 압박 인터뷰로 박멸. validate-idea 통과 후 심화 검증.
 argument-hint: "<validate-idea 산출물 또는 가설>"
+disable-model-invocation: true
 ---
 
 # /buddy:validate-advanced-edge-idea

@@ -1,6 +1,7 @@
 ---
 description: actor 그래프 + infra 매핑 → 시스템 토폴로지 자동 도출 — service map + data flow + trust boundary diagram (mermaid + JSON).
 argument-hint: "<project name>"
+disable-model-invocation: true
 ---
 
 # /buddy:derive-system-topology

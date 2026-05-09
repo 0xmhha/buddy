@@ -1,6 +1,7 @@
 ---
 description: multi-tenant 격리 전략 — RLS / schema-per / DB-per 3 모델 + 3 layer defense + compliance scope.
 argument-hint: "<project name>"
+disable-model-invocation: true
 ---
 
 # /buddy:design-tenant-model

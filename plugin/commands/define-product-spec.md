@@ -1,6 +1,7 @@
 ---
 description: 검증 결과를 공식 PRD (Product Requirements Document) 로 고정.
 argument-hint: "<검증 산출물 또는 컨텍스트>"
+disable-model-invocation: true
 ---
 
 # /buddy:define-product-spec

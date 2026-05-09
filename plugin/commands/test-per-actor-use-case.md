@@ -1,6 +1,7 @@
 ---
 description: actor use case 단위 통합 테스트 — frontend E2E + backend integration + 3rd-party contract.
 argument-hint: "<feature name> v<version>"
+disable-model-invocation: true
 ---
 
 # /buddy:test-per-actor-use-case

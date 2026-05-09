@@ -1,6 +1,7 @@
 ---
 description: actor 별 + cross-actor 완료 기준 + test infra 결정 — feature spec → verifiable test plan (unit / integration / contract / E2E).
 argument-hint: "<feature spec 또는 task DAG 입력>"
+disable-model-invocation: true
 ---
 
 # /buddy:define-acceptance-test-plan

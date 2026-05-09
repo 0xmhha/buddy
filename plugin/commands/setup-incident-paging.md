@@ -1,6 +1,7 @@
 ---
 description: on-call rotation + escalation policy + alert wiring + runbook 인덱스 — production incident first response 구조.
 argument-hint: "<project name>"
+disable-model-invocation: true
 ---
 
 # /buddy:setup-incident-paging

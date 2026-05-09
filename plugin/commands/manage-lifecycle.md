@@ -1,6 +1,7 @@
 ---
 description: 수명주기 관리 단계 — feature 또는 제품의 노후화, deprecation, 사용자 마이그레이션, 종료(EOL) 관리.
 argument-hint: "<deprecate할 feature 또는 product 이름>"
+disable-model-invocation: true
 ---
 
 # /buddy:manage-lifecycle

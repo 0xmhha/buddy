@@ -1,6 +1,7 @@
 ---
 description: actor → infra component 매핑 — actor × infra matrix + ownership + compliance scope.
 argument-hint: "<project name>"
+disable-model-invocation: true
 ---
 
 # /buddy:map-use-cases-to-infra

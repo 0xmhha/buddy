@@ -1,6 +1,7 @@
 ---
 description: 여러 buddy skill 을 순서대로 chain 실행. 이전 step 의 산출물을 다음 step 의 입력으로 전달.
 argument-hint: "<skill1>,<skill2>,...[ -- <shared args>]"
+disable-model-invocation: true
 ---
 
 # /buddy:chain

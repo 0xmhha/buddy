@@ -1,6 +1,7 @@
 ---
 description: task DAG 작성 — intra-track + cross-actor edges + cycle 감지 + critical path.
 argument-hint: "<task list 입력 또는 feature 이름>"
+disable-model-invocation: true
 ---
 
 # /buddy:map-task-dependencies

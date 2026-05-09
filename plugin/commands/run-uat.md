@@ -1,6 +1,7 @@
 ---
 description: UAT scenario 실행 + go/no-go 판단 — designated stakeholder 가 critical flow 를 verify, evidence + sign-off 수집.
 argument-hint: "<feature name> v<version>"
+disable-model-invocation: true
 ---
 
 # /buddy:run-uat

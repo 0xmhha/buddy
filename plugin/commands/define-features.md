@@ -1,6 +1,7 @@
 ---
 description: Feature 정의 단계 — PRD를 받아 actor / use case 매핑부터 feature backlog까지.
 argument-hint: "<PRD 경로 또는 제품 설명>"
+disable-model-invocation: true
 ---
 
 # /buddy:define-features

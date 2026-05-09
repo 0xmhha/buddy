@@ -1,6 +1,7 @@
 ---
 description: Infracost + unit economics ($/MAU) + waste detection + savings recommendation.
 argument-hint: "<project name> v<version>"
+disable-model-invocation: true
 ---
 
 # /buddy:audit-cost-efficiency

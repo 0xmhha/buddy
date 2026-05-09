@@ -1,6 +1,7 @@
 ---
 description: Architecture Decision Record 작성 — 표준 양식 + supersede 체인 + Index 갱신.
 argument-hint: "<title 또는 결정 요약>"
+disable-model-invocation: true
 ---
 
 # /buddy:write-adr

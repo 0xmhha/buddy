@@ -1,6 +1,7 @@
 ---
 description: 품질 검증 단계 — 코드 완성 후 테스트 / lint / 보안 / 컴플라이언스 통합 검증.
 argument-hint: "<feature 이름 또는 테스트 대상>"
+disable-model-invocation: true
 ---
 
 # /buddy:verify-quality

@@ -218,12 +218,12 @@ skill frontmatter 옵션. 적용 시 동작:
 
 ### 9.4 §5 Quick Win 재평가
 
-| Quick Win | 절감 (revised) | 적용 가능성 | 비고 |
-|-----------|-------------:|----------|------|
-| **A** Top 10 단축 | **~230 token** (실측) | ✅ APPLIED commit `350f2e3` | 4887→4319 chars |
-| **B** 전체 description 단축 | ~750 token | 분리 PR 가능 | A 가 흡수 가능한 부분 일부 있음 |
-| **C** Body slim | ~0 token (baseline) / **invocation 시에만** | Lower priority | baseline 에 영향 X |
-| **Z (NEW)** `disable-model-invocation: true` 일괄 적용 | **~1,725 token** (4319 chars / 2.5) | ⚠️ 사용자 승인 필요 | description 전체를 baseline 에서 제거 |
+| Quick Win | 절감 (revised) | 상태 | 비고 |
+|-----------|-------------:|------|------|
+| **A** Top 10 단축 | **~230 token** (실측) | ✅ APPLIED commit `350f2e3` | 4887→4319 chars. Z 적용 후 baseline 영향은 0 (description 자체가 baseline 에서 제거됨) — `/` 메뉴 라벨로서의 가치만 유지 |
+| **B** 전체 description 단축 | ~750 token | ❌ SUPERSEDED | Z 가 흡수 — description 이 baseline 에 없으므로 의미 없음 |
+| **C** Body slim | ~0 token (baseline) / invocation 시에만 | Deferred (low priority) | baseline 영향 없음. 향후 cumulative cost 절감용으로 검토 |
+| **Z** `disable-model-invocation: true` 일괄 적용 | **~1,725 token** | ✅ APPLIED — see ADR-001 (`docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md`) | 57/57 commands, router 는 default 유지 |
 
 ### 9.5 Quick Win Z — design implication
 
@@ -254,11 +254,12 @@ buddy 의 single-router 패턴(57 commands 가 모두 router 의 thin dispatch e
 3. **Description 정책**: 비록 baseline 에서 제거되더라도 user 가 `/` 메뉴에서 보는 라벨로서 의미 있으므로 유지하되 ≤80 chars 가이드라인.
 4. **Body 정책**: invocation 시 cumulative cost 가 의미 있으므로 thin invocation stub (1줄) 컨벤션 (Quick Win C 는 효과 작지만 적용 가치 있음).
 
-### 9.8 다음 액션
+### 9.8 다음 액션 — STATUS
 
-1. 사용자 승인 후 Quick Win Z 적용 (57 files, sed 1회) + 사후 router skill 동작 검증
-2. ADR 작성 (`docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md`)
-3. (Optional) Quick Win C body slim — invocation 시 cumulative cost 절감
+1. ✅ Quick Win Z 적용 완료 (57 files awk insertion). Router skill default 유지.
+2. ✅ ADR-001 작성 (`docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md`)
+3. ⏳ (Deferred) Quick Win C body slim — invocation 시 cumulative cost 절감용으로 후속 검토
+4. ⏳ (Future) `/buddy:*` 동작 in-session 검증 (router skill auto-routing 정상 작동 확인)
 
 <Fact-based Answer>
 - **Fact:**

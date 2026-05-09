@@ -1,6 +1,7 @@
 ---
 description: TDD red→green→refactor 루프로 특정 feature 또는 함수 구현.
 argument-hint: "<기능/스펙 설명>"
+disable-model-invocation: true
 ---
 
 # /buddy:build-with-tdd

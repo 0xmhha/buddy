@@ -1,6 +1,7 @@
 ---
 description: 아이디어 구체화 단계 — 검증, 사업성 평가, PRD 작성까지 한 번에.
 argument-hint: "<아이디어 설명 또는 컨셉>"
+disable-model-invocation: true
 ---
 
 # /buddy:concretize-idea

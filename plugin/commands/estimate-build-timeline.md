@@ -1,6 +1,7 @@
 ---
 description: critical path 기반 일정 합성 — confidence interval (best/expected/p90/worst) + risk buffer + holiday/availability 반영.
 argument-hint: "<task DAG / batch schedule / start date>"
+disable-model-invocation: true
 ---
 
 # /buddy:estimate-build-timeline

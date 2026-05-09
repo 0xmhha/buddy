@@ -1,6 +1,7 @@
 ---
 description: 여러 buddy skill 을 동시에 병렬 실행. 각 target 마다 fresh subagent 디스패치, 결과 집계.
 argument-hint: "<skill1>,<skill2>,...[ -- <shared args>]"
+disable-model-invocation: true
 ---
 
 # /buddy:parallel

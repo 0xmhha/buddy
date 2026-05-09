@@ -1,6 +1,7 @@
 ---
 description: save-context 가 저장한 가장 최근 작업 체크포인트를 복원. 브랜치 무관.
 argument-hint: "[<체크포인트 라벨 또는 ID>]"
+disable-model-invocation: true
 ---
 
 # /buddy:restore-context

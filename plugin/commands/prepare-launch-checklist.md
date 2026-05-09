@@ -1,6 +1,7 @@
 ---
 description: "launch readiness gate (6 axis × 17+ 항목) — GA 직전 cross-functional check."
 argument-hint: "<feature name> v<version>"
+disable-model-invocation: true
 ---
 
 # /buddy:prepare-launch-checklist

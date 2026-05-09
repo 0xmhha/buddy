@@ -1,6 +1,7 @@
 ---
 description: async event schema-first 설계 — producer/consumer + versioning + DLQ + idempotency.
 argument-hint: "<project name>"
+disable-model-invocation: true
 ---
 
 # /buddy:design-event-schema

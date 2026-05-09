@@ -1,6 +1,7 @@
 ---
 description: worker batch + sync points 계획 — capability fit + critical path 우선 + bottleneck 식별 + AI agent 통합 가능.
 argument-hint: "<DAG 입력 또는 feature 이름>"
+disable-model-invocation: true
 ---
 
 # /buddy:plan-parallel-execution

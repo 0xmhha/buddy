@@ -1,6 +1,7 @@
 ---
 description: rollback decision tree (언제 rollback / 언제 forward fix) + 실행 절차 + verification — incident response 의 핵심 도구.
 argument-hint: "<project name> v<version>"
+disable-model-invocation: true
 ---
 
 # /buddy:setup-rollback-runbook

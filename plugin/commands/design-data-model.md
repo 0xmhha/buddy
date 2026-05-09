@@ -1,6 +1,7 @@
 ---
 description: 데이터 모델 설계 — 스키마, 마이그레이션 전략, 인덱싱, 정규화 결정. production 운영 변경 비용을 사전 평가.
 argument-hint: "<entity 초안 또는 sub-domain 이름>"
+disable-model-invocation: true
 ---
 
 # /buddy:design-data-model

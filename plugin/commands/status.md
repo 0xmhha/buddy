@@ -1,6 +1,7 @@
 ---
 description: 현재 작업 단계 확인 + 다음에 실행할 명령 안내. 어디서 시작할지 막막할 때 먼저 실행.
 argument-hint: ""
+disable-model-invocation: true
 ---
 
 # /buddy:status

@@ -1,6 +1,7 @@
 ---
 description: canary deploy 단계 비율 + metric gate + auto-promote / rollback 정책 — staged rollout 으로 blast radius 제한.
 argument-hint: "<feature name> v<version>"
+disable-model-invocation: true
 ---
 
 # /buddy:setup-canary-deploy

@@ -1,6 +1,7 @@
 ---
 description: feature → actor 별 implementation track 분해 (frontend/backend/3rd-party/data) — Q8=(a) cascade 의 §4 진입점.
 argument-hint: "<feature spec 경로 또는 1줄 feature 요약>"
+disable-model-invocation: true
 ---
 
 # /buddy:decompose-feature-to-actor-tracks

@@ -1,6 +1,7 @@
 ---
 description: 임의의 단일 buddy skill 을 직접 invoke. 첫 번째 인자가 target skill 이름, 나머지는 그 skill 의 인자.
 argument-hint: "<target-skill-name> [skill arguments...]"
+disable-model-invocation: true
 ---
 
 # /buddy:run

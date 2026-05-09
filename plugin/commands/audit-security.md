@@ -1,6 +1,7 @@
 ---
 description: OWASP Top 10, secrets 노출, JWT, SQL injection 등 보안 취약점 점검.
 argument-hint: "[--scope <path>] [--severity <level>]"
+disable-model-invocation: true
 ---
 
 # /buddy:audit-security

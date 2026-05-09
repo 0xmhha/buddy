@@ -1,6 +1,7 @@
 ---
 description: typecheck, lint, 테스트, 데드코드, shell 자동 감지 → 0-10 가중 점수 대시보드.
 argument-hint: [--baseline]
+disable-model-invocation: true
 ---
 
 # /buddy:measure-code-health

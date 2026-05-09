@@ -1,6 +1,7 @@
 ---
 description: 사업성 7차원 평가 — 시장 규모, 가격 수용성, GTM, 경쟁, unit economics, 고객-구매자, 규제.
 argument-hint: "<아이디어 또는 PRD 경로>"
+disable-model-invocation: true
 ---
 
 # /buddy:assess-business-viability

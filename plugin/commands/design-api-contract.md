@@ -1,6 +1,7 @@
 ---
 description: API 계약 설계 — REST/GraphQL/RPC 선택 + actor 매핑 + schema + error taxonomy + versioning + contract test 전략.
 argument-hint: "<endpoint set 또는 sub-domain 이름>"
+disable-model-invocation: true
 ---
 
 # /buddy:design-api-contract

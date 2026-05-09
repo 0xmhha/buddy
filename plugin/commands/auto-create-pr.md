@@ -1,6 +1,7 @@
 ---
 description: feature 브랜치를 받아 PR 자동 생성 + 설명 + 라벨.
 argument-hint: "[<PR 제목 또는 비고>]"
+disable-model-invocation: true
 ---
 
 # /buddy:auto-create-pr

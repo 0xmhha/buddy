@@ -1,6 +1,7 @@
 ---
 description: WCAG 2.1 AA + axe + Lighthouse + manual screen reader 통합 a11y 감사 — public 제품 ADA / EAA / KR 장애인차별금지법 compliance.
 argument-hint: "<project name> v<version>"
+disable-model-invocation: true
 ---
 
 # /buddy:audit-accessibility
