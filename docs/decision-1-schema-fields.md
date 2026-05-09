@@ -18,7 +18,7 @@ Claude Code의 hook은 **stdin으로 JSON을 받는다**. 예를 들어 PreToolU
 {
   "session_id": "550e8400-e29b-41d4-a716-446655440000",
   "transcript_path": "/Users/.../.claude/sessions/550e8400.../transcript.jsonl",
-  "cwd": "/Users/wm/Work/buddy",
+  "cwd": "/Users/.../buddy",
   "hook_event_name": "PreToolUse",
   "tool_name": "Bash",
   "tool_input": {

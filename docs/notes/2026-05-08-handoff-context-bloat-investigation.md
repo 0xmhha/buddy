@@ -212,9 +212,9 @@ total PROCEDUREs: 105
 total slash commands: 57
 ```
 
-**Sync 명령 (다음 세션 첫 액션):**
+**Sync 명령 (다음 세션 첫 액션 — repo root 기준):**
 ```bash
-cd /Users/wm-it-22-00661/Work/github/study/ai/buddy
+# (cwd = buddy repo root, e.g. via `cd $(git rev-parse --show-toplevel)`)
 git fetch origin && git status
 git log --oneline -5
 ```

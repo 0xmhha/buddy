@@ -26,7 +26,7 @@ Before starting:
 - `bash >= 4.0` (macOS ships 3.2; install `brew install bash` if needed — but scripts target POSIX-ish bash4; note in README).
 - `jq >= 1.6`
 - `bats-core >= 1.10` for tests. On macOS: `brew install bats-core`. On Ubuntu: `sudo apt-get install bats`. Document in README.
-- Git repo at `/Users/wm-it-22-00661/Work/github/study/ai/buddy` already initialized with `main` branch.
+- Git repo at `<repo-root>` (this `buddy` repository, locally cloned) already initialized with `main` branch.
 
 All paths below are relative to repo root unless noted.
 
@@ -63,9 +63,8 @@ SHA256SUMS
 
 - [ ] **Step 2: Create directory skeleton with .gitkeep markers**
 
-Run:
+Run (from repo root, e.g. `cd $(git rev-parse --show-toplevel)`):
 ```bash
-cd /Users/wm-it-22-00661/Work/github/study/ai/buddy
 mkdir -p plugin/{commands,agents,skills,rules,hooks,mcp,.claude-plugin}
 mkdir -p vendor lib/bash scripts/release .github/workflows tests/bash
 touch plugin/commands/.gitkeep plugin/agents/.gitkeep plugin/skills/.gitkeep \

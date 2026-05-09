@@ -12,12 +12,12 @@
 
 `buddy` 프로젝트는 새로운 아이디어를 상용 수준의 제품으로 구체화하고, 구현, 테스트, 배포, 운영까지 지원하는 스킬셋을 모으는 것을 목표로 한다.
 
-이 문서는 현재 `buddy` 경로의 스킬들을 제품 빌딩 흐름의 작은 단계로 분리하고, `/Users/wm-it-22-00661/Work/github/study/ai/01.study/docs/projects/mattpocock-skills`에서 가져오면 좋은 기능을 검토하기 위한 초안이다.
+이 문서는 현재 `buddy` 경로의 스킬들을 제품 빌딩 흐름의 작은 단계로 분리하고, 외부 reference skill set(`<mattpocock-skills-repo>` — 머신별 경로 상이, 각 개발자 환경의 로컬 clone)에서 가져오면 좋은 기능을 검토하기 위한 초안이다.
 
 검토 대상:
 
 - Buddy: `./ko`
-- Matt skills: `/Users/wm-it-22-00661/Work/github/study/ai/01.study/docs/projects/mattpocock-skills`
+- Matt skills: `<mattpocock-skills-repo>` (외부 repo — 각 머신의 로컬 clone 경로 사용)
 
 ## 0. 11-stage → 9-phase 매핑
 
