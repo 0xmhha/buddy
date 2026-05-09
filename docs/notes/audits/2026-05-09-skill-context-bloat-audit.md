@@ -258,8 +258,8 @@ buddy 의 single-router 패턴(57 commands 가 모두 router 의 thin dispatch e
 
 1. ✅ Quick Win Z 적용 완료 (57 files awk insertion). Router skill default 유지.
 2. ✅ ADR-001 작성 (`docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md`)
-3. ⏳ (Deferred) Quick Win C body slim — invocation 시 cumulative cost 절감용으로 후속 검토
-4. ⏳ (Future) `/buddy:*` 동작 in-session 검증 (router skill auto-routing 정상 작동 확인)
+3. ✅ **Runtime 검증 PASS** — `claude plugin install buddy@buddy` + `/reload-plugins` 후 available-skills system-reminder 에 `buddy:router` 단독 노출 확인. 57 commands 의 description 이 baseline 에서 정상 제거됨. 자세한 내용은 closure handoff `docs/notes/2026-05-09-handoff-N1-closure.md` §4 참조.
+4. ⏳ (Deferred) Quick Win C body slim — invocation 시 cumulative cost 절감용으로 후속 검토
 
 <Fact-based Answer>
 - **Fact:**

@@ -89,12 +89,17 @@ Set the env var so all descriptions fit without compromise. **Rejected** because
 
 ## Verification
 
-Post-application checks (manual, 2026-05-09):
+### Tier-1 (static, performed 2026-05-09)
 
 - All 57 `plugin/commands/*.md` contain `disable-model-invocation: true` (`grep -l '^disable-model-invocation: true$' plugin/commands/*.md | wc -l` → 57).
 - Router SKILL.md unchanged.
-- `/buddy:status` dry-run via `/` menu lists the command with its description tagline (autocomplete unchanged).
-- A natural-language prompt that previously could trigger `/buddy:<name>` auto-invocation now goes through the router skill or returns a normal response — desired outcome.
+- Marketplace install reproduces the change: `claude plugin marketplace add 0xmhha/buddy` then `claude plugin install buddy@buddy` results in the same 57/57 frontmatter state at `~/.claude/plugins/marketplaces/buddy/plugin/commands/`. `diff -r` against the local repo is empty.
+
+### Tier-2 (runtime, performed 2026-05-09)
+
+After `/reload-plugins` in a Claude Code session with the plugin installed, the available-skills system-reminder lists **`buddy:router` only**. None of the 57 `/buddy:<name>` commands appear in the auto-loaded skill catalog. This matches the predicted behavior: descriptions are no longer in baseline context, while user-facing autocomplete via `/buddy:` still works.
+
+See [`docs/notes/2026-05-09-handoff-N1-closure.md`](../../notes/2026-05-09-handoff-N1-closure.md) §4 for the verification chain in full.
 
 ## Future revisits
 
