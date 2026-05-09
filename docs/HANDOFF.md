@@ -228,9 +228,7 @@ v0.1.0 release 가 끝났으므로 dogfood feedback 은 **v0.2 / v0.3 우선순�
 | `docs/roadmap.md` | M6 이후 무엇을 할지 결정할 때 |
 | `docs/v0.1-spec.md` | M1~M5 구현 의도/invariant 확인 |
 | `docs/decision-1-schema-fields.md` | hook event schema 왜 이렇게 결정됐는지 |
-| `docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md` | **1단계 plugin scaffold 본 트랙 design spec (entry point)** |
-| `docs/superpowers/plans/2026-04-24-buddy-plugin-scaffold-plan.md` | **1단계 plugin scaffold 구현 plan (Phase 1~)** |
-| `docs/superpowers/plans/2026-04-24-buddy-plugin-scaffold-plan.md` | v1.0 plugin 구현 plan |
+| `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` | plugin 9-phase 아키텍처 현행 SSoT |
 | `DOGFOOD.md` | 사용자가 본인 머신에 install할 때 안내 |
 | `docs/dogfood-feedback-template.md` | 며칠 사용 후 회고 템플릿 |
 | `archive/ts-poc/` | TS PoC 자산 (참조용, *사용 X*) |

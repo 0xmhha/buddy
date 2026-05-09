@@ -170,7 +170,6 @@
 - [`HANDOFF.md`](./HANDOFF.md) — 세션 인계 + 워크플로우 skill 분기
 - [`roadmap.md`](./roadmap.md) — Go CLI 마일스톤 SSoT
 - [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) — plugin 9-phase 아키텍처 SSoT
-- [`superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md`](./superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md) — plugin scaffold 설계
 - [`v0.1-spec.md`](./v0.1-spec.md) — Go CLI v0.1 spec (LOCKED)
 - [`skill-map.md`](./skill-map.md) — 11-stage → 9-phase 매핑 (참조용)
 - [`DOGFOOD.md`](../DOGFOOD.md) + [`dogfood-feedback-template.md`](./dogfood-feedback-template.md) — Go CLI dogfood
