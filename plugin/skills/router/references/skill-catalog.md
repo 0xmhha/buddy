@@ -141,6 +141,11 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `freeze-edit-scope` | dispatch | [패턴 라이브러리] session 동안 Edit/Write를 single directory로 lock (Read/Grep/Glob은 열어 둠) |
 | `dispatch-parallel-agents` | command + dispatch | feature/task를 worktree로 격리해 Sonnet worker agent에 병렬 분배하고 결과를 aggregate |
 | `diagnose-bug` | command + dispatch | 버그를 증상 반응이 아닌 재현 가능한 원인 분석으로 해결 |
+| `generate-from-api-contract` | command + dispatch | OpenAPI / GraphQL / gRPC contract → 클라이언트 SDK + 서버 stub + type 자동 생성. CI 자동 동기화 + AUTO-GENERATED 헤더 + wrapper layer 분리 |
+| `generate-tests-from-spec` | command + dispatch | acceptance criteria + test plan → unit / integration / contract / E2E test skeleton 자동 + mock 자동 import + TODO grep coverage gap |
+| `pair-program-loop` | command + dispatch | driver / navigator 역할 분리 + 15min swap + AI agent pair (driver 또는 navigator). build-with-tdd cycle cascade |
+| `refactor-with-rename-trace` | command + dispatch | LSP rename + 호출 그래프 cross-check + grep 누락 검증 + test baseline. pure rename = 단일 commit |
+| `update-docs-with-code` | command + dispatch | 코드 변경 → README / ADR / CHANGELOG / HANDOFF / skill-catalog 5 영역 동기화 매트릭스 + automation hook |
 
 ### §6 Stage Skills — Quality
 
