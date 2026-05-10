@@ -76,5 +76,14 @@ per the upstream gpt-researcher project.
 agent-evaluation
 Copyright (c) 2026 Kevin (with Claude formalization)
 MIT License — referenced by
-plugin/skills/audit-test-coverage-meaningful/PROCEDURE.md for the
+plugin/skills/audit-test-coverage-meaningful/PROCEDURE.md and
+plugin/skills/analyze-actor-failure-rate/PROCEDURE.md for the
 input-vs-output trust-scoring pattern (OMAS v2).
+
+---
+
+humanizer
+Copyright (c) 2025 Siqi Chen
+MIT License — referenced by
+plugin/skills/analyze-customer-feedback-corpus/PROCEDURE.md for
+AI-text naturalness inverse-pattern checking.

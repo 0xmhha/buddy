@@ -205,6 +205,13 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `save-context` | command + dispatch | decisions, remaining work, git status를 checkpoint로 저장해 future session이 branch가 달라도 이어받게 한다 |
 | `restore-context` | command + dispatch | context-save가 저장한 most recent work checkpoint를 cross-branch로 load한다 |
 | `persist-learning-jsonl` | dispatch | [패턴 라이브러리] JSONL append-only learning store data model + 누적/조회 패턴 (pattern/pitfall/preference taxonomy) |
+| `analyze-feature-adoption` | command + dispatch | awareness → trial → habit funnel + power user 5차원 코호트 + abandonment fix hypothesis + A/B test 후보 |
+| `analyze-user-cohort` | command + dispatch | acquisition cohort retention curve (D1/D7/D30/D90) + LTV/CAC 3:1+ + 3 churn 분류 (voluntary/involuntary/implicit) |
+| `analyze-actor-failure-rate` | command + dispatch | 4 actor failure matrix + trust score (reliability/predictability/MTTR/blast) + 6 recovery 패턴 (Release It! Nygard) + cascade |
+| `analyze-cost-anomaly` | command + dispatch | cloud / SaaS spike anomaly detection + drill-down 5차원 + root cause 6 분류 + 3 단계 alert + 5-step recovery |
+| `triage-customer-support-ticket` | command + dispatch | ticket 5+ 분류 + severity 4 단계 + recurring pattern threshold + product feedback loop 4 영역 + KB self-service |
+| `analyze-customer-feedback-corpus` | command + dispatch | CS/NPS/review/interview 텍스트 corpus → 토픽 모델링 + sentiment cross + verbatim quote + NPS 3-segment 분리 |
+| `audit-error-budget` | command + dispatch | SLO budget burn rate multi-window/multi-burn (Google SRE) + release gate 4 단계 + alert fatigue 회피 |
 
 ### §9 Stage Skills — Lifecycle Management
 
