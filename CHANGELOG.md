@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-05-10
+
+### Fixed — Cycle 1 dogfood validation findings
+
+- `concretize-idea` PROCEDURE: stage 4 / stage 6 의 stale `[bracket]` notation 제거 + "skill 미존재 시 orchestrator가 수행" fallback prose 제거. 두 skill 모두 v1.1.0 에서 작성 완료된 상태이나 본문이 갱신되지 않아 *cascade flow 가 둘 갈래로 분기 가능* 하던 위험 해소. (Issue B3 / B4 / B5)
+- `validate-idea` PROCEDURE: Q1 정확 phrasing 의 어색한 동사 형태 다듬기 ("내일 사라지면 진짜로 화날" → "내일 사라지면 진짜로 화내는 사람"). (Issue B2)
+
+### Added
+
+- `docs/notes/2026-05-10-dogfood-result-cycle-1.md` — Cycle 1 dogfood validation 결과 (`/buddy:concretize-idea` entry 검증, 7 issue 식별, quality gate minimum-viable subset 통과)
+- `docs/notes/2026-05-10-dogfood-validation-scenarios.md` §3.3 — Canned business scenarios 표 (S1 한국어 SaaS / S2 SMB 회계 / S3 i18n release) 로 Cycle 2 single-skill / cascade 테스트의 입력 set 정의. (Issue B1)
+
+### Changed
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version 1.1.0 → 1.1.1 (patch — content fix only, no API/scope change)
+
 ## [1.1.0] — 2026-05-10
 
 ### Added — Skill Completion Cycle 100% (44 신규 + 2 통합)
