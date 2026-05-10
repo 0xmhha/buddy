@@ -403,7 +403,24 @@ core track + ui track (cross-track contract via interfaces):
 
 **Pending**: acceptance gate `gofmt -l .` empty 는 별도 (housekeeping C-3 — 사전 drift in `persona.go` const block alignment, 본 batch 와 무관).
 
-**Batch B1 종료** — core-1 + i18n-1 모두 Done. 다음 라운드 = Batch B2 (core-2 Session struct + Lister interface, core-5 TokenUsage struct, core-12 pricing table embed).
+**Batch B1 종료** — core-1 + i18n-1 모두 Done.
+
+### 5.2 Batch B2 진행 로그
+
+| Task | 상태 | 산출 | TDD cycle |
+|------|------|------|----------|
+| **core-2** Session struct + Lister interface | ✅ Done | 신규 `internal/sessions/sessions.go` (Session 7-field struct, Lister single-method interface) + `sessions_test.go` (TestSession_FieldsMatchMigration, fakeLister + interface compile-time guard) | green-first (interface only, no behavior to red) |
+| **core-5** TokenUsage struct (재사용 확인) | ✅ Done | 별도 정의 없음 — `internal/sessions/sessions.go` 가 `schema.TokenUsage` (v0.1 §6.1 옵션 A) 를 그대로 import 해 `Session.Usage` 필드로 임베드. spec lock-in 1:1 보존. | n/a (zero-LOC task — *acceptance = re-use confirmed*) |
+| **core-12** pricing table embed | ✅ Done | 신규 `internal/pricing/anthropic.go` (`ModelPrice` struct + `Estimate(usage) cents` + 3 모델 (`opus-4-7` / `sonnet-4-6` / `haiku-4-5`) AnthropicPricing map + `Lookup(model) (ModelPrice, bool)`) + `anthropic_test.go` (5 test — zero / 1M tokens-each / realistic opus / known / unknown) | red 0 → green 5 (간단 기능, behavior 명확) |
+
+**Acceptance gate 결과 (B2)**:
+- `go test -race -count=2 ./...` → **18 packages all PASS** (16 → 18, sessions + pricing 신규)
+- `go build ./...` → clean
+- `go vet ./internal/sessions/ ./internal/pricing/` → clean
+
+**Pricing freshness**: 단가는 console.anthropic.com 2026-05 시점 기준. release cadence가 freshness window — Anthropic이 단가 조정 시 별도 commit 으로 갱신.
+
+**Batch B2 종료** — core-2 + core-5 + core-12 모두 Done. critical path L1 통과. 다음 라운드 = Batch B3 (core-3 fsLister impl + core-13 pricing.Estimate 함수 wrapping AI agent dispatch 가능).
 
 ---
 

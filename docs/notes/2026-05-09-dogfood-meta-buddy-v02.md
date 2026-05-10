@@ -22,7 +22,7 @@
 | §2 define-features | ✅ | plan §2.1~§2.4 (5 actor / 5 use case / 6 feature / DAG depth 매핑) | F-6 |
 | §3 design-system | ✅ | plan §3.1 (cascade 5 stage 적용) + §3.2 (D-1 = TUI 채택, ADR-002 proposed) + §3.3 (ai-m 패턴 차용 분류) + §3.4 (trigger-driven backlog 4건) + §3.5 (ADR draft) | F-7, F-8 |
 | §4 plan-build | ✅ | plan §4.1~§4.7 (3 implementation tracks / 24 atomic tasks / DAG critical path 7.75h / 8 batch schedule / acceptance test plan / timeline p50=5d p90=8d / autoplan skip) | F-9 |
-| §5 build-feature | 🟡 진행 중 | B1 ✅ Done — core-1 ✅ (migration v3 sessions + 4 test green) + i18n-1 ✅ (en 57/57 + sibling test + fallback test 재구성). B2 다음 라운드. | F-10 |
+| §5 build-feature | 🟡 진행 중 | B1 ✅ + B2 ✅ Done — B2: core-2 sessions package (Session+Lister) + core-5 TokenUsage 재사용 확인 (zero-LOC) + core-12 pricing package (3 model + Estimate 5 test). 18 packages race-clean. B3 다음 라운드. | F-10, F-11 |
 | §6 verify-quality | ⏸ | (§4.5 acceptance test plan 이 입력, SaaS audit 부분 적용) | — |
 | §7 ship-release | ⏸ | (v0.1 release.yml 재사용 + sessions migration + binary size check) | — |
 | §4 plan-build | ⏸ | (다음 세션) | — |
@@ -179,6 +179,22 @@
 - 또는 별도 stage skill `audit-test-contract-cascade` (Cluster A residual `audit-test-coverage-meaningful` 와 묶음 가능).
 
 **fix 우선순위:** Mid — 다른 dogfood 사용자가 *기존 codebase 에 새 feature 추가* 시 같은 마찰 겪을 가능성 높음.
+
+### F-11: `decompose-track-to-tasks` 가 *zero-LOC verify-only task* 를 자연스럽게 표현 못함
+
+**관찰:**
+- core-5 ("TokenUsage struct (v0.1 §6.1 schema 재사용 확인)") 가 plan §4.2 에서 atomic task 로 카운트 (1/24) + estimated 0.25h.
+- B2 진행 시 core-5 의 acceptance 가 *기존 artifact (`schema.TokenUsage`) 가 v0.2 sessions 에 그대로 import 됨* — *재사용 확인* 자체. **신규 코드 라인 0**.
+- `decompose-track-to-tasks` PROCEDURE 의 "atomic task = single PR scope" 정의는 *모든 task 가 produce code* 가정. zero-LOC task 는 PR 가 아닌 *review note*.
+- 본 batch 에서는 core-5 가 core-2 의 Session struct 안에서 자연스럽게 satisfied (Usage 필드가 schema.TokenUsage). 별도 task 분리가 noise.
+
+**확신도:** Mid (clearly observed 이번 batch — core-5 commit message 작성 시 *변경된 LOC 0* 를 명시할 자연 단어가 부재).
+
+**제안:**
+- (a) `decompose-track-to-tasks` PROCEDURE 에 한 줄 추가: "Verify-only / re-use-confirmation task 는 별도 atomic task 로 분리하지 말고 *consuming task 의 acceptance criterion* 으로 흡수."
+- (b) plan §4.2 task 양식에 task type 필드 추가 — `code` / `config` / `doc` / `verify` 분류.
+
+**fix 우선순위:** Low — 본 batch 에서는 *consuming task (core-2)* 가 자동 흡수해서 마찰이 약함. 단, plan task counter (24) 에 verify-only 가 섞여 진척률이 약간 부풀려짐.
 
 ---
 
