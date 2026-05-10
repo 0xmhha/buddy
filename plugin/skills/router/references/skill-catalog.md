@@ -212,6 +212,12 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `triage-customer-support-ticket` | command + dispatch | ticket 5+ 분류 + severity 4 단계 + recurring pattern threshold + product feedback loop 4 영역 + KB self-service |
 | `analyze-customer-feedback-corpus` | command + dispatch | CS/NPS/review/interview 텍스트 corpus → 토픽 모델링 + sentiment cross + verbatim quote + NPS 3-segment 분리 |
 | `audit-error-budget` | command + dispatch | SLO budget burn rate multi-window/multi-burn (Google SRE) + release gate 4 단계 + alert fatigue 회피 |
+| `optimize-conversion-funnel` | command + dispatch | AARRR funnel (Pirate Metrics) + 5 CRO sub-domain (onboarding/form/page/paywall/popup) + biggest-drop bottleneck + A/B pipeline |
+| `plan-growth-experiment` | command + dispatch | Hacking Growth (Ellis) ICE/RICE + sprint cadence + win/loss/inconclusive 영속화 + 5 anti-pattern 회피 |
+| `draft-marketing-copy` | command + dispatch | 5 카피 유형 (landing/email/ad/social/vs page) + headline 5+ variant + body framework (PAS/AIDA/FAB) + 6 editing + voice |
+| `plan-marketing-channel` | command + dispatch | 6 channel (paid/co/community/directory/lead-magnet/free-tool) channel-fit + LTV/CAC + brand 단계 mix + drift monitoring |
+| `audit-seo-aso` | command + dispatch | SEO 5 영역 + ASO 6 영역 + keyword research 4 차원 + content gap + drift monitoring (E-E-A-T) |
+| `automate-marketing-content` | command + dispatch | email sequence + cold email cadence + content calendar + automation 5 도구 + 6 metric + CAN-SPAM/GDPR/KISA |
 
 ### §9 Stage Skills — Lifecycle Management
 
