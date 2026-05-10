@@ -22,7 +22,7 @@
 | §2 define-features | ✅ | plan §2.1~§2.4 (5 actor / 5 use case / 6 feature / DAG depth 매핑) | F-6 |
 | §3 design-system | ✅ | plan §3.1 (cascade 5 stage 적용) + §3.2 (D-1 = TUI 채택, ADR-002 proposed) + §3.3 (ai-m 패턴 차용 분류) + §3.4 (trigger-driven backlog 4건) + §3.5 (ADR draft) | F-7, F-8 |
 | §4 plan-build | ✅ | plan §4.1~§4.7 (3 implementation tracks / 24 atomic tasks / DAG critical path 7.75h / 8 batch schedule / acceptance test plan / timeline p50=5d p90=8d / autoplan skip) | F-9 |
-| §5 build-feature | 🟡 진행 중 | B1 — core-1 ✅ (migration v3 sessions table + 4 test green) + i18n-1 partial (sample 5/57 + 톤 가이드 — 사용자 confirm 대기) | F-10 |
+| §5 build-feature | 🟡 진행 중 | B1 ✅ Done — core-1 ✅ (migration v3 sessions + 4 test green) + i18n-1 ✅ (en 57/57 + sibling test + fallback test 재구성). B2 다음 라운드. | F-10 |
 | §6 verify-quality | ⏸ | (§4.5 acceptance test plan 이 입력, SaaS audit 부분 적용) | — |
 | §7 ship-release | ⏸ | (v0.1 release.yml 재사용 + sessions migration + binary size check) | — |
 | §4 plan-build | ⏸ | (다음 세션) | — |

@@ -21,6 +21,19 @@ func TestKO_HasEntryForEveryKey(t *testing.T) {
 	}
 }
 
+// TestEN_HasEntryForEveryKey mirrors TestKO_HasEntryForEveryKey now that the
+// v0.2 i18n-1 sweep filled the en catalog. New Key additions from this point
+// on must include both ko and en templates; the ko-only fallback path is
+// reserved for future work mid-migration, not for the steady state.
+func TestEN_HasEntryForEveryKey(t *testing.T) {
+	en := enCatalog()
+	for _, key := range AllKeys() {
+		v, ok := en[key]
+		require.True(t, ok, "en catalog missing key %q", key)
+		assert.NotEmpty(t, v, "en catalog has empty template for key %q", key)
+	}
+}
+
 // TestM_RendersTemplate verifies the simplest path: a no-arg template returns
 // the catalog string verbatim under the active locale (default ko).
 func TestM_RendersTemplate(t *testing.T) {
@@ -37,22 +50,34 @@ func TestM_FillsArgs(t *testing.T) {
 	assert.Equal(t, "buddy: daemon 시작 (pid 12345).", got)
 }
 
-// TestML_FallbackToKO_WhenENMissing verifies the explicit-locale form falls
-// back to the ko entry when en doesn't have the key — the v0.2 i18n migration
-// path (en map starts partially populated; unfilled keys still resolve via
-// ko). KeyUninstallNothingRegistered is intentionally not in the v0.2 sample
-// tracer, so it exercises the fallback branch.
+// TestML_FallbackToKO_WhenENMissing keeps the fallback branch covered now
+// that the en catalog is full at the steady state. We mutate the live
+// catalog (mirroring the TestM_PanicsOnTrulyMissingKey pattern) to delete
+// one en entry within a sub-scope and assert ML(en, key) resolves through
+// the ko side. This guards the fallback wiring so future ko-only Key
+// additions during migration keep working instead of panicking.
+//
+// The catalog mutation is restored via t.Cleanup so siblings stay isolated.
 func TestML_FallbackToKO_WhenENMissing(t *testing.T) {
-	got := ML(LocaleEN, KeyUninstallNothingRegistered)
+	const targetKey = KeyUninstallNothingRegistered
+
+	mu.Lock()
+	saved := catalog[LocaleEN][targetKey]
+	delete(catalog[LocaleEN], targetKey)
+	mu.Unlock()
+	t.Cleanup(func() {
+		mu.Lock()
+		catalog[LocaleEN][targetKey] = saved
+		mu.Unlock()
+	})
+
+	got := ML(LocaleEN, targetKey)
 	assert.Equal(t, "buddy: 등록된 게 없어. 그대로 둘게.", got)
 }
 
-// TestSetLocale_ChangesActive sets en as active and verifies both paths the
-// catalog can resolve through:
-//   - filled en key → en template returned directly (KeyInstallDone is part
-//     of the v0.2 sample tracer in en.go).
-//   - unfilled en key → ko fallback still wired (KeyUninstallNothingRegistered
-//     hasn't been translated yet, so M() resolves through ko).
+// TestSetLocale_ChangesActive sets en as active and verifies M() returns the
+// en template directly (post-i18n-1 every Key resolves on the en side, no
+// fallback needed for the steady state).
 func TestSetLocale_ChangesActive(t *testing.T) {
 	resetLocale(t)
 	require.NoError(t, SetLocale(LocaleEN))
@@ -62,7 +87,7 @@ func TestSetLocale_ChangesActive(t *testing.T) {
 		M(KeyInstallDone),
 	)
 	assert.Equal(t,
-		"buddy: 등록된 게 없어. 그대로 둘게.",
+		"buddy: nothing registered. leaving things alone.",
 		M(KeyUninstallNothingRegistered),
 	)
 }

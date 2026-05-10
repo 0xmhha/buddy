@@ -394,14 +394,16 @@ core track + ui track (cross-track contract via interfaces):
 | Task | 상태 | 산출 | TDD cycle |
 |------|------|------|----------|
 | **core-1** sessions table migration SQL | ✅ Done | `internal/db/migrations.go` version 3 (table + 2 index) + `internal/db/db_test.go` 의 `TestOpen_CreatesAllTables` / `TestOpen_SessionsTable_HasV02Columns` (신규) / `TestOpen_RecordsLatestSchemaVersion` / `TestOpen_IsIdempotentAcrossReopens` 모두 갱신 + green | red (3 fail) → green (16 pkg race-clean) |
-| **i18n-1** en map 채우기 | 🟡 partial (sample 5/57 + 톤 가이드) | `internal/persona/en.go` — `KeyInstallDone` / `KeyInstallNoOp` / `KeyDaemonStarted` / `KeyDoctorAllHealthy` / `KeyDoctorDaemonNotRunning` 5건 영어 번역 + en 톤 가이드 docstring + 영향받은 fallback test 2건 갱신 | tracer-bullet (사용자 톤 confirm 대기) |
+| **i18n-1** en map 채우기 | ✅ Done (57/57) | `internal/persona/en.go` — 모든 ko key 의 영어 1:1 매핑 + 톤 가이드 docstring (spec §6.3 친구 톤 영어판). `TestEN_HasEntryForEveryKey` sibling test 추가, `TestML_FallbackToKO_WhenENMissing` 은 catalog mutation 패턴 (`TestM_PanicsOnTrulyMissingKey` 차용) 으로 재구성, `TestSetLocale_ChangesActive` 는 두 path 모두 en 결과로 갱신 | tracer-bullet 5 → full sweep 57 |
 
-**Acceptance gate 결과 (B1 partial)**:
+**Acceptance gate 결과 (B1 complete)**:
 - `go test -race -count=2 ./...` → 16 packages all PASS
 - `go build ./...` → clean
-- `go vet ./internal/db/ ./internal/persona/` → clean
+- `go vet ./internal/persona/` → clean
 
-**Pending**: i18n-1 의 나머지 52 key 는 사용자 톤 confirm 후 mechanical 채움. acceptance gate `gofmt -l .` empty 는 별도 (housekeeping C-3 — 사전 drift in `persona.go` const block alignment).
+**Pending**: acceptance gate `gofmt -l .` empty 는 별도 (housekeeping C-3 — 사전 drift in `persona.go` const block alignment, 본 batch 와 무관).
+
+**Batch B1 종료** — core-1 + i18n-1 모두 Done. 다음 라운드 = Batch B2 (core-2 Session struct + Lister interface, core-5 TokenUsage struct, core-12 pricing table embed).
 
 ---
 
