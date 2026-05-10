@@ -122,7 +122,37 @@ scenarios doc §8 의 *Skill Completion Cycle quality gate* 기준:
 
 ---
 
-## §10. References
+## §10. Addendum — Cycle 2 structural verification
+
+Live dispatch 는 token cost 6-8x 로 별 세션 권장 — 본 cycle 에서는 *PROCEDURE.md 본문 정합성 + cascade chain 명시* 만 spot-check.
+
+### §10.1 §4 single-skill 5 정합성
+
+| skill | scenarios doc §4 expected | 실 PROCEDURE.md 정합 |
+|-------|---------------------------|---------------------|
+| `decide-target-market` (109줄) | Stage 1 (matrix) ~ Stage 4 (ADR), §5 산출 형식, §6 self-check 6 항목 | ✅ 4 stage + §5 + §6 모두 명시 |
+| `review-legal-regulatory` (173줄) | 7 sub-domain + 3 sub-skill cascade (privacy / IP / AI) | ✅ 7 영역 표 + 3 sub-skill `(구현됨)` 라벨 명시 |
+| `audit-test-coverage-meaningful` (163줄) | 4 차원 trust score + agent-evaluation OMAS v2 ref | ✅ line / mutation / behavior / edge case + `agent-evaluation (외부 reference, MIT)` 본문 인용 |
+| `optimize-conversion-funnel` (124줄) | AARRR 5 단계 + 5 CRO sub-domain + marketingskills attribution | ✅ Pirate Metrics (AARRR) 5 단계 + onboarding / form / page / paywall-upgrade / popup 5 sub-domain + marketingskills 본문 인용 |
+| `archive-product` (169줄) | 6~12 month timeline + migrate-customers cascade + GDPR data portability | ✅ Stage 2 timeline 표 (-3 ~ +6 month) + `migrate-customers (§9) 호출` + GDPR / 개인정보보호법 *data portability* 명시 |
+
+### §10.2 §5 cascade chain 정합성
+
+| skill | `## 다음 phase` 명시 |
+|-------|--------------------|
+| `concretize-idea` | ✅ → `define-features` (2단계) |
+| `decide-target-market` | ✅ §7. 다음 phase 섹션 존재 |
+| `review-legal-regulatory` | ✅ 분기 명시 (글로벌 → 다음 phase / Korea → cluster trigger 등) |
+| `design-system` | ✅ → `plan-build` (4단계) |
+
+### §10.3 판정
+
+- **Cycle 2 structural verification**: ✅ pass (5/5 single-skill 본문 정합 + 4/4 cascade chain 명시).
+- **Cycle 2 live dispatch**: ❌ 미수행 — 별 세션 trigger 시 진행. session token cost 6-8x 예상.
+
+---
+
+## §11. References
 
 - `docs/notes/2026-05-10-dogfood-validation-scenarios.md` — 본 결과의 검증 scenario doc
 - `docs/superpowers/decisions/README.md` — ADR Index (3 ADR)

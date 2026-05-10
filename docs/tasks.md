@@ -155,7 +155,8 @@
 | A-4.6 | Cycle 1 발견 issue B3/B4/B5 fix — concretize-idea PROCEDURE bracket / fallback 문구 stale 제거 | A-4.5 의존, *minor major* — 단일 PR |
 | A-4.7 | Cycle 1 발견 B1 — scenarios doc §3.X canned scenarios 표 추가 | A-4.5 의존, doc-only |
 | A-4.8 | Cycle 1 발견 B2 — validate-idea L171 phrasing 다듬기 | A-4.5 의존, prose-only |
-| A-4.9 | Cycle 2 — §4 5 single-skill 실 dispatch 검증 + §5 cascade 4 stage 실 dispatch 검증 + 자연어 dispatch 검증 | A-4.6 의존 |
+| A-4.9 | Cycle 2 (structural) — §4 5 single-skill PROCEDURE.md 정합성 + §5 cascade 4 stage `## 다음 phase` 명시 검증 | ✅ Done — scenarios doc §4 expected-result 5/5 정합 (Stage 흐름 / sub-domain 수 / cascade ref / attribution) |
+| A-4.10 | Cycle 2 (live) — 5 single-skill 실 dispatch + 4 stage cascade 실 dispatch + 자연어 dispatch | A-4.9 의존, *별 세션 권장* (token cost 6-8x) |
 
 ### A-5. N-1 후속 (deferred, low priority)
 
