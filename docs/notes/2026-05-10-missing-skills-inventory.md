@@ -140,9 +140,36 @@ phase7-deferred-reevaluation.md 의 Cluster H. 사용자 confirm (2026-05-10) �
 
 ---
 
-### 2.4 그룹 4 — charter scope 12 stage × 9-phase 매핑 gap (Step 2 외부 탐색 후 결정 — 2026-05-10 lock-in)
+### 2.4 그룹 4 — charter scope gap (2026-05-10 lock-in 후, 11 신규 skill)
 
-**결정 (2026-05-10)**: 사용자 confirm — *Step 2 외부 4 경로 탐색 후 명명 / scope 결정*. 외부 자산이 form-factor / 그로스 / 마케팅 영역 단서 제공 가능.
+**Step 3a 매트릭스** ([`2026-05-10-skill-matrix-3a-groups-2-4.md`](./2026-05-10-skill-matrix-3a-groups-2-4.md)) 결과 사용자 confirm (D-D / D-E / D-F):
+
+#### 2.4.1 그룹 4 11 신규 skill (D-D lock-in — 권장 그대로, 필요시 변경)
+
+| stage | skill | 외부 자산 차용 |
+|-------|------|------------|
+| 3 form-factor 결정 | `decide-form-factor-app-vs-web` | (d) 신규 — 외부 후보 없음 |
+| 4 디자인 적용 | `apply-design-system` | (b) designer-skills/design-systems |
+| 4 디자인 적용 | `audit-ui-quality` | (b) make-interfaces-feel-better + designer-toolkit |
+| 4 디자인 적용 | `prototype-from-spec` | (b) designer-skills/prototyping-testing |
+| 4 디자인 적용 | `design-interaction-pattern` | (b) designer-skills/interaction-design |
+| 10+11 통합 | `optimize-conversion-funnel` | (b) marketingskills 5 CRO 통합 |
+| 10+11 통합 | `plan-growth-experiment` | (d) 신규 |
+| 10+11 통합 | `draft-marketing-copy` | (b) marketingskills copywriting + copy-editing + ad-creative |
+| 10+11 통합 | `plan-marketing-channel` | (b) marketingskills 6 channel 통합 |
+| 10+11 통합 | `audit-seo-aso` | (b) marketingskills ai-seo + aso-audit |
+| 10+11 통합 | `automate-marketing-content` | (b) marketingskills email-sequence + cold-email + content-strategy |
+
+> charter §3 의 stage 10 (그로스) + 11 (마케팅) 통합 (D-E lock-in) — *모호하면 통합 default, 필요시 분리* 정책. charter 본문 자체는 *분리 표기 유지* (영역의 *이상화* 분류 보존).
+
+#### 2.4.2 그룹 4-extension 의 deferred 2 (D-F lock-in — F1 보존)
+
+| skill | trigger | 외부 자산 차용 |
+|------|--------|------------|
+| `consult-korean-legal-context` | 사용자가 한국 시장 진출 시 | (b) korean-legal-guide_skill |
+| `draft-patent-application` | 특허 영역 진입 시 | (b) patent-application-drafting_skill |
+
+> 본 2 후보는 trigger 발생 시 plugin buddy 에 *지역 특화 모듈* 로 진입. 현재는 inventory 보존 only.
 
 
 
@@ -167,17 +194,18 @@ charter §3 의 plugin buddy scope 12 stage 와 plugin buddy 의 9-phase orchest
 
 ---
 
-## 3. 종합 매트릭스 (2026-05-10 결정 반영)
+## 3. 종합 매트릭스 (2026-05-10 결정 반영 + Step 3a lock-in)
 
 | 그룹 | 건수 | 결정 | plugin buddy 신규 작성 | 우선순위 |
 |------|-----|------|---------------------|--------|
-| **그룹 1** 직접 미구현 (A-2) | 29 | 신규 작성 또는 외부 참조 통합 | **29** | HIGH (charter 1 순위) |
+| **그룹 1** 직접 미구현 (A-2) | 29 | 신규 작성 또는 외부 참조 통합 (Step 3b 매트릭스) | **29** | HIGH (charter 1 순위) |
 | **그룹 2** skill-map 추가 (영역 겹침) | 4 | 통합 3 + 신규 1 | **1** (review-legal-regulatory) | MEDIUM (Cluster E 묶음) |
 | **그룹 3** MCP — Q4 보류 재평가 | 2 | C2 분할 진입 | **0 + 1 deferred** (analytics-mcp §8 후) | DEFERRED |
-| **그룹 4** charter scope gap | 4+ 영역 | Step 2 외부 탐색 후 결정 | **TBD** | MEDIUM-LOW |
-| **합계 (확정)** | **30 신규 + 1 deferred + 3 통합 + 4 영역 TBD** | | | |
+| **그룹 4** charter scope gap | 4 영역 → 11 skill | Step 3a lock-in (D-D / D-E) | **11** (form-factor 1 + design 4 + 그로스+마케팅 통합 6) | MEDIUM-LOW |
+| **그룹 4-extension** 한국 시장 deferred | 2 | D-F lock-in (F1 보존) | **0 + 2 deferred** (consult-korean-legal-context, draft-patent-application) | DEFERRED |
+| **합계 (확정)** | **41 신규 + 1 deferred (analytics-mcp) + 2 deferred-extension + 3 통합** | | | |
 
-> *통합 3* (define-product-context / write-prd / review-code-architecture) 는 신규 skill 작성이 아니라 *기존 PROCEDURE 갱신* 이라 plugin/skills/ 디렉토리 카운트 영향 없음 (현재 106 → 신규 30 후 = 136).
+> *통합 3* (define-product-context / write-prd / review-code-architecture) 는 신규 skill 작성이 아니라 *기존 PROCEDURE 갱신* 이라 plugin/skills/ 디렉토리 카운트 영향 없음 (현재 106 → 신규 41 후 = 147).
 > *cli buddy 트랙으로 이동* 1 (feature-management-mcp) 은 plugin buddy inventory 에서 제외됨.
 
 ### 3.1 charter scope cover 율
