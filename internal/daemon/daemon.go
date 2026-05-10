@@ -22,8 +22,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/wm-it-22-00661/buddy/internal/aggregator"
-	"github.com/wm-it-22-00661/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/aggregator"
+	"github.com/0xmhha/buddy/internal/db"
 )
 
 // Config governs how the daemon polls.

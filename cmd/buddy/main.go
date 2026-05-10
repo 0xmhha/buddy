@@ -15,15 +15,15 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wm-it-22-00661/buddy/internal/config"
-	"github.com/wm-it-22-00661/buddy/internal/daemon"
-	"github.com/wm-it-22-00661/buddy/internal/db"
-	"github.com/wm-it-22-00661/buddy/internal/diagnose"
-	"github.com/wm-it-22-00661/buddy/internal/hookwrap"
-	"github.com/wm-it-22-00661/buddy/internal/install"
-	"github.com/wm-it-22-00661/buddy/internal/persona"
-	"github.com/wm-it-22-00661/buddy/internal/queries"
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/config"
+	"github.com/0xmhha/buddy/internal/daemon"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/diagnose"
+	"github.com/0xmhha/buddy/internal/hookwrap"
+	"github.com/0xmhha/buddy/internal/install"
+	"github.com/0xmhha/buddy/internal/persona"
+	"github.com/0xmhha/buddy/internal/queries"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 // version / gitSHA / buildDate are the three pieces that compose `buddy

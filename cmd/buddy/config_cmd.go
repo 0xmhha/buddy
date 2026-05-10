@@ -22,8 +22,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wm-it-22-00661/buddy/internal/config"
-	"github.com/wm-it-22-00661/buddy/internal/persona"
+	"github.com/0xmhha/buddy/internal/config"
+	"github.com/0xmhha/buddy/internal/persona"
 )
 
 // newConfigCmd returns the `buddy config` parent command. The four subcommands

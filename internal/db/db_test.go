@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wm-it-22-00661/buddy/internal/db"
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 func TestOpen_CreatesAllTables(t *testing.T) {

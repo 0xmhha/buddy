@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/wm-it-22-00661/buddy/internal/schema"
-	"github.com/wm-it-22-00661/buddy/internal/sessions"
+	"github.com/0xmhha/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/sessions"
 )
 
 // TestSession_FieldsMatchMigration is the static check that the Go struct

@@ -25,9 +25,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wm-it-22-00661/buddy/internal/db"
-	"github.com/wm-it-22-00661/buddy/internal/persona"
-	"github.com/wm-it-22-00661/buddy/internal/purge"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/persona"
+	"github.com/0xmhha/buddy/internal/purge"
 )
 
 func newPurgeCmd() *cobra.Command {

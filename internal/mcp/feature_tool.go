@@ -9,7 +9,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/wm-it-22-00661/buddy/internal/feature"
+	"github.com/0xmhha/buddy/internal/feature"
 )
 
 // ─── feature_list ───────────────────────────────────────────────────────────

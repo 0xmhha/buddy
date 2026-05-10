@@ -18,10 +18,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wm-it-22-00661/buddy/internal/cliwrapcfg"
-	"github.com/wm-it-22-00661/buddy/internal/daemon"
-	"github.com/wm-it-22-00661/buddy/internal/db"
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/cliwrapcfg"
+	"github.com/0xmhha/buddy/internal/daemon"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 // SettingsFileName is the Claude Code settings filename inside ClaudeDir.

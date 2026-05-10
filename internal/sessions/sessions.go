@@ -10,7 +10,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 // Session represents an active Claude Code session as observed by buddy.

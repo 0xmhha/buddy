@@ -1,4 +1,4 @@
-module github.com/wm-it-22-00661/buddy
+module github.com/0xmhha/buddy
 
 go 1.25.0
 

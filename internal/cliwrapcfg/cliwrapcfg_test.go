@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wm-it-22-00661/buddy/internal/cliwrapcfg"
+	"github.com/0xmhha/buddy/internal/cliwrapcfg"
 )
 
 func TestRender_RequiresBuddyBinary(t *testing.T) {

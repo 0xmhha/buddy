@@ -19,9 +19,9 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/wm-it-22-00661/buddy/internal/adapter"
-	"github.com/wm-it-22-00661/buddy/internal/db"
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/adapter"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 const fallbackEvent = schema.EventPreToolUse

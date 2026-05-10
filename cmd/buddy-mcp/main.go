@@ -9,7 +9,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	buddymcp "github.com/wm-it-22-00661/buddy/internal/mcp"
+	buddymcp "github.com/0xmhha/buddy/internal/mcp"
 )
 
 func main() {

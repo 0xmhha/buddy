@@ -17,8 +17,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/wm-it-22-00661/buddy/internal/db"
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 // StatsWindowsMin lists the rolling-window sizes (minutes) we maintain.

@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wm-it-22-00661/buddy/internal/daemon"
-	"github.com/wm-it-22-00661/buddy/internal/db"
-	"github.com/wm-it-22-00661/buddy/internal/diagnose"
-	"github.com/wm-it-22-00661/buddy/internal/install"
+	"github.com/0xmhha/buddy/internal/daemon"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/diagnose"
+	"github.com/0xmhha/buddy/internal/install"
 )
 
 const fakeBuddy = "/usr/local/bin/buddy"

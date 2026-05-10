@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wm-it-22-00661/buddy/internal/adapter"
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/adapter"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 func TestParse_EmptyInput(t *testing.T) {

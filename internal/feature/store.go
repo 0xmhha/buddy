@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wm-it-22-00661/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/db"
 )
 
 // Options configures store operations.

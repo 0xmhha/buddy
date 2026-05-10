@@ -16,10 +16,10 @@ import (
 	"io"
 	"sort"
 
-	"github.com/wm-it-22-00661/buddy/internal/daemon"
-	"github.com/wm-it-22-00661/buddy/internal/db"
-	"github.com/wm-it-22-00661/buddy/internal/format"
-	"github.com/wm-it-22-00661/buddy/internal/persona"
+	"github.com/0xmhha/buddy/internal/daemon"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/format"
+	"github.com/0xmhha/buddy/internal/persona"
 )
 
 // IssueKind identifies the category of a diagnostic, for testability and for

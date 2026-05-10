@@ -19,8 +19,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wm-it-22-00661/buddy/internal/db"
-	"github.com/wm-it-22-00661/buddy/internal/format"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/format"
 )
 
 // defaultEventsLimit is the row cap when EventsOptions.Limit is unset (0).

@@ -18,10 +18,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/wm-it-22-00661/buddy/internal/config"
-	"github.com/wm-it-22-00661/buddy/internal/daemon"
-	"github.com/wm-it-22-00661/buddy/internal/diagnose"
-	"github.com/wm-it-22-00661/buddy/internal/persona"
+	"github.com/0xmhha/buddy/internal/config"
+	"github.com/0xmhha/buddy/internal/daemon"
+	"github.com/0xmhha/buddy/internal/diagnose"
+	"github.com/0xmhha/buddy/internal/persona"
 )
 
 // loadEffectiveConfig loads ~/.buddy/config.json (or path) and returns its

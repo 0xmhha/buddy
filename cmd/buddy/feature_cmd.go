@@ -14,8 +14,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/wm-it-22-00661/buddy/internal/feature"
-	"github.com/wm-it-22-00661/buddy/internal/persona"
+	"github.com/0xmhha/buddy/internal/feature"
+	"github.com/0xmhha/buddy/internal/persona"
 )
 
 func newFeatureCmd() *cobra.Command {

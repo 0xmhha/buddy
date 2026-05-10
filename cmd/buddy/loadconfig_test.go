@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wm-it-22-00661/buddy/internal/config"
+	"github.com/0xmhha/buddy/internal/config"
 )
 
 // TestLoadEffectiveConfig_MissingFile_ReturnsDefaults locks the M5 T3

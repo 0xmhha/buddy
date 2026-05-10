@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 // ClaudeHookInput is the relevant subset of what Claude Code sends on stdin.

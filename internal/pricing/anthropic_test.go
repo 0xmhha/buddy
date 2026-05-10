@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/wm-it-22-00661/buddy/internal/pricing"
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/pricing"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 // TestEstimate_Zero verifies the zero TokenUsage returns zero cost across

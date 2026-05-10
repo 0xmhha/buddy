@@ -20,8 +20,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/wm-it-22-00661/buddy/internal/db"
-	"github.com/wm-it-22-00661/buddy/internal/format"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/format"
 )
 
 // ErrInvalidWindow is the sentinel returned when Options.Window is not one of

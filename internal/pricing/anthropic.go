@@ -10,7 +10,7 @@
 package pricing
 
 import (
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 // ModelPrice is the per-million-token unit price for one Claude model.

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wm-it-22-00661/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/schema"
 )
 
 // AppendToOutbox writes the payload to hook_outbox synchronously.

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wm-it-22-00661/buddy/internal/config"
+	"github.com/0xmhha/buddy/internal/config"
 )
 
 // helpers ---------------------------------------------------------------------

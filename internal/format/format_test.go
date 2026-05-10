@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/wm-it-22-00661/buddy/internal/format"
+	"github.com/0xmhha/buddy/internal/format"
 )
 
 func TestDuration_Boundaries(t *testing.T) {
