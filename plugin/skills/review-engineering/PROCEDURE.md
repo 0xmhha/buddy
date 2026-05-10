@@ -314,3 +314,30 @@ plan이 "data는 A에서 C로 흐른다"고 handwave하면, 이렇게 말하라:
 **Scope reduction is sticky.** user가 scope reduction recommendation을 accept 또는 reject하면 그 결정을 끝까지 유지하라. 이후 section에서 더 작은 scope를 재주장하지 마라. scope를 조용히 줄이거나 계획된 component를 몰래 건너뛰지 마라.
 
 **Critical rule:** issue를 한 질문으로 batch하지 마라. one issue = one question. 각 issue를 interactive하게 순서대로 진행하라. 이 skill의 가치는 recursive drilling이며, checklist 실행이 아니다.
+
+## 흡수된 책임 (D-B 통합 결정 — 2026-05-10)
+
+본 skill 은 [`docs/notes/2026-05-10-missing-skills-inventory.md`](../../../docs/notes/2026-05-10-missing-skills-inventory.md) §2.2 의 D-B 결정에 따라 `review-code-architecture` (Matt Pocock skills 의 `improve-codebase-architecture` 기반) 의 책임을 흡수한다.
+
+### 흡수 영역 — deep module / interface depth / locality / leverage
+
+기존 review-engineering 의 7 dimension (Data Flow / Caching / Concurrency / Performance / Edge Cases / Test Coverage / Architecture) 의 *Architecture* 섹션을 다음 4 sub-criteria 로 강화:
+
+| sub-criteria | 정의 |
+|------------|-----|
+| **Deep module** | 작은 interface 뒤에 큰 functionality. shallow module (큰 interface + 작은 implementation) 회피 |
+| **Interface depth** | interface 가 implementation detail 을 *얼마나 숨기나* — 깊을수록 변경 비용 감소 |
+| **Locality** | 관련 logic 이 *같은 module* 에 모이나 — scattered 면 변경 시 영향 추적 어려움 |
+| **Leverage** | 한 변경이 *얼마나 많은 영역* 에 가치 — leverage 큰 변경 우선 |
+
+→ `improve-codebase-architecture` 의 핵심 원칙 (A Philosophy of Software Design — John Ousterhout) 본 skill 안에서 cover.
+
+### 적용 시점
+
+review-engineering 의 Architecture section 검토 시 위 4 sub-criteria 명시 적용. shallow module / interface leak / scattered logic 발견 시 plan 의 *deep module 재설계* 권장.
+
+### 별도 skill 미작성 이유
+
+review-engineering 가 이미 implementation plan 의 architecture 영역 cover. `review-code-architecture` 별도 작성 시 *영역 겹침 + dispatch 혼란* 위험. 단일 skill (review-engineering) 내 sub-section 흡수가 더 일관.
+
+> Matt Pocock skills MIT — `improve-codebase-architecture` 의 *deep module / interface depth / locality / leverage* 패턴 reference. 별도 차용 코드 X (개념 차용만).

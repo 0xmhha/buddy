@@ -221,7 +221,12 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 
 ### §9 Stage Skills — Lifecycle Management
 
-> 현재 단계별 stage skill은 `manage-lifecycle` orchestrator가 직접 수행. 신규 stage skill은 추후 추가.
+| Skill name | Trigger | When to use (1줄) |
+|------------|---------|------------------|
+| `deprecate-feature` | command + dispatch | feature sunset — timeline (1~12 month) + sunset notice 5 layer + telemetry + migration path + post-cleanup |
+| `migrate-customers` | command + dispatch | 대규모 customer migration — tier segmentation + 자동/수동 + batch schedule + rollback + communication + telemetry. Strangler Fig 패턴 |
+| `archive-product` | command + dispatch | product EOL — ADR + 6~12 month timeline + data export (GDPR Article 20) + tombstone + legal/compliance + knowledge preservation |
+| `spin-off-feature` | command + dispatch | 기능 분리 → 별도 product / repo — 5 차원 적합성 + 코드 분리 5 패턴 + brand/운영 분리 + funding/acquisition 옵션 |
 
 ### Cross-cutting Utilities (Phase 소속 없음)
 

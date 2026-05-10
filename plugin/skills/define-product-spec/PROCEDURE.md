@@ -191,3 +191,28 @@ PRD를 vertical slice 가능한 feature 후보로 변환 (다음 스킬 입력).
 6. **Stakeholder 다수 명시 (책임 분산)** — 충돌 시 누가 결정? 1명 owner.
 7. **Feature candidate 생략** — split-work-into-features가 다시 처음부터. 후보 목록은 핸드오프 필수.
 8. **PRD를 design doc과 혼동** — PRD = what / why. design doc = how. 분리 유지.
+
+## 9. 흡수된 책임 (D-B 통합 결정 — 2026-05-10)
+
+본 skill 은 [`docs/notes/2026-05-10-missing-skills-inventory.md`](../../../docs/notes/2026-05-10-missing-skills-inventory.md) §2.2 의 D-B 결정에 따라 다음 *external 추천 skill 의 책임* 을 흡수한다 (별도 skill 작성 X):
+
+### 9.1 `define-product-context` 흡수 — domain context / ADR 기반 운영
+
+PRD 섹션에 *domain context* 영역 명시:
+
+| 항목 | 내용 |
+|------|------|
+| Domain glossary | PRD 사용 *도메인 용어* + 정의 (사용자 / 시스템 / 도메인 전문가 합의 단어) |
+| Conceptual model | 핵심 entity 간 *관계 도표* (UML / ER / mermaid) |
+| Domain boundary | 우리 *제품의 책임* vs *외부* (3rd-party / user 관여 / out-of-scope) |
+| ADR linkage | 도메인 결정의 ADR (`write-adr` 호출) — 결정 이유 영속화 |
+
+→ `grill-with-docs` 패턴 (Matt Pocock skills, MIT) 의 *도메인 용어 합의 + ADR 기반 운영* 영역 본 skill 안에서 cover.
+
+### 9.2 `write-prd` 흡수 — PRD 작성 표준
+
+본 skill 자체가 PRD 작성 책임을 가짐 (`define-product-spec`). 별도 `write-prd` skill 미작성 — 동일 책임 중복.
+
+`to-prd` 패턴 (Matt Pocock skills, MIT) 의 *대화 / 계획 → PRD 변환* 절차도 본 skill §3 입력 → §5 산출 흐름과 동일.
+
+→ 향후 *대화 / 계획 → PRD 변환* 의 자동화가 필요하면 본 skill 의 *Stage 0 — context capture* 강화로 cover.
