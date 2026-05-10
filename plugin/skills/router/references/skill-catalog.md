@@ -51,6 +51,11 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `validate-idea` | command + dispatch | YC 스타일 아이디어 검증 인터뷰 — 6 forcing question으로 product idea를 stress-test |
 | `validate-advanced-edge-idea` | command + dispatch | validate-idea 통과 후 edge case, hidden assumption, second-order effect를 압박 인터뷰(grilling)로 박멸 |
 | `assess-business-viability` | command + dispatch | 아이디어가 사업으로 성립하는지 7차원(TAM/SAM/SOM, 고객-구매자, willingness-to-pay, GTM, 경쟁, unit economics, 규제)으로 평가 |
+| `analyze-market-size` | command + dispatch | TAM/SAM/SOM 산출 — top-down + bottom-up cross-check + ±50% sensitivity. assess-business-viability 의 시장 차원 입력 |
+| `map-customer-segments` | command + dispatch | 사용자 vs 구매자 분리 + early adopter 5차원 persona + secondary segment 2~3 + anti-persona |
+| `map-jobs-to-be-done` | command + dispatch | JTBD 프레임워크 — functional/emotional/social job + Anthony Ulwick job map 8단계 + outcome statement + competitive analysis (non-consumption 포함) |
+| `conduct-customer-interview` | command + dispatch | 인터뷰 스크립트 + Mom Test anti-pattern 회피 + 결과 코딩 매트릭스 + 4-라벨 가설 update (confirmed/partial/refuted/new) |
+| `decide-target-market` | command + dispatch | target market 결정 (글로벌 / 단일 지역 / 다지역) + region cluster trigger. assess-business-viability 후, region-specific extension 의 활성화 trigger |
 | `review-pricing-and-gtm` | dispatch | pricing model 설계와 GTM(Go-To-Market) channel 전략 평가 |
 | `define-product-spec` | command + dispatch | 아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정 |
 | `apply-builder-ethos` | dispatch | Boil the Lake, Search Before Building, User Sovereignty 3 원칙을 주입해 AI collaboration project에 적용 |
