@@ -7,8 +7,8 @@
   "plugins": [
     {
       "name": "buddy",
-      "description": "9-phase multi-orchestrator model: idea → business validation → design → build → quality → release → A/B iterate → lifecycle. 105 procedures behind a single router skill, 57 slash commands (run/chain/parallel for ad-hoc composition).",
-      "version": "1.0.8",
+      "description": "9-phase multi-orchestrator model: idea → business validation → design → build → quality → release → A/B iterate → lifecycle. 148 procedures behind a single router skill, 99 slash commands (run/chain/parallel for ad-hoc composition).",
+      "version": "1.1.0",
       "source": "./plugin",
       "author": {
         "name": "mhha"

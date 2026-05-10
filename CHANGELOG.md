@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-05-10
+
+### Added — Skill Completion Cycle 100% (44 신규 + 2 통합)
+
+**Group 1 — 직접 미구현 29 skill (commits `18a79b6` ~ `900944f`):**
+
+- §1 customer/market 5 (Cluster E): `/buddy:analyze-market-size`, `/buddy:map-customer-segments`, `/buddy:map-jobs-to-be-done`, `/buddy:conduct-customer-interview`, `/buddy:analyze-competition-and-substitutes`
+- §2 effort 1: `/buddy:estimate-feature-effort`
+- §3 design 부가 4 (Cluster B residual): `/buddy:design-observability`, `/buddy:design-secret-management`, `/buddy:design-i18n-strategy`, `/buddy:design-accessibility-baseline`
+- §5 build 부가 5 (Cluster D): `/buddy:generate-from-api-contract`, `/buddy:generate-tests-from-spec`, `/buddy:pair-program-loop`, `/buddy:refactor-with-rename-trace`, `/buddy:update-docs-with-code`
+- §6 verify 부가 3 (Cluster A residual): `/buddy:audit-i18n-coverage`, `/buddy:chaos-test`, `/buddy:audit-test-coverage-meaningful`
+- §8 data 7 (Cluster F): `/buddy:analyze-feature-adoption`, `/buddy:analyze-user-cohort`, `/buddy:analyze-actor-failure-rate`, `/buddy:analyze-cost-anomaly`, `/buddy:triage-customer-support-ticket`, `/buddy:analyze-customer-feedback-corpus`, `/buddy:audit-error-budget`
+- §9 lifecycle 4 (Cluster G): `/buddy:deprecate-feature`, `/buddy:migrate-customers`, `/buddy:archive-product`, `/buddy:spin-off-feature`
+
+**Group 2 — 신규 1 (legal Layer 2):**
+
+- `/buddy:review-legal-regulatory` — region-agnostic 법률 / 규제 검토 frame (7 sub-domain) + region cluster trigger
+
+**Group 4 — charter scope gap 12 skill:**
+
+- Layer 1: `/buddy:decide-target-market` — region 결정 (글로벌 / 단일 / 다지역)
+- stage 3: `/buddy:decide-form-factor-app-vs-web`
+- stage 4: `/buddy:apply-design-system`, `/buddy:audit-ui-quality`, `/buddy:prototype-from-spec`, `/buddy:design-interaction-pattern`
+- stage 10+11 통합: `/buddy:optimize-conversion-funnel`, `/buddy:plan-growth-experiment`, `/buddy:draft-marketing-copy`, `/buddy:plan-marketing-channel`, `/buddy:audit-seo-aso`, `/buddy:automate-marketing-content`
+
+### Changed — Group 2 통합 PROCEDURE 갱신 (Batch 7)
+
+- `define-product-spec` PROCEDURE 갱신 — `define-product-context` + `write-prd` (Matt Pocock `to-prd`) 흡수
+- `review-engineering` PROCEDURE 갱신 — `review-code-architecture` (Ousterhout deep module + interface depth + locality + leverage) 흡수
+- `plugin/.claude-plugin/plugin.json` version 1.0.8 → 1.1.0
+- `.claude-plugin/marketplace.json` version + description 갱신 (148 procedures / 99 commands)
+
+### Architecture
+
+- charter §3 plugin buddy scope 12 stage **100% cover** 도달
+- 외부 자산 활용도: (b) 수정 차용 17 + (d) 신규 24 + (c) 참고만 3 (Korea cluster deferred)
+- Counts: skills 106 → **148** (+42), commands 57 → **99** (+42)
+
+### Decisions (ADR)
+
+- **ADR-002** (`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`) — roadmap v0.2/v0.3/v1.0 outline × charter cli buddy 진짜 목적 gap 매핑
+- **ADR-003** (`docs/superpowers/decisions/2026-05-10-superpowers-attribution.md`) — external `superpowers` project attribution 정책
+
+### Documents
+
+- `docs/two-tracks-charter.md` — plugin buddy / cli buddy 정체성 + 책임 경계 lock-in
+- `docs/response-format-guide.md` — 논문 흐름 응답 양식 reference
+- `docs/notes/2026-05-10-missing-skills-inventory.md` + 4 후속 문서 — Step 1~4 산출
+- `docs/superpowers/plans/2026-05-10-skill-completion-plan.md` — Step 4 7 batch plan
+- `docs/notes/2026-05-10-dogfood-validation-scenarios.md` — quality gate 검증 시나리오
+
+### Deferred (trigger 발화 시 활성)
+
+- Korea cluster 3 (`consult-korea-legal-context`, `draft-korea-patent-application`, `audit-korea-cii-vulnerability`) — D-F F1 (target market = Korea trigger)
+- `analytics-mcp` — D-C C2 (§8 cluster F 일부 구현 후 trigger 가능 — 현재 도달)
+- `feature-management-mcp` — D-C C2 (cli buddy 트랙 분리)
+
+### Migration notes
+
+- `/plugin` 결과 1.0.8 그대로 표시되면 `claude plugin marketplace add 0xmhha/buddy` (re-fetch) → `claude plugin install buddy@buddy` 로 1.1.0 install. 또는 `/reload-plugins`.
+- 기존 57 commands 모두 그대로 동작. 42 신규 commands 추가만 — breaking change 없음.
+
 ## [1.0.8] — 2026-05-08
 
 ### Added
