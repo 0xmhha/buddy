@@ -18,8 +18,8 @@
 
 | 트랙 | 상태 | 마지막 release |
 |------|------|---------------|
-| **Plugin** (9-phase orchestrator + 105 procedures + 57 commands) | ACTIVE — N-1 closed (ADR-001), Phase 1+2+3+4+5ext Done | v1.0.8 (2026-05-08) |
-| **Go CLI** (hook reliability monitor) | PAUSED — dogfood feedback 대기 | v0.1.0 (2026-04-26) |
+| **plugin buddy** (9-phase orchestrator + **148 procedures + 99 commands**) | ACTIVE — Skill Completion Cycle 100% (44/44). charter scope 12 stage cover 100%. unreleased (v1.1.0 후보) | v1.0.8 (2026-05-08, 신규 batch 1~7 unreleased) |
+| **cli buddy** (TUI 자동화 agent 관리 — charter §3) | PAUSED — spec 미작성. v0.1.0 의 hook reliability monitor 가 sub-feature | v0.1.0 (2026-04-26) |
 | **Housekeeping** | ad-hoc | — |
 
 ---
@@ -35,25 +35,35 @@
 | A-1.3 | README counts 갱신 | `README.md` | 49 commands → 57, 97 skills → 105, stage skills 표에 신규 8 skill 추가 |
 | A-1.4 | N-1 closure 반영 | `HANDOFF.md` §0 / §3 / §11 | ADR-001 적용 사실 + `disable-model-invocation: true` 컨벤션 명시 |
 
-### A-2. 잔여 stage skill 29 (cluster별)
+### A-2. 잔여 stage skill — ✅ 모두 Done (Skill Completion Cycle 100%, 2026-05-10)
 
-> 출처: [`spec §4 Stage Skill Gap`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md#4-단계별-skill-군집화--gap-분석) + [`Phase 7 deferred re-evaluation`](./superpowers/plans/2026-05-08-phase7-deferred-reevaluation.md).
+> 출처: [`spec §4 Stage Skill Gap`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md#4-단계별-skill-군집화--gap-분석) + [`Phase 7 deferred re-evaluation`](./superpowers/plans/2026-05-08-phase7-deferred-reevaluation.md) + [`skill-completion-plan`](./superpowers/plans/2026-05-10-skill-completion-plan.md).
 >
-> Phase 1+2+3+4+5ext (v1.0.2~v1.0.8) 완료 — Q8=(a) cascade 5-단계 chain (use case → system → actor track → build → test) 완성 + SaaS 공통 패턴 (event/auth/tenant) + launch readiness audit (load/a11y/cost) + cascade bridge (use-case→infra / system topology) Done.
->
-> 잔여 = 기존 37 − Phase 5 ext 8 = **29 skill**.
+> 본 cycle 산출 commits: `18a79b6` (Batch 1) → `b23a995` (2) → `1c5c528` (3) → `6f0677d` (4) → `3544342` (5) → `9cb6ca3` (6a) → `f5b8afb` (6b) → `900944f` (7).
 
-| Phase | 보유 / Done | 누락 잔여 | Cluster | 즉시 가치 |
-|-------|------------|-----------|---------|----------|
-| §1 concretize-idea | validate-idea, validate-advanced-edge-idea, assess-business-viability, review-pricing-and-gtm, define-product-spec | 5 | E (conditional) | Low |
-| §2 define-features | identify-actors + 9 stage skill | 1 | low priority | Low |
-| §3 design-system | review-* (4), design-* (6 기존), consult-*, explore-design-variants, **§3 핵심 4 ✓ v1.0.2**, **§3 cascade bridge 2 ✓ v1.0.6**, **§3 SaaS pattern 3 ✓ v1.0.8** | 4 | B residual | Mid (조건부) |
-| §4 plan-build | **6 stage 모두 ✓ v1.0.3** | 0 | Done | — |
-| §5 build-feature | build-with-tdd, iterate-fix-verify, freeze-edit-scope, dispatch-parallel-agents, diagnose-bug, consult-codex | 5 | D | Low (IDE 대체 가능) |
-| §6 verify-quality | 11 기존 + **use-case test 2 ✓ v1.0.5**, **launch readiness 3 ✓ v1.0.7** | 3 | A residual | Mid |
-| §7 ship-release | 7 기존 + **safety nets 7 ✓ v1.0.4** | 0 | Done | — |
-| §8 iterate-product | 11 기존 (design-ab-experiment, analyze-ab-experiment, analyze-user-funnel, generate-improvement-tasks, handle-incident, conduct-postmortem, monitor-regressions, summarize-retro, save-context, restore-context, persist-learning-jsonl) | 7 | F | Deferred (production traffic 의존) |
-| §9 manage-lifecycle | (orchestrator만) | 4 | G | Deferred (1년+) |
+| Phase | 잔여 (이전) | Skill Completion Cycle 후 | 상태 |
+|-------|-----------|--------------------|-----|
+| §1 concretize-idea (Cluster E 5) | 5 | 0 | ✅ Done (Batch 1+2) |
+| §2 define-features | 1 | 0 | ✅ Done (Batch 2) |
+| §3 design-system 부가 (Cluster B residual 4) | 4 | 0 | ✅ Done (Batch 3) |
+| §5 build-feature (Cluster D 5) | 5 | 0 | ✅ Done (Batch 4) |
+| §6 verify-quality 부가 (Cluster A residual 3) | 3 | 0 | ✅ Done (Batch 5) |
+| §8 iterate-product (Cluster F 7) | 7 | 0 | ✅ Done (Batch 6a) |
+| §9 manage-lifecycle (Cluster G 4) | 4 | 0 | ✅ Done (Batch 7) |
+| 그룹 4 (12) — form-factor / design 적용 4 / 그로스+마케팅 6 / target-market 결정 | (신규 발견) | 0 | ✅ Done (Batch 1, 3, 6b) |
+| 그룹 2 신규 (review-legal-regulatory) | (신규 발견) | 0 | ✅ Done (Batch 2) |
+| 그룹 2 통합 PROCEDURE 갱신 (define-product-spec / review-engineering) | (신규 발견) | 0 | ✅ Done (Batch 7) |
+| **합계** | **29 + 12 + 1 + 2** | **0 신규 잔여** | **44/44 (100%)** |
+
+**Deferred 보존 (trigger 발화 시 활성):**
+
+| 항목 | trigger | 결정 |
+|------|--------|------|
+| Korea cluster 3 (`consult-korea-legal-context` / `draft-korea-patent-application` / `audit-korea-cii-vulnerability`) | target market = Korea 결정 시 | D-F F1 |
+| `analytics-mcp` | §8 cluster F 일부 구현 후 — *현재 trigger 가능* | D-C C2 |
+| `feature-management-mcp` | cli buddy 트랙 spec 작성 시점 | D-C C2 (cli buddy 트랙 분리) |
+
+> 아래 §A-2.1 ~ §A-2.7 sub-section 은 *historical 보존* — 각 cluster 의 정의 + 작성 시점 reference. 신규 잔여 inventory 는 본 표 위쪽 갱신 대상.
 
 #### A-2.1 §1 concretize-idea — Cluster E (5)
 

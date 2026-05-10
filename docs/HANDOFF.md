@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-09 (Plugin v1.0.8 — Phase 1+2+3+4+5ext Done + N-1 closure (ADR-001) 적용)
+**Last updated:** 2026-05-10 (plugin buddy 148 procedures / 99 commands — Skill Completion Cycle 100% — Group 1+2+4 모두 완료, Korea cluster 3 + analytics-mcp + feature-management-mcp 만 deferred)
 
 ## 트랙 상태
 
@@ -10,10 +10,10 @@
 
 | 트랙 | 상태 | 위치 | Entry doc |
 |------|------|------|----------|
-| **plugin buddy** — Claude Code plugin (skill / MCP / agent / hook 카탈로그). 9-phase orchestrator, 105 procedures, 57 commands, single-router dispatch | 🟢 ACTIVE — v1.0.8 released, Phase 1+2+3+4+5ext Done + N-1 closed. 다음 후보: 미구현 skill 보완 (`docs/tasks.md` §A-2 + `docs/` 추가 검토) | `plugin/`, `docs/superpowers/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §2 + [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) |
+| **plugin buddy** — Claude Code plugin (skill / MCP / agent / hook 카탈로그). 9-phase orchestrator, **148 procedures, 99 commands**, single-router dispatch | 🟢 ACTIVE — Skill Completion Cycle 100% (44/44 신규 + 통합 2). charter scope 12 stage 100% cover. 다음 후보: dogfood 검증 + Korea cluster / analytics-mcp 의 trigger 발화 시 deferred 작성 | `plugin/`, `docs/superpowers/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §2 + [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) |
 | **cli buddy** — TUI 자동화 agent 관리 툴 (plugin buddy 내재화). 진짜 목적은 *agent 생성 / 실행 / 종료 / 설정 관리*. v0.1.0 = hook reliability monitor (한 sub-feature 만 구현). | 🟡 부분 구현 — TUI / agent runtime / plugin buddy 내재화 layer 모두 미구현. 본격 spec 작성 미진입 | `cmd/`, `internal/`, `archive/ts-poc/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 + 이 HANDOFF §1~12 (이하 본문은 v0.1.0 시점 기준) |
 
-**plugin buddy 진행 상태 (2026-05-09):**
+**plugin buddy 진행 상태 (2026-05-10):**
 
 | Phase | 상태 | Release | Skill count |
 |-------|------|---------|-------------|
@@ -26,8 +26,18 @@
 | Phase 5 ext Cluster A (§6 launch readiness 3) | ✅ Done | v1.0.7 | +3 |
 | Phase 5 ext Cluster B (§3 SaaS pattern 3) | ✅ Done | v1.0.8 | +3 |
 | **N-1 closure** (ADR-001: `disable-model-invocation: true` × 57 commands) | ✅ Done | (no version bump) | — |
-| **Total** | **105 procedures / 57 commands / 14 ship-release stages** | v1.0.8 | 105 |
-| Phase 5/6/7 deferred (29) | ⏳ deferred | n/a | — |
+| **Skill Completion Cycle Batch 1** (decide-target-market + §1 customer/market 4) | ✅ Done | unreleased | +5 |
+| **Batch 2** (analyze-competition + estimate-feature-effort + review-legal-regulatory) | ✅ Done | unreleased | +3 |
+| **Batch 3** (§3 design 부가 4 + 그룹 4 stage 3+4 의 5) | ✅ Done | unreleased | +9 |
+| **Batch 4** (§5 build 부가 5 — Cluster D) | ✅ Done | unreleased | +5 |
+| **Batch 5** (§6 verify 부가 3 — Cluster A residual) | ✅ Done | unreleased | +3 |
+| **Batch 6a** (§8 data 분석 7 — Cluster F) | ✅ Done | unreleased | +7 |
+| **Batch 6b** (그룹 4 stage 10+11 통합 6 — 그로스 + 마케팅) | ✅ Done | unreleased | +6 |
+| **Batch 7** (§9 lifecycle 4 — Cluster G + 그룹 2 통합 2 PROCEDURE 갱신) | ✅ Done | unreleased | +4 (+2 갱신) |
+| **Total** | **148 procedures / 99 commands / 14 ship-release stages** | unreleased (다음 release 시점에 v1.1.0 후보) | 148 |
+| Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
+| analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
+| feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy spec 작성 시점 | — |
 
 **5단계 비전:** 1) Plugin install ✅ → 2) TUI 상위 레이어(`ai-m` 류) → 3) 설정/세션 관리 툴(`claude-code-organizer` 류) → 4) Dashboard + 칸반 → 5) 4단계에 1~3단계가 모두 녹아듦.
 

@@ -2,7 +2,7 @@
 
 A reliability and observability control plane for [Claude Code](https://claude.ai/code) sessions.
 
-Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 57 slash commands and 105 skills covering the full product development lifecycle, dispatched through a single auto-loaded `router` skill.
+Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 99 slash commands and 148 skills covering the full product development lifecycle, dispatched through a single auto-loaded `router` skill.
 
 ```
               ┌──────────────────────────┐
@@ -30,7 +30,7 @@ cli buddy *embeds* plugin buddy; plugin buddy stands alone. The Features table b
 
 | Area | Track | What it does |
 |------|-------|-------------|
-| **Claude Code plugin** | plugin buddy | 9-phase lifecycle orchestrator, 57 `/buddy:*` commands, 105 skills behind one router |
+| **Claude Code plugin** | plugin buddy | 9-phase lifecycle orchestrator, 99 `/buddy:*` commands, 148 skills behind one router |
 | **Hook reliability** | cli buddy (v0.1.0) | Wraps Claude Code hooks; surfaces silent failures with structured logs |
 | **State schema** | cli buddy (v0.1.0) | Zod-validated JSON state prevents corruption and schema drift |
 | **Task retry** | cli buddy (v0.1.0) | WAL-backed outbox ensures failed tasks are replayed, not dropped |
@@ -149,7 +149,7 @@ Full CLI reference: [`docs/v0.1-spec.md §7`](./docs/v0.1-spec.md).
 
 ### Claude Code plugin — slash commands
 
-Once the plugin is installed, 57 slash commands are available in any Claude Code session, all dispatched through the single auto-loaded `router` skill.
+Once the plugin is installed, 99 slash commands are available in any Claude Code session, all dispatched through the single auto-loaded `router` skill.
 
 #### Phase orchestrators (9 — pipeline entry points)
 
