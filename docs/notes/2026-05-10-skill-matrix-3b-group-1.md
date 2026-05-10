@@ -200,6 +200,8 @@ README 첫 줄: *"주요정보통신기반시설(CII) 취약점 분석평가를 
 - `draft-patent-application`
 - **`audit-cii-vulnerability` (신규 발견 — Step 3b)**
 
+> ⚠️ **2026-05-10 D-G 정정**: 본 섹션은 *한국 시장만* 가정. 정정된 region-cross-cutting framework + 명명 정정 (`audit-cii-vulnerability` → `audit-korea-cii-vulnerability` 등) 은 [`2026-05-10-missing-skills-inventory.md`](./2026-05-10-missing-skills-inventory.md) §2.4.2 참조. Layer 1 신규 `decide-target-market` 추가됨.
+
 ### 4.3 `humanizer` (skill 경로)
 
 README 첫 줄: *"AI 텍스트 자연화 — Claude Code + OpenCode 호환"*

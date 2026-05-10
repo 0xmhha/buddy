@@ -244,6 +244,8 @@ scope 정의 (Step 3a 신규 제안):
 
 ### 6.2 deferred 그룹 4-extension (지역 특화)
 
+> ⚠️ **2026-05-10 D-G 정정**: 본 표는 Step 3a 시점에 *한국 시장만* 가정. 정정된 region-cross-cutting framework 는 [`2026-05-10-missing-skills-inventory.md`](./2026-05-10-missing-skills-inventory.md) §2.4.2 참조. 명명 정정: `consult-korean-legal-context` → `consult-korea-legal-context` / `draft-patent-application` → `draft-korea-patent-application`. Layer 1 신규 `decide-target-market` 추가됨.
+
 | 후보 | trigger |
 |------|---------|
 | `consult-korean-legal-context` | buddy 사용자가 한국 시장 진출 시 |

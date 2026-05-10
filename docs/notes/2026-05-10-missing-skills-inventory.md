@@ -162,14 +162,47 @@ phase7-deferred-reevaluation.md 의 Cluster H. 사용자 confirm (2026-05-10) �
 
 > charter §3 의 stage 10 (그로스) + 11 (마케팅) 통합 (D-E lock-in) — *모호하면 통합 default, 필요시 분리* 정책. charter 본문 자체는 *분리 표기 유지* (영역의 *이상화* 분류 보존).
 
-#### 2.4.2 그룹 4-extension 의 deferred 2 (D-F lock-in — F1 보존)
+#### 2.4.2 그룹 4-extension 재구조화 — region-cross-cutting framework (2026-05-10 D-G 정정)
 
-| skill | trigger | 외부 자산 차용 |
+**비판 (사용자 D-G)**: 한국 시장만 deferred 로 한정한 것이 잘못. 지역 분기는 *cross-cutting* 차원 — 글로벌 / 한국 / USA / EU 등 모두 가능. 글로벌 default + region cluster 구조로 재정리.
+
+##### 3 layer 구조
+
+| Layer | 책임 | 산출 |
+|-------|------|------|
+| **Layer 1** Region 결정 (선행 stage) | target market 결정 — 글로벌 / 단일 지역 / 다지역 | 1 신규 skill: `decide-target-market` |
+| **Layer 2** Region-agnostic core | 글로벌 default — 일반 법률 / 규제 / privacy / IP / consumer protection | (기존) `review-legal-regulatory` (그룹 2 신규 1) — *지역 무관 frame 으로 작성* |
+| **Layer 3** Region-specific extension cluster | Layer 1 결정 결과 trigger — 지역별 모듈 | Korea cluster 3 (즉시 lock-in) + USA / EU / 기타 (deferred-deferred) |
+
+##### Layer 3 — Korea cluster (즉시 lock-in)
+
+| skill (rename) | trigger | 외부 자산 차용 |
 |------|--------|------------|
-| `consult-korean-legal-context` | 사용자가 한국 시장 진출 시 | (b) korean-legal-guide_skill |
-| `draft-patent-application` | 특허 영역 진입 시 | (b) patent-application-drafting_skill |
+| `consult-korea-legal-context` | target market = Korea 결정 시 | (b) korean-legal-guide_skill |
+| `draft-korea-patent-application` | Korea + 특허 영역 진입 | (b) patent-application-drafting_skill (KIPO 특화) |
+| `audit-korea-cii-vulnerability` | Korea + 정보통신기반시설 보호법 적용 시 | (b) KESE-KIT (한국 CII 특화) |
 
-> 본 2 후보는 trigger 발생 시 plugin buddy 에 *지역 특화 모듈* 로 진입. 현재는 inventory 보존 only.
+##### Layer 3 — 다른 region cluster (deferred-deferred, 외부 자산 부재)
+
+| region cluster | 가능 후보 (예시) | trigger | 자산 status |
+|--------------|------------|--------|----------|
+| USA cluster | `consult-usa-legal-context`, `audit-usa-hipaa-compliance` (의료) 등 | target market = USA 결정 시 | 외부 자산 없음 — 신규 작성 필요 |
+| EU cluster | `consult-eu-legal-context`, `audit-eu-gdpr-compliance` 등 | target market = EU 결정 시 | 외부 자산 없음 — 신규 작성 필요 |
+| 기타 | (사용자 진출 trigger 시 신규 cluster) | target market 결정 시 | trigger 시 외부 자산 식별 |
+
+> **명명 컨벤션**: `{verb}-{region}-{topic}` (예: `consult-korea-legal-context`, `audit-eu-gdpr-compliance`). 같은 패턴이라 다른 지역 추가 시 *기계적 확장* 가능.
+
+##### 그룹 4-extension 합계 (D-G 정정 후)
+
+| 영역 | 건수 | 결정 |
+|------|-----|------|
+| Layer 1 (region 결정 선행 stage) | 1 (`decide-target-market`) | (d) 신규 — 그룹 4 stage 2 에 추가 |
+| Layer 3 Korea cluster | 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | (b) 수정 차용 (외부 자산 3 활용) — deferred (Korea 진출 trigger 시) |
+| Layer 3 USA / EU / 기타 cluster | 0 (template 만, 실 skill 미작성) | deferred-deferred |
+| **합계 (확정)** | **4** | (Layer 1 즉시 + Layer 3 Korea 3 deferred) |
+
+> **그룹 4 11 → 12 skill 확장** (Layer 1 의 decide-target-market 추가).
+> **그룹 4-extension 2 → 3 확장** (KESE-KIT 추가 — D-G 의 Korea cluster 일부).
 
 
 
@@ -194,19 +227,20 @@ charter §3 의 plugin buddy scope 12 stage 와 plugin buddy 의 9-phase orchest
 
 ---
 
-## 3. 종합 매트릭스 (2026-05-10 결정 반영 + Step 3a lock-in)
+## 3. 종합 매트릭스 (2026-05-10 결정 반영 + Step 3a + Step 3b + D-G 정정 lock-in)
 
 | 그룹 | 건수 | 결정 | plugin buddy 신규 작성 | 우선순위 |
 |------|-----|------|---------------------|--------|
-| **그룹 1** 직접 미구현 (A-2) | 29 | 신규 작성 또는 외부 참조 통합 (Step 3b 매트릭스) | **29** | HIGH (charter 1 순위) |
-| **그룹 2** skill-map 추가 (영역 겹침) | 4 | 통합 3 + 신규 1 | **1** (review-legal-regulatory) | MEDIUM (Cluster E 묶음) |
+| **그룹 1** 직접 미구현 (A-2) | 29 | (b) 8 + (d) 21 (Step 3b 매트릭스) | **29** | HIGH (charter 1 순위) |
+| **그룹 2** skill-map 추가 (영역 겹침) | 4 | 통합 3 + 신규 1 | **1** (review-legal-regulatory — region-agnostic frame) | MEDIUM (Cluster E 묶음) |
 | **그룹 3** MCP — Q4 보류 재평가 | 2 | C2 분할 진입 | **0 + 1 deferred** (analytics-mcp §8 후) | DEFERRED |
-| **그룹 4** charter scope gap | 4 영역 → 11 skill | Step 3a lock-in (D-D / D-E) | **11** (form-factor 1 + design 4 + 그로스+마케팅 통합 6) | MEDIUM-LOW |
-| **그룹 4-extension** 한국 시장 deferred | 2 | D-F lock-in (F1 보존) | **0 + 2 deferred** (consult-korean-legal-context, draft-patent-application) | DEFERRED |
-| **합계 (확정)** | **41 신규 + 1 deferred (analytics-mcp) + 2 deferred-extension + 3 통합** | | | |
+| **그룹 4** charter scope gap | 4 영역 → **12 skill** (D-G: decide-target-market 추가) | Step 3a + D-G lock-in | **12** (form-factor 1 + target-market 1 + design 4 + 그로스+마케팅 통합 6) | MEDIUM-LOW |
+| **그룹 4-extension** Region-cross-cutting framework | Korea 3 + USA/EU/기타 0 (deferred-deferred) | D-F + D-G lock-in (F1 보존, region 일반화) | **0 + 3 deferred** (Korea cluster) | DEFERRED |
+| **합계 (확정)** | **42 신규 + 1 deferred (analytics-mcp) + 3 deferred-extension (Korea) + 3 통합** | | | |
 
-> *통합 3* (define-product-context / write-prd / review-code-architecture) 는 신규 skill 작성이 아니라 *기존 PROCEDURE 갱신* 이라 plugin/skills/ 디렉토리 카운트 영향 없음 (현재 106 → 신규 41 후 = 147).
+> *통합 3* (define-product-context / write-prd / review-code-architecture) 는 신규 skill 작성이 아니라 *기존 PROCEDURE 갱신* 이라 plugin/skills/ 디렉토리 카운트 영향 없음 (현재 106 → 신규 42 후 = 148).
 > *cli buddy 트랙으로 이동* 1 (feature-management-mcp) 은 plugin buddy inventory 에서 제외됨.
+> *Layer 3 다른 region cluster* (USA / EU / 기타) 는 *template 만* 보존 — 실 skill 작성은 trigger 발생 시.
 
 ### 3.1 charter scope cover 율
 
