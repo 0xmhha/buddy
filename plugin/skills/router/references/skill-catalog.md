@@ -157,6 +157,9 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `run-load-test` | command + dispatch | sustained + soak + spike + stress 4 시나리오 + breaking point + capacity headroom — launch 직전 SLA 근거 |
 | `audit-accessibility` | command + dispatch | WCAG 2.1 AA + axe + Lighthouse + manual screen reader 통합 a11y 감사 — ADA / EAA / KR 장애인차별금지법 compliance |
 | `audit-cost-efficiency` | command + dispatch | Infracost + per-component breakdown + unit economics ($/MAU) + waste detection + RI/SP savings recommendation |
+| `audit-i18n-coverage` | command + dispatch | locale 별 번역 누락 + fallback rate (>5% fail) + ICU MessageFormat 정합 + format / RTL 검증. coverage matrix + priority fix |
+| `chaos-test` | command + dispatch | failure injection (network / pod / CPU / dependency / DB / time) + 4 원칙 + blast radius 5 단계 + hypothesis-driven + game day |
+| `audit-test-coverage-meaningful` | command + dispatch | line coverage 0.2 + mutation score 0.4 + behavior ratio 0.2 + edge case 0.2 → trust score. Stryker / mutmut / go-mutesting |
 | `run-browser-qa` | dispatch | [패턴 라이브러리] browser automation QA 패턴 — snapshot diff, form testing, responsive check, dialog, accessibility |
 | `monitor-regressions` | dispatch | [패턴 라이브러리] delta-based threshold + transient tolerance + per-page isolation으로 monitoring + regression detect |
 | `audit-security` | command + dispatch | CSO-mode security audit을 수행한다 |

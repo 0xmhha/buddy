@@ -70,3 +70,11 @@ gpt-researcher
 Referenced as an automation aid (not adopted verbatim) by
 plugin/skills/conduct-customer-interview/PROCEDURE.md. License terms apply
 per the upstream gpt-researcher project.
+
+---
+
+agent-evaluation
+Copyright (c) 2026 Kevin (with Claude formalization)
+MIT License — referenced by
+plugin/skills/audit-test-coverage-meaningful/PROCEDURE.md for the
+input-vs-output trust-scoring pattern (OMAS v2).
