@@ -80,6 +80,19 @@ Claude Code session 안에서 `/buddy:` 입력 → 자동완성 list 검증:
 - [ ] frontmatter `disable-model-invocation: true` 활성 (description 이 baseline 에 안 등장)
 - [ ] `/reload-plugins` 후 system-reminder 의 available-skills 에 `buddy:router` 만 (44 신규 description 미등장)
 
+### 3.3 Canned business scenarios (forcing-question dialogue 입력용)
+
+본 doc 의 §4-§5 single-skill / cascade 검증에서 *진짜 founder 응답* 을 모사할 때 사용 가능한 canned idea 모음. mock 한계 (anti-sycophancy 진단의 valid 가치 zero) 는 [`docs/notes/2026-05-10-dogfood-result-cycle-1.md`](./2026-05-10-dogfood-result-cycle-1.md) §3 참조 — 본 표는 *PROCEDURE 본문 + 분기 동작* 검증에 한해 활용.
+
+| ID | Idea statement (1 문장) | Target user | Status quo | 1차 wedge |
+|----|-------------------------|-------------|-----------|-----------|
+| S1 | 한국 거주 외국인 전문직(엔지니어/디자이너) 대상 LLM 1:1 한국어 튜터링 + 회사 도메인 컨텍스트 학습 SaaS | 외국인 시니어 엔지니어 / PM | Papago 번역 + 동료 손빌림 + 사내 위키 | 이메일·미팅 한국어 교정 chrome extension |
+| S2 | 한국 SMB 회계 자동화 — 영수증/은행거래/세금계산서 OCR + 회계처리 매핑 | 5~50인 SMB 대표 + 외주 회계사 | 엑셀 + 손입력 + 분기말 회계사 정정 | 영수증 OCR → 분개 자동 매핑 |
+| S3 | 글로벌 SaaS 의 i18n release 자동화 — 코드 변경 → 번역 누락 / fallback 누수 lint + PR 차단 | i18n 책임 SWE / DevRel | 번역 누락 prod buggy + 분기 audit | i18n lint CI hook (Stage 1: en/ko 만) |
+
+> S1/S2 는 region-bound (한국 cluster) — `decide-target-market` 의 Korea cluster trigger 검증에 사용.
+> S3 은 region-agnostic — 글로벌 default cluster 검증에 사용.
+
 ---
 
 ## 4. 사용자 액션 3 — 단일 skill 호출 테스트

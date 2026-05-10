@@ -15,15 +15,13 @@ concretize-idea (1단계 phase orchestrator)
 ├── stage 1: validate-idea          (idea stress-test — 6 forcing questions)
 ├── stage 2: validate-advanced-edge-idea  (edge case / hidden assumption grilling)
 ├── stage 3: assess-business-viability  (7차원 사업성 평가)
-├── stage 4: [analyze-competition-and-substitutes]  경쟁/대체재 매트릭스
+├── stage 4: analyze-competition-and-substitutes  (경쟁/대체재 매트릭스)
 ├── stage 5: review-pricing-and-gtm  (pricing model + GTM channel 평가)
-├── stage 6: [map-customer-segments]  고객 세그먼트 + 구매자 분리
+├── stage 6: map-customer-segments  (Primary user vs Buyer + early adopter)
 ├── stage 7: define-product-spec    (PRD draft 생성)
 └── stage 8: autoplan               (PRD 4-mode review — cross-phase sub-orchestrator)
         └── invokes review-scope / review-engineering / review-design / review-devex
 ```
-
-> 브라켓(`[name]`)으로 표시된 stage 는 신규 작성 필요. 현재는 해당 단계를 orchestrator 가 직접 수행.
 
 ---
 
@@ -46,7 +44,7 @@ concretize-idea (1단계 phase orchestrator)
 
 `assess-business-viability` skill을 invoke해 TAM/SAM/SOM, 고객-구매자 분리, willingness-to-pay, GTM, 경쟁, unit economics, 규제 7차원을 평가한다.
 
-경쟁 분석이 필요하면 경쟁/대체재 매트릭스를 직접 작성한다 (`analyze-competition-and-substitutes` skill 미존재 시 orchestrator가 수행):
+`analyze-competition-and-substitutes` skill을 invoke해 경쟁/대체재 매트릭스를 작성한다:
 - Direct competitors, indirect competitors, substitutes 3분류
 - 각 항목별 price, target user, key differentiator, market share(추정) 표
 
@@ -56,7 +54,7 @@ concretize-idea (1단계 phase orchestrator)
 
 ### Stage 6: Customer Segmentation
 
-고객 세그먼트를 식별한다 (`map-customer-segments` skill 미존재 시 orchestrator가 수행):
+`map-customer-segments` skill을 invoke해 고객 세그먼트를 식별한다:
 - Primary user vs Buyer 분리 (B2B의 경우 특히 중요)
 - Early adopter 프로필 (demographics, pain intensity, current solution)
 - Secondary segment 2-3개
