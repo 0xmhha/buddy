@@ -87,6 +87,15 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `design-event-schema` | command + dispatch | async event schema-first 설계 — producer/consumer contract + versioning + DLQ + idempotency. design-api-contract sync-only gap 보강 |
 | `design-auth-model` | command + dispatch | OAuth2 / JWT / SAML / SSO / RBAC 다층 결정 — 5 axis (auth / session / authz / federation / MFA) integrated design |
 | `design-tenant-model` | command + dispatch | multi-tenant 격리 전략 — shared (RLS) vs schema-per vs DB-per + 3 layer defense + onboarding cost + compliance scope |
+| `design-observability` | command + dispatch | 3 pillar (logs / metrics / traces) 도구 + retention + cost + SLO/SLI + alert top-3 + PII redaction. observability 비용 인프라의 5~15% |
+| `design-secret-management` | command + dispatch | secret store + rotation 주기 + access audit + 4-layer leak detection + 5-step incident response. plaintext-in-repo 0건 강제 |
+| `design-i18n-strategy` | command + dispatch | locale + fallback + ICU MessageFormat + RTL + 번역 워크플로우 (extract/memory/review/deploy) + locale 변형 5 영역 |
+| `design-accessibility-baseline` | command + dispatch | WCAG 2.2 AA + a11y annotation + component baseline + 색 대비 4.5:1 / focus 3:1 + ESLint jsx-a11y + axe-core CI |
+| `decide-form-factor-app-vs-web` | command + dispatch | app vs web vs hybrid vs desktop 결정. 7 차원 (user device fit / job context / native API / distribution / dev cost / 유지 / 시장 정합) + ADR. §3 stage 0 (define-tech-stack 직전) |
+| `apply-design-system` | command + dispatch | form factor 별 design system 채택 (shadcn/MUI/HIG/Material/RN Paper) + token 5 종 + pattern library + adoption 80%+ |
+| `audit-ui-quality` | command + dispatch | visual / interaction polish (6 state) / micro-detail 7 / a11y 시각 / performance perception 5 차원 audit + severity 분류 |
+| `prototype-from-spec` | command + dispatch | low-fi (wireframe) → state diagram (5+ state) → high-fi (system 정합) → user testing 5명 → dev handoff |
+| `design-interaction-pattern` | command + dispatch | gesture / motion (200~300ms ease-out) / feedback (100ms 안) / state transition + mobile gesture vocabulary + prefers-reduced-motion |
 
 ### §3 Stage Skills — Technical Design
 
