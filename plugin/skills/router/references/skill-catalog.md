@@ -55,7 +55,9 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `map-customer-segments` | command + dispatch | 사용자 vs 구매자 분리 + early adopter 5차원 persona + secondary segment 2~3 + anti-persona |
 | `map-jobs-to-be-done` | command + dispatch | JTBD 프레임워크 — functional/emotional/social job + Anthony Ulwick job map 8단계 + outcome statement + competitive analysis (non-consumption 포함) |
 | `conduct-customer-interview` | command + dispatch | 인터뷰 스크립트 + Mom Test anti-pattern 회피 + 결과 코딩 매트릭스 + 4-라벨 가설 update (confirmed/partial/refuted/new) |
+| `analyze-competition-and-substitutes` | command + dispatch | 4 분류 (direct/indirect/substitute/non-consumption) × 4 차원 매트릭스 + positioning (Moore) + moat (7 Powers) + 선택적 vs page |
 | `decide-target-market` | command + dispatch | target market 결정 (글로벌 / 단일 지역 / 다지역) + region cluster trigger. assess-business-viability 후, region-specific extension 의 활성화 trigger |
+| `review-legal-regulatory` | command + dispatch | region-agnostic 법률 / 규제 frame (7 sub-domain — privacy / IP / AI 책임 / 약관 / 결제 / 산업 / audit) + region cluster trigger. 기존 review-privacy-data-risk / review-license-and-ip-risk / review-ai-safety-liability cascade |
 | `review-pricing-and-gtm` | dispatch | pricing model 설계와 GTM(Go-To-Market) channel 전략 평가 |
 | `define-product-spec` | command + dispatch | 아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정 |
 | `apply-builder-ethos` | dispatch | Boil the Lake, Search Before Building, User Sovereignty 3 원칙을 주입해 AI collaboration project에 적용 |
@@ -70,6 +72,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `compose-feature-from-use-cases` | dispatch | cross-actor use case를 묶어 feature 정의 — feature = 여러 actor use case의 합성 |
 | `define-feature-spec` | dispatch | feature의 완전한 명세서 작성 — actor/use case/system boundary/acceptance criteria/test plan 포함 |
 | `score-feature-priority` | dispatch | RICE/ICE/MoSCoW로 feature 우선순위 결정 |
+| `estimate-feature-effort` | command + dispatch | feature 단위 effort estimation — T-shirt sizing (XS/S/M/L/XL) + ideal-h × multiplier + 4-point uncertainty (best/expected/p90/worst). XL / 3× uncertainty 발견 시 분해 강제 |
 | `map-feature-dependencies` | dispatch | feature 간 선후 의존성 DAG 작성 — critical path + 병렬 실행 그룹 식별 |
 | `split-work-into-features` | dispatch | PRD를 받아 vertical slice 기반 재사용 가능한 feature 단위로 분해 |
 | `query-feature-registry` | dispatch | PRD 또는 feature candidate를 받아 feature-management-saas-mcp registry에서 유사 feature 검색해 reuse / adapt / inspire |
