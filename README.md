@@ -13,15 +13,29 @@ Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failur
 
 ---
 
+## Two tracks
+
+This repo contains two independent assets that share the `buddy` name. The canonical definitions and responsibility boundaries live in [`docs/two-tracks-charter.md`](./docs/two-tracks-charter.md); the one-line summary:
+
+| Track | One-line definition |
+|-------|---------------------|
+| **plugin buddy** | A Claude Code plugin — a unified catalog of skills, MCP servers, agents, and hooks that supports the full product lifecycle (idea → business validation → app/web decision → design → spec → build → automated tests → deploy → A/B → growth → marketing → maintenance) creatively, efficiently, and reliably. |
+| **cli buddy** | A TUI tool that embeds plugin buddy to manage automation agents — create, run, stop, and configure agents that drive long-running automated work (e.g. a "draw a webtoon" agent that organizes a story world, plans the daily episode, generates art, and publishes to a target service on schedule). |
+
+cli buddy *embeds* plugin buddy; plugin buddy stands alone. The Features table below describes what is actually shipped today, which is plugin buddy in full and a small slice of cli buddy (the v0.1.0 hook-reliability monitor — one sub-feature of the broader cli buddy goal).
+
+---
+
 ## Features
 
-| Area | What it does |
-|------|-------------|
-| **Hook reliability** | Wraps Claude Code hooks; surfaces silent failures with structured logs |
-| **State schema** | Zod-validated JSON state prevents corruption and schema drift |
-| **Task retry** | WAL-backed outbox ensures failed tasks are replayed, not dropped |
-| **Observability** | Unified token/cost/session/hook status via a single `stats` command |
-| **Claude Code plugin** | 9-phase lifecycle orchestrator, 57 `/buddy:*` commands, 105 skills behind one router |
+| Area | Track | What it does |
+|------|-------|-------------|
+| **Claude Code plugin** | plugin buddy | 9-phase lifecycle orchestrator, 57 `/buddy:*` commands, 105 skills behind one router |
+| **Hook reliability** | cli buddy (v0.1.0) | Wraps Claude Code hooks; surfaces silent failures with structured logs |
+| **State schema** | cli buddy (v0.1.0) | Zod-validated JSON state prevents corruption and schema drift |
+| **Task retry** | cli buddy (v0.1.0) | WAL-backed outbox ensures failed tasks are replayed, not dropped |
+| **Observability** | cli buddy (v0.1.0) | Unified token/cost/session/hook status via a single `stats` command |
+| **TUI agent manager** | cli buddy (planned) | Create / run / stop / configure automation agents that embed plugin buddy. Not yet implemented — see charter §3 |
 
 ---
 

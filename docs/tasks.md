@@ -223,7 +223,7 @@
 | ID | 작업 | 위치 | 비고 |
 |----|------|------|------|
 | C-1 | `cmd/buddy/main.go` 685 lines 분할 (install/daemon/doctor/stats/events/hookwrap sibling 분리) | `cmd/buddy/` | v0.2 새 명령 추가 전 권장 |
-| C-2 | Module path drift 정리 | `go.mod` + 전체 import | `github.com/wm-it-22-00661/buddy` → `github.com/0xmhha/buddy` |
+| ~~C-2~~ | ~~Module path drift 정리 (`wm-it-22-00661/buddy` → `0xmhha/buddy`)~~ | ✅ Done (`4ce3ccb`) | 43 파일 / 91 import 줄 / go.mod 1 줄 일괄 변경 |
 | C-3 | gofmt drift 정리 (필요 시) | repo 전체 | 한 commit으로 처리, 현재는 clean |
 
 ---
@@ -261,7 +261,7 @@
 **Wave 4 — 사용자 페이스:**
 
 6. **B-1.1 ~ B-1.3** — Go CLI dogfood feedback (3~7일 사용 후)
-7. **C-1 / C-2** — 코드 housekeeping (v0.2 새 명령 추가 직전)
+7. **C-1** — 코드 housekeeping `cmd/buddy/main.go` 분할 (v0.2 새 명령 추가 직전). C-2 는 `4ce3ccb` 으로 완료됨.
 
 **Wave 5 — Go CLI 본격 재개:**
 

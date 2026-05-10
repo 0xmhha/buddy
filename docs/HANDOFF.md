@@ -6,14 +6,14 @@
 
 ## 트랙 상태
 
-> 이 repo는 두 트랙이 공존한다. **현재 능동 트랙은 Plugin.**
+> 이 repo는 두 트랙이 공존한다. **현재 능동 트랙은 plugin buddy.** 트랙 정체성 / 책임 경계의 SSoT는 [`docs/two-tracks-charter.md`](./two-tracks-charter.md).
 
 | 트랙 | 상태 | 위치 | Entry doc |
 |------|------|------|----------|
-| **Plugin — 9-phase orchestrator** (105 procedures, 57 commands, single-router dispatch) | 🟢 ACTIVE — v1.0.8 released, Phase 1+2+3+4+5ext Done + N-1 closed. 다음 후보: A-4 plugin dogfood (실 SaaS 프로젝트 install) | `plugin/`, `docs/superpowers/` | [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) |
-| **Go CLI (hook reliability monitor)** v0.1.0 released | 🟡 PAUSED — dogfood feedback 대기, 별개 트랙 | `cmd/`, `internal/`, `archive/ts-poc/` | 이 HANDOFF §1~12 (이하 본문은 Go CLI 트랙 기준) |
+| **plugin buddy** — Claude Code plugin (skill / MCP / agent / hook 카탈로그). 9-phase orchestrator, 105 procedures, 57 commands, single-router dispatch | 🟢 ACTIVE — v1.0.8 released, Phase 1+2+3+4+5ext Done + N-1 closed. 다음 후보: 미구현 skill 보완 (`docs/tasks.md` §A-2 + `docs/` 추가 검토) | `plugin/`, `docs/superpowers/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §2 + [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) |
+| **cli buddy** — TUI 자동화 agent 관리 툴 (plugin buddy 내재화). 진짜 목적은 *agent 생성 / 실행 / 종료 / 설정 관리*. v0.1.0 = hook reliability monitor (한 sub-feature 만 구현). | 🟡 부분 구현 — TUI / agent runtime / plugin buddy 내재화 layer 모두 미구현. 본격 spec 작성 미진입 | `cmd/`, `internal/`, `archive/ts-poc/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 + 이 HANDOFF §1~12 (이하 본문은 v0.1.0 시점 기준) |
 
-**Plugin 트랙 진행 상태 (2026-05-09):**
+**plugin buddy 진행 상태 (2026-05-09):**
 
 | Phase | 상태 | Release | Skill count |
 |-------|------|---------|-------------|
@@ -294,7 +294,7 @@ rm -rf $SANDBOX
 - ~~Cross-compile + release workflow~~ ✅ M6 T1+T2.
 - ~~Plugin command context bloat (N-1)~~ ✅ ADR-001 (`disable-model-invocation: true` × 57 commands, commit `ca99762`). **신규 command 추가 시 이 컨벤션 강제** — `plugin/commands/*.md` 모든 신규 파일은 frontmatter에 `disable-model-invocation: true`를 포함해야 한다.
 - **`cmd/buddy/main.go` 분할 (685 lines):** v0.1.0 release 후 685 lines. v0.2 새 명령 추가 전에 install/daemon/doctor/stats/events/hookwrap 도 sibling으로 옮기면 좋음. ([`tasks.md`](./tasks.md) C-1)
-- **모듈 path:** `github.com/wm-it-22-00661/buddy` — 이전 머신 잔재. 현재 origin인 `github.com/0xmhha/buddy` 와 일치시키려면 모든 import 경로 일괄 변경 필요. v0.2 cleanup 후보. ([`tasks.md`](./tasks.md) C-2)
+- ~~**모듈 path:** `github.com/wm-it-22-00661/buddy` — 이전 머신 잔재.~~ ✅ commit `4ce3ccb` 으로 `github.com/0xmhha/buddy` 일괄 변경 완료 (43 파일 / 91 import / go.mod 1 줄).
 - **gofmt drift 한 번 정리:** `gofmt -l .`이 가끔 비어있지 않으면 한 commit으로 정리 (현재는 clean). ([`tasks.md`](./tasks.md) C-3)
 
 ---
