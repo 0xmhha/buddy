@@ -151,6 +151,11 @@
 | A-4.2 | 9-phase orchestrator 단일 cycle 검증 (idea → ship-release) | A-4.1 의존 |
 | A-4.3 | dogfood 결과로 A-2 잔여 29 skill 재정렬 | A-4.2 의존 |
 | A-4.4 | dogfood 중 발견된 router/orchestrator 마찰 fix | ad-hoc, A-4.2 의존 |
+| A-4.5 | **Cycle 1 dogfood validation** — `/buddy:concretize-idea` entry → Stage 1 gate / mode / smart-routing 검증 | ✅ Done — [`docs/notes/2026-05-10-dogfood-result-cycle-1.md`](./notes/2026-05-10-dogfood-result-cycle-1.md) |
+| A-4.6 | Cycle 1 발견 issue B3/B4/B5 fix — concretize-idea PROCEDURE bracket / fallback 문구 stale 제거 | A-4.5 의존, *minor major* — 단일 PR |
+| A-4.7 | Cycle 1 발견 B1 — scenarios doc §3.X canned scenarios 표 추가 | A-4.5 의존, doc-only |
+| A-4.8 | Cycle 1 발견 B2 — validate-idea L171 phrasing 다듬기 | A-4.5 의존, prose-only |
+| A-4.9 | Cycle 2 — §4 5 single-skill 실 dispatch 검증 + §5 cascade 4 stage 실 dispatch 검증 + 자연어 dispatch 검증 | A-4.6 의존 |
 
 ### A-5. N-1 후속 (deferred, low priority)
 
