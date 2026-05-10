@@ -112,35 +112,39 @@
 
 ---
 
-### 2.2 그룹 2 — skill-map.md 추가 후보 4 (영역 겹침 검토 필요)
+### 2.2 그룹 2 — skill-map.md 추가 후보 4 (영역 겹침 — 결정 lock-in 2026-05-10)
 
-`skill-map.md` "추천 신규 buddy 스킬 목록" 의 17 중 13 은 이미 구현 (build-with-tdd, diagnose-bug, setup-quality-gates, define-feature-spec 등). 미구현 4 건은 *기존 skill 과 영역 겹침* 가능성 있음 — *통합 또는 신규 작성* 결정 필요.
+`skill-map.md` "추천 신규 buddy 스킬 목록" 의 17 중 13 은 이미 구현 (build-with-tdd, diagnose-bug, setup-quality-gates, define-feature-spec 등). 미구현 4 건의 *영역 겹침 결정* 은 사용자 confirm (2026-05-10) 으로 lock-in.
 
-| skill | 1줄 용도 | 영역 겹침 후보 (기존 skill) | 결정 필요 |
-|-------|---------|----------------------------|---------|
-| `define-product-context` | Matt skills `grill-with-docs` 기반 — 도메인 컨텍스트 / ADR 기반 운영 | `define-product-spec` (구현됨) — PRD 작성에 포함될 수도 / 별개 차원일 수도 | *PRD 의 "domain context" 섹션* 으로 통합 vs 별도 skill |
-| `write-prd` | Matt skills `to-prd` 기반 — PRD 작성 | `define-product-spec` (구현됨) — 동일 책임 가능성 높음 | rename / alias / 폐기 |
-| `review-code-architecture` | Matt skills `improve-codebase-architecture` 기반 — deep module + interface depth | `review-engineering` (구현됨), `consult-codex` (구현됨) | review-engineering 의 stage 로 흡수 vs 별도 |
-| `review-legal-regulatory` | buddy 자체 추가 후보 — 법률 / 규제 영향 검토 | (없음) | §1 사업성 영역에 신규 (Cluster E 와 묶음) — neighbour |
+| skill | 1줄 용도 | 영역 겹침 | 결정 |
+|-------|---------|----------|------|
+| `define-product-context` | Matt skills `grill-with-docs` 기반 — 도메인 컨텍스트 / ADR 기반 운영 | `define-product-spec` (구현됨) | **통합** — define-product-spec 의 *internal sub-section* 으로 흡수. 별도 skill 미작성 |
+| `write-prd` | Matt skills `to-prd` 기반 — PRD 작성 | `define-product-spec` (구현됨, 동일 책임) | **폐기** — define-product-spec 가 동일 책임 cover |
+| `review-code-architecture` | Matt skills `improve-codebase-architecture` 기반 — deep module + interface depth | `review-engineering` (구현됨), `consult-codex` (구현됨) | **흡수** — review-engineering 의 stage 로 통합 |
+| `review-legal-regulatory` | buddy 자체 추가 후보 — 법률 / 규제 영향 검토 | (없음) | **신규 작성** — Cluster E 와 묶어 §1 사업성 영역으로 |
 
-> **그룹 2 합계: 4 skill** (단 *영역 겹침 결정* 후 신규 작성은 1~4 변동 가능).
-
----
-
-### 2.3 그룹 3 — deferred-by-decision MCP 2 (`Cluster H`)
-
-phase7-deferred-reevaluation.md 의 Cluster H — Q4 결정에 의해 *보류 유지*.
-
-| MCP server | 1줄 용도 | trigger |
-|-----------|---------|--------|
-| `feature-management-mcp` | feature.query / store / update / link_code / export_patch — feature registry MCP | A-3 (현재 cli buddy 트랙의 buddy MCP 확장 작업) 본격화 시 |
-| `analytics-mcp` | funnel / AB / cohort 노출 (§8 cluster 일부 선결 후) | Cluster F (§8 데이터 분석 7 skill) 일부 구현 후 |
-
-> **그룹 3 합계: 2 MCP** (skill 이 아닌 MCP server 라 분리 필요. plugin buddy 의 MCP 자산 영역).
+> **그룹 2 결정 결과: 신규 작성 1 (review-legal-regulatory) + 기존 skill 보강 3 (define-product-spec / review-engineering 의 PROCEDURE 갱신)**.
 
 ---
 
-### 2.4 그룹 4 — charter scope 12 stage × 9-phase 매핑 gap (추가 후보)
+### 2.3 그룹 3 — MCP 2 (Q4 보류 재평가 — 결정 lock-in 2026-05-10: C2 분할 진입)
+
+phase7-deferred-reevaluation.md 의 Cluster H. 사용자 confirm (2026-05-10) 으로 *분할 진입* 결정.
+
+| MCP server | 1줄 용도 | 결정 | 트랙 |
+|-----------|---------|------|------|
+| `feature-management-mcp` | feature.query / store / update / link_code / export_patch — feature registry MCP | **cli buddy 트랙으로 분리** — charter §5 의 `cmd/buddy-mcp/` "두 트랙 공유" 위치 활용. plugin buddy inventory 에서 제외 | cli buddy |
+| `analytics-mcp` | funnel / AB / cohort 노출 | **§8 일부 구현 후 자연 진입** — Cluster F (§8 데이터 분석 7 skill) 일부 완료가 trigger. plugin buddy inventory 에 잔존 | plugin buddy (deferred) |
+
+> **그룹 3 결정 결과: plugin buddy inventory 에 1 MCP (analytics-mcp, deferred) 잔존, 1 MCP (feature-management-mcp) 는 cli buddy 트랙으로 이동**.
+
+---
+
+### 2.4 그룹 4 — charter scope 12 stage × 9-phase 매핑 gap (Step 2 외부 탐색 후 결정 — 2026-05-10 lock-in)
+
+**결정 (2026-05-10)**: 사용자 confirm — *Step 2 외부 4 경로 탐색 후 명명 / scope 결정*. 외부 자산이 form-factor / 그로스 / 마케팅 영역 단서 제공 가능.
+
+
 
 charter §3 의 plugin buddy scope 12 stage 와 plugin buddy 의 9-phase orchestrator 를 매핑할 때 *cover 안 되는 영역* 식별. 신규 발견 후보.
 
@@ -163,15 +167,18 @@ charter §3 의 plugin buddy scope 12 stage 와 plugin buddy 의 9-phase orchest
 
 ---
 
-## 3. 종합 매트릭스
+## 3. 종합 매트릭스 (2026-05-10 결정 반영)
 
-| 그룹 | 건수 | 성격 | 우선순위 (추정) |
-|------|-----|------|--------------|
-| **그룹 1** 직접 미구현 (A-2) | 29 | 명확 — 신규 작성 또는 외부 참조 통합 | HIGH (charter 1 순위) |
-| **그룹 2** skill-map 추가 (영역 겹침) | 4 | 결정 필요 — 통합 vs 신규 | MEDIUM (영역 겹침 해소 후 결정) |
-| **그룹 3** MCP deferred | 2 | 보류 유지 (Q4=(c)) | DEFERRED |
-| **그룹 4** charter scope gap | 4+ 영역 (skill 미정) | 신규 발견 — 사용자 confirm 후 명명 / 우선순위 결정 | MEDIUM-LOW (gap 명확화 후) |
-| **합계 (확정 + 후보)** | **39+** | (29 + 4 + 2 + 4+) | — |
+| 그룹 | 건수 | 결정 | plugin buddy 신규 작성 | 우선순위 |
+|------|-----|------|---------------------|--------|
+| **그룹 1** 직접 미구현 (A-2) | 29 | 신규 작성 또는 외부 참조 통합 | **29** | HIGH (charter 1 순위) |
+| **그룹 2** skill-map 추가 (영역 겹침) | 4 | 통합 3 + 신규 1 | **1** (review-legal-regulatory) | MEDIUM (Cluster E 묶음) |
+| **그룹 3** MCP — Q4 보류 재평가 | 2 | C2 분할 진입 | **0 + 1 deferred** (analytics-mcp §8 후) | DEFERRED |
+| **그룹 4** charter scope gap | 4+ 영역 | Step 2 외부 탐색 후 결정 | **TBD** | MEDIUM-LOW |
+| **합계 (확정)** | **30 신규 + 1 deferred + 3 통합 + 4 영역 TBD** | | | |
+
+> *통합 3* (define-product-context / write-prd / review-code-architecture) 는 신규 skill 작성이 아니라 *기존 PROCEDURE 갱신* 이라 plugin/skills/ 디렉토리 카운트 영향 없음 (현재 106 → 신규 30 후 = 136).
+> *cli buddy 트랙으로 이동* 1 (feature-management-mcp) 은 plugin buddy inventory 에서 제외됨.
 
 ### 3.1 charter scope cover 율
 
@@ -222,7 +229,17 @@ skill 별 PR 단위. plan 따라 진행.
 
 ---
 
-## 5. 사용자 confirm 받을 항목
+## 5. 사용자 confirm — 완료 (2026-05-10)
+
+| 결정 | 선택 |
+|------|------|
+| D-A (그룹 4 처리) | Step 2 외부 4 경로 탐색 후 결정 (Recommended) |
+| D-B (그룹 2 영역 겹침) | 통합 3 + 신규 1 (Recommended) |
+| D-C (그룹 3 MCP 재평가) | C2 분할 진입 — analytics-mcp §8 후 / feature-management-mcp cli buddy 분리 (Recommended) |
+
+원본 옵션 / 영향 분석은 git history 의 `404fd1e` commit message 참조.
+
+## 5'. (historical) confirm 옵션 원본
 
 ### 5.1 그룹 4 (charter scope gap) 신규 후보 4 영역
 
