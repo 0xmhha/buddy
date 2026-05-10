@@ -230,12 +230,22 @@ Bug reports and feature requests: [GitHub Issues](https://github.com/0xmhha/budd
 
 ## Acknowledgments
 
-Portions of the Claude Code plugin skills (`plugin/skills/`) are derived from or inspired by the following MIT-licensed projects:
+Portions of the Claude Code plugin skills (`plugin/skills/`) are derived from, inspired by, or reference the following MIT-licensed projects:
 
-- **[mattpocock/skills](https://github.com/mattpocock/skills)** — Copyright (c) 2026 Matt Pocock. [MIT License](https://opensource.org/licenses/MIT).
-- **[gstack](https://github.com/garrytan/gstack)** — Copyright (c) 2026 Garry Tan. [MIT License](https://opensource.org/licenses/MIT).
+| Project | Author / Copyright | Used by |
+|---------|-------------------|---------|
+| [mattpocock/skills](https://github.com/mattpocock/skills) | Matt Pocock | `define-product-spec` (define-product-context + write-prd absorption), `review-engineering` (review-code-architecture absorption) |
+| [gstack](https://github.com/garrytan/gstack) | Garry Tan | early plugin scaffolding inspiration |
+| marketingskills | Corey Haines, 2025 | `analyze-competition-and-substitutes`, `optimize-conversion-funnel` (5 CRO sub), `draft-marketing-copy`, `plan-marketing-channel`, `audit-seo-aso`, `automate-marketing-content` (3 sub), `analyze-feature-adoption`, `analyze-user-cohort`, `analyze-customer-feedback-corpus`, `conduct-customer-interview`, `map-customer-segments` |
+| designer-skills | MC Dean, 2026 | `apply-design-system`, `audit-ui-quality`, `prototype-from-spec`, `design-interaction-pattern`, `design-accessibility-baseline`, `conduct-customer-interview` (design-research) |
+| make-interfaces-feel-better | (MIT) | `audit-ui-quality` (micro-detail patterns) |
+| agent-evaluation | Kevin + Claude, 2026 (OMAS v2) | `audit-test-coverage-meaningful`, `analyze-actor-failure-rate` (input-vs-output trust scoring) |
+| humanizer | Siqi Chen, 2025 | `analyze-customer-feedback-corpus` (AI-text inverse pattern) |
+| [superpowers](https://github.com/obra/superpowers) | Jesse Vincent, 2025 | `docs/superpowers/` directory naming + composable-skill + router-instruction pattern. See [ADR-003](./docs/superpowers/decisions/2026-05-10-superpowers-attribution.md). |
+| gpt-researcher | (referenced) | `conduct-customer-interview` (automation aid) |
+| Korean legal cluster | varies (MIT) | Korea cluster deferred (`consult-korea-legal-context` etc) — `ai-professional-replacement-legal-exploration_skill`, `korean-legal-guide_skill`, `patent-application-drafting_skill`, `KESE-KIT` |
 
-These works are used and modified in accordance with their respective MIT licenses. Full license texts are reproduced in [`NOTICE`](./NOTICE).
+These works are used and modified in accordance with their respective MIT licenses. No verbatim code or text was adopted in any case — all buddy implementations are independently authored, with the upstream projects providing pattern inspiration, naming conventions, or domain framing only. Full license texts are reproduced in [`NOTICE`](./NOTICE).
 
 ---
 

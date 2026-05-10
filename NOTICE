@@ -87,3 +87,25 @@ Copyright (c) 2025 Siqi Chen
 MIT License — referenced by
 plugin/skills/analyze-customer-feedback-corpus/PROCEDURE.md for
 AI-text naturalness inverse-pattern checking.
+
+---
+
+superpowers
+Copyright (c) 2025 Jesse Vincent
+MIT License — upstream: github.com/obra/superpowers
+(also distributed via the official Claude plugin marketplace
+at claude.com/plugins/superpowers).
+
+Inspiration acknowledgment per ADR-003
+(docs/superpowers/decisions/2026-05-10-superpowers-attribution.md):
+
+- buddy's docs/superpowers/ directory naming is influenced by this
+  upstream project, and
+- the composable-skill + router-instruction pattern adopted in
+  plugin/skills/router/SKILL.md and plugin/skills/<name>/PROCEDURE.md
+  shares the same conceptual lineage as upstream's "set of composable
+  skills and some initial instructions that make sure your agent uses
+  them" framing.
+
+No verbatim code or text was adopted. buddy's implementation is
+independently authored.
