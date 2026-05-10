@@ -151,6 +151,10 @@
 
 ## 4. v0.2 — Control Plane (멀티-세션 dashboard)
 
+> ⚠️ **재평가 필요**: 본 outline 은 v0.1 시점 (2026-04-23) 에 작성됐고, [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 의 cli buddy 진짜 목적 (자동화 agent 관리 — 생성 / 실행 / 종료 / 설정) 과 *부분 정합 / 부분 충돌*. 본격 변경은 charter §6.2 의 1 순위 작업 (`docs/cli-buddy-spec.md` 신규 작성) 시점에 진행. 그때까지 본 outline 의 항목들은 *historical 사고 보존* 으로 read.
+>
+> Gap 매핑 표 + 처리 방향: [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](./superpowers/decisions/2026-05-10-roadmap-charter-gap.md) (ADR-002).
+
 ### Why
 
 [Harness analysis](../../harness-engineering-analysis.md) §3 갭 G "통합 observability" — 토큰·세션·비용·hook 상태가 별개 도구로 분산. v0.1의 `buddy doctor`/`stats`는 단일 머신·단일 세션 관점이지만, dashboard는 *동시에 떠 있는 여러 Claude Code 세션*을 한 번에 본다. recon이 PID→JSONL 매핑 패턴([analysis 메타-인사이트 #1](../../harness-engineering-analysis.md))을 이미 검증했으므로 차용 가능.
@@ -178,6 +182,10 @@
 
 ## 5. v0.3 — Orchestration (task DAG executor)
 
+> ⚠️ **재평가 필요**: 본 outline 은 v0.1 시점 (2026-04-23) 에 작성됐고, [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 의 cli buddy 진짜 목적과 *부분 정합 / 부분 충돌*. 특히 `buddy task` CLI 의 *task* 단어 가 cli buddy 의 *agent* 단위와 충돌 가능성. 본격 변경은 `docs/cli-buddy-spec.md` 신규 작성 시점.
+>
+> Gap 매핑 표 + 처리 방향: [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](./superpowers/decisions/2026-05-10-roadmap-charter-gap.md) (ADR-002).
+
 ### Why
 
 [Harness analysis](../../harness-engineering-analysis.md) §3 갭 A(task dependency graph), B(retry/feedback loop). arc-reactor의 wave parallelization 패턴 + quality gate retry loop ([analysis 메타-인사이트 #2](../../harness-engineering-analysis.md))를 buddy의 신뢰성 위에 얹는다. 갭 A는 claude-squad·task-master가 부분 시도, 단일 자료구조로 통일된 적 없음 — buddy의 SQLite 인프라가 이 통일을 가능케 한다.
@@ -202,6 +210,10 @@
 ---
 
 ## 6. v1.0 — 통합 (AGENTS.md auto-sync, plugin model, MCP server)
+
+> ⚠️ **재평가 필요**: 본 outline 은 v0.1 시점 (2026-04-23) 에 작성됐고, [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 의 cli buddy 진짜 목적과 *부분 정합 / 부분 충돌*. 특히 *AGENTS.md 의 agent (capability metadata)* 와 *cli buddy 의 agent (자동화 실행체)* 단어 충돌 명백. *plugin model* 도 charter §3.6 의 *plugin buddy 내재화* 와 다른 차원. 본격 변경은 `docs/cli-buddy-spec.md` 신규 작성 시점.
+>
+> Gap 매핑 표 + 처리 방향: [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](./superpowers/decisions/2026-05-10-roadmap-charter-gap.md) (ADR-002).
 
 ### Why
 
