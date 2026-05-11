@@ -30,8 +30,8 @@
 | **N-1 closure** (ADR-001: `disable-model-invocation: true` × 57 commands) | ✅ Done | — | — |
 | **Skill Completion Cycle Batch 1~7** (44 신규 + 2 통합) | ✅ Done | (was v1.1.0 candidate) | +44 (+2 갱신) |
 | **Cycle 1 dogfood fix** (B1-B5) + Cycle 2 structural | ✅ Done | (was v1.1.1 patch) | — |
-| **v0.2.0 release prep** (doc cleanup 12 + B6 lint/template + ADR-004) | ✅ Done — **본 publish 의 baseline** | **plugin-v0.2.0** | — |
-| **Total** | **148 procedures / 99 commands / 14 ship-release stages** | **plugin-v0.2.0** (2026-05-11) | 148 |
+| **v0.2.0 release prep** (doc cleanup 12 + B6 lint/template + ADR-004) | ✅ Done — **본 publish 의 baseline** | **v0.2.0** | — |
+| **Total** | **148 procedures / 99 commands / 14 ship-release stages** | **v0.2.0** (2026-05-11) | 148 |
 | Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
 | analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
 | feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy spec lock-in 시점 | — |

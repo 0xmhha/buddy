@@ -102,14 +102,18 @@ charter + cli-buddy-spec 의 의존 chain 으로부터 derive:
 | breaking change (PROCEDURE 양식 일괄 변경 등) | minor bump + ADR + migration notes |
 | §2.2 4 조건 모두 만족 | **v1.0.0** |
 
-### 2.4 두 트랙 version namespace 분리
+### 2.4 두 트랙 version namespace 공유 (revised 2026-05-11 post-release)
 
-| 트랙 | tag prefix | 예시 |
+| 트랙 | tag | 예시 |
 |------|----------|------|
-| plugin | `plugin-vX.Y.Z` | `plugin-v0.2.0`, `plugin-v1.0.0` |
-| cli | `cli-vX.Y.Z` (또는 기존 `vX.Y.Z` 유지) | `cli-v0.1.0` (현재 `v0.1.0` 의 rename 후보 — supersede 시점에 결정) |
+| plugin | `vX.Y.Z` | `v0.2.0`, `v0.3.0`, `v1.0.0` |
+| cli | `vX.Y.Z` | `v0.1.0` (기존, 2026-04-26 published) |
 
-CHANGELOG entry 도 동일 prefix 로 분리 (선택 — 향후 cli track release 진행 시).
+**Rationale (revised)**: 초안에서는 `plugin-vX.Y.Z` / `cli-vX.Y.Z` prefix 분리를 제안했으나, 사용자 의사결정으로 *prefix 없는 공통 `vX.Y.Z` namespace* 채택. 두 트랙이 *같은 repo + 같은 release page* 를 공유하고, version 자체가 *시간순 cadence* 를 표현 — prefix 가 cognitive overhead.
+
+**Trade-off**: 같은 `vX.Y.Z` namespace 라 release page 가 *artifact 종류 (plugin vs cli) 를 명시* 해야 함. 본 release 의 title pattern: `vX.Y.Z — {plugin buddy | Go CLI} {brief description}`. CHANGELOG entry 는 단일 `[X.Y.Z]` 으로 통일 + 본문 첫 줄에 *어느 artifact 의 release 인지* 명시.
+
+기존 `v0.1.0` (Go CLI binary, 2026-04-26) 와 본 `v0.2.0` (plugin buddy, 2026-05-11) 는 *artifact 다름, version stream 연속 X*. 향후 minor/major bump 도 *artifact 별 독립* — 충돌 시 다음 사용 가능 version 사용.
 
 ---
 
@@ -188,7 +192,7 @@ charter 의 v1.0.0 milestone 정의를 *현재 자산만으로 v1.0.0* 으로 �
 
 ### 5.2 Runtime (publish 후)
 
-- git tag `plugin-v0.2.0` push → GitHub Release publish (CHANGELOG `[0.2.0]` entry 본문 사용)
+- git tag `v0.2.0` push → GitHub Release publish (CHANGELOG `[0.2.0]` entry 본문 사용). 기존 `v0.1.0` (Go CLI binary) 와 *같은 namespace 공유* — release title 로 artifact 종류 구분 (§2.4 revised)
 - `claude plugin marketplace add 0xmhha/buddy` → marketplace 재fetch → `0.2.0` enabled
 
 ---
