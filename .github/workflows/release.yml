@@ -60,8 +60,14 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           # Auto-uses the tag that triggered the workflow.
+          # `buddy_*` matches the cli binary, `buddy-mcp_*` matches the MCP
+          # server binary — both are produced by `make release-binaries`
+          # and must ship together (plugin mcpServers entry expects
+          # buddy-mcp on PATH). v0.4.0 shipped only `buddy_*`; fixed in
+          # v0.4.1.
           files: |
             dist/buddy_*
+            dist/buddy-mcp_*
             dist/SHA256SUMS
           fail_on_unmatched_files: true
           generate_release_notes: true

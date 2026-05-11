@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-05-11
+
+### Fixed — release workflow includes buddy-mcp binaries
+
+v0.4.0's `.github/workflows/release.yml` had `files: dist/buddy_*` which uploads only the cli binary; `buddy-mcp_*` (MCP server binary) was built but never attached. The plugin's `mcpServers` entry expects `buddy-mcp` on PATH, so users who installed via release binary had a working `buddy` CLI but no MCP server.
+
+Fix: widen the pattern to include `dist/buddy-mcp_*` alongside `dist/buddy_*` + `dist/SHA256SUMS`. v0.4.1 tag-triggered release publishes **8 binaries** (4 buddy + 4 buddy-mcp) plus the checksum file.
+
+### Changed (release-only)
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.4.0` → `0.4.1`.
+- `internal/mcp/server.go` MCP server `Version` `0.4.0` → `0.4.1`.
+- `cmd/buddy/main.go` `var version` `0.4.0` → `0.4.1`.
+- `Makefile` `RELEASE_VERSION` `0.4.0` → `0.4.1`.
+- `README.md` install snippet bumped to `0.4.1`.
+
+### Migration notes
+
+- This is a patch release; no functionality changes beyond the workflow fix. Existing v0.4.0 users may stay on v0.4.0 if they only need the cli binary; pull v0.4.1 if you need `buddy-mcp` from the release page rather than from source build.
+
 ## [0.4.0] — 2026-05-11
 
 ### Versioning policy note

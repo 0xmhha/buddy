@@ -40,7 +40,7 @@ import (
 //
 // Roadmap §3 M6 T3.
 var (
-	version   = "0.4.0"
+	version   = "0.4.1"
 	gitSHA    = "dev"
 	buildDate = "unknown"
 )

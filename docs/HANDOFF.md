@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-11 (**v0.4.0** — cli buddy W3-3 agent runtime + background scheduler ship. plugin buddy assets unchanged from v0.3.0; cli binary version namespace-aligned to 0.4.0 per ADR-004 §2.4 revised. **세션 인계 진입점: [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md)**)
+**Last updated:** 2026-05-11 (**v0.4.1** — release workflow patch (buddy-mcp binary now included in release page). Functionality unchanged from v0.4.0. **세션 인계 진입점: [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md)**)
 
 ## 트랙 상태
 
@@ -32,8 +32,9 @@
 | **Cycle 1 dogfood fix** (B1-B5) + Cycle 2 structural | ✅ Done | (was v1.1.1 patch) | — |
 | **v0.2.0 release prep** (doc cleanup 12 + B6 lint/template + ADR-004) | ✅ Done | v0.2.0 (2026-05-11, tag pushed) | — |
 | **v0.3.0 release** (analytics-mcp W4-2.1 ~ W4-2.6 — 7 MCP tools + SQLite adapter + 10 skill MCP integration) | ✅ Done | v0.3.0 (2026-05-11) | — |
-| **v0.4.0 release** (cli buddy W3-3 agent runtime + background scheduler + cli binary version namespace align) | ✅ Done — **본 publish 의 baseline** | **v0.4.0** | — |
-| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP analytics tools / 6 cli agent subcommands** | **v0.4.0** (2026-05-11) | 148 |
+| **v0.4.0 release** (cli buddy W3-3 agent runtime + background scheduler + cli binary version namespace align) | ✅ Done | v0.4.0 (2026-05-11) | — |
+| **v0.4.1 patch** (release workflow: include buddy-mcp_* in publish pattern) | ✅ Done — **본 publish 의 baseline** | **v0.4.1** | — |
+| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP analytics tools / 6 cli agent subcommands** | **v0.4.1** (2026-05-11) | 148 |
 | Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
 | analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
 | feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy W3-3 agent runtime 진입 시 (spec lock-in 은 ADR-005 로 완료, 2026-05-11) | — |

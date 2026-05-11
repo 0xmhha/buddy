@@ -54,7 +54,7 @@ cli buddy *embeds* plugin buddy; plugin buddy stands alone. The Features table b
 ```bash
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-VERSION=0.4.0
+VERSION=0.4.1
 
 curl -fL "https://github.com/0xmhha/buddy/releases/download/v${VERSION}/buddy_${VERSION}_${OS}_${ARCH}" -o buddy
 curl -fL "https://github.com/0xmhha/buddy/releases/download/v${VERSION}/SHA256SUMS" -o SHA256SUMS
@@ -76,7 +76,7 @@ Using the `gh` CLI:
 ```bash
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-gh release download v0.4.0 --repo 0xmhha/buddy \
+gh release download v0.4.1 --repo 0xmhha/buddy \
   --pattern "buddy_*_${OS}_${ARCH}" -O buddy
 ```
 
@@ -93,7 +93,7 @@ Verify:
 
 ```bash
 claude plugin list
-# buddy  0.4.0  installed
+# buddy  0.4.1  installed
 ```
 
 Uninstall:
