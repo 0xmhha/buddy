@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — analytics-mcp Phase W4-2.1 (stub)
+
+- `internal/mcp/analytics_tool.go` — 7 MCP tools (`analytics_query_funnel` / `analytics_query_cohort` / `analytics_query_ab_experiment` / `analytics_query_actor_failure` / `analytics_query_cost` / `analytics_query_slo_burn` / `analytics_query_feedback_corpus`) registered in `cmd/buddy-mcp/`. Args/result schemas mirror spec §4 verbatim so future adapter work is handler-internal only.
+- `BUDDY_ANALYTICS_BACKEND` env var (recognised: `sql` / `mixpanel` / `amplitude` / `datadog` / `stripe` / `elasticsearch`). v0.2 ships stubs — every handler returns a friend-tone Korean text body explaining the missing adapter rather than a transport error.
+- `internal/mcp/analytics_tool_test.go` — race-clean tests for registration, stub behaviour, and backend resolution sentinel errors.
+- `docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` Status flipped Draft → **Accepted (v0.2.0 — phase W4-2.1 stub published)**.
+
+Deferred to a future cycle (per spec §8): W4-2.2 Custom SQL adapter, W4-2.3 handler 본격 구현, W4-2.4 7 PROCEDURE.md 의 MCP tool 호출 example, W4-2.7 standalone `analytics-mcp-v0.1.0` tag.
+
+### Changed
+
+- `internal/mcp/server.go` — MCP server `Version` bumped to `0.2.0` and `Instructions` mention the analytics surface.
+
 ## [0.2.0] — 2026-05-11
 
 ### Versioning policy reset (BREAKING — version scheme only)

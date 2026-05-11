@@ -11,16 +11,20 @@ import (
 func NewBuddyServer(opts Options) *mcp.Server {
 	s := mcp.NewServer(&mcp.Implementation{
 		Name:    "buddy",
-		Version: "0.1.0",
+		Version: "0.2.0",
 	}, &mcp.ServerOptions{
-		Instructions: "buddy — Claude Code hook harness control plane. " +
-			"Use these tools to inspect health, query hook statistics, " +
-			"and manage the local feature registry.",
+		Instructions: "buddy — Claude Code hook harness control plane + analytics surface. " +
+			"Use these tools to inspect hook health, query hook statistics, manage the " +
+			"local feature registry, and (analytics_query_*) read funnel / cohort / A-B / " +
+			"cost / SLO / feedback data from production backends. Analytics tools require " +
+			"BUDDY_ANALYTICS_BACKEND to be set; v0.2.0 ships stubs and reports the missing " +
+			"adapter in friend-tone text rather than a transport error.",
 	})
 
 	addDoctorTool(s, opts)
 	addStatsTool(s, opts)
 	addFeatureTools(s, opts)
+	addAnalyticsTools(s, opts)
 
 	return s
 }

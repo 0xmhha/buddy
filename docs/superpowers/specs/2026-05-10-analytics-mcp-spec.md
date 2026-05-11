@@ -1,7 +1,7 @@
 # analytics-mcp — Spec
 
-> **Date**: 2026-05-10
-> **Status**: Draft (trigger 발화 — §8 Cluster F 7 skill 작성 완료, D-C C2 적용)
+> **Date**: 2026-05-10 (W4-2.1 phase accepted 2026-05-11)
+> **Status**: **Accepted (v0.2.0 — phase W4-2.1 stub published)**. 7 tool registration + friend-tone "backend not configured" 응답 + race-clean test 까지 ship. 본격 adapter 구현 (W4-2.2 custom SQL → W4-2.3 handler 본격) 은 다음 cycle.
 > **Track**: plugin buddy (charter §3 의 4 자산 중 *MCP* 영역)
 > **Related**:
 > - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §2.4.2 그룹 3 MCP 결정
@@ -310,17 +310,17 @@ server.RegisterTool("analytics_query_cohort", analyticsCohortHandler)
 
 ## 8. Implementation phases
 
-| phase | 범위 | 비용 |
-|-------|------|------|
-| W4-2.1 | MCP tool registration (7 tool stub) | LOW |
-| W4-2.2 | Custom SQL adapter (PostgreSQL / MySQL) | MED |
-| W4-2.3 | 7 tool handler 본격 구현 | HIGH |
-| W4-2.4 | 7 PROCEDURE.md 의 *MCP tool 호출 example* 추가 | LOW |
-| W4-2.5 | error handling + friend-tone i18n | LOW |
-| W4-2.6 | race-clean test + integration test (synthetic events) | MED |
-| W4-2.7 | release v0.1.0 | LOW |
+| phase | 범위 | 비용 | 상태 |
+|-------|------|------|------|
+| W4-2.1 | MCP tool registration (7 tool stub) | LOW | ✅ Done (2026-05-11, plugin v0.2.0 commit `bdf957e^..`). `internal/mcp/analytics_tool.go` 신규 + `server.go` 의 `addAnalyticsTools` wire-up |
+| W4-2.2 | Custom SQL adapter (PostgreSQL / MySQL) | MED | ⏳ |
+| W4-2.3 | 7 tool handler 본격 구현 | HIGH | ⏳ |
+| W4-2.4 | 7 PROCEDURE.md 의 *MCP tool 호출 example* 추가 | LOW | ⏳ |
+| W4-2.5 | error handling + friend-tone i18n | LOW | ✅ W4-2.1 안에서 흡수 (현재 한국어 stub message + `BUDDY_ANALYTICS_BACKEND` env var 안내). i18n split 은 v0.2 i18n sweep 과 함께 |
+| W4-2.6 | race-clean test + integration test (synthetic events) | MED | 🟡 부분 (registration + stub behaviour `internal/mcp/analytics_tool_test.go` 4 test 통과. synthetic event integration 은 adapter 구현 후) |
+| W4-2.7 | release v0.1.0 | LOW | ⏳ (analytics-mcp 단독 release tag 미발행 — plugin v0.2.0 안에 흡수. 향후 `analytics-mcp-v0.1.0` 별도 tag 후보) |
 
-→ 6 phase × 평균 1~2 week = **2~4 month** estimate.
+→ 6 phase × 평균 1~2 week = **2~4 month** estimate. W4-2.1 + W4-2.5 + W4-2.6 부분 = *현재 ship 됨*.
 
 ---
 
