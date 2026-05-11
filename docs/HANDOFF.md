@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-11 (**v0.4.1** — release workflow patch (buddy-mcp binary now included in release page). Functionality unchanged from v0.4.0. **세션 인계 진입점: [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md)**)
+**Last updated:** 2026-05-12 (**v0.5.0** — W3-4 PROCEDURE output parser ship. `internal/agent/parser.go` extracts §self-check verdict + §next-phase candidates from Claude stdout; `StepResult.Parsed` surfaces in `agent_runs.result_json`; runtime adds two info log lines per successful step. v0.3 contract: metadata only — exit code still drives step success. **세션 인계 진입점: [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md)**)
 
 ## 트랙 상태
 
@@ -11,7 +11,7 @@
 | 트랙 | 상태 | 위치 | Entry doc |
 |------|------|------|----------|
 | **plugin buddy** — Claude Code plugin (skill / MCP / agent / hook 카탈로그). 9-phase orchestrator, **148 procedures, 99 commands**, single-router dispatch | 🟢 ACTIVE — Skill Completion Cycle 100% (44/44 신규 + 통합 2). charter scope 12 stage 100% cover. 다음 후보: dogfood 검증 + Korea cluster / analytics-mcp 의 trigger 발화 시 deferred 작성 | `plugin/`, `docs/superpowers/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §2 + [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) |
-| **cli buddy** — TUI 자동화 agent 관리 툴 (plugin buddy 내재화). 진짜 목적은 *agent 생성 / 실행 / 종료 / 설정 관리*. v0.1.0 = hook reliability monitor (한 sub-feature). | 🟢 본격 진입 — W3-1 spec Accepted (ADR-005). **W3-3 runtime + scheduler Done + W3-4 parser partial (2026-05-11)** — `internal/agent/` (types/spec/store/executor/runtime/scheduler/parser) + migration v4 + `buddy agent {create,list,show,run,delete,scheduler}` ship. W3-2 TUI / W3-4 retry-on-fail semantics / W3-5 재배치 / W3-6 reference agent cascade 미구현 | `cmd/`, `internal/`, `archive/ts-poc/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 + [`docs/cli-buddy-spec.md`](./cli-buddy-spec.md) (Accepted) |
+| **cli buddy** — TUI 자동화 agent 관리 툴 (plugin buddy 내재화). 진짜 목적은 *agent 생성 / 실행 / 종료 / 설정 관리*. v0.1.0 = hook reliability monitor (한 sub-feature). | 🟢 본격 진입 — W3-1 spec Accepted (ADR-005). **W3-3 runtime + scheduler Done + W3-4 parser shipped in v0.5.0 (2026-05-12)** — `internal/agent/` (types/spec/store/executor/runtime/scheduler/parser) + migration v4 + `buddy agent {create,list,show,run,delete,scheduler}` ship. W3-2 TUI / W3-4 retry-on-fail semantics / W3-5 재배치 / W3-6 reference agent cascade 미구현 | `cmd/`, `internal/`, `archive/ts-poc/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 + [`docs/cli-buddy-spec.md`](./cli-buddy-spec.md) (Accepted) |
 
 **plugin buddy 진행 상태 (2026-05-11):**
 
@@ -33,8 +33,9 @@
 | **v0.2.0 release prep** (doc cleanup 12 + B6 lint/template + ADR-004) | ✅ Done | v0.2.0 (2026-05-11, tag pushed) | — |
 | **v0.3.0 release** (analytics-mcp W4-2.1 ~ W4-2.6 — 7 MCP tools + SQLite adapter + 10 skill MCP integration) | ✅ Done | v0.3.0 (2026-05-11) | — |
 | **v0.4.0 release** (cli buddy W3-3 agent runtime + background scheduler + cli binary version namespace align) | ✅ Done | v0.4.0 (2026-05-11) | — |
-| **v0.4.1 patch** (release workflow: include buddy-mcp_* in publish pattern) | ✅ Done — **본 publish 의 baseline** | **v0.4.1** | — |
-| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP analytics tools / 6 cli agent subcommands** | **v0.4.1** (2026-05-11) | 148 |
+| **v0.4.1 patch** (release workflow: include buddy-mcp_* in publish pattern) | ✅ Done | v0.4.1 | — |
+| **v0.5.0 release** (cli buddy W3-4 partial: PROCEDURE output parser — verdict + next-phase metadata) | ✅ Done — **본 publish 의 baseline** | **v0.5.0** (2026-05-12) | — |
+| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP analytics tools / 6 cli agent subcommands / PROCEDURE parser** | **v0.5.0** (2026-05-12) | 148 |
 | Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
 | analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
 | feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy W3-3 agent runtime 진입 시 (spec lock-in 은 ADR-005 로 완료, 2026-05-11) | — |

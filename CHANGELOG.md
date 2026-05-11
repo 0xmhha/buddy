@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-05-12
+
 ### Added — cli buddy W3-4 partial: PROCEDURE output parser
 
 - `internal/agent/parser.go` — `ParseClaudeOutput(stdout)` returns
@@ -45,6 +47,25 @@ consistently echo `- [ ]` without genuinely completing the check.
 - `cli-buddy-spec.md` §9 — W3-4 row marked "MED-HIGH (partial Done
   2026-05-11 — parser ship, retry/fail 의미 변경 deferred)" with explicit
   ship summary + deferred follow-on list.
+
+### Changed (release-only)
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.4.1` → `0.5.0`.
+- `internal/mcp/server.go` MCP server `Version` `0.4.1` → `0.5.0`.
+- `cmd/buddy/main.go` `var version` `0.4.1` → `0.5.0`.
+- `Makefile` `RELEASE_VERSION` `0.4.1` → `0.5.0`.
+- `README.md` install snippet + sample output bumped to `0.5.0`.
+
+### Versioning policy note
+
+W3-4 parser ships *behavior-visible* additions — new `internal/agent/parser.go` package member, new `StepResult.Parsed` field surfacing through `agent_runs.result_json`, two new `agent_logs` lines per step. Per ADR-004 §2.3 (new functionality under v0.x → minor bump), this is `0.4.1 → 0.5.0`, not a patch.
+
+### Migration notes
+
+- **plugin users**: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` re-fetches metadata and upgrades to 0.5.0. Skill catalog + command surface unchanged from 0.4.x (148 skills / 99 commands). The parser runs for every `buddy agent run` invocation but only adds metadata — existing agent specs need no change.
+- **cli binary users**: tag `v0.5.0` triggers the GitHub Actions release workflow → cross-compile matrix (4 buddy + 4 buddy-mcp) + `SHA256SUMS` published automatically. Install per README §"Release binary" using `VERSION=0.5.0`.
+- **agent run JSON schema**: `StepResult` now has a `parsed` field (`{self_check, next_phase}`). Consumers that pin to the exact `StepResult` shape must accept the new field; everything else stays byte-identical.
+- **agent_logs**: two new info-level lines per successful step (`self-check=<verdict> (M/T passed)` and `next-phase candidates: <list>`). Log parsers that match on exact line formats may need to ignore the new prefixes.
 
 ## [0.4.1] — 2026-05-11
 
@@ -685,5 +706,10 @@ performance, and recent activity through read-only commands.
   reads only `~/.buddy/config.json`).
 - AGENTS.md, the plugin model, and an MCP server (v1.0+ scope).
 
-[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/0xmhha/buddy/releases/tag/v0.5.0
+[0.4.1]: https://github.com/0xmhha/buddy/releases/tag/v0.4.1
+[0.4.0]: https://github.com/0xmhha/buddy/releases/tag/v0.4.0
+[0.3.0]: https://github.com/0xmhha/buddy/releases/tag/v0.3.0
+[0.2.0]: https://github.com/0xmhha/buddy/releases/tag/v0.2.0
 [0.1.0]: https://github.com/0xmhha/buddy/releases/tag/v0.1.0
