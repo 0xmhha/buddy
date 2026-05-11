@@ -4,6 +4,8 @@ package mcp
 
 import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/0xmhha/buddy/internal/analytics"
 )
 
 // NewBuddyServer creates an MCP server with all buddy tools registered.
@@ -33,4 +35,9 @@ func NewBuddyServer(opts Options) *mcp.Server {
 type Options struct {
 	// DBPath is the path to buddy.db. Empty means the default (~/.buddy/buddy.db).
 	DBPath string
+
+	// Analytics is the adapter backing the analytics_query_* tools. When nil,
+	// the tools register but each handler returns a friend-tone "backend not
+	// configured" text body instead of querying real data.
+	Analytics analytics.Adapter
 }

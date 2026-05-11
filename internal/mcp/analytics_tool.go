@@ -2,159 +2,86 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/0xmhha/buddy/internal/analytics"
 )
 
-// analytics_tool.go implements Phase W4-2.1 of the analytics-mcp spec
-// (docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md):
-// register 7 MCP tools (funnel/cohort/ab_experiment/actor_failure/cost/
-// slo_burn/feedback_corpus) so the §8 Cluster F skills (analyze-feature-adoption,
-// analyze-user-cohort, analyze-actor-failure-rate, analyze-cost-anomaly,
-// triage-customer-support-ticket, analyze-customer-feedback-corpus,
-// audit-error-budget) can call them directly.
+// analytics_tool.go wires the 7 analytics_query_* MCP tools (spec §4) to a
+// pluggable analytics.Adapter. v0.2.0 keeps the friend-tone stub behaviour
+// from W4-2.1 as the *fallback*: if Options.Analytics is nil (no adapter
+// configured), every handler returns guidance text. With an adapter, the
+// handler delegates to it and renders the typed result.
 //
-// v0.2.0 ships stubs only: every handler reports "backend not configured"
-// in friend-tone Korean text unless BUDDY_ANALYTICS_BACKEND is set. Real
-// adapters (custom SQL / Mixpanel / Amplitude / Datadog) land in W4-2.2+.
-//
-// Args/result shapes mirror spec §4 verbatim so future adapter work is
-// purely handler-internal — no signature churn.
+// Args carry MCP-side jsonschema annotations; results reuse analytics
+// package types directly so JSON shapes track spec §4 verbatim.
 
-// ─── shared input types ─────────────────────────────────────────────────────
+// ─── shared MCP-side args ─────────────────────────────────────────────────
 
-type timeRange struct {
+type timeRangeArg struct {
 	From string `json:"from" jsonschema:"ISO-8601 start (inclusive). e.g. 2026-04-01T00:00:00Z"`
 	To   string `json:"to"   jsonschema:"ISO-8601 end (exclusive). e.g. 2026-05-01T00:00:00Z"`
 }
 
-type segment struct {
+func (a timeRangeArg) toAnalytics() (analytics.TimeRange, error) {
+	var out analytics.TimeRange
+	if a.From != "" {
+		t, err := time.Parse(time.RFC3339, a.From)
+		if err != nil {
+			return out, fmt.Errorf("time_range.from: %w", err)
+		}
+		out.From = t
+	}
+	if a.To != "" {
+		t, err := time.Parse(time.RFC3339, a.To)
+		if err != nil {
+			return out, fmt.Errorf("time_range.to: %w", err)
+		}
+		out.To = t
+	}
+	return out, nil
+}
+
+type segmentArg struct {
 	Dimension string `json:"dimension" jsonschema:"Segmentation dimension (e.g. plan_tier, country)."`
 	Value     string `json:"value"     jsonschema:"Value within the dimension to filter on."`
 }
 
-// ─── analytics_query_funnel — spec §4.1 ────────────────────────────────────
+// ─── argument types per tool ──────────────────────────────────────────────
 
 type funnelArgs struct {
-	Product   string    `json:"product,omitempty"  jsonschema:"Product identifier when more than one product shares this backend."`
-	Stages    []string  `json:"stages"             jsonschema:"Ordered funnel stages, e.g. [signup, first_action, retention_d7]."`
-	TimeRange timeRange `json:"time_range"         jsonschema:"Reporting window."`
-	Segment   *segment  `json:"segment,omitempty"  jsonschema:"Optional segmentation filter."`
+	Product   string       `json:"product,omitempty" jsonschema:"Product identifier when more than one product shares this backend."`
+	Stages    []string     `json:"stages"            jsonschema:"Ordered funnel stages, e.g. [signup, first_action, retention_d7]."`
+	TimeRange timeRangeArg `json:"time_range"        jsonschema:"Reporting window."`
+	Segment   *segmentArg  `json:"segment,omitempty" jsonschema:"Optional segmentation filter."`
 }
-
-type funnelStage struct {
-	Stage                 string  `json:"stage"`
-	Count                 int64   `json:"count"`
-	ConversionFromPrior   float64 `json:"conversion_from_prior"`
-	DropOffFromPrior      float64 `json:"drop_off_from_prior"`
-}
-
-type funnelResult struct {
-	Funnel        []funnelStage `json:"funnel"`
-	TotalUsers    int64         `json:"total_users"`
-	TimeRangeUsed timeRange     `json:"time_range_used"`
-}
-
-// ─── analytics_query_cohort — spec §4.2 ────────────────────────────────────
 
 type cohortArgs struct {
-	CohortDimension string   `json:"cohort_dimension" jsonschema:"weekly | monthly | quarterly"`
-	RetentionMetric string   `json:"retention_metric" jsonschema:"active | revenue | feature_use"`
-	Segments        []string `json:"segments,omitempty" jsonschema:"Optional segment filters."`
+	CohortDimension string   `json:"cohort_dimension"      jsonschema:"weekly | monthly | quarterly"`
+	RetentionMetric string   `json:"retention_metric"      jsonschema:"active | revenue | feature_use"`
+	Segments        []string `json:"segments,omitempty"    jsonschema:"Optional segment filters."`
 }
-
-type cohortRow struct {
-	CohortID  string             `json:"cohort_id"`
-	Size      int64              `json:"size"`
-	Retention map[string]float64 `json:"retention"` // D1, D7, D30, D90, D180
-	LTV       *float64           `json:"ltv,omitempty"`
-	CAC       *float64           `json:"cac,omitempty"`
-}
-
-type cohortResult struct {
-	Cohorts []cohortRow `json:"cohorts"`
-}
-
-// ─── analytics_query_ab_experiment — spec §4.3 ─────────────────────────────
 
 type abExperimentArgs struct {
 	ExperimentID string `json:"experiment_id" jsonschema:"Experiment identifier in the backend."`
 }
 
-type abVariant struct {
-	Variant            string     `json:"variant"`
-	SampleSize         int64      `json:"sample_size"`
-	PrimaryMetricValue float64    `json:"primary_metric_value"`
-	ConfidenceInterval [2]float64 `json:"confidence_interval"`
-}
-
-type abSignificance struct {
-	PValue                    float64 `json:"p_value"`
-	Confidence                float64 `json:"confidence"`
-	StatisticallySignificant  bool    `json:"statistically_significant"`
-}
-
-type abGuardrail struct {
-	Metric string  `json:"metric"`
-	Change float64 `json:"change"`
-	Alert  bool    `json:"alert"`
-}
-
-type abExperimentResult struct {
-	Experiment struct {
-		ID        string  `json:"id"`
-		Name      string  `json:"name"`
-		StartedAt string  `json:"started_at"`
-		EndedAt   *string `json:"ended_at,omitempty"`
-	} `json:"experiment"`
-	Variants         []abVariant    `json:"variants"`
-	Significance     abSignificance `json:"significance"`
-	GuardrailMetrics []abGuardrail  `json:"guardrail_metrics,omitempty"`
-	Recommendation   string         `json:"recommendation" jsonschema:"ship | revert | continue | inconclusive"`
-}
-
-// ─── analytics_query_actor_failure — spec §4.4 ─────────────────────────────
-
 type actorFailureArgs struct {
-	Actor     string    `json:"actor"      jsonschema:"user | system | 3rd-party | external-tool"`
-	TimeRange timeRange `json:"time_range" jsonschema:"Reporting window."`
+	Actor     string       `json:"actor"      jsonschema:"user | system | 3rd-party | external-tool"`
+	TimeRange timeRangeArg `json:"time_range" jsonschema:"Reporting window."`
 }
-
-type actorFailureResult struct {
-	Actor                    string   `json:"actor"`
-	FailureRate              float64  `json:"failure_rate"`
-	PredictabilityVariance   float64  `json:"predictability_variance"`
-	MTTRMinutes              float64  `json:"mttr_minutes"`
-	BlastRadius              int64    `json:"blast_radius"`
-	TrustScore               float64  `json:"trust_score"`
-	RecoveryPatternsApplied  []string `json:"recovery_patterns_applied"`
-}
-
-// ─── analytics_query_cost — spec §4.5 ──────────────────────────────────────
 
 type costArgs struct {
-	TimeRange        timeRange `json:"time_range"               jsonschema:"Reporting window."`
-	DrillDown        string    `json:"drill_down,omitempty"     jsonschema:"service | component | region | account | tag"`
-	AnomalyDetection bool      `json:"anomaly_detection,omitempty" jsonschema:"When true, return spike rows in addition to totals."`
+	TimeRange        timeRangeArg `json:"time_range"                  jsonschema:"Reporting window."`
+	DrillDown        string       `json:"drill_down,omitempty"        jsonschema:"service | component | region | account | tag"`
+	AnomalyDetection bool         `json:"anomaly_detection,omitempty" jsonschema:"When true, return spike rows in addition to totals."`
 }
-
-type costAnomaly struct {
-	Dimension string  `json:"dimension"`
-	SpikeAt   string  `json:"spike_at"`
-	CostCents int64   `json:"cost_cents"`
-	ZScore    float64 `json:"z_score"`
-}
-
-type costResult struct {
-	TotalCostCents int64            `json:"total_cost_cents"`
-	ByDimension    map[string]int64 `json:"by_dimension"`
-	Anomalies      []costAnomaly    `json:"anomalies,omitempty"`
-}
-
-// ─── analytics_query_slo_burn — spec §4.6 ──────────────────────────────────
 
 type sloBurnArgs struct {
 	SLI        string  `json:"sli"         jsonschema:"SLI identifier (e.g. p99_latency_ms)."`
@@ -162,49 +89,15 @@ type sloBurnArgs struct {
 	TimeWindow string  `json:"time_window" jsonschema:"1h | 6h | 1d | 3d | 30d"`
 }
 
-type sloBurnResult struct {
-	SLI                  string  `json:"sli"`
-	SLOTarget            float64 `json:"slo_target"`
-	TimeWindow           string  `json:"time_window"`
-	CurrentValue         float64 `json:"current_value"`
-	BudgetRemainingPct   float64 `json:"budget_remaining_pct"`
-	BurnRate             float64 `json:"burn_rate"`
-	AlertLevel           string  `json:"alert_level"           jsonschema:"info | warning | critical"`
-	ReleaseGateDecision  string  `json:"release_gate_decision" jsonschema:"ship | limit | freeze | rollback"`
-}
-
-// ─── analytics_query_feedback_corpus — spec §4.7 ───────────────────────────
-
 type feedbackCorpusArgs struct {
-	Source            string    `json:"source,omitempty"             jsonschema:"cs_ticket | nps_comment | app_review | interview"`
-	TimeRange         timeRange `json:"time_range"                   jsonschema:"Reporting window."`
-	TopicModeling     bool      `json:"topic_modeling,omitempty"     jsonschema:"When true, run topic modelling on items."`
-	SentimentAnalysis bool      `json:"sentiment_analysis,omitempty" jsonschema:"When true, score each topic with positive/negative/neutral."`
+	Source            string       `json:"source,omitempty"             jsonschema:"cs_ticket | nps_comment | app_review | interview"`
+	TimeRange         timeRangeArg `json:"time_range"                   jsonschema:"Reporting window."`
+	TopicModeling     bool         `json:"topic_modeling,omitempty"     jsonschema:"When true, run topic modelling on items."`
+	SentimentAnalysis bool         `json:"sentiment_analysis,omitempty" jsonschema:"When true, score each topic with positive/negative/neutral."`
 }
 
-type feedbackTopic struct {
-	Topic           string         `json:"topic"`
-	ItemCount       int64          `json:"item_count"`
-	Sentiment       map[string]int64 `json:"sentiment,omitempty"`
-	VerbatimQuotes  []string       `json:"verbatim_quotes"`
-}
+// ─── env-var helpers (kept so the stub path stays observable) ─────────────
 
-type npsBand struct {
-	Count     int64    `json:"count"`
-	TopTopics []string `json:"top_topics"`
-}
-
-type feedbackCorpusResult struct {
-	TotalItems  int64                  `json:"total_items"`
-	Topics      []feedbackTopic        `json:"topics,omitempty"`
-	NPSSegments map[string]npsBand     `json:"nps_segments,omitempty"`
-}
-
-// ─── adapter resolution ────────────────────────────────────────────────────
-
-// resolveAnalyticsBackend reads the BUDDY_ANALYTICS_BACKEND environment
-// variable. Until W4-2.2 lands a real adapter, every supported value returns
-// notConfiguredErr — the handlers funnel it into a friend-tone text response.
 func resolveAnalyticsBackend() (string, error) {
 	backend := os.Getenv("BUDDY_ANALYTICS_BACKEND")
 	if backend == "" {
@@ -212,27 +105,21 @@ func resolveAnalyticsBackend() (string, error) {
 	}
 	switch backend {
 	case "sql", "mixpanel", "amplitude", "datadog", "stripe", "elasticsearch":
-		// Recognised but no adapter ships in v0.2.0.
 		return backend, errBackendStubOnly
 	default:
 		return "", fmt.Errorf("unknown analytics backend %q (set BUDDY_ANALYTICS_BACKEND to one of: sql, mixpanel, amplitude, datadog, stripe, elasticsearch)", backend)
 	}
 }
 
-// Sentinel errors used by all 7 stub handlers. Real adapters (W4-2.2+)
-// keep these as the *unconfigured* signal and add their own typed errors.
 var (
-	errBackendNotConfigured = fmt.Errorf(
+	errBackendNotConfigured = errors.New(
 		"analytics backend not configured — set BUDDY_ANALYTICS_BACKEND to one of: sql, mixpanel, amplitude, datadog, stripe, elasticsearch",
 	)
-	errBackendStubOnly = fmt.Errorf(
+	errBackendStubOnly = errors.New(
 		"analytics backend recognised but the adapter is not implemented yet (analytics-mcp v0.2.0 ships stubs only — see docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md §8 phase W4-2.2)",
 	)
 )
 
-// notConfiguredResponse renders a friend-tone text body for the MCP client.
-// Returning text (not just error) lets Claude surface the guidance verbatim
-// to the user rather than swallowing it as a transport error.
 func notConfiguredResponse(toolName string, err error) *mcp.CallToolResult {
 	body := fmt.Sprintf(
 		"analytics-mcp/%s 호출은 받았는데, 데이터 백엔드 연결이 아직 안 돼 있어.\n\n%s\n\n"+
@@ -240,67 +127,174 @@ func notConfiguredResponse(toolName string, err error) *mcp.CallToolResult {
 			"요청한 시각: %s",
 		toolName, err.Error(), time.Now().UTC().Format(time.RFC3339),
 	)
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{&mcp.TextContent{Text: body}},
-	}
+	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: body}}}
 }
 
-// ─── registration ──────────────────────────────────────────────────────────
+// jsonContent renders a typed result as a single TextContent JSON blob so
+// Claude can either parse it back or quote it verbatim. We pretty-print so
+// session transcripts stay readable.
+func jsonContent(v any) *mcp.CallToolResult {
+	buf, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{
+			Text: fmt.Sprintf("analytics-mcp: marshal result: %v", err),
+		}}}
+	}
+	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(buf)}}}
+}
 
-func addAnalyticsTools(s *mcp.Server, _ Options) {
+// ─── registration ─────────────────────────────────────────────────────────
+
+func addAnalyticsTools(s *mcp.Server, opts Options) {
+	adapter := opts.Analytics
+
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "analytics_query_funnel",
-		Description: "Funnel stage counts + conversion/drop-off rates for analyze-feature-adoption and optimize-conversion-funnel skills. Reads from BUDDY_ANALYTICS_BACKEND (sql/mixpanel/amplitude/datadog/stripe/elasticsearch). Stubbed in v0.2.0 — real adapter lands in spec §8 phase W4-2.2.",
-	}, func(_ context.Context, _ *mcp.CallToolRequest, _ funnelArgs) (*mcp.CallToolResult, funnelResult, error) {
-		_, err := resolveAnalyticsBackend()
-		return notConfiguredResponse("analytics_query_funnel", err), funnelResult{}, nil
+		Description: "Funnel stage counts + conversion/drop-off rates for analyze-feature-adoption and optimize-conversion-funnel skills. Reads from BUDDY_ANALYTICS_BACKEND (sql/mixpanel/amplitude/datadog/stripe/elasticsearch). With BUDDY_ANALYTICS_BACKEND=sql + BUDDY_ANALYTICS_DSN, queries the local SQL reference adapter; otherwise returns guidance text.",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, args funnelArgs) (*mcp.CallToolResult, analytics.FunnelResult, error) {
+		if adapter == nil {
+			_, err := resolveAnalyticsBackend()
+			return notConfiguredResponse("analytics_query_funnel", err), analytics.FunnelResult{}, nil
+		}
+		tr, err := args.TimeRange.toAnalytics()
+		if err != nil {
+			return nil, analytics.FunnelResult{}, err
+		}
+		var seg *analytics.Segment
+		if args.Segment != nil && args.Segment.Dimension != "" {
+			seg = &analytics.Segment{Dimension: args.Segment.Dimension, Value: args.Segment.Value}
+		}
+		res, err := adapter.QueryFunnel(ctx, analytics.FunnelQuery{
+			Product: args.Product, Stages: args.Stages, TimeRange: tr, Segment: seg,
+		})
+		if err != nil {
+			return nil, analytics.FunnelResult{}, err
+		}
+		return jsonContent(res), res, nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "analytics_query_cohort",
-		Description: "Acquisition cohort retention curves (D1/D7/D30/D90/D180) for analyze-user-cohort skill. Optional LTV/CAC when revenue + attribution data exist. Stubbed in v0.2.0.",
-	}, func(_ context.Context, _ *mcp.CallToolRequest, _ cohortArgs) (*mcp.CallToolResult, cohortResult, error) {
-		_, err := resolveAnalyticsBackend()
-		return notConfiguredResponse("analytics_query_cohort", err), cohortResult{}, nil
+		Description: "Acquisition cohort retention curves (D1/D7/D30/D90/D180) for analyze-user-cohort skill. Optional LTV/CAC when revenue + attribution data exist. SQL reference adapter buckets users by their first 'signup' event.",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, args cohortArgs) (*mcp.CallToolResult, analytics.CohortResult, error) {
+		if adapter == nil {
+			_, err := resolveAnalyticsBackend()
+			return notConfiguredResponse("analytics_query_cohort", err), analytics.CohortResult{}, nil
+		}
+		res, err := adapter.QueryCohort(ctx, analytics.CohortQuery{
+			CohortDimension: analytics.CohortDimension(args.CohortDimension),
+			RetentionMetric: analytics.RetentionMetric(args.RetentionMetric),
+			Segments:        args.Segments,
+		})
+		if err != nil {
+			return nil, analytics.CohortResult{}, err
+		}
+		return jsonContent(res), res, nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "analytics_query_ab_experiment",
-		Description: "A/B test results (variants + significance + guardrails + recommendation) for analyze-ab-experiment skill. Stubbed in v0.2.0.",
-	}, func(_ context.Context, _ *mcp.CallToolRequest, _ abExperimentArgs) (*mcp.CallToolResult, abExperimentResult, error) {
-		_, err := resolveAnalyticsBackend()
-		return notConfiguredResponse("analytics_query_ab_experiment", err), abExperimentResult{}, nil
+		Description: "A/B test results (variants + significance + guardrails + recommendation) for analyze-ab-experiment skill. SQL reference adapter computes Welch's t-test on the experiment's primary metric.",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, args abExperimentArgs) (*mcp.CallToolResult, analytics.ABExperimentResult, error) {
+		if adapter == nil {
+			_, err := resolveAnalyticsBackend()
+			return notConfiguredResponse("analytics_query_ab_experiment", err), analytics.ABExperimentResult{}, nil
+		}
+		res, err := adapter.QueryABExperiment(ctx, analytics.ABExperimentQuery{ExperimentID: args.ExperimentID})
+		if errors.Is(err, analytics.ErrNotFound) {
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{
+				Text: fmt.Sprintf("analytics-mcp: experiment %q not found in backend", args.ExperimentID),
+			}}}, analytics.ABExperimentResult{}, nil
+		}
+		if err != nil {
+			return nil, analytics.ABExperimentResult{}, err
+		}
+		return jsonContent(res), res, nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "analytics_query_actor_failure",
-		Description: "Per-actor failure rate + MTTR + trust score (Release-It Nygard 4-dim) for analyze-actor-failure-rate skill. Stubbed in v0.2.0.",
-	}, func(_ context.Context, _ *mcp.CallToolRequest, _ actorFailureArgs) (*mcp.CallToolResult, actorFailureResult, error) {
-		_, err := resolveAnalyticsBackend()
-		return notConfiguredResponse("analytics_query_actor_failure", err), actorFailureResult{}, nil
+		Description: "Per-actor failure rate + MTTR + trust score (Release-It Nygard 4-dim) for analyze-actor-failure-rate skill. SQL reference adapter reads the failures table.",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, args actorFailureArgs) (*mcp.CallToolResult, analytics.ActorFailureResult, error) {
+		if adapter == nil {
+			_, err := resolveAnalyticsBackend()
+			return notConfiguredResponse("analytics_query_actor_failure", err), analytics.ActorFailureResult{}, nil
+		}
+		tr, err := args.TimeRange.toAnalytics()
+		if err != nil {
+			return nil, analytics.ActorFailureResult{}, err
+		}
+		res, err := adapter.QueryActorFailure(ctx, analytics.ActorFailureQuery{
+			Actor: analytics.ActorType(args.Actor), TimeRange: tr,
+		})
+		if err != nil {
+			return nil, analytics.ActorFailureResult{}, err
+		}
+		return jsonContent(res), res, nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "analytics_query_cost",
-		Description: "Cost timeline + drill-down + anomaly detection for analyze-cost-anomaly and audit-cost-efficiency skills. Stubbed in v0.2.0.",
-	}, func(_ context.Context, _ *mcp.CallToolRequest, _ costArgs) (*mcp.CallToolResult, costResult, error) {
-		_, err := resolveAnalyticsBackend()
-		return notConfiguredResponse("analytics_query_cost", err), costResult{}, nil
+		Description: "Cost timeline + drill-down + anomaly detection for analyze-cost-anomaly and audit-cost-efficiency skills. SQL reference adapter sums cost_records grouped by service/component/region/account/tag, with z-score anomaly detection.",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, args costArgs) (*mcp.CallToolResult, analytics.CostResult, error) {
+		if adapter == nil {
+			_, err := resolveAnalyticsBackend()
+			return notConfiguredResponse("analytics_query_cost", err), analytics.CostResult{}, nil
+		}
+		tr, err := args.TimeRange.toAnalytics()
+		if err != nil {
+			return nil, analytics.CostResult{}, err
+		}
+		res, err := adapter.QueryCost(ctx, analytics.CostQuery{
+			TimeRange: tr, DrillDown: analytics.CostDrillDown(args.DrillDown), AnomalyDetection: args.AnomalyDetection,
+		})
+		if err != nil {
+			return nil, analytics.CostResult{}, err
+		}
+		return jsonContent(res), res, nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "analytics_query_slo_burn",
-		Description: "SLO burn rate (multi-window) + release-gate decision for audit-error-budget skill. Stubbed in v0.2.0.",
-	}, func(_ context.Context, _ *mcp.CallToolRequest, _ sloBurnArgs) (*mcp.CallToolResult, sloBurnResult, error) {
-		_, err := resolveAnalyticsBackend()
-		return notConfiguredResponse("analytics_query_slo_burn", err), sloBurnResult{}, nil
+		Description: "SLO burn rate (multi-window) + release-gate decision for audit-error-budget skill. SQL reference adapter implements the Google SRE multi-window thresholds (burn_rate ≥14 → rollback, ≥6 → freeze, ≥3 → limit, ≥1 → ship+warning).",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, args sloBurnArgs) (*mcp.CallToolResult, analytics.SLOBurnResult, error) {
+		if adapter == nil {
+			_, err := resolveAnalyticsBackend()
+			return notConfiguredResponse("analytics_query_slo_burn", err), analytics.SLOBurnResult{}, nil
+		}
+		res, err := adapter.QuerySLOBurn(ctx, analytics.SLOBurnQuery{
+			SLI: args.SLI, SLOTarget: args.SLOTarget, TimeWindow: args.TimeWindow,
+		})
+		if errors.Is(err, analytics.ErrNotFound) {
+			return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{
+				Text: fmt.Sprintf("analytics-mcp: no observations for SLI %q in the requested window", args.SLI),
+			}}}, analytics.SLOBurnResult{}, nil
+		}
+		if err != nil {
+			return nil, analytics.SLOBurnResult{}, err
+		}
+		return jsonContent(res), res, nil
 	})
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "analytics_query_feedback_corpus",
-		Description: "Text corpus search + topic modelling + sentiment + NPS band split for analyze-customer-feedback-corpus and triage-customer-support-ticket skills. Stubbed in v0.2.0.",
-	}, func(_ context.Context, _ *mcp.CallToolRequest, _ feedbackCorpusArgs) (*mcp.CallToolResult, feedbackCorpusResult, error) {
-		_, err := resolveAnalyticsBackend()
-		return notConfiguredResponse("analytics_query_feedback_corpus", err), feedbackCorpusResult{}, nil
+		Description: "Text corpus search + topic modelling + sentiment + NPS band split for analyze-customer-feedback-corpus and triage-customer-support-ticket skills. SQL reference adapter aggregates by source + optionally clusters by pre-classified topic/sentiment columns.",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, args feedbackCorpusArgs) (*mcp.CallToolResult, analytics.FeedbackResult, error) {
+		if adapter == nil {
+			_, err := resolveAnalyticsBackend()
+			return notConfiguredResponse("analytics_query_feedback_corpus", err), analytics.FeedbackResult{}, nil
+		}
+		tr, err := args.TimeRange.toAnalytics()
+		if err != nil {
+			return nil, analytics.FeedbackResult{}, err
+		}
+		res, err := adapter.QueryFeedbackCorpus(ctx, analytics.FeedbackQuery{
+			Source: analytics.FeedbackSource(args.Source), TimeRange: tr,
+			TopicModeling: args.TopicModeling, SentimentAnalysis: args.SentimentAnalysis,
+		})
+		if err != nil {
+			return nil, analytics.FeedbackResult{}, err
+		}
+		return jsonContent(res), res, nil
 	})
 }

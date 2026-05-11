@@ -313,14 +313,14 @@ server.RegisterTool("analytics_query_cohort", analyticsCohortHandler)
 | phase | 범위 | 비용 | 상태 |
 |-------|------|------|------|
 | W4-2.1 | MCP tool registration (7 tool stub) | LOW | ✅ Done (2026-05-11, plugin v0.2.0 commit `bdf957e^..`). `internal/mcp/analytics_tool.go` 신규 + `server.go` 의 `addAnalyticsTools` wire-up |
-| W4-2.2 | Custom SQL adapter (PostgreSQL / MySQL) | MED | ⏳ |
-| W4-2.3 | 7 tool handler 본격 구현 | HIGH | ⏳ |
+| W4-2.2 | Custom SQL adapter (PostgreSQL / MySQL) | MED | ✅ Done (2026-05-11). `internal/analytics/` 신규 package — `types.go` (spec §4 shapes) + `schema.go` (7-table SQLite DDL + Migrate) + `adapter.go` (Adapter interface) + `sql.go` (`SQLAdapter` 본격 구현). Reference impl 은 SQLite — PostgreSQL/MySQL adapter 는 동일 interface 로 follow-up cycle |
+| W4-2.3 | 7 tool handler 본격 구현 | HIGH | ✅ Done (2026-05-11). `analytics_tool.go` 의 7 handler 가 `Options.Analytics` adapter 가 있으면 query → `jsonContent(result)` 반환, 없으면 v0.2.0 stub fallback 유지. `cmd/buddy-mcp/main.go` 에 `configureAnalytics()` 추가 — `BUDDY_ANALYTICS_BACKEND=sql` + `BUDDY_ANALYTICS_DSN` env 로 in-memory / file-based SQLite 활성 |
 | W4-2.4 | 7 PROCEDURE.md 의 *MCP tool 호출 example* 추가 | LOW | ✅ Done (2026-05-11). 10 skill PROCEDURE (primary 7 + secondary 3: optimize-conversion-funnel / audit-cost-efficiency / triage-customer-support-ticket) 끝에 `## MCP integration (analytics-mcp v0.2.0+)` 섹션 일괄 추가 |
 | W4-2.5 | error handling + friend-tone i18n | LOW | ✅ W4-2.1 안에서 흡수 (현재 한국어 stub message + `BUDDY_ANALYTICS_BACKEND` env var 안내). i18n split 은 v0.2 i18n sweep 과 함께 |
-| W4-2.6 | race-clean test + integration test (synthetic events) | MED | 🟡 부분 (registration + stub behaviour `internal/mcp/analytics_tool_test.go` 4 test 통과. synthetic event integration 은 adapter 구현 후) |
-| W4-2.7 | release v0.1.0 | LOW | ⏳ (analytics-mcp 단독 release tag 미발행 — plugin v0.2.0 안에 흡수. 향후 `analytics-mcp-v0.1.0` 별도 tag 후보) |
+| W4-2.6 | race-clean test + integration test (synthetic events) | MED | ✅ Done (2026-05-11). `internal/analytics/sql_test.go` — 9 test (7 query type × synthetic seed + 2 not-found edge case) + `internal/mcp/analytics_tool_test.go` 의 adapter-wired integration test. `go test -race -count=1 ./...` 전체 19 package PASS |
+| W4-2.7 | release v0.1.0 | LOW | ⏳ (analytics-mcp 단독 release tag 미발행 — plugin v0.2.x 안에 흡수. 향후 `analytics-mcp-v0.1.0` 별도 tag 후보 — 단 ADR-004 의 v1.0.0 milestone 정의는 plugin track 우선) |
 
-→ 6 phase × 평균 1~2 week = **2~4 month** estimate. W4-2.1 + W4-2.5 + W4-2.6 부분 = *현재 ship 됨*.
+→ 6 phase × 평균 1~2 week 추정이었으나 *동일 cycle 안에 W4-2.1 ~ W4-2.6 모두 ship*. v0.3.0 patch release 후보.
 
 ---
 

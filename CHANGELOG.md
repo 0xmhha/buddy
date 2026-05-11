@@ -7,15 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added — analytics-mcp Phase W4-2.1 (stub) + W4-2.4 (skill MCP examples)
+### Added — analytics-mcp Phase W4-2.1 ~ W4-2.6 (full v1 ship modulo standalone tag)
 
-- `internal/mcp/analytics_tool.go` — 7 MCP tools (`analytics_query_funnel` / `analytics_query_cohort` / `analytics_query_ab_experiment` / `analytics_query_actor_failure` / `analytics_query_cost` / `analytics_query_slo_burn` / `analytics_query_feedback_corpus`) registered in `cmd/buddy-mcp/`. Args/result schemas mirror spec §4 verbatim so future adapter work is handler-internal only.
-- `BUDDY_ANALYTICS_BACKEND` env var (recognised: `sql` / `mixpanel` / `amplitude` / `datadog` / `stripe` / `elasticsearch`). v0.2 ships stubs — every handler returns a friend-tone Korean text body explaining the missing adapter rather than a transport error.
-- `internal/mcp/analytics_tool_test.go` — race-clean tests for registration, stub behaviour, and backend resolution sentinel errors.
+- `internal/mcp/analytics_tool.go` — 7 MCP tools (`analytics_query_funnel` / `analytics_query_cohort` / `analytics_query_ab_experiment` / `analytics_query_actor_failure` / `analytics_query_cost` / `analytics_query_slo_burn` / `analytics_query_feedback_corpus`) registered in `cmd/buddy-mcp/`. When `Options.Analytics` is set, each handler queries the adapter and returns a JSON-marshalled typed result; when nil, falls back to the friend-tone "backend not configured" stub.
+- **`internal/analytics/` new package** (W4-2.2 + W4-2.3) — Adapter interface + SQLite reference implementation:
+  - `types.go` — input/output structs matching spec §4 verbatim (TimeRange / Segment / FunnelQuery / CohortQuery / ABExperimentQuery / ActorFailureQuery / CostQuery / SLOBurnQuery / FeedbackQuery + result types).
+  - `schema.go` — 7-table SQLite DDL (`events` / `ab_experiments` / `ab_assignments` / `ab_metric_observations` / `failures` / `cost_records` / `slo_observations` / `feedback_items`) + idempotent `Migrate(ctx, *sql.DB)`.
+  - `adapter.go` — `Adapter` interface (7 methods) + `ErrNotFound` sentinel.
+  - `sql.go` — `SQLAdapter` with full implementations: loose funnel + retention curves + Welch's t-test on A/B experiments + Nygard 4-dim trust score + z-score cost anomaly detection + Google SRE multi-window SLO burn thresholds + NPS band split with topic clustering. Dependency-free `normalCDF` via `math.Erf`.
+- `cmd/buddy-mcp/main.go` — reads `BUDDY_ANALYTICS_BACKEND` + `BUDDY_ANALYTICS_DSN` env vars; when `BUDDY_ANALYTICS_BACKEND=sql` + DSN set, opens SQLite, migrates schema, wires `analytics.NewSQLAdapter(db)` into `Options.Analytics`. Documented at top of file.
+- `BUDDY_ANALYTICS_BACKEND` env var (recognised: `sql` / `mixpanel` / `amplitude` / `datadog` / `stripe` / `elasticsearch`). v0.2 ships SQL adapter; other values still register the tools as stubs.
+- `internal/mcp/analytics_tool_test.go` — registration tests, stub behaviour test, backend resolution sentinel tests, **adapter-wired integration test** (`TestAnalyticsTools_AdapterWiredReturnsJSON`) proving JSON result body when `Options.Analytics` is non-nil.
+- `internal/analytics/sql_test.go` — 9 race-clean integration tests against in-memory SQLite (one per query method plus not-found edge cases for A/B + SLO). Full repo `go test -race -count=1 ./...` clean across 19 packages.
 - `## MCP integration (analytics-mcp v0.2.0+)` section appended to 10 skill PROCEDUREs (primary 7 + secondary 3: optimize-conversion-funnel / audit-cost-efficiency / triage-customer-support-ticket). Each section documents the matching `analytics_query_*` tool invocation example + `BUDDY_ANALYTICS_BACKEND` env var prerequisite + cross-reference to spec §4.
-- `docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` Status flipped Draft → **Accepted (v0.2.0 — phase W4-2.1 stub published)**. Phase W4-2.4 also marked Done in §8 implementation phases.
+- `docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` Status flipped Draft → **Accepted (v0.2.0 — phase W4-2.1 stub published)**. §8 phase table updated: W4-2.1 / W4-2.2 / W4-2.3 / W4-2.4 / W4-2.5 / W4-2.6 all Done. W4-2.7 standalone `analytics-mcp-v0.1.0` tag deferred (analytics-mcp bundled inside plugin v0.x.x for now).
 
-Deferred to a future cycle (per spec §8): W4-2.2 Custom SQL adapter, W4-2.3 handler 본격 구현, W4-2.7 standalone `analytics-mcp-v0.1.0` tag.
+Deferred (per spec §8): W4-2.7 standalone `analytics-mcp-v0.1.0` tag — analytics-mcp ships inside plugin v0.x.x, separate tag is a future packaging decision (ADR-004 §2.2 condition 1).
 
 ### Changed
 

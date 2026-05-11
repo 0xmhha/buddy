@@ -2,11 +2,16 @@ package mcp
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"strings"
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/require"
+	_ "modernc.org/sqlite"
+
+	"github.com/0xmhha/buddy/internal/analytics"
 )
 
 // TestAnalyticsTools_Registered verifies the 7 analytics_query_* tools land in
@@ -130,6 +135,71 @@ func TestResolveAnalyticsBackend_UnsetReturnsNotConfigured(t *testing.T) {
 	t.Setenv("BUDDY_ANALYTICS_BACKEND", "")
 	_, err := resolveAnalyticsBackend()
 	require.ErrorIs(t, err, errBackendNotConfigured)
+}
+
+// TestAnalyticsTools_AdapterWiredReturnsJSON proves the W4-2.2 + W4-2.3 wire-up:
+// when Options.Analytics is a real adapter (here, the SQL reference impl over
+// an in-memory SQLite), the funnel handler returns a JSON body with the typed
+// result — not the friend-tone "backend not configured" stub. This is the
+// regression guard for "I plugged in an adapter but the MCP layer still falls
+// back to the stub."
+func TestAnalyticsTools_AdapterWiredReturnsJSON(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := sql.Open("sqlite", ":memory:?cache=shared")
+	require.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	require.NoError(t, analytics.Migrate(ctx, db))
+
+	// Seed two signup events + one downstream feature_used event so the
+	// funnel returns non-zero counts and pairwise conversion is computable.
+	for _, row := range []struct {
+		event, user, at string
+	}{
+		{"signup", "u1", "2026-04-10T00:00:00Z"},
+		{"signup", "u2", "2026-04-11T00:00:00Z"},
+		{"feature_used", "u1", "2026-04-12T00:00:00Z"},
+	} {
+		_, err := db.ExecContext(ctx,
+			`INSERT INTO events (event_name, user_id, occurred_at) VALUES (?, ?, ?)`,
+			row.event, row.user, row.at,
+		)
+		require.NoError(t, err)
+	}
+
+	server := NewBuddyServer(Options{Analytics: analytics.NewSQLAdapter(db)})
+	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "0.0.0"}, nil)
+	st, ct := mcp.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, st, nil)
+	require.NoError(t, err)
+	defer serverSession.Close()
+	clientSession, err := client.Connect(ctx, ct, nil)
+	require.NoError(t, err)
+	defer clientSession.Close()
+
+	res, err := clientSession.CallTool(ctx, &mcp.CallToolParams{
+		Name: "analytics_query_funnel",
+		Arguments: map[string]any{
+			"stages": []string{"signup", "feature_used"},
+			"time_range": map[string]string{
+				"from": "2026-04-01T00:00:00Z",
+				"to":   "2026-05-01T00:00:00Z",
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, res.Content)
+	text, ok := res.Content[0].(*mcp.TextContent)
+	require.True(t, ok)
+
+	// The body must be JSON, not the stub guidance.
+	require.NotContains(t, text.Text, "BUDDY_ANALYTICS_BACKEND")
+	var parsed analytics.FunnelResult
+	require.NoError(t, json.Unmarshal([]byte(text.Text), &parsed))
+	require.Len(t, parsed.Funnel, 2)
+	require.Equal(t, int64(2), parsed.Funnel[0].Count)
+	require.Equal(t, int64(1), parsed.Funnel[1].Count)
+	require.InDelta(t, 50.0, parsed.Funnel[1].ConversionFromPrior, 0.01)
 }
 
 // strings is used implicitly via require.Contains; keep import explicit so the
