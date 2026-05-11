@@ -134,3 +134,29 @@ CS (customer support) 티켓을 *분류 + 우선순위 + recurring pattern 식�
 - Intercom Customer Support Trends Report
 - The Effortless Experience (Matthew Dixon) — CS quality
 - Zendesk Triage automation patterns
+
+---
+
+## MCP integration (analytics-mcp v0.2.0+)
+
+본 skill 의 *recurring issue 패턴화* 단계에서 `analytics_query_feedback_corpus` MCP tool 호출 (analyze-customer-feedback-corpus 와 동일 tool 공유).
+
+**호출 예 — cs_ticket source 의 topic clustering**:
+
+```json
+{
+  "tool": "analytics_query_feedback_corpus",
+  "arguments": {
+    "source": "cs_ticket",
+    "time_range": { "from": "2026-04-01T00:00:00Z", "to": "2026-05-01T00:00:00Z" },
+    "topic_modeling": true,
+    "sentiment_analysis": true
+  }
+}
+```
+
+응답의 topics (with item_count + verbatim_quotes) 가 ticket classification rule 의 입력. high-volume topics 가 *recurring issue 후보* — separate `/buddy:generate-improvement-tasks` 로 cascade.
+
+**전제**: `BUDDY_ANALYTICS_BACKEND` env var 설정 (elasticsearch 권장 — ticket corpus search 강함). v0.2.0 stubs — 본격 adapter 는 W4-2.2 ~ W4-2.3.
+
+**관련 spec**: `../../../docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` §4.7

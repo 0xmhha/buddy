@@ -146,3 +146,29 @@ NPS 의 *왜* 차원:
 - The Mom Test (Rob Fitzpatrick) — verbatim 발화 신뢰성
 - marketingskills/customer-research (외부 reference, MIT)
 - humanizer (외부 reference, MIT — Siqi Chen, AI text 자연화 inverse 패턴)
+
+---
+
+## MCP integration (analytics-mcp v0.2.0+)
+
+본 skill 의 *feedback corpus search + topic / sentiment 분석* 에서 `analytics_query_feedback_corpus` MCP tool 호출.
+
+**호출 예**:
+
+```json
+{
+  "tool": "analytics_query_feedback_corpus",
+  "arguments": {
+    "source": "nps_comment",
+    "time_range": { "from": "2026-04-01T00:00:00Z", "to": "2026-05-01T00:00:00Z" },
+    "topic_modeling": true,
+    "sentiment_analysis": true
+  }
+}
+```
+
+기대 응답: total_items + topics (with verbatim_quotes) + nps_segments (promoter / passive / detractor band 별 top_topics).
+
+**전제**: `BUDDY_ANALYTICS_BACKEND` env var 설정 (elasticsearch 권장 — text corpus search 강함). v0.2.0 stubs — 본격 adapter 는 W4-2.2 ~ W4-2.3.
+
+**관련 spec**: `../../../docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` §4.7

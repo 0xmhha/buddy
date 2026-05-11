@@ -122,3 +122,28 @@ Referral       1   (75% drop)
 - AARRR Pirate Metrics (Dave McClure) — funnel framework
 - Hooked (Nir Eyal) — habit / activation
 - marketingskills 5 CRO sub-skills (외부 reference, MIT — onboarding-cro / form-cro / page-cro / paywall-upgrade-cro / popup-cro)
+
+---
+
+## MCP integration (analytics-mcp v0.2.0+)
+
+본 skill 의 *AARRR funnel 5 단계별 conversion 측정* 에서 `analytics_query_funnel` MCP tool 호출 (analyze-feature-adoption 과 동일 tool 공유).
+
+**호출 예 — Activation 단계 변환율 측정**:
+
+```json
+{
+  "tool": "analytics_query_funnel",
+  "arguments": {
+    "stages": ["acquisition", "activation_event_1", "activation_event_2"],
+    "time_range": { "from": "2026-04-01T00:00:00Z", "to": "2026-05-01T00:00:00Z" },
+    "segment": { "dimension": "channel", "value": "organic" }
+  }
+}
+```
+
+5 단계 (acquisition / activation / retention / revenue / referral) 별로 호출해 biggest-drop bottleneck 식별 → A/B test pipeline 입력.
+
+**전제**: `BUDDY_ANALYTICS_BACKEND` env var 설정. v0.2.0 stubs — 본격 adapter 는 W4-2.2 ~ W4-2.3.
+
+**관련 spec**: `../../../docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` §4.1

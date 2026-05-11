@@ -111,3 +111,26 @@ drop-off 큰 step 식별:
 - Hooked (Nir Eyal) — habit formation
 - Lean Analytics (Croll + Yoskovitz) — funnel metric
 - marketingskills/analytics-tracking (외부 reference, MIT — analytics 패턴)
+
+---
+
+## MCP integration (analytics-mcp v0.2.0+)
+
+본 skill 의 *adoption funnel 데이터 수집* 단계에서 `analytics_query_funnel` MCP tool 을 호출해 직접 데이터를 가져올 수 있다 (buddy-mcp 서버 enable 시).
+
+**호출 예 (Claude Code session 내부)**:
+
+```json
+{
+  "tool": "analytics_query_funnel",
+  "arguments": {
+    "stages": ["feature_seen", "feature_used", "feature_used_d7"],
+    "time_range": { "from": "2026-04-01T00:00:00Z", "to": "2026-05-01T00:00:00Z" },
+    "segment": { "dimension": "plan_tier", "value": "pro" }
+  }
+}
+```
+
+**전제**: `BUDDY_ANALYTICS_BACKEND` env var (sql / mixpanel / amplitude / datadog / stripe / elasticsearch) 설정. v0.2.0 ships stubs — 모든 호출은 friend-tone "backend not configured" 응답. 본격 adapter 구현 (W4-2.2 ~ W4-2.3) 후 실 데이터.
+
+**관련 spec**: `../../../docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` §4.1

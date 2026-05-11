@@ -125,3 +125,28 @@ cloud / SaaS 비용의 *비정상 증가* 자동 탐지 + root cause 분석 + �
 - AWS Cost Anomaly Detection / GCP Recommender — anomaly 도구
 - FinOps Foundation — cost engineering practices
 - buddy `audit-cost-efficiency` (§6, 구현됨) — efficiency 일반 영역과 분리
+
+---
+
+## MCP integration (analytics-mcp v0.2.0+)
+
+본 skill 의 *cost timeline + anomaly detection* 에서 `analytics_query_cost` MCP tool 호출.
+
+**호출 예**:
+
+```json
+{
+  "tool": "analytics_query_cost",
+  "arguments": {
+    "time_range": { "from": "2026-04-01T00:00:00Z", "to": "2026-05-01T00:00:00Z" },
+    "drill_down": "service",
+    "anomaly_detection": true
+  }
+}
+```
+
+기대 응답: total_cost_cents + by_dimension (service / component / region / account / tag) + anomalies (spike_at + z_score 포함).
+
+**전제**: `BUDDY_ANALYTICS_BACKEND` env var 설정. v0.2.0 stubs — 본격 adapter 는 W4-2.2 ~ W4-2.3.
+
+**관련 spec**: `../../../docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` §4.5

@@ -126,3 +126,27 @@ actor 간 failure 전파:
 - Release It! (Michael Nygard) — circuit breaker / bulkhead / timeout patterns
 - agent-evaluation (외부 reference, MIT — Kevin + Claude, OMAS v2 trust 패턴)
 - Google SRE Book Ch.10 — postmortem / cascade
+
+---
+
+## MCP integration (analytics-mcp v0.2.0+)
+
+본 skill 의 *actor 별 failure rate + MTTR + trust score 계산* 에서 `analytics_query_actor_failure` MCP tool 호출.
+
+**호출 예**:
+
+```json
+{
+  "tool": "analytics_query_actor_failure",
+  "arguments": {
+    "actor": "3rd-party",
+    "time_range": { "from": "2026-04-01T00:00:00Z", "to": "2026-05-01T00:00:00Z" }
+  }
+}
+```
+
+기대 응답: failure_rate / predictability_variance / mttr_minutes / blast_radius / trust_score (Release It! Nygard 4-dim) + recovery_patterns_applied 목록.
+
+**전제**: `BUDDY_ANALYTICS_BACKEND` env var 설정. v0.2.0 stubs — 본격 adapter 는 W4-2.2 ~ W4-2.3.
+
+**관련 spec**: `../../../docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` §4.4

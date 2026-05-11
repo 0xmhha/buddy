@@ -132,3 +132,28 @@ slow burn (3d × 1×) → weekly review
 - Google SRE Book Ch.3-4 + Ch.21 (Multi-Window Multi-Burn-Rate Alerts)
 - The Site Reliability Workbook
 - buddy `design-observability` (§3) — SLO 정의 입력
+
+---
+
+## MCP integration (analytics-mcp v0.2.0+)
+
+본 skill 의 *SLO burn rate + release gate decision* 에서 `analytics_query_slo_burn` MCP tool 호출.
+
+**호출 예**:
+
+```json
+{
+  "tool": "analytics_query_slo_burn",
+  "arguments": {
+    "sli": "p99_latency_ms",
+    "slo_target": 250,
+    "time_window": "1d"
+  }
+}
+```
+
+기대 응답: current_value + budget_remaining_pct + burn_rate (multi-window) + alert_level (info / warning / critical) + release_gate_decision (ship / limit / freeze / rollback).
+
+**전제**: `BUDDY_ANALYTICS_BACKEND` env var 설정 (datadog 권장 — SLO 영역 강함). v0.2.0 stubs — 본격 adapter 는 W4-2.2 ~ W4-2.3.
+
+**관련 spec**: `../../../docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` §4.6

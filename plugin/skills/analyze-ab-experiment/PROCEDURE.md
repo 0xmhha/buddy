@@ -130,3 +130,26 @@ No Result (결론 없음):
 - Ship → `ship-release` 7-3 단계 fast path
 - Revert → `conduct-postmortem`
 - 결과 기반 개선 → `generate-improvement-tasks`
+
+---
+
+## MCP integration (analytics-mcp v0.2.0+)
+
+본 skill 의 *A/B 결과 fetch* 단계에서 `analytics_query_ab_experiment` MCP tool 호출.
+
+**호출 예**:
+
+```json
+{
+  "tool": "analytics_query_ab_experiment",
+  "arguments": {
+    "experiment_id": "exp_2026_q2_signup_flow"
+  }
+}
+```
+
+기대 응답: variants + sample_size + primary metric + 95% CI + significance + guardrail + recommendation ("ship" | "revert" | "continue" | "inconclusive").
+
+**전제**: `BUDDY_ANALYTICS_BACKEND` env var 설정. v0.2.0 stubs — 본격 adapter 는 W4-2.2 ~ W4-2.3.
+
+**관련 spec**: `../../../docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` §4.3

@@ -265,3 +265,28 @@ acceptance gate:
 - [ ] §0 anti-pattern 부재 — total only / projection 부재 / unit economics 부재 / waste 무검증 / RI 미검토 / cross-AZ 누락 모두 충족
 
 하나라도 no 면 해당 phase 회귀 후 재검증.
+
+---
+
+## MCP integration (analytics-mcp v0.2.0+)
+
+본 skill 의 *Infracost monthly + per-component breakdown* 에서 `analytics_query_cost` MCP tool 호출 (analyze-cost-anomaly 와 동일 tool 공유).
+
+**호출 예 — service 별 비용 + waste 탐지**:
+
+```json
+{
+  "tool": "analytics_query_cost",
+  "arguments": {
+    "time_range": { "from": "2026-04-01T00:00:00Z", "to": "2026-05-01T00:00:00Z" },
+    "drill_down": "service",
+    "anomaly_detection": false
+  }
+}
+```
+
+`drill_down` 을 `component` / `region` / `account` / `tag` 로 바꿔가며 호출 → $/MAU 단위 economics + RI / Savings Plan / right-sizing 추천 입력.
+
+**전제**: `BUDDY_ANALYTICS_BACKEND` env var 설정 (stripe 또는 datadog 권장). v0.2.0 stubs — 본격 adapter 는 W4-2.2 ~ W4-2.3.
+
+**관련 spec**: `../../../docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md` §4.5

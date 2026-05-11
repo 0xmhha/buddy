@@ -315,7 +315,7 @@ server.RegisterTool("analytics_query_cohort", analyticsCohortHandler)
 | W4-2.1 | MCP tool registration (7 tool stub) | LOW | ✅ Done (2026-05-11, plugin v0.2.0 commit `bdf957e^..`). `internal/mcp/analytics_tool.go` 신규 + `server.go` 의 `addAnalyticsTools` wire-up |
 | W4-2.2 | Custom SQL adapter (PostgreSQL / MySQL) | MED | ⏳ |
 | W4-2.3 | 7 tool handler 본격 구현 | HIGH | ⏳ |
-| W4-2.4 | 7 PROCEDURE.md 의 *MCP tool 호출 example* 추가 | LOW | ⏳ |
+| W4-2.4 | 7 PROCEDURE.md 의 *MCP tool 호출 example* 추가 | LOW | ✅ Done (2026-05-11). 10 skill PROCEDURE (primary 7 + secondary 3: optimize-conversion-funnel / audit-cost-efficiency / triage-customer-support-ticket) 끝에 `## MCP integration (analytics-mcp v0.2.0+)` 섹션 일괄 추가 |
 | W4-2.5 | error handling + friend-tone i18n | LOW | ✅ W4-2.1 안에서 흡수 (현재 한국어 stub message + `BUDDY_ANALYTICS_BACKEND` env var 안내). i18n split 은 v0.2 i18n sweep 과 함께 |
 | W4-2.6 | race-clean test + integration test (synthetic events) | MED | 🟡 부분 (registration + stub behaviour `internal/mcp/analytics_tool_test.go` 4 test 통과. synthetic event integration 은 adapter 구현 후) |
 | W4-2.7 | release v0.1.0 | LOW | ⏳ (analytics-mcp 단독 release tag 미발행 — plugin v0.2.0 안에 흡수. 향후 `analytics-mcp-v0.1.0` 별도 tag 후보) |
