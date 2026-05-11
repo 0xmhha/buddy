@@ -147,6 +147,22 @@ func (r *Runtime) runOneStep(ctx context.Context, runID int64, idx int, step Cha
 					fmt.Sprintf("step[%d] %s next-phase candidates: %s",
 						idx, step.Command, strings.Join(last.Parsed.NextPhase.Skills, ", ")))
 			}
+			if len(last.Parsed.NextPhase.Branches) > 0 {
+				// One log line per branch keeps each conditional rule on
+				// its own grep-able line — important for the future
+				// cascade engine, which will pick *one* branch based on
+				// the run's environment / inputs rather than fanning out
+				// to the Skills union.
+				for _, b := range last.Parsed.NextPhase.Branches {
+					rhs := strings.Join(b.Skills, ", ")
+					if rhs == "" {
+						rhs = "(no skill)"
+					}
+					_ = r.store.AppendLog(ctx, runID, "info",
+						fmt.Sprintf("step[%d] %s next-phase branch: %q → %s",
+							idx, step.Command, b.Condition, rhs))
+				}
+			}
 			_ = r.store.AppendLog(ctx, runID, "info",
 				fmt.Sprintf("step[%d] %s ok", idx, step.Command))
 			return last, nil

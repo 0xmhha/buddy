@@ -324,6 +324,62 @@ func TestRuntime_Run_ParsesSelfCheckAndNextPhase(t *testing.T) {
 	require.True(t, selfCheckLogged, "expected self-check log line, got %+v", logs)
 }
 
+// TestRuntime_Run_ParsesConditionalBranches covers the W3-4 follow-on
+// (conditional next-phase parse): when the Claude output describes
+// branch-style cascade rules, Runtime persists Branches into StepResult
+// and emits one log line per branch instead of (or alongside) the
+// candidates union line.
+func TestRuntime_Run_ParsesConditionalBranches(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	spec, err := ParseSpec([]byte(minimalSpecYAML))
+	require.NoError(t, err)
+	agent, err := store.Create(ctx, spec, minimalSpecYAML)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{
+		Stdout: "## 6. 검증\n\n- [x] decided\n\n" +
+			"## 7. 다음 phase\n\n" +
+			"- 글로벌 → `review-legal-regulatory`\n" +
+			"- Korea → `consult-korea-legal-context` + `review-legal-regulatory`\n" +
+			"- USA / EU / 기타 → (template 작성 필요)\n",
+		ExitCode: 0,
+	}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, agent)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, 1)
+
+	parsed := res.Steps[0].Parsed
+	require.Len(t, parsed.NextPhase.Branches, 3)
+	require.Equal(t, "글로벌", parsed.NextPhase.Branches[0].Condition)
+	require.Equal(t, []string{"review-legal-regulatory"}, parsed.NextPhase.Branches[0].Skills)
+	require.Equal(t, "Korea", parsed.NextPhase.Branches[1].Condition)
+	require.Empty(t, parsed.NextPhase.Branches[2].Skills,
+		"no-skill branch keeps condition but empty skills")
+
+	logs, err := store.Logs(ctx, res.RunID, 0)
+	require.NoError(t, err)
+	var globalLogged, koreaLogged, noSkillLogged bool
+	for _, l := range logs {
+		switch {
+		case strings.Contains(l.Message, `next-phase branch: "글로벌" → review-legal-regulatory`):
+			globalLogged = true
+		case strings.Contains(l.Message, `next-phase branch: "Korea" → consult-korea-legal-context, review-legal-regulatory`):
+			koreaLogged = true
+		case strings.Contains(l.Message, `next-phase branch: "USA / EU / 기타" → (no skill)`):
+			noSkillLogged = true
+		}
+	}
+	require.True(t, globalLogged, "expected 글로벌 branch log line, got %+v", logs)
+	require.True(t, koreaLogged, "expected Korea branch log line, got %+v", logs)
+	require.True(t, noSkillLogged, "expected USA/EU/기타 branch log line, got %+v", logs)
+}
+
 func TestRuntime_Run_FileOutputWritesResult(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

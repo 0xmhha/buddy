@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — cli buddy W3-4 follow-on: conditional next-phase branches
+
+- `NextPhase.Branches []NextPhaseBranch` — captures conditional cascade
+  rules of the form `- <condition> → \`skill-a\` [+ \`skill-b\` ...]` so
+  callers can pick the right target based on the run's environment /
+  inputs instead of fanning out to the union `Skills` list. Each branch
+  records the trimmed condition prose (≤30 runes, e.g. "글로벌",
+  "Korea", "USA / EU / 기타") and the backtick-extracted RHS skills.
+  Branches with no skill on the RHS ("→ (template 작성 필요)") keep the
+  condition with an empty skill slice — still informative.
+- Detection rejects backtick-leading bullets (`- \`skill\` — entity → API
+  resource 매핑` stays a sequential candidate, not a branch) and prose
+  bullets where the LHS exceeds 30 runes, so description-style arrows
+  don't get misclassified.
+- ASCII `->` and Unicode `→` both match.
+- Runtime emits one `next-phase branch: "<cond>" → <skills>` log line per
+  branch alongside the existing `next-phase candidates` union line, so
+  `agent_logs` shows the cascade structure grep-line-by-line.
+- `internal/agent/parser_test.go` — 7 race-clean unit tests covering
+  single conditional, multi-conditional with descriptions and no-skill
+  fallback, ASCII arrow form, sequential-only stays Branches-empty,
+  long-LHS prose rejection, backtick-leading rejection, integration
+  with §self-check populated.
+- `internal/agent/runtime_test.go` — `TestRuntime_Run_ParsesConditionalBranches`
+  end-to-end: mock returns Korea/global/USA branch syntax; asserts
+  `StepResult.Parsed.NextPhase.Branches` populated and three branch log
+  lines written.
+
+v0.3 contract unchanged: parsed branches are metadata. Auto-cascade
+into a chosen branch's skills remains deferred — the cascade engine
+needs a branch-selection policy (env-var? CLI flag? interactive
+prompt?) that hasn't been designed yet.
+
 ## [0.5.0] — 2026-05-12
 
 ### Added — cli buddy W3-4 partial: PROCEDURE output parser

@@ -3,6 +3,7 @@ package agent
 import (
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 // parser.go implements W3-4 of the cli-buddy-spec: extract structured
@@ -62,12 +63,24 @@ type SelfCheck struct {
 }
 
 // NextPhase is the cascade hint extracted from §next-phase. Skills is
-// every backtick-wrapped identifier the parser found; Raw is the
-// section body verbatim so callers can surface conditional branches
-// ("if A → X / if B → Y") that the parser does not interpret.
+// every backtick-wrapped identifier the parser found (the union across
+// any conditional branches plus any sequential candidates). Branches
+// captures conditional cascade rules ("- 글로벌 → `skill-a`" lines) so
+// callers that want to follow the condition rather than the union can
+// pick the right target. Raw is the section body verbatim.
 type NextPhase struct {
-	Skills []string `json:"skills,omitempty"`
-	Raw    string   `json:"raw,omitempty"`
+	Skills   []string          `json:"skills,omitempty"`
+	Branches []NextPhaseBranch `json:"branches,omitempty"`
+	Raw      string            `json:"raw,omitempty"`
+}
+
+// NextPhaseBranch is one conditional cascade rule. Condition is the
+// trimmed LHS prose (e.g. "글로벌", "Korea", "USA / EU / 기타"); Skills is
+// the backtick-extracted RHS (may be empty when the PROCEDURE marks a
+// branch as "to be created" without naming an existing skill).
+type NextPhaseBranch struct {
+	Condition string   `json:"condition"`
+	Skills    []string `json:"skills,omitempty"`
 }
 
 // ParsedOutput aggregates everything the parser pulls out of one Claude
@@ -94,6 +107,14 @@ var (
 	// identifier extractor. We post-filter to drop trivially non-skill
 	// values (those containing whitespace or starting with /).
 	backtickRefRE = regexp.MustCompile("`([^`\n]+)`")
+	// branchLineRE matches a bullet of the form
+	//   - <condition> → <rhs>
+	//   - <condition> -> <rhs>
+	// where <condition> is short prose (≤80 chars, no opening backtick).
+	// The backtick-leading check rejects ordinary sequential bullets like
+	// `- ` + "`skill-name` — description with → arrow inside" where the
+	// arrow belongs to a description rather than a conditional split.
+	branchLineRE = regexp.MustCompile(`^\s*-\s+([^` + "`" + `\n][^\n]*?)\s*(?:→|->)\s*(.+)$`)
 )
 
 // ParseClaudeOutput scans raw stdout from a Claude subprocess run of one
@@ -161,7 +182,50 @@ func parseNextPhase(s string) NextPhase {
 		seen[candidate] = true
 		skills = append(skills, candidate)
 	}
-	return NextPhase{Skills: skills, Raw: strings.TrimSpace(body)}
+	return NextPhase{Skills: skills, Branches: parseBranches(body), Raw: strings.TrimSpace(body)}
+}
+
+// parseBranches scans the §next-phase body for conditional cascade
+// bullets of the form
+//
+//	- <condition> → `skill-a`
+//	- <condition> → `skill-a` + `skill-b` (optional description)
+//	- <condition> → (skill not yet authored — prose only)
+//
+// Sequential candidate bullets (those that start with a backtick or
+// contain no arrow) are intentionally ignored — they belong in Skills,
+// not Branches.
+func parseBranches(body string) []NextPhaseBranch {
+	var out []NextPhaseBranch
+	for _, line := range strings.Split(body, "\n") {
+		m := branchLineRE.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		condition := strings.TrimSpace(m[1])
+		rhs := m[2]
+		// Skip bullets whose LHS is suspiciously long — those are almost
+		// certainly prose descriptions that happen to contain an arrow,
+		// not condition labels. Measured in *runes*, not bytes, so the
+		// limit doesn't shrink for Hangul/Japanese/Chinese conditions.
+		// 30 runes covers "USA / EU / 기타" (12) comfortably without
+		// admitting paragraph-length prose.
+		if condition == "" || utf8.RuneCountInString(condition) > 30 {
+			continue
+		}
+		var skills []string
+		seen := map[string]bool{}
+		for _, bm := range backtickRefRE.FindAllStringSubmatch(rhs, -1) {
+			cand := strings.TrimSpace(bm[1])
+			if !looksLikeSkillIdent(cand) || seen[cand] {
+				continue
+			}
+			seen[cand] = true
+			skills = append(skills, cand)
+		}
+		out = append(out, NextPhaseBranch{Condition: condition, Skills: skills})
+	}
+	return out
 }
 
 // looksLikeSkillIdent filters backtick refs to *kebab-case identifiers*
