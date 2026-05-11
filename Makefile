@@ -1,4 +1,4 @@
-.PHONY: build test test-routing fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
+.PHONY: build test test-routing test-skill-form fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
 
 BIN     := bin/buddy
 BIN_MCP := bin/buddy-mcp
@@ -45,6 +45,13 @@ test:
 # touch plugin/commands/buddy/, plugin/skills/, or plugin/.claude-plugin/.
 test-routing:
 	@bash scripts/test-router-wireup.sh
+
+# test-skill-form reports PROCEDURE.md section-form deviations across 148 skills
+# (B6 — ADR-004 §2.2 condition 3). Report-only by default; --strict for CI gate
+# (currently 43 deviations are *known free-form / externally-inherited* skills,
+# so strict mode is opt-in until B6 follow-up unifies them).
+test-skill-form:
+	@bash scripts/lint-skill-procedure.sh
 
 fmt:
 	gofmt -s -w .
