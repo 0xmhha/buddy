@@ -6,7 +6,7 @@
 > **Tags**: attribution, naming-collision, charter, skill-catalog
 > **Related**:
 > - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §6.3 호환성 우선 원칙
-> - [`docs/notes/2026-05-10-skill-matrix-3b-group-1.md`](../../notes/2026-05-10-skill-matrix-3b-group-1.md) §4.1 신규 발견
+> - skill-matrix-3b note (`docs/notes/2026-05-10-skill-matrix-3b-group-1.md`) §4.1 — removed in v0.2.0 doc cleanup; *외부 superpowers 발견* 핵심 내용은 §1 Context 에 인용
 > - [`docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md`](./2026-05-09-buddy-commands-disable-model-invocation.md) (ADR-001)
 > - [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](./2026-05-10-roadmap-charter-gap.md) (ADR-002)
 
@@ -173,7 +173,7 @@ buddy's implementation is independently authored.
 ## 7. References
 
 - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §6.3 — 호환성 우선 원칙
-- [`docs/notes/2026-05-10-skill-matrix-3b-group-1.md`](../../notes/2026-05-10-skill-matrix-3b-group-1.md) §4.1 — 신규 발견
+- skill-matrix-3b note §4.1 신규 발견 — file removed in v0.2.0 cleanup, see git history
 - [`docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md`](./2026-05-09-buddy-commands-disable-model-invocation.md) (ADR-001) — N-1 closure
 - [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](./2026-05-10-roadmap-charter-gap.md) (ADR-002) — roadmap charter gap
 - 외부 superpowers (skill 경로 inventory): `aidax-dag/ai-cli/skill/superpowers/`

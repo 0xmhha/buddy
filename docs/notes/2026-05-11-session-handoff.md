@@ -1,7 +1,7 @@
 # Session Handoff — Cycle 1 Close + 1.1.1 Patch (2026-05-11)
 
 > **목적**: 다른 세션에서 *처음 3분 안에* 어디까지 와있는지 + *다음 한 시간 안에* 무엇을 진행할지 파악.
-> **선행 핸드오프**: `docs/HANDOFF.md` (장기 트랙 상태), `docs/notes/2026-05-09-handoff-N1-closure.md` (N-1 closure)
+> **선행 핸드오프**: `docs/HANDOFF.md` (장기 트랙 상태). N-1 closure 의 상세는 `docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md` (ADR-001) 가 canonical.
 > **본 세션 범위**: dogfood validation Cycle 1 종료 + Cycle 1 fix 반영 + 1.1.1 patch release + Cycle 2 structural verification
 
 ---

@@ -4,7 +4,7 @@
 > **Date:** 2026-05-09
 > **Deciders:** buddy maintainer
 > **Tags:** plugin-architecture, context-cost, routing
-> **Related:** [N-1 audit](../../notes/audits/2026-05-09-skill-context-bloat-audit.md), handoff §2 (`docs/notes/2026-05-08-handoff-context-bloat-investigation.md`)
+> **Related:** N-1 audit + handoff notes (`docs/notes/audits/2026-05-09-skill-context-bloat-audit.md`, `docs/notes/2026-05-09-handoff-N1-closure.md`) — removed in v0.2.0 doc cleanup; measurements + conclusions absorbed into §Context + §Verification below. See git history for raw evidence.
 
 ## Context
 
@@ -99,7 +99,7 @@ Set the env var so all descriptions fit without compromise. **Rejected** because
 
 After `/reload-plugins` in a Claude Code session with the plugin installed, the available-skills system-reminder lists **`buddy:router` only**. None of the 57 `/buddy:<name>` commands appear in the auto-loaded skill catalog. This matches the predicted behavior: descriptions are no longer in baseline context, while user-facing autocomplete via `/buddy:` still works.
 
-See [`docs/notes/2026-05-09-handoff-N1-closure.md`](../../notes/2026-05-09-handoff-N1-closure.md) §4 for the verification chain in full.
+Verification chain (handoff note `2026-05-09-handoff-N1-closure.md` removed in v0.2.0 cleanup; summary inlined): five commits ending at `ca99762` pushed; `claude plugin install buddy@buddy` → v1.0.8 enabled with all 57 commands flagged; `diff -r plugin/commands/ ~/.claude/plugins/marketplaces/buddy/plugin/commands/` empty; after `/reload-plugins` system-reminder lists `buddy:router` only (57 commands absent from baseline, present in `/` autocomplete). Estimated saving: ~1,725 tokens/prompt.
 
 ## Future revisits
 

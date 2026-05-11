@@ -5,7 +5,7 @@
 > **Track**: plugin buddy (charter §3 의 4 자산 중 *MCP* 영역)
 > **Related**:
 > - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §2.4.2 그룹 3 MCP 결정
-> - [`docs/notes/2026-05-10-missing-skills-inventory.md`](../../notes/2026-05-10-missing-skills-inventory.md) §2.3 D-C C2 분할 진입
+> - missing-skills-inventory note §2.3 D-C C2 분할 진입 (file removed in v0.2.0 doc cleanup; 결정 요지: §8 Cluster F 7 skill 작성 후 trigger 활성)
 > - [`plugin/skills/analyze-feature-adoption/PROCEDURE.md`](../../../plugin/skills/analyze-feature-adoption/PROCEDURE.md), [`analyze-user-cohort`](../../../plugin/skills/analyze-user-cohort/PROCEDURE.md), [`analyze-customer-feedback-corpus`](../../../plugin/skills/analyze-customer-feedback-corpus/PROCEDURE.md), [`audit-error-budget`](../../../plugin/skills/audit-error-budget/PROCEDURE.md)
 
 ---
@@ -339,7 +339,7 @@ server.RegisterTool("analytics_query_cohort", analyticsCohortHandler)
 ## 10. References
 
 - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §2.4.2 그룹 3
-- [`docs/notes/2026-05-10-missing-skills-inventory.md`](../../notes/2026-05-10-missing-skills-inventory.md) §2.3 D-C C2
+- missing-skills-inventory note §2.3 D-C C2 (removed in v0.2.0 doc cleanup, see git history)
 - 7 §8 Cluster F PROCEDURE.md (cascade in)
 - `modelcontextprotocol/go-sdk` 또는 `mcp-go` upstream
 - 기존 `cmd/buddy-mcp/` (doctor / stats / feature 자산)
