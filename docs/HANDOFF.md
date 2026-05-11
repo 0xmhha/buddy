@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-10 (plugin buddy 148 procedures / 99 commands — Skill Completion Cycle 100% — Group 1+2+4 모두 완료, Korea cluster 3 + analytics-mcp + feature-management-mcp 만 deferred — Cycle 1 dogfood validation `partial pass`, [`docs/notes/2026-05-10-dogfood-result-cycle-1.md`](./notes/2026-05-10-dogfood-result-cycle-1.md))
+**Last updated:** 2026-05-11 (plugin buddy v1.1.1 patch — Cycle 1 dogfood fix B1-B5 반영, Cycle 2 structural verification 통과, live dispatch 만 별 세션 deferred. **세션 인계 진입점: [`docs/notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md)**)
 
 ## 트랙 상태
 
