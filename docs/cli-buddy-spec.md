@@ -326,10 +326,27 @@ cli buddy spec 작성 자체가 *roadmap.md §4/§5/§6 outline 의 actual rewri
 |-------|------------|--------|------|
 | W3-1 spec | 본 문서 | LOW (Done) | — |
 | W3-2 TUI | bubbletea 학습 + agent list / create form | HIGH | W3-1 |
-| W3-3 agent runtime | scheduler (cron) + executor + retry | HIGH | W3-1 |
-| W3-4 plugin buddy embedding | Claude Code subprocess + PROCEDURE parse | MED-HIGH | W3-1 |
+| W3-3 agent runtime | scheduler (cron) + executor + retry | HIGH (partial Done 2026-05-11 — minimum-viable subset) | W3-1 |
+| W3-4 plugin buddy embedding | Claude Code subprocess + PROCEDURE parse | MED-HIGH | W3-1 (Subprocess executor 의 spawn 부분 W3-3 안에서 ship — PROCEDURE §6 self-check parse 는 W3-4 본격) |
 | W3-5 v0.1.0 재배치 | main.go 분할 + sub-feature 재배치 | MED (W6-1 묶음) | W3-2 / W3-3 / W3-4 (1 부분만) |
 | W3-6 reference agent | 웹툰 agent example | HIGH | W3-2 ~ W3-5 |
+
+### W3-3 partial Done — 2026-05-11 ship summary
+
+**v0.3.x 안에 ship 한 minimum-viable subset**:
+- `internal/db/migrations.go` v4 — agents / agent_runs / agent_logs 테이블 + FK cascade
+- `internal/agent/` package — types / spec(YAML) / store(CRUD + log) / executor(Subprocess+Mock) / runtime(retry + output target)
+- `cmd/buddy/agent.go` — `buddy agent create | list | show | run | delete` 5 subcommands
+- 9 race-clean tests (`internal/agent/runtime_test.go`)
+
+**deferred (W3-3 follow-on)**:
+- background cron scheduler (현재 `buddy agent run` 만 on-demand)
+- exponential backoff (현재 fixed `backoff_delay`)
+- streaming log capture (현재 stdout/stderr buffer 전체만)
+- PROCEDURE §6 self-check parse (W3-4 본격 — pass/fail 자동 판정)
+- production-proven dogfood (사용자 실 agent 등록 시)
+- webhook / API output target (현재 stdout / file 만)
+- `buddy agent log <id>` / `buddy agent edit <id>` 등 추가 subcommand
 
 → 6 phase × 평균 1~3 week = **3~6 month** estimate (single-dev cadence).
 

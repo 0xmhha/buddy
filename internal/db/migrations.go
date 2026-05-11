@@ -95,6 +95,50 @@ var migrations = []migration{
 			CREATE INDEX idx_sessions_transcript_path ON sessions(transcript_path);
 		`,
 	},
+	{
+		// v4 — cli buddy W3-3 agent runtime tables. Per cli-buddy-spec §3.3
+		// + ADR-005 lock-in. agents = static definition, agent_runs = one
+		// row per Run(agent) invocation, agent_logs = streaming log events
+		// (line-level) so the TUI / future buddy:status can tail without
+		// touching the filesystem.
+		version: 4,
+		sql: `
+			CREATE TABLE agents (
+				id           TEXT    PRIMARY KEY,
+				name         TEXT    NOT NULL,
+				spec_yaml    TEXT    NOT NULL,
+				schedule     TEXT    NOT NULL DEFAULT '',
+				status       TEXT    NOT NULL DEFAULT 'idle',
+				created_at   INTEGER NOT NULL,
+				updated_at   INTEGER NOT NULL,
+				last_run_at  INTEGER
+			);
+			CREATE INDEX idx_agents_status     ON agents(status);
+			CREATE INDEX idx_agents_updated_at ON agents(updated_at);
+
+			CREATE TABLE agent_runs (
+				id            INTEGER PRIMARY KEY AUTOINCREMENT,
+				agent_id      TEXT    NOT NULL,
+				started_at    INTEGER NOT NULL,
+				ended_at      INTEGER,
+				exit_code     INTEGER NOT NULL DEFAULT 0,
+				error         TEXT,
+				result_json   TEXT    NOT NULL DEFAULT '{}',
+				FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
+			);
+			CREATE INDEX idx_agent_runs_agent_started ON agent_runs(agent_id, started_at);
+
+			CREATE TABLE agent_logs (
+				id         INTEGER PRIMARY KEY AUTOINCREMENT,
+				run_id     INTEGER NOT NULL,
+				ts         INTEGER NOT NULL,
+				level      TEXT    NOT NULL,
+				message    TEXT    NOT NULL,
+				FOREIGN KEY (run_id) REFERENCES agent_runs(id) ON DELETE CASCADE
+			);
+			CREATE INDEX idx_agent_logs_run_ts ON agent_logs(run_id, ts);
+		`,
+	},
 }
 
 // RunMigrations applies every migration whose version is greater than the

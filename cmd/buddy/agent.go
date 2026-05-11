@@ -1,0 +1,283 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"os"
+	"strings"
+
+	"github.com/spf13/cobra"
+
+	"github.com/0xmhha/buddy/internal/agent"
+	"github.com/0xmhha/buddy/internal/db"
+)
+
+// newAgentCmd assembles the `buddy agent ...` subtree. Per cli-buddy-spec §6.2
+// (locked in by ADR-005), v0.3 ships create / list / show / run / delete. tui
+// / edit / log / schedule list land in W3-2 (TUI) and W3-3 follow-ons.
+func newAgentCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "agent",
+		Short: "Manage cli buddy automation agents",
+		Long: "Manage automation agents that drive plugin buddy command chains.\n" +
+			"Per cli-buddy-spec §3 + ADR-005, agents = static YAML spec + on-demand or\n" +
+			"scheduled Run(). v0.3 ships on-demand only; scheduler arrives in W3-3 follow-on.",
+	}
+	c.AddCommand(
+		newAgentCreateCmd(),
+		newAgentListCmd(),
+		newAgentShowCmd(),
+		newAgentRunCmd(),
+		newAgentDeleteCmd(),
+	)
+	return c
+}
+
+// agentDBPathFlag binds the same --db flag the rest of buddy uses so the agent
+// subtree resolves to the same SQLite file as hook events, sessions, features.
+func agentDBPathFlag(cmd *cobra.Command) *string {
+	return cmd.PersistentFlags().String("db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+}
+
+// openAgentStore is the wire-up shared by every subcommand: open DB → run
+// migrations → wrap in agent.Store. Caller closes via t.Cleanup-equivalent
+// returned closer.
+func openAgentStore(dbFlag string) (*agent.Store, func(), error) {
+	conn, err := db.Open(db.Options{Path: dbFlag})
+	if err != nil {
+		return nil, nil, fmt.Errorf("open db: %w", err)
+	}
+	return agent.NewStore(conn), func() { _ = conn.Close() }, nil
+}
+
+// ─── create ────────────────────────────────────────────────────────────────
+
+func newAgentCreateCmd() *cobra.Command {
+	var dbFlag string
+	c := &cobra.Command{
+		Use:   "create <yaml-path>",
+		Short: "Register an agent from a YAML spec file",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			yamlBytes, err := readFileOrStdin(args[0])
+			if err != nil {
+				return err
+			}
+			spec, err := agent.ParseSpec(yamlBytes)
+			if err != nil {
+				return err
+			}
+			store, closer, err := openAgentStore(dbFlag)
+			if err != nil {
+				return err
+			}
+			defer closer()
+			created, err := store.Create(ctx, spec, string(yamlBytes))
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%s 등록 완료 (status=%s)\n", created.ID, created.Status)
+			return nil
+		},
+	}
+	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	return c
+}
+
+// readFileOrStdin returns the YAML body. "-" means stdin so users can pipe
+// `cat spec.yaml | buddy agent create -`.
+func readFileOrStdin(path string) ([]byte, error) {
+	if path == "-" {
+		return io.ReadAll(os.Stdin)
+	}
+	return os.ReadFile(path)
+}
+
+// ─── list ──────────────────────────────────────────────────────────────────
+
+func newAgentListCmd() *cobra.Command {
+	var dbFlag string
+	c := &cobra.Command{
+		Use:   "list",
+		Short: "List all registered agents (most recently updated first)",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			store, closer, err := openAgentStore(dbFlag)
+			if err != nil {
+				return err
+			}
+			defer closer()
+			agents, err := store.List(cmd.Context())
+			if err != nil {
+				return err
+			}
+			if len(agents) == 0 {
+				fmt.Fprintln(cmd.OutOrStdout(), "등록된 agent 가 없어. `buddy agent create <spec.yaml>` 로 시작.")
+				return nil
+			}
+			out := cmd.OutOrStdout()
+			fmt.Fprintf(out, "%-24s %-10s %-19s %s\n", "ID", "STATUS", "LAST RUN", "NAME")
+			for _, a := range agents {
+				last := "-"
+				if a.LastRunAt != nil {
+					last = a.LastRunAt.Format("2006-01-02 15:04:05")
+				}
+				fmt.Fprintf(out, "%-24s %-10s %-19s %s\n", a.ID, a.Status, last, a.Name)
+			}
+			return nil
+		},
+	}
+	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	return c
+}
+
+// ─── show ──────────────────────────────────────────────────────────────────
+
+func newAgentShowCmd() *cobra.Command {
+	var dbFlag string
+	c := &cobra.Command{
+		Use:   "show <agent-id>",
+		Short: "Show one agent's spec + status detail",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			store, closer, err := openAgentStore(dbFlag)
+			if err != nil {
+				return err
+			}
+			defer closer()
+			a, err := store.Get(cmd.Context(), args[0])
+			if err != nil {
+				return err
+			}
+			out := cmd.OutOrStdout()
+			fmt.Fprintf(out, "ID:         %s\n", a.ID)
+			fmt.Fprintf(out, "Name:       %s\n", a.Name)
+			fmt.Fprintf(out, "Status:     %s\n", a.Status)
+			fmt.Fprintf(out, "Schedule:   %s\n", emptyDash(a.Schedule))
+			fmt.Fprintf(out, "Created:    %s\n", a.CreatedAt.Format("2006-01-02 15:04:05 MST"))
+			fmt.Fprintf(out, "Updated:    %s\n", a.UpdatedAt.Format("2006-01-02 15:04:05 MST"))
+			if a.LastRunAt != nil {
+				fmt.Fprintf(out, "Last run:   %s\n", a.LastRunAt.Format("2006-01-02 15:04:05 MST"))
+			}
+			fmt.Fprintln(out, "Spec YAML:")
+			fmt.Fprintln(out, indent(a.SpecYAML, "    "))
+			return nil
+		},
+	}
+	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	return c
+}
+
+// ─── run ───────────────────────────────────────────────────────────────────
+
+func newAgentRunCmd() *cobra.Command {
+	var (
+		dbFlag       string
+		claudeBinary string
+	)
+	c := &cobra.Command{
+		Use:   "run <agent-id>",
+		Short: "Execute the agent's chain synchronously and stream the result",
+		Long: "Spawns `claude` once per chain step (cli-buddy-spec §4.1 option (a)\n" +
+			"lock-in via ADR-005). Output is the JSON-marshalled RunResult.\n" +
+			"Errors that come from a missing claude binary include an install hint.",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			store, closer, err := openAgentStore(dbFlag)
+			if err != nil {
+				return err
+			}
+			defer closer()
+			a, err := store.Get(ctx, args[0])
+			if err != nil {
+				return err
+			}
+			exec := agent.NewSubprocessExecutor()
+			if claudeBinary != "" {
+				exec.ClaudeBinary = claudeBinary
+			}
+			rt := agent.NewRuntime(store, exec)
+			res, runErr := rt.Run(ctx, a)
+			if runErr != nil {
+				fmt.Fprintln(cmd.ErrOrStderr(), "agent run encountered an error:", runErr)
+			}
+			// Always emit the captured result so users see partial progress on failure.
+			if err := writeRunResultJSON(cmd.OutOrStdout(), res); err != nil {
+				return err
+			}
+			if runErr != nil {
+				return runErr
+			}
+			if res.ExitCode != 0 {
+				return fmt.Errorf("agent %s finished with non-zero exit code %d", a.ID, res.ExitCode)
+			}
+			return nil
+		},
+	}
+	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	c.Flags().StringVar(&claudeBinary, "claude-binary", "", "override claude CLI path (default: 'claude' on PATH)")
+	return c
+}
+
+// writeRunResultJSON emits the same shape as agent_runs.result_json so the
+// user can compare what the CLI printed with what was persisted.
+func writeRunResultJSON(w io.Writer, res agent.RunResult) error {
+	return writeJSONIndented(w, res)
+}
+
+// ─── delete ────────────────────────────────────────────────────────────────
+
+func newAgentDeleteCmd() *cobra.Command {
+	var dbFlag string
+	c := &cobra.Command{
+		Use:   "delete <agent-id>",
+		Short: "Remove an agent and cascade-delete its runs + logs",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			store, closer, err := openAgentStore(dbFlag)
+			if err != nil {
+				return err
+			}
+			defer closer()
+			if err := store.Delete(cmd.Context(), args[0]); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%s 삭제 완료\n", args[0])
+			return nil
+		},
+	}
+	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	return c
+}
+
+// ─── small helpers ────────────────────────────────────────────────────────
+
+func emptyDash(s string) string {
+	if strings.TrimSpace(s) == "" {
+		return "-"
+	}
+	return s
+}
+
+func indent(s, pad string) string {
+	if s == "" {
+		return pad + "(empty)"
+	}
+	var b strings.Builder
+	for _, line := range strings.Split(strings.TrimRight(s, "\n"), "\n") {
+		b.WriteString(pad)
+		b.WriteString(line)
+		b.WriteByte('\n')
+	}
+	return strings.TrimRight(b.String(), "\n")
+}
+
+// ctx-safe context for sub-commands without a parent context (e.g. tests).
+// Kept in this file rather than main.go because only the agent subtree
+// currently passes ctx through cmd.Context() — older commands use Background.
+func _agentCtxUnused() context.Context { //nolint:unused
+	return context.Background()
+}

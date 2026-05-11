@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — cli buddy W3-3 agent runtime (minimum-viable subset)
+
+Ships the agent runtime engine + on-demand CLI (`buddy agent ...`) following the
+ADR-005 lock-in. v0.3.x ships the minimum-viable subset; background scheduler,
+exponential backoff, streaming logs, and PROCEDURE §6 self-check parse are
+W3-3 / W3-4 follow-ons.
+
+- **SQLite migration v4** (`internal/db/migrations.go`) — `agents` (static
+  definition: id/name/spec_yaml/schedule/status/created_at/updated_at/last_run_at),
+  `agent_runs` (one row per Run invocation, FK cascade), `agent_logs`
+  (per-run log lines). Idempotent.
+- **`internal/agent/` package**:
+  - `types.go` — Agent / AgentSpec / ChainStep / RetryPolicy / OutputTarget /
+    AgentRun / AgentLog / StepResult.
+  - `spec.go` — YAML parsing + validation + `NormalizeCommand` (strips
+    `/buddy:` / `/` prefix so users can paste slash form).
+  - `store.go` — agent CRUD + StartRun/FinishRun/AppendLog/Logs persistence.
+    ErrNotFound sentinel matches the analytics package convention.
+  - `executor.go` — `Executor` interface + `SubprocessExecutor` (spawns
+    `claude` per ADR-005 §4.1 option (a)) + `MockExecutor` (test double).
+    `ErrClaudeMissing` sentinel guides users to install Claude Code.
+  - `runtime.go` — `Runtime.Run(agent)` walks `spec.Chain` step-by-step
+    via executor, persists each attempt + result, handles per-step retry
+    (capped `MaxAttempts` + optional fixed `BackoffDelay`), writes
+    file/stdout output, transitions status idle → running → done|failed.
+  - `runtime_test.go` + helpers — 9 race-clean integration tests covering
+    spec parsing, store CRUD, happy-path persistence, non-zero exit short-circuit,
+    retry exhaustion, executor error path, file output target.
+- **`cmd/buddy/agent.go`** — `buddy agent create | list | show | run | delete`
+  5 subcommands sharing the same `--db` flag and using
+  `agent.NewSubprocessExecutor()` for `run`. `--claude-binary` override flag
+  supported. End-to-end smoke verified.
+- **Spec status**: `docs/cli-buddy-spec.md` §9 W3-3 row marked "HIGH (partial
+  Done 2026-05-11 — minimum-viable subset)" with explicit ship summary and
+  deferred follow-on list.
+
+### Changed
+
+- `internal/db/db_test.go` — schema_version assertion bumped 3 → 4; table-existence
+  test gains agents / agent_runs / agent_logs.
+
+### Migration notes
+
+- Existing buddy DBs run migration v4 automatically on next open. Idempotent.
+- No version bump (this is `[Unreleased]`). Cut a v0.3.1 / v0.4.0 once enough
+  W3-3 follow-on lands to justify a release.
+
 ## [0.3.0] — 2026-05-11
 
 ### Added — analytics-mcp Phase W4-2.1 ~ W4-2.6 (full v1 ship modulo standalone tag)
