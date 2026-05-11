@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:audit-i18n-coverage
 
 design-i18n-strategy 적용 결과 검증. key coverage + fallback rate + ICU 양식 + format 4 영역 audit. CI 자동화 (pre-commit + matrix). prepare-launch-checklist 의 i18n gate 입력.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `audit-i18n-coverage`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

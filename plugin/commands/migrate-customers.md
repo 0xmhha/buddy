@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:migrate-customers
 
 대규모 customer migration plan. deprecate-feature 의 대규모 사용자 영향 케이스 후속. Strangler Fig (Fowler) 패턴 + Stripe API migration playbook reference.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `migrate-customers`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

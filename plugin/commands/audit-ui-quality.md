@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:audit-ui-quality
 
 apply-design-system 적용 결과의 인지 품질 검토. audit-accessibility (§6) 와 책임 분리 — 본 skill 은 디자인 품질 (visual + interaction + detail + perception). make-interfaces-feel-better 의 micro-detail 7 패턴 활용.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `audit-ui-quality`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

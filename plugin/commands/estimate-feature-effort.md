@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:estimate-feature-effort
 
 define-feature-spec 산출 → feature 별 T-shirt size + ideal-h × multiplier (1.0~2.5×) + 4-point PERT uncertainty. XL 또는 uncertainty 폭 3× 초과 시 split-work-into-features 분해 강제. score-feature-priority 의 effort 입력 + estimate-build-timeline (§4) task layer cascade.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `estimate-feature-effort`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

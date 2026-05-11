@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:conduct-customer-interview
 
 가설 검증 가장 신뢰 신호 = 잠재 고객 인터뷰. 3 단계 스크립트 (warm-up / past behavior / future hypothesis) + Mom Test anti-pattern 회피 (intent / pitch / WTP-direct 금지) + N≥5 인터뷰 후 코딩 매트릭스 (segment / pain / solution / switch / WTP / objection / quote) + 4-라벨 update. assess-business-viability evidence + map-customer-segments persona refinement 입력.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `conduct-customer-interview`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

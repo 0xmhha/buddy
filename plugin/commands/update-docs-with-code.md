@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:update-docs-with-code
 
 doc drift = 코드와 docs 가 다른 진실. 5 영역 (README count / ADR / CHANGELOG entry / HANDOFF Last updated / skill-catalog) 매트릭스 강제. Keep a Changelog + Conventional Commits 정합.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `update-docs-with-code`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

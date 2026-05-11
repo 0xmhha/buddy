@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:review-legal-regulatory
 
 decide-target-market 산출 + PRD + segment → 7 sub-domain 검토 (review-privacy-data-risk + review-license-and-ip-risk + review-ai-safety-liability cascade + 약관 / 결제 / 산업 / AI audit inline). region cluster trigger 결과 (글로벌 default 인 경우 본 skill 만, Korea 시 consult-korea-legal-context 추가). prepare-launch-checklist (§7) 법률 readiness 입력. 항상 전문가 검토 의뢰가 최종 step.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `review-legal-regulatory`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

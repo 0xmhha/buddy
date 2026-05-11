@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:analyze-customer-feedback-corpus
 
 비구조 텍스트 → 구조화 insight. NPS 의 *왜* 차원 + verbatim quote (추상 평균보다 강함). score-feature-priority + audit-ui-quality + generate-improvement-tasks 입력.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `analyze-customer-feedback-corpus`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

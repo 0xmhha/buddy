@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:map-customer-segments
 
 target user 가설 → user vs buyer 분리 (B2B 특히), early adopter 5차원 persona (demographics / pain / current solution / switching cost / reachability), secondary segment 2~3, anti-persona. define-product-spec / review-pricing-and-gtm 입력.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `map-customer-segments`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

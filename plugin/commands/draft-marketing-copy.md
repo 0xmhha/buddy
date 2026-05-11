@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:draft-marketing-copy
 
 map-customer-segments buyer voice + analyze-competition positioning + customer-feedback-corpus verbatim quote 입력. design-ab-experiment 로 variant test.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `draft-marketing-copy`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

@@ -71,15 +71,16 @@ else
 fi
 
 # --- Check 2: PROCEDURE.md count --------------------------------------------
-# 79 PROCEDURE.md files cover the full lifecycle catalog (78 baseline + 1
-# Phase 1 Task 1.1 define-tech-stack). Drift here means a skill was added or
-# removed without updating tests or docs. Bump this count when Phase 1 Tasks
-# 1.2 / 1.3 / 1.4 land (→ 80, 81, 82).
-procedure_count=$(find "$SKILLS_DIR" -name PROCEDURE.md | wc -l | tr -d ' ')
-if [ "$procedure_count" = "105" ]; then
-    pass "PROCEDURE.md count is 105"
+# 148 PROCEDURE.md files cover the full lifecycle catalog after Skill Completion
+# Cycle (Batch 1~7) + Phase 5 ext A/B/C. Drift here means a skill was added or
+# removed without updating tests. Bump this count when new skills land.
+# Excludes the .template/ placeholder.
+procedure_count=$(find "$SKILLS_DIR" -name PROCEDURE.md -not -path "*/.template/*" | wc -l | tr -d ' ')
+# 147 PROCEDURE-based skills + 1 router (SKILL.md, not PROCEDURE) = 148 total skill directories.
+if [ "$procedure_count" = "147" ]; then
+    pass "PROCEDURE.md count is 147 (+ 1 router SKILL.md = 148 skills total)"
 else
-    fail "expected 105 PROCEDURE.md files, found $procedure_count"
+    fail "expected 147 PROCEDURE.md files (148 skills minus router), found $procedure_count"
 fi
 
 # --- Check 3: plugin.json must NOT declare a `commands` field ----------------

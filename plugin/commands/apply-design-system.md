@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:apply-design-system
 
 decide-form-factor 결과 + brand → design system 채택. token (color/spacing/typography/radius/shadow) 정합 + pattern library + adoption 80%+ 추적.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `apply-design-system`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

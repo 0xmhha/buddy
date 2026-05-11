@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:design-secret-management
 
 API key / DB / OAuth / TLS 등 secret 의 저장 + 회전 + audit + 누수 탐지 통합 설계. runtime + dev secret 분리. plaintext-in-repo 0건 강제.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `design-secret-management`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```

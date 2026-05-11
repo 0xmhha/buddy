@@ -7,3 +7,14 @@ disable-model-invocation: true
 # /buddy:spin-off-feature
 
 기존 product 의 한 기능 → 별도 product / repo 전환. archive-product 와 책임 분리 (분리 vs 종료). define-product-spec / decide-target-market 으로 신규 product fresh start cascade.
+
+## 실행 지시
+
+`Skill` 도구로 `router` skill 을 호출하라. 다음 컨텍스트를 전달한다:
+
+- mode: `single`
+- target PROCEDURE: `spin-off-feature`
+- 사용자 인자:
+    ```
+    $ARGUMENTS
+    ```
