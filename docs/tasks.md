@@ -8,9 +8,9 @@
 > - [`roadmap.md`](./roadmap.md): Go CLI 트랙의 마일스톤 SSoT (M5/M6/v0.2/v0.3/v1.0)
 > - [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md): plugin 9-phase 아키텍처 SSoT
 > - [`HANDOFF.md`](./HANDOFF.md): 세션 인계 가이드
-> - [`notes/2026-05-09-handoff-N1-closure.md`](./notes/2026-05-09-handoff-N1-closure.md): N-1 closure (ADR-001 적용 결과)
+> - [`notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md): 가장 최신 세션 인계
 >
-> 작성일: 2026-05-05 / 최종 갱신: 2026-05-09 (v1.0.8 + N-1 closure + Phase 5 ext A+B+C 8 skill Done 반영) / 상태: WORKING
+> 작성일: 2026-05-05 / 최종 갱신: 2026-05-11 (plugin-v0.2.0 release + doc cleanup + B6 infrastructure 반영) / 상태: WORKING
 
 ---
 
@@ -18,7 +18,7 @@
 
 | 트랙 | 상태 | 마지막 release |
 |------|------|---------------|
-| **plugin buddy** (9-phase orchestrator + **148 procedures + 99 commands**) | ACTIVE — Skill Completion Cycle 100% (44/44). charter scope 12 stage cover 100%. unreleased (v1.1.0 후보) | v1.0.8 (2026-05-08, 신규 batch 1~7 unreleased) |
+| **plugin buddy** (9-phase orchestrator + **148 procedures + 99 commands**) | ACTIVE — Skill Completion Cycle 100% (44/44) + Cycle 1 dogfood fix + B6 lint infra. charter scope 12 stage cover 100% | **plugin-v0.2.0** (2026-05-11, ADR-004 version reset) |
 | **cli buddy** (TUI 자동화 agent 관리 — charter §3) | PAUSED — spec 미작성. v0.1.0 의 hook reliability monitor 가 sub-feature | v0.1.0 (2026-04-26) |
 | **Housekeeping** | ad-hoc | — |
 
@@ -37,7 +37,7 @@
 
 ### A-2. 잔여 stage skill — ✅ 모두 Done (Skill Completion Cycle 100%, 2026-05-10)
 
-> 출처: [`spec §4 Stage Skill Gap`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md#4-단계별-skill-군집화--gap-분석) + [`Phase 7 deferred re-evaluation`](./superpowers/plans/2026-05-08-phase7-deferred-reevaluation.md) + [`skill-completion-plan`](./superpowers/plans/2026-05-10-skill-completion-plan.md).
+> 출처: [`spec §4 Stage Skill Gap`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md#4-단계별-skill-군집화--gap-분석). 잔여 cluster 분석 + Step 4 7-batch plan 은 v0.2.0 정리 cycle 에서 제거됨 — git history (`docs/superpowers/plans/2026-05-08-phase7-deferred-reevaluation.md`, `docs/superpowers/plans/2026-05-10-skill-completion-plan.md`) 참조.
 >
 > 본 cycle 산출 commits: `18a79b6` (Batch 1) → `b23a995` (2) → `1c5c528` (3) → `6f0677d` (4) → `3544342` (5) → `9cb6ca3` (6a) → `f5b8afb` (6b) → `900944f` (7).
 
@@ -301,9 +301,8 @@
 - [`HANDOFF.md`](./HANDOFF.md) — 세션 인계 + 워크플로우 skill 분기
 - [`roadmap.md`](./roadmap.md) — Go CLI 마일스톤 SSoT
 - [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) — plugin 9-phase 아키텍처 SSoT
-- [`superpowers/plans/2026-05-08-phase7-deferred-reevaluation.md`](./superpowers/plans/2026-05-08-phase7-deferred-reevaluation.md) — Cluster A~H 분석 (잔여 29 skill 재평가 입력)
 - [`superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md`](./superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md) — ADR-001 (N-1 closure)
 - [`v0.1-spec.md`](./v0.1-spec.md) — Go CLI v0.1 spec (LOCKED)
 - [`skill-map.md`](./skill-map.md) — 11-stage → 9-phase 매핑 (참조용)
 - [`DOGFOOD.md`](../DOGFOOD.md) + [`dogfood-feedback-template.md`](./dogfood-feedback-template.md) — Go CLI dogfood
-- [`notes/2026-05-09-handoff-N1-closure.md`](./notes/2026-05-09-handoff-N1-closure.md) — N-1 closure handoff
+- [`notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md) — 가장 최신 세션 인계

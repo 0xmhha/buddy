@@ -13,6 +13,7 @@
 | [ADR-001](./2026-05-09-buddy-commands-disable-model-invocation.md) | 2026-05-09 | Disable model invocation for all `plugin/commands/*.md` | Accepted | plugin-architecture, context-cost, routing |
 | [ADR-002](./2026-05-10-roadmap-charter-gap.md) | 2026-05-10 | roadmap.md v0.2/v0.3/v1.0 outline × two-tracks-charter cli buddy gap | Accepted | roadmap, charter, cli-buddy, naming, scope-alignment |
 | [ADR-003](./2026-05-10-superpowers-attribution.md) | 2026-05-10 | `superpowers` external project attribution policy | Accepted | attribution, naming-collision, charter, skill-catalog |
+| [ADR-004](./2026-05-11-plugin-version-reset.md) | 2026-05-11 | Plugin track version reset to v0.x.x (was v1.1.1) | Accepted | versioning, release, semver, plugin-track, charter-alignment |
 
 ---
 
@@ -116,11 +117,13 @@ charter §6.2 의 cli buddy 진화 시 예상 ADR 후보:
 
 | 예상 ADR 후보 | 트리거 |
 |------------|--------|
-| ADR-{N} cli buddy spec scope decision | `docs/cli-buddy-spec.md` 작성 시 |
+| ADR-{N} cli buddy spec scope decision | `docs/cli-buddy-spec.md` lock-in 시 |
 | ADR-{N} TUI vs web (D-1) 최종 결정 | dogfood feedback 회수 후 |
 | ADR-{N} agent runtime model | cli buddy 본격 spec 시 |
 | ADR-{N} task vs agent naming (P3 from ADR-002) | roadmap rewrite 시 |
 | ADR-{N} AGENTS.md naming collision (P3 from ADR-002) | v1.0 plugin model 결정 시 |
+| ADR-{N} PROCEDURE skeleton enforcement (B6 follow-up) | lint script 출시 후 + 148 skill body 일괄 정리 결정 시 |
+| ADR-{N} router smart-skip session state (B7) | feature-management-mcp 또는 별 design 진입 시 |
 
 ---
 

@@ -7,7 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.1] — 2026-05-10
+## [0.2.0] — 2026-05-11
+
+### Versioning policy reset (BREAKING — version scheme only)
+
+이전 v1.0.0 ~ v1.1.1 entry 5개는 사전적으로 `1.x` 로 진행됐으나, **plugin track 의 v1.0.0 milestone 정의는 cli buddy 통합 + production-proven 이후** (`docs/two-tracks-charter.md` + `docs/cli-buddy-spec.md`). 그 전까지 모든 plugin release 의 major 는 `0` 으로 유지. 새 ADR-004 (`docs/superpowers/decisions/2026-05-11-plugin-version-reset.md`) 가 결정 근거.
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `1.1.1` → **`0.2.0`** (이전 v1.x.x history 는 본 CHANGELOG 의 [1.0.0]~[1.1.1] entry 로 historical 보존 — 마켓플레이스 fetch 시 본 entry 들은 superseded 로 간주, git tag `v1.0.x`~`v1.1.x` 가 publish 되지 않은 상태라 외부 영향 0).
+
+### Doc cleanup — 12 superseded notes/plans 제거
+
+Skill Completion Cycle / N-1 closure / Phase 5 ext / v0.2 outline (cli-buddy-spec 으로 superseded) 의 *planning + audit 산출물* 12개 제거. 결정 + 검증 결과는 ADR-001 / ADR-002 / ADR-003 / tasks.md / HANDOFF.md 로 흡수.
+
+제거된 파일 (git history 보존):
+- `docs/notes/2026-05-08-live-retest-v1.0.4.md`
+- `docs/notes/2026-05-09-dogfood-meta-buddy-v02.md`
+- `docs/notes/2026-05-09-handoff-N1-closure.md`
+- `docs/notes/2026-05-10-external-skills-inventory.md`
+- `docs/notes/2026-05-10-missing-skills-inventory.md`
+- `docs/notes/2026-05-10-skill-matrix-3a-groups-2-4.md`
+- `docs/notes/2026-05-10-skill-matrix-3b-group-1.md`
+- `docs/notes/audits/2026-05-09-skill-context-bloat-audit.md` (+ `docs/notes/audits/` dir)
+- `docs/superpowers/plans/2026-05-06-stage-buildout-plan.md`
+- `docs/superpowers/plans/2026-05-08-phase7-deferred-reevaluation.md`
+- `docs/superpowers/plans/2026-05-09-v02-control-plane-plan.md`
+- `docs/superpowers/plans/2026-05-10-skill-completion-plan.md` (+ `docs/superpowers/plans/` dir)
+
+### Added — Quality infrastructure (B6 도입)
+
+- `plugin/skills/.template/PROCEDURE.md` — 12-section 표준 skeleton template (신규 skill 작성 시 reference)
+- `bin/lint-skill-procedure.sh` — 148 skill PROCEDURE 양식 inconsistency lint script (section 명칭 / 필수 §11 self-check / `## 다음 phase` 명시)
+- `docs/superpowers/decisions/2026-05-11-plugin-version-reset.md` — ADR-004 (version reset rationale)
+
+### Migration notes
+
+- `claude plugin marketplace add 0xmhha/buddy` 후 `claude plugin install buddy@buddy` → `0.2.0` install. v1.x.x 가 *어떤 사용자에게도 publish 되지 않은 상태* 라 downgrade migration 부담 0.
+- Skill catalog + command surface 모두 v1.1.1 시점과 동일 (148 skills / 99 commands). content 변경 없음 — content는 0.3.0 이후 cycle 에 진입.
+
+## [1.1.1] — 2026-05-10 *(superseded — see [0.2.0] versioning policy reset)*
 
 ### Fixed — Cycle 1 dogfood validation findings
 
@@ -70,8 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `docs/two-tracks-charter.md` — plugin buddy / cli buddy 정체성 + 책임 경계 lock-in
 - `docs/response-format-guide.md` — 논문 흐름 응답 양식 reference
-- `docs/notes/2026-05-10-missing-skills-inventory.md` + 4 후속 문서 — Step 1~4 산출
-- `docs/superpowers/plans/2026-05-10-skill-completion-plan.md` — Step 4 7 batch plan
+- (v0.2.0 cleanup 에서 제거) Step 1~4 산출 5 docs (`docs/notes/2026-05-10-missing-skills-inventory.md` + `docs/notes/2026-05-10-external-skills-inventory.md` + skill-matrix 2건 + `docs/superpowers/plans/2026-05-10-skill-completion-plan.md`) — Skill Completion Cycle 100% 후 deferred-cluster 의사결정은 `docs/tasks.md` §A-2 / HANDOFF.md 로 이관, git history 보존
 - `docs/notes/2026-05-10-dogfood-validation-scenarios.md` — quality gate 검증 시나리오
 
 ### Deferred (trigger 발화 시 활성)

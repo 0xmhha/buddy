@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-11 (plugin buddy v1.1.1 patch — Cycle 1 dogfood fix B1-B5 반영, Cycle 2 structural verification 통과, live dispatch 만 별 세션 deferred. **세션 인계 진입점: [`docs/notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md)**)
+**Last updated:** 2026-05-11 (plugin buddy **v0.2.0** — version reset from v1.1.1 per ADR-004 + doc cleanup 12 superseded notes/plans + B6 lint/template infrastructure. **세션 인계 진입점: [`docs/notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md)**)
 
 ## 트랙 상태
 
@@ -13,31 +13,29 @@
 | **plugin buddy** — Claude Code plugin (skill / MCP / agent / hook 카탈로그). 9-phase orchestrator, **148 procedures, 99 commands**, single-router dispatch | 🟢 ACTIVE — Skill Completion Cycle 100% (44/44 신규 + 통합 2). charter scope 12 stage 100% cover. 다음 후보: dogfood 검증 + Korea cluster / analytics-mcp 의 trigger 발화 시 deferred 작성 | `plugin/`, `docs/superpowers/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §2 + [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) |
 | **cli buddy** — TUI 자동화 agent 관리 툴 (plugin buddy 내재화). 진짜 목적은 *agent 생성 / 실행 / 종료 / 설정 관리*. v0.1.0 = hook reliability monitor (한 sub-feature 만 구현). | 🟡 부분 구현 — TUI / agent runtime / plugin buddy 내재화 layer 모두 미구현. 본격 spec 작성 미진입 | `cmd/`, `internal/`, `archive/ts-poc/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 + 이 HANDOFF §1~12 (이하 본문은 v0.1.0 시점 기준) |
 
-**plugin buddy 진행 상태 (2026-05-10):**
+**plugin buddy 진행 상태 (2026-05-11):**
 
-| Phase | 상태 | Release | Skill count |
-|-------|------|---------|-------------|
-| Phase 0 (foundation: routing infra + CI) | ✅ Done | v1.0.0 | 78 baseline |
-| Phase 1 (§3 Technical Design 4) | ✅ Done | v1.0.2 | +4 |
-| Phase 2 (§4 Implementation Plan 6) | ✅ Done | v1.0.3 | +6 |
-| Phase 3 (§7 Release Safety Nets 7) | ✅ Done | v1.0.4 | +7 |
-| Phase 4 (§6 Use-case Test 2) | ✅ Done | v1.0.5 | +2 |
-| Phase 5 ext Cluster C (§3 cascade bridge 2) | ✅ Done | v1.0.6 | +2 |
-| Phase 5 ext Cluster A (§6 launch readiness 3) | ✅ Done | v1.0.7 | +3 |
-| Phase 5 ext Cluster B (§3 SaaS pattern 3) | ✅ Done | v1.0.8 | +3 |
-| **N-1 closure** (ADR-001: `disable-model-invocation: true` × 57 commands) | ✅ Done | (no version bump) | — |
-| **Skill Completion Cycle Batch 1** (decide-target-market + §1 customer/market 4) | ✅ Done | unreleased | +5 |
-| **Batch 2** (analyze-competition + estimate-feature-effort + review-legal-regulatory) | ✅ Done | unreleased | +3 |
-| **Batch 3** (§3 design 부가 4 + 그룹 4 stage 3+4 의 5) | ✅ Done | unreleased | +9 |
-| **Batch 4** (§5 build 부가 5 — Cluster D) | ✅ Done | unreleased | +5 |
-| **Batch 5** (§6 verify 부가 3 — Cluster A residual) | ✅ Done | unreleased | +3 |
-| **Batch 6a** (§8 data 분석 7 — Cluster F) | ✅ Done | unreleased | +7 |
-| **Batch 6b** (그룹 4 stage 10+11 통합 6 — 그로스 + 마케팅) | ✅ Done | unreleased | +6 |
-| **Batch 7** (§9 lifecycle 4 — Cluster G + 그룹 2 통합 2 PROCEDURE 갱신) | ✅ Done | unreleased | +4 (+2 갱신) |
-| **Total** | **148 procedures / 99 commands / 14 ship-release stages** | unreleased (다음 release 시점에 v1.1.0 후보) | 148 |
+> **Version note**: 아래 Phase 컬럼의 `v1.0.x` ~ `v1.0.8` 는 *역사적 작업 단위* — 어느 publish 도 안 됐고 현재 marketplace.json 은 **v0.2.0** (ADR-004 §1.4). 각 Phase 의 commit 은 git history 에 있으나 *release tag 0건*.
+
+| Phase | 상태 | 작업 단위 (release X) | Skill count |
+|-------|------|---------------------|-------------|
+| Phase 0 (foundation: routing infra + CI) | ✅ Done | (was tagged v1.0.0, never published) | 78 baseline |
+| Phase 1 (§3 Technical Design 4) | ✅ Done | (was v1.0.2) | +4 |
+| Phase 2 (§4 Implementation Plan 6) | ✅ Done | (was v1.0.3) | +6 |
+| Phase 3 (§7 Release Safety Nets 7) | ✅ Done | (was v1.0.4) | +7 |
+| Phase 4 (§6 Use-case Test 2) | ✅ Done | (was v1.0.5) | +2 |
+| Phase 5 ext Cluster C (§3 cascade bridge 2) | ✅ Done | (was v1.0.6) | +2 |
+| Phase 5 ext Cluster A (§6 launch readiness 3) | ✅ Done | (was v1.0.7) | +3 |
+| Phase 5 ext Cluster B (§3 SaaS pattern 3) | ✅ Done | (was v1.0.8) | +3 |
+| **N-1 closure** (ADR-001: `disable-model-invocation: true` × 57 commands) | ✅ Done | — | — |
+| **Skill Completion Cycle Batch 1~7** (44 신규 + 2 통합) | ✅ Done | (was v1.1.0 candidate) | +44 (+2 갱신) |
+| **Cycle 1 dogfood fix** (B1-B5) + Cycle 2 structural | ✅ Done | (was v1.1.1 patch) | — |
+| **v0.2.0 release prep** (doc cleanup 12 + B6 lint/template + ADR-004) | ✅ Done — **본 publish 의 baseline** | **plugin-v0.2.0** | — |
+| **Total** | **148 procedures / 99 commands / 14 ship-release stages** | **plugin-v0.2.0** (2026-05-11) | 148 |
 | Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
 | analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
-| feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy spec 작성 시점 | — |
+| feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy spec lock-in 시점 | — |
+| Cycle 2 live dispatch + B6 PROCEDURE body unify + B7 router session state | ⏳ deferred | trigger: 별 세션 / v0.3.0 cycle | — |
 
 **5단계 비전:** 1) Plugin install ✅ → 2) TUI 상위 레이어(`ai-m` 류) → 3) 설정/세션 관리 툴(`claude-code-organizer` 류) → 4) Dashboard + 칸반 → 5) 4단계에 1~3단계가 모두 녹아듦.
 
@@ -244,7 +242,7 @@ v0.1.0 release 가 끝났으므로 dogfood feedback 은 **v0.2 / v0.3 우선순�
 | `docs/tasks.md` | cross-track 작업 인벤토리 (Wave 우선순위 + 잔여 29 skill cluster) |
 | `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` | plugin 9-phase 아키텍처 현행 SSoT |
 | `docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md` | ADR-001 — N-1 closure (commands에 `disable-model-invocation: true` 강제) |
-| `docs/notes/2026-05-09-handoff-N1-closure.md` | N-1 closure handoff (가장 최신 세션 인계) |
+| `docs/notes/2026-05-11-session-handoff.md` | 가장 최신 세션 인계 (Cycle 1 close + v1.1.1 patch — v0.2.0 reset 이전 기준) |
 | `DOGFOOD.md` | 사용자가 본인 머신에 install할 때 안내 |
 | `docs/dogfood-feedback-template.md` | 며칠 사용 후 회고 템플릿 |
 | `archive/ts-poc/` | TS PoC 자산 (참조용, *사용 X*) |
