@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-05-11
+
 ### Added — analytics-mcp Phase W4-2.1 ~ W4-2.6 (full v1 ship modulo standalone tag)
 
 - `internal/mcp/analytics_tool.go` — 7 MCP tools (`analytics_query_funnel` / `analytics_query_cohort` / `analytics_query_ab_experiment` / `analytics_query_actor_failure` / `analytics_query_cost` / `analytics_query_slo_burn` / `analytics_query_feedback_corpus`) registered in `cmd/buddy-mcp/`. When `Options.Analytics` is set, each handler queries the adapter and returns a JSON-marshalled typed result; when nil, falls back to the friend-tone "backend not configured" stub.
@@ -26,7 +28,19 @@ Deferred (per spec §8): W4-2.7 standalone `analytics-mcp-v0.1.0` tag — analyt
 
 ### Changed
 
-- `internal/mcp/server.go` — MCP server `Version` bumped to `0.2.0` and `Instructions` mention the analytics surface.
+- `internal/mcp/server.go` — MCP server `Version` bumped `0.2.0` → `0.3.0` and `Instructions` mention the analytics surface.
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.2.0` → **`0.3.0`** (minor bump per ADR-004 §2.3: new MCP surface + Adapter layer = minor, not patch).
+
+### Migration notes
+
+- Existing v0.2.0 installs: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` re-fetches metadata and upgrades to 0.3.0. Skill catalog + command surface unchanged from v0.2.0 (148 skills / 99 commands).
+- Analytics tools are *opt-in*: nothing changes for users who don't set `BUDDY_ANALYTICS_BACKEND`. The 7 `analytics_query_*` tools continue to register and return the friend-tone stub message when no adapter is configured.
+- To enable the SQL adapter:
+  ```bash
+  export BUDDY_ANALYTICS_BACKEND=sql
+  export BUDDY_ANALYTICS_DSN=~/.buddy/analytics.db
+  ```
+  Then connect `cmd/buddy-mcp` from Claude Code's `mcpServers` config with the env block above. Schema is migrated on first connection (idempotent).
 
 ## [0.2.0] — 2026-05-11
 

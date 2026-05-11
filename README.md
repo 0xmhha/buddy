@@ -93,7 +93,7 @@ Verify:
 
 ```bash
 claude plugin list
-# buddy  0.2.0  installed
+# buddy  0.3.0  installed
 ```
 
 Uninstall:

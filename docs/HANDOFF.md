@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-11 (plugin buddy **v0.2.0** — version reset from v1.1.1 per ADR-004 + doc cleanup 12 superseded notes/plans + B6 lint/template infrastructure. **세션 인계 진입점: [`docs/notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md)**)
+**Last updated:** 2026-05-11 (plugin buddy **v0.3.0** — analytics-mcp Phase W4-2.1 ~ W4-2.6 ship (7 MCP tools + SQLite reference adapter + 10 skill MCP integration sections). Previous landmarks: v0.2.0 version reset baseline (ADR-004) + doc cleanup 12 + B6 lint infrastructure. **세션 인계 진입점: [`docs/notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md)**)
 
 ## 트랙 상태
 
@@ -15,7 +15,7 @@
 
 **plugin buddy 진행 상태 (2026-05-11):**
 
-> **Version note**: 아래 Phase 컬럼의 `v1.0.x` ~ `v1.0.8` 는 *역사적 작업 단위* — 어느 publish 도 안 됐고 현재 marketplace.json 은 **v0.2.0** (ADR-004 §1.4). 각 Phase 의 commit 은 git history 에 있으나 *release tag 0건*.
+> **Version note**: 아래 Phase 컬럼의 `v1.0.x` ~ `v1.0.8` 는 *역사적 작업 단위* — 어느 publish 도 안 됐고 현재 marketplace.json 은 **v0.3.0** (ADR-004 §1.4 + 본 cycle 의 analytics-mcp minor bump). 각 Phase 의 commit 은 git history 에 있으나 *release tag 0건* (v1.x 시점 기준).
 
 | Phase | 상태 | 작업 단위 (release X) | Skill count |
 |-------|------|---------------------|-------------|
@@ -30,8 +30,9 @@
 | **N-1 closure** (ADR-001: `disable-model-invocation: true` × 57 commands) | ✅ Done | — | — |
 | **Skill Completion Cycle Batch 1~7** (44 신규 + 2 통합) | ✅ Done | (was v1.1.0 candidate) | +44 (+2 갱신) |
 | **Cycle 1 dogfood fix** (B1-B5) + Cycle 2 structural | ✅ Done | (was v1.1.1 patch) | — |
-| **v0.2.0 release prep** (doc cleanup 12 + B6 lint/template + ADR-004) | ✅ Done — **본 publish 의 baseline** | **v0.2.0** | — |
-| **Total** | **148 procedures / 99 commands / 14 ship-release stages** | **v0.2.0** (2026-05-11) | 148 |
+| **v0.2.0 release prep** (doc cleanup 12 + B6 lint/template + ADR-004) | ✅ Done | v0.2.0 (2026-05-11, tag pushed) | — |
+| **v0.3.0 release** (analytics-mcp W4-2.1 ~ W4-2.6 — 7 MCP tools + SQLite adapter + 10 skill MCP integration) | ✅ Done — **본 publish 의 baseline** | **v0.3.0** | — |
+| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP tools (doctor/stats/feature_*/analytics_query_*)** | **v0.3.0** (2026-05-11) | 148 |
 | Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
 | analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
 | feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy spec lock-in 시점 | — |
