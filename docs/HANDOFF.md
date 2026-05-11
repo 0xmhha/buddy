@@ -11,7 +11,7 @@
 | 트랙 | 상태 | 위치 | Entry doc |
 |------|------|------|----------|
 | **plugin buddy** — Claude Code plugin (skill / MCP / agent / hook 카탈로그). 9-phase orchestrator, **148 procedures, 99 commands**, single-router dispatch | 🟢 ACTIVE — Skill Completion Cycle 100% (44/44 신규 + 통합 2). charter scope 12 stage 100% cover. 다음 후보: dogfood 검증 + Korea cluster / analytics-mcp 의 trigger 발화 시 deferred 작성 | `plugin/`, `docs/superpowers/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §2 + [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) |
-| **cli buddy** — TUI 자동화 agent 관리 툴 (plugin buddy 내재화). 진짜 목적은 *agent 생성 / 실행 / 종료 / 설정 관리*. v0.1.0 = hook reliability monitor (한 sub-feature 만 구현). | 🟡 부분 구현 — TUI / agent runtime / plugin buddy 내재화 layer 모두 미구현. 본격 spec 작성 미진입 | `cmd/`, `internal/`, `archive/ts-poc/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 + 이 HANDOFF §1~12 (이하 본문은 v0.1.0 시점 기준) |
+| **cli buddy** — TUI 자동화 agent 관리 툴 (plugin buddy 내재화). 진짜 목적은 *agent 생성 / 실행 / 종료 / 설정 관리*. v0.1.0 = hook reliability monitor (한 sub-feature 만 구현). | 🟡 부분 구현 — W3-1 spec Accepted (ADR-005, 2026-05-11). W3-2 TUI / W3-3 agent runtime / W3-4 plugin buddy embedding / W3-5 v0.1.0 재배치 / W3-6 reference agent cascade *trigger 해제 — 사용자 페이스 대기* | `cmd/`, `internal/`, `archive/ts-poc/` | [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 + [`docs/cli-buddy-spec.md`](./cli-buddy-spec.md) (Accepted) |
 
 **plugin buddy 진행 상태 (2026-05-11):**
 
@@ -35,7 +35,7 @@
 | **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP tools (doctor/stats/feature_*/analytics_query_*)** | **v0.3.0** (2026-05-11) | 148 |
 | Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
 | analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
-| feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy spec lock-in 시점 | — |
+| feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy W3-3 agent runtime 진입 시 (spec lock-in 은 ADR-005 로 완료, 2026-05-11) | — |
 | Cycle 2 live dispatch + B6 PROCEDURE body unify + B7 router session state | ⏳ deferred | trigger: 별 세션 / v0.3.0 cycle | — |
 
 **5단계 비전:** 1) Plugin install ✅ → 2) TUI 상위 레이어(`ai-m` 류) → 3) 설정/세션 관리 툴(`claude-code-organizer` 류) → 4) Dashboard + 칸반 → 5) 4단계에 1~3단계가 모두 녹아듦.
