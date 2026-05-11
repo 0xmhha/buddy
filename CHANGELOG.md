@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — cli buddy W3-4 partial: PROCEDURE output parser
+
+- `internal/agent/parser.go` — `ParseClaudeOutput(stdout)` returns
+  `ParsedOutput{SelfCheck, NextPhase}`. Pattern-matches the §self-check
+  section (Form A `## 6. 검증 (self-check)`, Form C `## 11. Verification
+  gate`, English `## N. Verification`) and counts `- [x]` vs `- [ ]`
+  checkboxes to compute a verdict (`pass` / `fail` / `pending` /
+  `unknown`). Pattern-matches the §next-phase section (`## N. 다음
+  phase` / `## N. 다음 skill` / English `Next phase` / `Next skill`)
+  and extracts kebab-case skill identifiers from backticks
+  (deduplicated, with sentence-like and path-shaped strings filtered
+  out).
+- `internal/agent/parser_test.go` — 11 race-clean unit tests covering:
+  all-passed pass verdict, mixed fail, all-unchecked pending, no
+  section unknown, Form C `Verification gate` header, case-insensitive
+  capital X, next-phase skill extraction + filtering + dedupe + empty
+  section + integration with both sections populated + empty input
+  harmless.
+- `StepResult.Parsed` field — surfaces verdict + per-item detail + next
+  phase candidates in `agent_runs.result_json`. The MCP-side / TUI
+  consumers (and the future cascade engine) read this rather than
+  re-parsing stdout.
+- Runtime self-check log line — `agent_logs` now records
+  `step[N] <cmd> self-check=pass (M/T passed)` alongside the existing
+  ok / warn / error lines, plus `next-phase candidates: <list>` when
+  the parser found cascade hints.
+
+v0.3 contract: parsed metadata only. Step success / failure still
+tracks `ExitCode` from the executor. Auto-retry on `self_check=fail`
+and auto-cascade to `next_phase.skills` are W3-4 follow-on — they
+need real-world Claude dogfood signal first because the LLM may
+consistently echo `- [ ]` without genuinely completing the check.
+
+### Changed
+
+- `cli-buddy-spec.md` §9 — W3-4 row marked "MED-HIGH (partial Done
+  2026-05-11 — parser ship, retry/fail 의미 변경 deferred)" with explicit
+  ship summary + deferred follow-on list.
+
 ## [0.4.1] — 2026-05-11
 
 ### Fixed — release workflow includes buddy-mcp binaries

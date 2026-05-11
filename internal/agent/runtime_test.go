@@ -276,6 +276,54 @@ func TestRuntime_Run_ExecutorErrorMarksFailed(t *testing.T) {
 	require.Equal(t, StatusFailed, after.Status)
 }
 
+// TestRuntime_Run_ParsesSelfCheckAndNextPhase verifies the W3-4 wire-up:
+// when the executor returns a Claude-style stdout containing §self-check
+// and §next phase sections, the Runtime parses them into StepResult.Parsed
+// and writes a self-check log line. v0.3 contract: parse result is metadata
+// only — step success still tracks ExitCode.
+func TestRuntime_Run_ParsesSelfCheckAndNextPhase(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	spec, err := ParseSpec([]byte(minimalSpecYAML))
+	require.NoError(t, err)
+	agent, err := store.Create(ctx, spec, minimalSpecYAML)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{
+		Stdout: "## 5. 산출물 형식\n\n결과 본문\n\n" +
+			"## 6. 검증 (self-check)\n\n" +
+			"- [x] 항목 1 통과\n" +
+			"- [x] 항목 2 통과\n\n" +
+			"## 7. 다음 phase\n\n" +
+			"- `define-features` 가 다음 entry\n",
+		ExitCode: 0,
+	}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, agent)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, 1)
+
+	parsed := res.Steps[0].Parsed
+	require.Equal(t, SelfCheckPass, parsed.SelfCheck.Verdict)
+	require.Equal(t, 2, parsed.SelfCheck.Total)
+	require.Equal(t, []string{"define-features"}, parsed.NextPhase.Skills)
+
+	// Run logs include the self-check summary line.
+	logs, err := store.Logs(ctx, res.RunID, 0)
+	require.NoError(t, err)
+	var selfCheckLogged bool
+	for _, l := range logs {
+		if strings.Contains(l.Message, "self-check=pass (2/2 passed)") {
+			selfCheckLogged = true
+		}
+	}
+	require.True(t, selfCheckLogged, "expected self-check log line, got %+v", logs)
+}
+
 func TestRuntime_Run_FileOutputWritesResult(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

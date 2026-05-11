@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -118,6 +119,7 @@ func (r *Runtime) runOneStep(ctx context.Context, runID int64, idx int, step Cha
 		last = StepResult{
 			Command: NormalizeCommand(step.Command), Args: step.Args, Attempt: attempt,
 			ExitCode: code, Stdout: stdout, Stderr: stderr,
+			Parsed: ParseClaudeOutput(stdout),
 		}
 		lastErr = err
 		if err != nil {
@@ -128,6 +130,23 @@ func (r *Runtime) runOneStep(ctx context.Context, runID int64, idx int, step Cha
 			_ = r.store.AppendLog(ctx, runID, "warn",
 				fmt.Sprintf("step[%d] %s attempt=%d exit=%d", idx, step.Command, attempt, code))
 		} else {
+			// Surface the parsed §self-check verdict in the run log so
+			// `buddy agent log <id>` (future) and live tail show the
+			// quality signal alongside the exit code. v0.3 does NOT
+			// flip step success to "failure" based on the verdict —
+			// that's a follow-on once we have dogfood signal that the
+			// LLM consistently fills the checkboxes.
+			if last.Parsed.SelfCheck.Verdict != SelfCheckUnknown {
+				_ = r.store.AppendLog(ctx, runID, "info",
+					fmt.Sprintf("step[%d] %s self-check=%s (%d/%d passed)",
+						idx, step.Command, last.Parsed.SelfCheck.Verdict,
+						last.Parsed.SelfCheck.Passed, last.Parsed.SelfCheck.Total))
+			}
+			if len(last.Parsed.NextPhase.Skills) > 0 {
+				_ = r.store.AppendLog(ctx, runID, "info",
+					fmt.Sprintf("step[%d] %s next-phase candidates: %s",
+						idx, step.Command, strings.Join(last.Parsed.NextPhase.Skills, ", ")))
+			}
 			_ = r.store.AppendLog(ctx, runID, "info",
 				fmt.Sprintf("step[%d] %s ok", idx, step.Command))
 			return last, nil

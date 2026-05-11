@@ -103,11 +103,12 @@ type AgentLog struct {
 // StepResult is the captured output of a single chain step. The Runtime
 // aggregates these into AgentRun.ResultJSON.
 type StepResult struct {
-	Command  string `json:"command"`
-	Args     string `json:"args,omitempty"`
-	Attempt  int    `json:"attempt"`
-	ExitCode int    `json:"exit_code"`
-	Stdout   string `json:"stdout,omitempty"`
-	Stderr   string `json:"stderr,omitempty"`
-	Error    string `json:"error,omitempty"`
+	Command  string       `json:"command"`
+	Args     string       `json:"args,omitempty"`
+	Attempt  int          `json:"attempt"`
+	ExitCode int          `json:"exit_code"`
+	Stdout   string       `json:"stdout,omitempty"`
+	Stderr   string       `json:"stderr,omitempty"`
+	Error    string       `json:"error,omitempty"`
+	Parsed   ParsedOutput `json:"parsed"`
 }
