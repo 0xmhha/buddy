@@ -10,7 +10,7 @@
 > - [`HANDOFF.md`](./HANDOFF.md): 세션 인계 가이드
 > - [`notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md): 가장 최신 세션 인계
 >
-> 작성일: 2026-05-05 / 최종 갱신: 2026-05-11 (v0.3.0 release + analytics-mcp W4-2.1~W4-2.6 + cli buddy W3-1 lock-in + W3-3 minimum-viable ship 반영) / 상태: WORKING
+> 작성일: 2026-05-05 / 최종 갱신: 2026-05-11 (v0.4.0 release + cli buddy W3-3 runtime + background scheduler ship 반영) / 상태: WORKING
 >
 > **cycle close 핸드오프**: [`notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md) — 본 cycle 완료/미완료 작업 정리 + 다음 진입점 우선순위
 
@@ -20,7 +20,8 @@
 
 | 트랙 | 상태 | 마지막 release |
 |------|------|---------------|
-| **plugin buddy** (9-phase orchestrator + **148 procedures + 99 commands + 7 MCP analytics tools**) | ACTIVE — Skill Completion Cycle 100% + analytics-mcp W4-2.1~W4-2.6 ship. charter scope 12 stage cover 100% | **v0.3.0** (2026-05-11) |
+| **plugin buddy** (9-phase orchestrator + **148 procedures + 99 commands + 7 MCP analytics tools**) | ACTIVE — Skill Completion Cycle 100% + analytics-mcp W4-2.1~W4-2.6 ship. charter scope 12 stage cover 100% | **v0.4.0** (2026-05-11, plugin assets unchanged from v0.3.0) |
+| **cli buddy** (Go binary CLI + 6 agent subcommands + runtime + scheduler) | ACTIVE — W3-1 spec Accepted + W3-3 minimum-viable + background scheduler ship | **v0.4.0** (2026-05-11, namespace-aligned with plugin) |
 | **cli buddy** (TUI 자동화 agent 관리 — charter §3) | PAUSED — spec 미작성. v0.1.0 의 hook reliability monitor 가 sub-feature | v0.1.0 (2026-04-26) |
 | **Housekeeping** | ad-hoc | — |
 

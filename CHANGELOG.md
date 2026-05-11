@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-05-11
+
+### Versioning policy note
+
+본 release 는 *cli buddy track 의 W3-3 ship + plugin 의 0.3.0 이후 누적 doc/infra 변경* 을 한 minor bump 로 묶음. ADR-004 §2.4 (revised) 의 *공통 `vX.Y.Z` namespace* 정합 — Go CLI binary 의 self-report `version` 도 본 release 부터 plugin 과 같이 `0.4.0` 으로 align. 향후 두 트랙은 *artifact 별 의미* 가 release title 로 disambiguate, internal version 은 namespace 동기.
+
 ### Added — cli buddy W3-3 agent runtime (minimum-viable subset)
 
 Ships the agent runtime engine + on-demand CLI (`buddy agent ...`) following the
@@ -84,11 +90,20 @@ W3-3 / W3-4 follow-ons.
 - `docs/cli-buddy-spec.md` §9 W3-3 row — background scheduler moved out of
   "deferred follow-on" into the ✅ ship summary.
 
+### Changed (release-only)
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.3.0` → **`0.4.0`** (minor bump per ADR-004 §2.3: cli buddy track major new functionality = minor, not patch).
+- `internal/mcp/server.go` MCP server `Version` `0.3.0` → `0.4.0`.
+- `cmd/buddy/main.go` `var version` `0.1.0` → **`0.4.0`** (cli binary self-report joins shared namespace per ADR-004 §2.4 revised).
+- `Makefile` `RELEASE_VERSION` `0.1.0` → `0.4.0` — tag-triggered release workflow now matches and will auto-publish the cross-compile binary matrix for the first time since the v0.1.0 cli release (2026-04-26).
+- `README.md` install snippet + sample output bumped to `0.4.0`.
+
 ### Migration notes
 
-- Existing buddy DBs run migration v4 automatically on next open. Idempotent.
-- No version bump (this is `[Unreleased]`). Cut a v0.3.1 / v0.4.0 once enough
-  W3-3 follow-on lands to justify a release.
+- **plugin users**: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` re-fetches metadata and upgrades to 0.4.0. Skill catalog + command surface unchanged from 0.3.0 (148 skills / 99 commands). Analytics tools still opt-in via `BUDDY_ANALYTICS_BACKEND`.
+- **cli binary users**: tag `v0.4.0` triggers the GitHub Actions release workflow → cross-compile matrix (4 binaries) + `SHA256SUMS` published automatically. Install per README §"Release binary" using `VERSION=0.4.0`. The earlier `v0.1.0` binary release stays available for compatibility.
+- **Existing buddy DBs**: schema v4 migration runs automatically on next open (adds `agents` / `agent_runs` / `agent_logs` tables). Idempotent across reopens.
+- **New CLI subtree**: `buddy agent {create,list,show,run,delete,scheduler}` is opt-in. Users who don't touch the agent subtree get the same surface as 0.3.0.
 
 ## [0.3.0] — 2026-05-11
 
