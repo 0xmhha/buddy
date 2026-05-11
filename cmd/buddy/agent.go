@@ -1,11 +1,11 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -30,14 +30,9 @@ func newAgentCmd() *cobra.Command {
 		newAgentShowCmd(),
 		newAgentRunCmd(),
 		newAgentDeleteCmd(),
+		newAgentSchedulerCmd(),
 	)
 	return c
-}
-
-// agentDBPathFlag binds the same --db flag the rest of buddy uses so the agent
-// subtree resolves to the same SQLite file as hook events, sessions, features.
-func agentDBPathFlag(cmd *cobra.Command) *string {
-	return cmd.PersistentFlags().String("db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
 }
 
 // openAgentStore is the wire-up shared by every subcommand: open DB → run
@@ -228,6 +223,118 @@ func writeRunResultJSON(w io.Writer, res agent.RunResult) error {
 	return writeJSONIndented(w, res)
 }
 
+// ─── scheduler ─────────────────────────────────────────────────────────────
+
+func newAgentSchedulerCmd() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "scheduler",
+		Short: "Background scheduler for agents with a non-empty schedule field",
+		Long: "Loads every agent whose spec.schedule is a valid cron expression and\n" +
+			"ticks them in the foreground until interrupted. Use `buddy agent scheduler\n" +
+			"start` to run; `status` to one-shot the current entry list.\n\n" +
+			"v0.3 caveats:\n" +
+			"  - sub-second cron (@every 100ms) does not work — robfig/cron rounds to\n" +
+			"    whole seconds. Use @every 1m or finer-grained CLI tools.\n" +
+			"  - the scheduler does not auto-reload when agents are added/removed —\n" +
+			"    restart to pick up changes.",
+	}
+	c.AddCommand(newAgentSchedulerStartCmd(), newAgentSchedulerStatusCmd())
+	return c
+}
+
+func newAgentSchedulerStartCmd() *cobra.Command {
+	var (
+		dbFlag       string
+		claudeBinary string
+	)
+	c := &cobra.Command{
+		Use:   "start",
+		Short: "Run the scheduler in the foreground (blocks until Ctrl-C)",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
+			store, closer, err := openAgentStore(dbFlag)
+			if err != nil {
+				return err
+			}
+			defer closer()
+
+			exec := agent.NewSubprocessExecutor()
+			if claudeBinary != "" {
+				exec.ClaudeBinary = claudeBinary
+			}
+			rt := agent.NewRuntime(store, exec)
+			sched := agent.NewScheduler(store, rt, agent.SchedulerOptions{Logger: cmd.ErrOrStderr()})
+
+			loaded, skipped, err := sched.Load(ctx)
+			if err != nil {
+				return err
+			}
+			for _, s := range skipped {
+				fmt.Fprintf(cmd.ErrOrStderr(),
+					"scheduler: skipping agent %q — invalid cron %q: %v\n",
+					s.ID, s.Schedule, s.Err)
+			}
+			fmt.Fprintf(cmd.OutOrStdout(),
+				"scheduler: loaded %d agent(s) (%d skipped). Ctrl-C to stop.\n",
+				loaded, len(skipped))
+
+			// cobra contexts already honour SIGINT/SIGTERM when set up via
+			// signal.NotifyContext in main(); the scheduler's Start blocks
+			// until ctx is cancelled, then gracefully drains in-flight jobs.
+			return sched.Start(ctx)
+		},
+	}
+	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	c.Flags().StringVar(&claudeBinary, "claude-binary", "", "override claude CLI path (default: 'claude' on PATH)")
+	return c
+}
+
+func newAgentSchedulerStatusCmd() *cobra.Command {
+	var dbFlag string
+	c := &cobra.Command{
+		Use:   "status",
+		Short: "Show scheduled agents and their next planned tick (one-shot)",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
+			store, closer, err := openAgentStore(dbFlag)
+			if err != nil {
+				return err
+			}
+			defer closer()
+
+			rt := agent.NewRuntime(store, agent.NewSubprocessExecutor())
+			sched := agent.NewScheduler(store, rt, agent.SchedulerOptions{})
+			loaded, skipped, err := sched.Load(ctx)
+			if err != nil {
+				return err
+			}
+
+			out := cmd.OutOrStdout()
+			fmt.Fprintf(out, "Loaded:   %d\n", loaded)
+			fmt.Fprintf(out, "Skipped:  %d\n", len(skipped))
+			for _, s := range skipped {
+				fmt.Fprintf(out, "  - %s (%q): %v\n", s.ID, s.Schedule, s.Err)
+			}
+			if loaded > 0 {
+				fmt.Fprintln(out, "Entries:")
+				now := time.Now()
+				for _, e := range sched.Entries() {
+					// cron library populates entry.Next only after Start();
+					// status is a one-shot, so compute the next fire time
+					// manually from the schedule.
+					next := e.Schedule.Next(now)
+					fmt.Fprintf(out, "  - entry_id=%d next=%s\n", e.ID, next.Format("2006-01-02 15:04:05 MST"))
+				}
+			}
+			return nil
+		},
+	}
+	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	return c
+}
+
 // ─── delete ────────────────────────────────────────────────────────────────
 
 func newAgentDeleteCmd() *cobra.Command {
@@ -275,9 +382,3 @@ func indent(s, pad string) string {
 	return strings.TrimRight(b.String(), "\n")
 }
 
-// ctx-safe context for sub-commands without a parent context (e.g. tests).
-// Kept in this file rather than main.go because only the agent subtree
-// currently passes ctx through cmd.Context() — older commands use Background.
-func _agentCtxUnused() context.Context { //nolint:unused
-	return context.Background()
-}

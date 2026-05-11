@@ -339,14 +339,17 @@ cli buddy spec 작성 자체가 *roadmap.md §4/§5/§6 outline 의 actual rewri
 - `cmd/buddy/agent.go` — `buddy agent create | list | show | run | delete` 5 subcommands
 - 9 race-clean tests (`internal/agent/runtime_test.go`)
 
-**deferred (W3-3 follow-on)**:
-- background cron scheduler (현재 `buddy agent run` 만 on-demand)
+**W3-3 follow-on 추가 ship (2026-05-11, 동일 cycle)**:
+- ✅ background cron scheduler — `internal/agent/scheduler.go` (`Scheduler` + per-agent in-flight guard + sequential dispatch) + `buddy agent scheduler {start,status}` CLI. Spec.schedule 필드가 cron expression 일 때 활성. robfig/cron/v3 dependency (whole-second precision — sub-second `@every` 비활성).
+
+**남은 W3-3 follow-on**:
 - exponential backoff (현재 fixed `backoff_delay`)
 - streaming log capture (현재 stdout/stderr buffer 전체만)
 - PROCEDURE §6 self-check parse (W3-4 본격 — pass/fail 자동 판정)
 - production-proven dogfood (사용자 실 agent 등록 시)
 - webhook / API output target (현재 stdout / file 만)
 - `buddy agent log <id>` / `buddy agent edit <id>` 등 추가 subcommand
+- scheduler live-refresh (현재 startup 시 load only — agent 추가/삭제는 restart 필요)
 
 → 6 phase × 평균 1~3 week = **3~6 month** estimate (single-dev cadence).
 

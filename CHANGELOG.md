@@ -43,10 +43,46 @@ W3-3 / W3-4 follow-ons.
   Done 2026-05-11 — minimum-viable subset)" with explicit ship summary and
   deferred follow-on list.
 
+### Added — cli buddy W3-3 follow-on: background scheduler
+
+- `internal/agent/scheduler.go` — `Scheduler` that loads agents with non-empty
+  `spec.schedule` (cron expression), ticks them via `robfig/cron/v3`, dispatches
+  `Runtime.Run` per tick, and guards against overlap via a per-agent atomic
+  in-flight flag (concurrent ticks for the same agent are dropped, not piled).
+  Sequential dispatch within one Scheduler instance — no parallel agent runs in
+  v0.3 (W3-3 follow-on follow-on).
+- `internal/agent/scheduler_test.go` — 5 race-clean tests covering: load (only
+  scheduled agents register), invalid-cron reporting (skipped list, others
+  still load), end-to-end Start with `@every 1s` cron firing ≥1 tick in a 2.5s
+  window, overlap guard via direct `makeJob` unit test (sub-second timing
+  reliability), and immediate-cancel shutdown sanity.
+- `cmd/buddy/agent.go` — `buddy agent scheduler {start,status}` subcommands.
+  `start` is a blocking foreground loop honouring SIGINT via cobra's
+  context-driven cancel. `status` is one-shot — manually computes next fire
+  time so users see a real timestamp before they run `start`. Both share the
+  same `--db` / `--claude-binary` flags as `buddy agent run`.
+- New direct dep: `github.com/robfig/cron/v3 v3.0.1` (MIT). Promoted to
+  go.mod's direct require block by `go mod tidy`.
+
+### Caveats / known limitations (W3-3 scheduler v0.3)
+
+- **Sub-second cron is not supported.** robfig/cron's `ConstantDelaySchedule.Next`
+  rounds to whole seconds; `@every 100ms` does not fire reliably. Use `@every 1m`
+  or coarser. Documented in the `agent scheduler` long help.
+- **No live refresh.** The scheduler reads agents once at startup. Adding /
+  deleting agents while it runs has no effect until restart. Live refresh is a
+  W3-3 follow-on follow-on.
+- **No exponential backoff.** Retry honours the `MaxAttempts` + `BackoffDelay`
+  fields with fixed delay only. Exponential remains W3-3 follow-on.
+
 ### Changed
 
 - `internal/db/db_test.go` — schema_version assertion bumped 3 → 4; table-existence
   test gains agents / agent_runs / agent_logs.
+- `cmd/buddy/agent.go` — `newAgentCmd` now wires in `newAgentSchedulerCmd`
+  alongside the existing 5 subcommands.
+- `docs/cli-buddy-spec.md` §9 W3-3 row — background scheduler moved out of
+  "deferred follow-on" into the ✅ ship summary.
 
 ### Migration notes
 
