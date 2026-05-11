@@ -10,7 +10,9 @@
 > - [`HANDOFF.md`](./HANDOFF.md): 세션 인계 가이드
 > - [`notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md): 가장 최신 세션 인계
 >
-> 작성일: 2026-05-05 / 최종 갱신: 2026-05-11 (v0.3.0 release + analytics-mcp W4-2.1~W4-2.6 ship 반영) / 상태: WORKING
+> 작성일: 2026-05-05 / 최종 갱신: 2026-05-11 (v0.3.0 release + analytics-mcp W4-2.1~W4-2.6 + cli buddy W3-1 lock-in + W3-3 minimum-viable ship 반영) / 상태: WORKING
+>
+> **cycle close 핸드오프**: [`notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md) — 본 cycle 완료/미완료 작업 정리 + 다음 진입점 우선순위
 
 ---
 
@@ -305,4 +307,5 @@
 - [`v0.1-spec.md`](./v0.1-spec.md) — Go CLI v0.1 spec (LOCKED)
 - [`skill-map.md`](./skill-map.md) — 11-stage → 9-phase 매핑 (참조용)
 - [`DOGFOOD.md`](../DOGFOOD.md) + [`dogfood-feedback-template.md`](./dogfood-feedback-template.md) — Go CLI dogfood
-- [`notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md) — 가장 최신 세션 인계
+- [`notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md) — **본 cycle close 핸드오프** (가장 최신, v0.3.0 ship + W3-3 partial)
+- [`notes/2026-05-11-session-handoff.md`](./notes/2026-05-11-session-handoff.md) — 본 cycle 시작 baseline (Cycle 1 close + v1.1.1)

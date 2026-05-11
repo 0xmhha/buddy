@@ -243,7 +243,10 @@ v0.1.0 release 가 끝났으므로 dogfood feedback 은 **v0.2 / v0.3 우선순�
 | `docs/tasks.md` | cross-track 작업 인벤토리 (Wave 우선순위 + 잔여 29 skill cluster) |
 | `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` | plugin 9-phase 아키텍처 현행 SSoT |
 | `docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md` | ADR-001 — N-1 closure (commands에 `disable-model-invocation: true` 강제) |
-| `docs/notes/2026-05-11-session-handoff.md` | 가장 최신 세션 인계 (Cycle 1 close + v1.1.1 patch — v0.2.0 reset 이전 기준) |
+| `docs/superpowers/decisions/2026-05-11-plugin-version-reset.md` | ADR-004 — plugin track version reset v1.x → v0.x + v1.0.0 entry conditions |
+| `docs/superpowers/decisions/2026-05-11-cli-buddy-spec-lock-in.md` | ADR-005 — cli buddy spec Draft → Accepted lock-in |
+| `docs/notes/2026-05-11-cycle-handoff.md` | **본 cycle close 핸드오프** (v0.2.0 reset → v0.3.0 ship → W3-3 partial). 가장 최신 |
+| `docs/notes/2026-05-11-session-handoff.md` | 본 cycle 시작 시점 baseline (Cycle 1 close + v1.1.1 patch) |
 | `DOGFOOD.md` | 사용자가 본인 머신에 install할 때 안내 |
 | `docs/dogfood-feedback-template.md` | 며칠 사용 후 회고 템플릿 |
 | `archive/ts-poc/` | TS PoC 자산 (참조용, *사용 X*) |
