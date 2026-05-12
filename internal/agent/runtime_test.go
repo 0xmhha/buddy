@@ -3,9 +3,13 @@ package agent
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -506,6 +510,207 @@ output:
 	info, err := stat(outPath)
 	require.NoError(t, err)
 	require.Greater(t, info.Size(), int64(10))
+}
+
+// TestRuntime_Run_WebhookOutputPostsResult covers the Tier 1.8 happy path:
+// a httptest.Server receives the agent's RunResult as JSON, the runtime
+// sets Content-Type=application/json by default, and the configured
+// custom Authorization header round-trips intact.
+func TestRuntime_Run_WebhookOutputPostsResult(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	var (
+		mu          sync.Mutex
+		gotMethod   string
+		gotPath     string
+		gotCT       string
+		gotAuth     string
+		gotPayload  RunResult
+		callCount   int
+	)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		callCount++
+		gotMethod = r.Method
+		gotPath = r.URL.Path
+		gotCT = r.Header.Get("Content-Type")
+		gotAuth = r.Header.Get("Authorization")
+		_ = json.NewDecoder(r.Body).Decode(&gotPayload)
+		mu.Unlock()
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	t.Cleanup(srv.Close)
+
+	yamlSrc := `
+id: webhook-agent
+name: "Webhook output"
+chain:
+  - command: status
+output:
+  type: webhook
+  url: ` + srv.URL + `/buddy-result
+  headers:
+    Authorization: "Bearer test-token"
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	agent, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{Stdout: "step done", ExitCode: 0}
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, agent)
+	require.NoError(t, err)
+
+	mu.Lock()
+	defer mu.Unlock()
+	require.Equal(t, 1, callCount, "webhook should be hit exactly once per run")
+	require.Equal(t, "POST", gotMethod, "default method is POST")
+	require.Equal(t, "/buddy-result", gotPath)
+	require.Equal(t, "application/json", gotCT, "Content-Type defaults to application/json")
+	require.Equal(t, "Bearer test-token", gotAuth, "custom Authorization header round-trips")
+	require.Equal(t, res.RunID, gotPayload.RunID, "received body parses as the runtime's RunResult")
+	require.Equal(t, "webhook-agent", gotPayload.AgentID)
+	require.Equal(t, 0, gotPayload.ExitCode)
+}
+
+// TestRuntime_Run_WebhookOutputCustomMethodAndContentType verifies the spec
+// can override the HTTP verb (PUT) and the Content-Type header — useful
+// for targets that expect idempotent uploads or a custom media type.
+func TestRuntime_Run_WebhookOutputCustomMethodAndContentType(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	var (
+		mu        sync.Mutex
+		gotMethod string
+		gotCT     string
+	)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		gotMethod = r.Method
+		gotCT = r.Header.Get("Content-Type")
+		mu.Unlock()
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
+
+	yamlSrc := `
+id: webhook-put-agent
+name: "Webhook PUT"
+chain:
+  - command: status
+output:
+  type: webhook
+  url: ` + srv.URL + `
+  method: PUT
+  headers:
+    Content-Type: application/vnd.buddy+json
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	agent, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{ExitCode: 0}
+	rt := NewRuntime(store, mock)
+	_, err = rt.Run(ctx, agent)
+	require.NoError(t, err)
+
+	mu.Lock()
+	defer mu.Unlock()
+	require.Equal(t, "PUT", gotMethod)
+	require.Equal(t, "application/vnd.buddy+json", gotCT, "explicit Content-Type wins over the default")
+}
+
+// TestRuntime_Run_WebhookOutputNon2xxLogged ensures the runtime surfaces a
+// non-2xx response as a warn-level log line on the run (the step itself
+// still succeeded, but the output dispatch did not). Body preview should
+// appear in the log so users can diagnose without re-running.
+func TestRuntime_Run_WebhookOutputNon2xxLogged(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"error":"webhook target down"}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	yamlSrc := `
+id: webhook-fail-agent
+name: "Webhook 500"
+chain:
+  - command: status
+output:
+  type: webhook
+  url: ` + srv.URL + `
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	agent, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{ExitCode: 0}
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, agent)
+	require.NoError(t, err, "webhook failure does not fail the step itself")
+	require.Equal(t, 0, res.ExitCode)
+
+	logs, err := store.Logs(ctx, res.RunID, 0)
+	require.NoError(t, err)
+	var found bool
+	for _, l := range logs {
+		if strings.Contains(l.Message, "write output") && strings.Contains(l.Message, "500") {
+			found = true
+			break
+		}
+	}
+	require.True(t, found, "expected a warn log line mentioning the 500 status, got %+v", logs)
+}
+
+// TestParseSpec_RejectsWebhookWithoutURL covers the spec-side guardrail:
+// a webhook target without a URL is a configuration error, caught at
+// ParseSpec time rather than at the first agent run.
+func TestParseSpec_RejectsWebhookWithoutURL(t *testing.T) {
+	t.Parallel()
+	yamlSrc := `
+id: bad-webhook
+name: "missing URL"
+chain:
+  - command: status
+output:
+  type: webhook
+`
+	_, err := ParseSpec([]byte(yamlSrc))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "output.url")
+}
+
+// TestParseSpec_RejectsWebhookBadScheme catches typos in the URL — only
+// http:// and https:// are honoured, so a missing scheme or one of
+// ftp:// / file:// / javascript: never reaches the HTTP client.
+func TestParseSpec_RejectsWebhookBadScheme(t *testing.T) {
+	t.Parallel()
+	yamlSrc := `
+id: ftp-webhook
+name: "wrong scheme"
+chain:
+  - command: status
+output:
+  type: webhook
+  url: ftp://example.com/upload
+`
+	_, err := ParseSpec([]byte(yamlSrc))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "http:// or https://")
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────

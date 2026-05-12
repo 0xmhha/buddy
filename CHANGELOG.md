@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — webhook output target (Tier 1.8)
+
+`OutputTarget` gains a third type, `webhook`, alongside the existing `stdout` and `file`. Agents whose YAML declares `output: { type: webhook, url: ... }` now have their `RunResult` JSON POST'ed (or PUT'ed / PATCH'ed) to the configured URL after the chain finishes. This is the dependency the cli-buddy-spec §2.2 reference webtoon agent (W3-6) was waiting on — agents can now self-publish to downstream services without a wrapper script.
+
+Schema additions on `OutputTarget`:
+
+| field | meaning | default |
+|---|---|---|
+| `type: webhook` | new output mode | — |
+| `url` | POST/PUT/PATCH target (required) | — |
+| `method` | HTTP verb | `POST` |
+| `headers: { K: V, ... }` | extra HTTP headers (`Content-Type` auto unless overridden) | `{}` |
+| `timeout: 30s` | per-request HTTP timeout | `30s` |
+
+Example spec:
+
+```yaml
+id: webtoon-publish
+name: "Daily webtoon publish"
+schedule: "@daily"
+chain:
+  - command: build-feature
+    args: "today's strip"
+output:
+  type: webhook
+  url: https://webtoon-by-ai.example.com/api/v1/episodes
+  method: POST
+  headers:
+    Authorization: "Bearer ${WEBTOON_API_TOKEN}"   # literal — template before agent create
+    X-Source: buddy-agent
+  timeout: 60s
+```
+
+Implementation:
+
+- `runtime.go writeOutput` dispatches `case "webhook"` to a new `postWebhook(target, result)` helper.
+- `postWebhook` serialises `RunResult` to JSON via `json.Marshal`, builds an `http.Request` with the configured method / headers / context-timeout, and POSTs it. Non-2xx responses surface as an `agent: webhook %s %s returned %s: %s` error (with up to 512 bytes of the response body included for diagnosability — server-side JSON error envelopes show up in the agent_logs warn line).
+- `spec.go` rejects `type: webhook` without a URL at `ParseSpec` time, and rejects URL schemes other than `http://` / `https://` (no `ftp:`, `file:`, `javascript:` slipping into the HTTP client).
+- Header values are written *literally* — secret expansion (e.g. `${ENV}`) is intentionally out of scope. Specs that need an Authorization secret should template the YAML before `buddy agent create` rather than commit the secret to source.
+
+Tests (`internal/agent/runtime_test.go` + `spec` extension, 5 new race-clean):
+
+- happy path against `httptest.Server`: default POST method, default Content-Type=application/json, custom Authorization header round-trips, request body parses back into the runtime's `RunResult`, server hit exactly once per run.
+- spec can override method (`PUT`) and `Content-Type` (`application/vnd.buddy+json`).
+- 500 response surfaces as a warn-level `agent_logs` line on the run; step itself still succeeds (output dispatch failure does not flip step exit code).
+- `ParseSpec` rejects `type: webhook` without a URL.
+- `ParseSpec` rejects URLs with disallowed schemes.
+
+v0.3 contract preserved: webhook dispatch happens *after* the chain finishes; `ExitCode` still drives step success / failure. A failed webhook never converts a green run into a red one — it shows up in logs for diagnosis.
+
 ## [0.6.5] — 2026-05-12
 
 Ships the cli buddy `[Unreleased]` work accumulated after v0.6.4: scheduler live refresh (Tier 1.6 — backward-compatible, opt-out via `--no-refresh`). Closes the last open `cli-buddy-spec.md` §9 W3-3 follow-on item.

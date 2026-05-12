@@ -100,8 +100,26 @@ const (
 // stdout and file targets — webhook / API endpoints (spec §2.2 webtoon
 // example) land in W3-6.
 type OutputTarget struct {
-	Type string `yaml:"type"`           // "stdout" | "file"
+	Type string `yaml:"type"`           // "stdout" | "file" | "webhook"
 	Path string `yaml:"path,omitempty"` // file path when Type=="file"
+
+	// URL is the POST target when Type=="webhook". Required for that
+	// type; ignored otherwise.
+	URL string `yaml:"url,omitempty"`
+	// Method is the HTTP method for Type=="webhook". Defaults to POST.
+	// Useful when the target expects PUT (idempotent uploads) or PATCH.
+	Method string `yaml:"method,omitempty"`
+	// Headers are extra HTTP headers sent on the webhook request. The
+	// runtime sets Content-Type=application/json unless the spec
+	// overrides it here. Authorization, X-API-Key, etc. live here.
+	// Header values are written literally — secret expansion (e.g.
+	// `${BUDDY_TOKEN}`) is intentionally not auto-applied; if a user
+	// needs secrets, they should template the spec before `buddy agent
+	// create` rather than commit them to a YAML file.
+	Headers map[string]string `yaml:"headers,omitempty"`
+	// Timeout is the per-request HTTP timeout for Type=="webhook".
+	// Defaults to 30s. Long uploads should bump this explicitly.
+	Timeout time.Duration `yaml:"timeout,omitempty"`
 }
 
 // AgentRun is one execution record. Persisted to agent_runs.

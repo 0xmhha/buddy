@@ -77,8 +77,17 @@ func (s AgentSpec) Validate() error {
 			if strings.TrimSpace(s.Output.Path) == "" {
 				return errors.New("agent: spec.output.path is required when output.type='file'")
 			}
+		case "webhook":
+			if strings.TrimSpace(s.Output.URL) == "" {
+				return errors.New("agent: spec.output.url is required when output.type='webhook'")
+			}
+			if !strings.HasPrefix(s.Output.URL, "http://") && !strings.HasPrefix(s.Output.URL, "https://") {
+				return fmt.Errorf(
+					"agent: spec.output.url must start with http:// or https:// (got %q)",
+					s.Output.URL)
+			}
 		default:
-			return fmt.Errorf("agent: spec.output.type %q is unsupported (want stdout|file)", s.Output.Type)
+			return fmt.Errorf("agent: spec.output.type %q is unsupported (want stdout|file|webhook)", s.Output.Type)
 		}
 	}
 	return nil

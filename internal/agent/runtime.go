@@ -1,9 +1,13 @@
 package agent
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -264,6 +268,69 @@ func writeOutput(target *OutputTarget, result RunResult) error {
 		}
 		defer f.Close()
 		return writeJSON(f, result)
+	case "webhook":
+		return postWebhook(target, result)
 	}
 	return fmt.Errorf("agent: unsupported output.type %q", target.Type)
+}
+
+// postWebhook serialises the RunResult to JSON and POSTs (or PUTs / PATCHes)
+// it to the target URL. Non-2xx responses surface as errors so the caller
+// can log them — the runtime itself never blocks step success on output
+// dispatch, but the appended log line records the failure for `buddy agent
+// log <id>` consumers.
+//
+// Security note: header values are written literally. The runtime does
+// not template `${ENV_VAR}` style references — if a spec needs to inject
+// an Authorization secret, the caller is expected to template the YAML
+// before `buddy agent create` rather than commit secrets to source.
+func postWebhook(target *OutputTarget, result RunResult) error {
+	if strings.TrimSpace(target.URL) == "" {
+		return errors.New("agent: output.url empty when type='webhook'")
+	}
+	method := target.Method
+	if method == "" {
+		method = http.MethodPost
+	}
+	timeout := target.Timeout
+	if timeout <= 0 {
+		timeout = 30 * time.Second
+	}
+	body, err := json.Marshal(result)
+	if err != nil {
+		return fmt.Errorf("agent: marshal result for webhook: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, method, target.URL, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("agent: webhook request: %w", err)
+	}
+	// Set Content-Type unless the spec explicitly overrides it (rare but
+	// legal — e.g. a target that wants application/vnd.buddy+json).
+	if _, hasContentType := target.Headers["Content-Type"]; !hasContentType {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	for k, v := range target.Headers {
+		req.Header.Set(k, v)
+	}
+
+	client := &http.Client{Timeout: timeout}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("agent: webhook %s %s: %w", method, target.URL, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		// Drain a short prefix of the body so error messages include any
+		// machine-readable detail the server wanted to surface (e.g.
+		// `{"error":"unauthorised"}`). Cap at 512 bytes so a server
+		// returning a 5 MB stack trace doesn't blow up the log line.
+		preview, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		return fmt.Errorf(
+			"agent: webhook %s %s returned %s: %s",
+			method, target.URL, resp.Status, strings.TrimSpace(string(preview)))
+	}
+	return nil
 }
