@@ -327,7 +327,7 @@ cli buddy spec 작성 자체가 *roadmap.md §4/§5/§6 outline 의 actual rewri
 | W3-1 spec | 본 문서 | LOW (Done) | — |
 | W3-2 TUI | bubbletea 학습 + agent list / create form | HIGH | W3-1 |
 | W3-3 agent runtime | scheduler (cron) + executor + retry | HIGH (partial Done 2026-05-11 — minimum-viable subset) | W3-1 |
-| W3-4 plugin buddy embedding | Claude Code subprocess + PROCEDURE parse | MED-HIGH (partial Done 2026-05-11 — parser ship, retry/fail 의미 변경 deferred) | W3-1 (Subprocess executor 의 spawn 부분 W3-3 안에서 ship — PROCEDURE §6/§7 parser 는 W3-4 ship) |
+| W3-4 plugin buddy embedding | Claude Code subprocess + PROCEDURE parse | MED-HIGH (partial Done 2026-05-12 — parser ship in v0.5.0 + conditional branches ship in v0.6.0, retry/fail 의미 변경 + auto-cascade deferred) | W3-1 (Subprocess executor 의 spawn 부분 W3-3 안에서 ship — PROCEDURE §6/§7 parser + branches 는 W3-4 ship) |
 | W3-5 v0.1.0 재배치 | main.go 분할 + sub-feature 재배치 | MED (W6-1 묶음) | W3-2 / W3-3 / W3-4 (1 부분만) |
 | W3-6 reference agent | 웹툰 agent example | HIGH | W3-2 ~ W3-5 |
 
@@ -342,11 +342,15 @@ cli buddy spec 작성 자체가 *roadmap.md §4/§5/§6 outline 의 actual rewri
 **W3-3 follow-on 추가 ship (2026-05-11, 동일 cycle)**:
 - ✅ background cron scheduler — `internal/agent/scheduler.go` (`Scheduler` + per-agent in-flight guard + sequential dispatch) + `buddy agent scheduler {start,status}` CLI. Spec.schedule 필드가 cron expression 일 때 활성. robfig/cron/v3 dependency (whole-second precision — sub-second `@every` 비활성).
 
-**W3-4 partial Done (2026-05-11, 동일 cycle)**:
+**W3-4 partial Done (2026-05-11, v0.5.0)**:
 - ✅ PROCEDURE output parser — `internal/agent/parser.go` (`ParseClaudeOutput`) extracts §self-check verdict (pass / fail / pending / unknown) + per-item checklist detail + §next-phase skill candidates. Pattern-matches Form A (`## 6. 검증`) / Form C (`## 11. Verification gate`) / English aliases without requiring 148 PROCEDURE rewrites.
 - ✅ `StepResult.Parsed` 필드 추가 — 각 step 의 self-check + next-phase metadata 가 `agent_runs.result_json` 에 포함.
 - ✅ Runtime log line — self-check verdict + count + next-phase candidates 를 `agent_logs` 에 기록.
-- ⏳ deferred (W3-4 follow-on): self-check fail 시 step retry / abort 의미 변경, next-phase auto-cascade (현재는 *metadata only*).
+
+**W3-4 follow-on Done (2026-05-12, v0.6.0)**:
+- ✅ Conditional next-phase branches — `NextPhase.Branches []NextPhaseBranch` captures `- <cond> → \`skill\`` style cascade rules (Hangul / English / mixed). Detection guards: backtick-leading bullets rejected, LHS ≤30 runes (char-count, not bytes), ASCII `->` + Unicode `→` both match.
+- ✅ Per-branch runtime log line — `next-phase branch: "<cond>" → <skills>` (or `→ (no skill)` when RHS has no backtick), preserves the v0.5.0 union `next-phase candidates: <list>` line.
+- ⏳ deferred (W3-4 follow-on remaining): self-check fail 시 step retry / abort 의미 변경, next-phase auto-cascade with branch-selection policy (env-var / CLI flag / interactive prompt — design pending).
 
 **남은 W3-3 follow-on**:
 - exponential backoff (현재 fixed `backoff_delay`)

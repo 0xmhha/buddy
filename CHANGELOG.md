@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-05-12
+
 ### Added — cli buddy W3-4 follow-on: conditional next-phase branches
 
 - `NextPhase.Branches []NextPhaseBranch` — captures conditional cascade
@@ -39,6 +41,25 @@ v0.3 contract unchanged: parsed branches are metadata. Auto-cascade
 into a chosen branch's skills remains deferred — the cascade engine
 needs a branch-selection policy (env-var? CLI flag? interactive
 prompt?) that hasn't been designed yet.
+
+### Changed (release-only)
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.5.0` → `0.6.0`.
+- `internal/mcp/server.go` MCP server `Version` `0.5.0` → `0.6.0`.
+- `cmd/buddy/main.go` `var version` `0.5.0` → `0.6.0`.
+- `Makefile` `RELEASE_VERSION` `0.5.0` → `0.6.0`.
+- `README.md` install snippet + sample output bumped to `0.6.0`.
+
+### Versioning policy note
+
+Conditional branch extraction is a *behavior-visible* addition — new `NextPhase.Branches` field surfaces through `agent_runs.result_json`, and the runtime emits one new `agent_logs` line per branch alongside the existing union-candidates line. Per ADR-004 §2.3 (new functionality under v0.x → minor bump), this is `0.5.0 → 0.6.0`, not a patch. Consistent with the v0.5.0 release rationale.
+
+### Migration notes
+
+- **plugin users**: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` re-fetches metadata and upgrades to 0.6.0. Skill catalog + command surface unchanged from 0.5.x (148 skills / 99 commands). The branch parser runs for every `buddy agent run` invocation but only adds metadata — existing agent specs and PROCEDUREs need no edit.
+- **cli binary users**: tag `v0.6.0` triggers the GitHub Actions release workflow → cross-compile matrix (4 buddy + 4 buddy-mcp) + `SHA256SUMS` published automatically. Install per README §"Release binary" using `VERSION=0.6.0`.
+- **Agent JSON consumers**: `NextPhase` now has an optional `branches` field (`[{condition, skills}]`). Code that pins to the exact shape must accept the new field; `skills` (union) stays byte-identical to v0.5.0, so callers that only read `skills` need no change.
+- **Agent log parsers**: one new info-level line per detected branch (`next-phase branch: "<cond>" → <skills>` or `→ (no skill)`). Parsers that match on exact line prefixes may need to ignore the new prefix. The existing `next-phase candidates: <list>` line is preserved unchanged.
 
 ## [0.5.0] — 2026-05-12
 
@@ -739,7 +760,8 @@ performance, and recent activity through read-only commands.
   reads only `~/.buddy/config.json`).
 - AGENTS.md, the plugin model, and an MCP server (v1.0+ scope).
 
-[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/0xmhha/buddy/releases/tag/v0.6.0
 [0.5.0]: https://github.com/0xmhha/buddy/releases/tag/v0.5.0
 [0.4.1]: https://github.com/0xmhha/buddy/releases/tag/v0.4.1
 [0.4.0]: https://github.com/0xmhha/buddy/releases/tag/v0.4.0
