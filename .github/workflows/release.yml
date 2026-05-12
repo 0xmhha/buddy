@@ -21,14 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source at tagged commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # The release rule embeds the short SHA into --version via ldflags;
           # checking out at the tagged commit makes that SHA accurate.
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.22'
 
@@ -57,7 +57,7 @@ jobs:
           fi
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           # Auto-uses the tag that triggered the workflow.
           # `buddy_*` matches the cli binary, `buddy-mcp_*` matches the MCP

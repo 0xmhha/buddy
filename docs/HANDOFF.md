@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-12 (**v0.6.0** — W3-4 follow-on: conditional next-phase branches. `NextPhase.Branches []NextPhaseBranch` captures `- 글로벌 → \`a\` / - Korea → \`b\`` style cascade rules from PROCEDURE output, alongside the v0.5.0 union `Skills`. Runtime emits one `next-phase branch: "<cond>" → <skills>` log line per branch. v0.3 contract: metadata only — auto-cascade into a chosen branch remains deferred pending branch-selection policy. **세션 인계 진입점: [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md)**)
+**Last updated:** 2026-05-12 (**v0.6.1** — release workflow patch: bumped 3 GitHub Actions to Node 24-compatible majors (`actions/checkout@v6`, `actions/setup-go@v6`, `softprops/action-gh-release@v3`) ahead of the 2026-06-02 default switch. No behavior change from v0.6.0. **세션 인계 진입점: [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md)**)
 
 ## 트랙 상태
 
@@ -35,8 +35,9 @@
 | **v0.4.0 release** (cli buddy W3-3 agent runtime + background scheduler + cli binary version namespace align) | ✅ Done | v0.4.0 (2026-05-11) | — |
 | **v0.4.1 patch** (release workflow: include buddy-mcp_* in publish pattern) | ✅ Done | v0.4.1 | — |
 | **v0.5.0 release** (cli buddy W3-4 partial: PROCEDURE output parser — verdict + next-phase metadata) | ✅ Done | v0.5.0 (2026-05-12) | — |
-| **v0.6.0 release** (cli buddy W3-4 follow-on: conditional next-phase branches — `- cond → \`skill\`` cascade rule extraction) | ✅ Done — **본 publish 의 baseline** | **v0.6.0** (2026-05-12) | — |
-| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP analytics tools / 6 cli agent subcommands / PROCEDURE parser + conditional branches** | **v0.6.0** (2026-05-12) | 148 |
+| **v0.6.0 release** (cli buddy W3-4 follow-on: conditional next-phase branches — `- cond → \`skill\`` cascade rule extraction) | ✅ Done | v0.6.0 (2026-05-12) | — |
+| **v0.6.1 patch** (release.yml: bump actions/checkout@v6, setup-go@v6, action-gh-release@v3 — Node 24 compatibility ahead of 2026-06-02 default switch) | ✅ Done — **본 publish 의 baseline** | **v0.6.1** (2026-05-12) | — |
+| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP analytics tools / 6 cli agent subcommands / PROCEDURE parser + conditional branches** | **v0.6.1** (2026-05-12) | 148 |
 | Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
 | analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
 | feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy W3-3 agent runtime 진입 시 (spec lock-in 은 ADR-005 로 완료, 2026-05-11) | — |

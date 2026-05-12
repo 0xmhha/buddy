@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] — 2026-05-12
+
+### Fixed — GitHub Actions Node 20 deprecation
+
+The v0.6.0 release workflow surfaced the Node.js 20 deprecation warning on its run page: `actions/checkout@v4`, `actions/setup-go@v5`, and `softprops/action-gh-release@v2` are all Node 20 actions. GitHub forces Node 24 as the default on 2026-06-02 and removes the Node 20 runner on 2026-09-16; without action bumps the next release after that date could surface broken runs.
+
+Fix: bump all three actions to their Node 24-compatible majors. Functionality unchanged, but the workflow is now warning-free on current runners and forward-compatible past the 2026-06-02 default switch.
+
+### Changed (workflow-only)
+
+- `.github/workflows/release.yml`:
+  - `actions/checkout@v4` → `@v6` (latest v6.0.2 — Node 24 runtime).
+  - `actions/setup-go@v5` → `@v6` (latest v6.4.0 — Node 24 runtime).
+  - `softprops/action-gh-release@v2` → `@v3` (latest v3.0.0 — release notes explicitly state "moves the action runtime from Node 20 to Node 24").
+
+Floating-major tags (`@v6`, `@v6`, `@v3`) follow GitHub Actions convention; minor patch releases auto-apply without further workflow edits.
+
+### Changed (release-only)
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.6.0` → `0.6.1`.
+- `internal/mcp/server.go` MCP server `Version` `0.6.0` → `0.6.1`.
+- `cmd/buddy/main.go` `var version` `0.6.0` → `0.6.1`.
+- `Makefile` `RELEASE_VERSION` `0.6.0` → `0.6.1`.
+- `README.md` install snippet + sample output bumped to `0.6.1`.
+
+### Versioning policy note
+
+Workflow-only patch, no behavior change visible to plugin / cli consumers. Per ADR-004 §2.3 (config / infra patch with no scope change → patch), this is `0.6.0 → 0.6.1`, not a minor. The tag-triggered publish doubles as a live verification of the bumped workflow.
+
+### Migration notes
+
+- **plugin users**: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` re-fetches and upgrades to 0.6.1. No surface change from 0.6.0.
+- **cli binary users**: optional bump — v0.6.0 binaries continue to work. Pull v0.6.1 only if you want the version-string to match the latest release page.
+- **Plugin / cli contributors**: anyone forking the workflow should pull the same three action bumps; the v0.6.0 file's pins are deprecated.
+
 ## [0.6.0] — 2026-05-12
 
 ### Added — cli buddy W3-4 follow-on: conditional next-phase branches
@@ -760,7 +795,8 @@ performance, and recent activity through read-only commands.
   reads only `~/.buddy/config.json`).
 - AGENTS.md, the plugin model, and an MCP server (v1.0+ scope).
 
-[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/0xmhha/buddy/releases/tag/v0.6.1
 [0.6.0]: https://github.com/0xmhha/buddy/releases/tag/v0.6.0
 [0.5.0]: https://github.com/0xmhha/buddy/releases/tag/v0.5.0
 [0.4.1]: https://github.com/0xmhha/buddy/releases/tag/v0.4.1
