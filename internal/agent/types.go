@@ -65,12 +65,36 @@ type ChainStep struct {
 	Args    string `yaml:"args,omitempty"` // free-form argument string passed to the command
 }
 
-// RetryPolicy is a uniform retry config for every step. v0.3 implements a
-// simple capped retry; exponential backoff is a follow-on.
+// RetryPolicy is a uniform retry config for every step. v0.3 shipped a
+// fixed-delay capped retry; v0.6.x adds exponential backoff with an
+// optional cap (BackoffMax).
 type RetryPolicy struct {
-	MaxAttempts  int           `yaml:"max_attempts"`
-	BackoffDelay time.Duration `yaml:"backoff_delay,omitempty"` // capped sleep between attempts
+	MaxAttempts int `yaml:"max_attempts"`
+	// BackoffDelay is the *base* sleep between retry attempts. With
+	// BackoffStrategy="fixed" (or unset, for v0.6.x backward compat)
+	// every retry waits exactly this duration. With
+	// BackoffStrategy="exponential" it is the delay after the *first*
+	// failure (attempt 1 fail → wait BackoffDelay → retry as attempt 2);
+	// subsequent failures double the wait up to BackoffMax.
+	BackoffDelay time.Duration `yaml:"backoff_delay,omitempty"`
+	// BackoffStrategy selects how BackoffDelay grows across retries.
+	// Empty string is treated as "fixed" so existing specs keep their
+	// v0.3+ behavior verbatim. Valid values: "fixed" | "exponential".
+	BackoffStrategy string `yaml:"backoff_strategy,omitempty"`
+	// BackoffMax caps the exponential growth. Zero means uncapped (the
+	// growth still terminates when MaxAttempts is reached). Has no
+	// effect when BackoffStrategy="fixed".
+	BackoffMax time.Duration `yaml:"backoff_max,omitempty"`
 }
+
+const (
+	// BackoffStrategyFixed makes every retry wait BackoffDelay (the v0.3+
+	// default — explicit constant so callers can name it).
+	BackoffStrategyFixed = "fixed"
+	// BackoffStrategyExponential doubles the wait each failed attempt,
+	// capped at BackoffMax (0 = uncapped).
+	BackoffStrategyExponential = "exponential"
+)
 
 // OutputTarget describes where the final aggregated result goes. v0.3 ships
 // stdout and file targets — webhook / API endpoints (spec §2.2 webtoon

@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — exponential backoff for agent step retries (Tier 1.4)
+
+Agent specs can now ask the runtime to grow the wait between retries instead of using a fixed delay. Useful for steps that hammer a flaky upstream (rate limit, transient 5xx) — the next attempt waits 2×, 4×, 8× the base delay until a cap kicks in.
+
+YAML schema additions (backward-compatible — existing specs continue to fixed-delay):
+
+```yaml
+retry:
+  max_attempts: 5
+  backoff_delay: 500ms          # base delay (existing field)
+  backoff_strategy: exponential # NEW: "fixed" (default) | "exponential"
+  backoff_max: 8s               # NEW: cap when strategy=exponential, 0 = uncapped
+```
+
+Implementation:
+
+- `RetryPolicy.BackoffStrategy` (`""` defaults to `"fixed"` — v0.6.x specs need no edit) + `RetryPolicy.BackoffMax` (`0` = uncapped).
+- `agent.BackoffStrategyFixed` / `agent.BackoffStrategyExponential` constants exposed so callers can refer to them by name.
+- `computeBackoff(retry, attemptJustFailed)` pure helper:
+  - fixed → `BackoffDelay`
+  - exponential → `BackoffDelay * 2^(attemptJustFailed - 1)`, capped at `BackoffMax` when set
+  - exponent clamped to 30 internally so a misconfigured `MaxAttempts=50` cannot overflow `time.Duration`'s int64 range
+- Runtime emits a new `step[N] <cmd> backoff <duration> before attempt <N+1>` info log line per retry, so `buddy agent log <id>` shows when and for how long the runtime is waiting.
+- Spec validation rejects unknown strategies (e.g. `gaussian-random`) and inverted configs (`backoff_max < backoff_delay`) with friendly errors.
+
+Tests:
+
+- `internal/agent/backoff_test.go` — 12 race-clean unit tests covering nil policy, zero base, fixed/empty strategy (returns base), exponential doubling, cap kicks in at the right step, uncapped path, large-attempt overflow safety, unknown-strategy graceful fallback, and 4 spec-parsing happy/error paths.
+
+v0.3 contract preserved: ExitCode still drives step success / failure; backoff only affects *when* the next attempt runs. Existing specs with `backoff_strategy` omitted behave byte-identically to v0.6.2.
+
 ### Changed — split `cmd/buddy/main.go` (W3-5 retrofit)
 
 The `cmd/buddy/main.go` file had grown to 688 lines hosting eight unrelated sub-feature wirings (events / stats / doctor / install / uninstall / daemon-tree / hookwrap / boilerplate). `coding-style.md` recommends ≤400 lines per file and warns that mixing domains in one file is a single-responsibility violation regardless of size. The next subcommand addition would have pushed `main.go` past 800.

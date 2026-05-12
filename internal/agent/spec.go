@@ -51,8 +51,23 @@ func (s AgentSpec) Validate() error {
 		// (kebab-case, no /buddy: prefix). We accept a leading slash for
 		// usability but strip it during Run.
 	}
-	if s.Retry != nil && s.Retry.MaxAttempts < 1 {
-		return errors.New("agent: spec.retry.max_attempts must be >= 1 when retry is set")
+	if s.Retry != nil {
+		if s.Retry.MaxAttempts < 1 {
+			return errors.New("agent: spec.retry.max_attempts must be >= 1 when retry is set")
+		}
+		switch s.Retry.BackoffStrategy {
+		case "", BackoffStrategyFixed, BackoffStrategyExponential:
+			// ok — empty is treated as fixed for v0.6.x backward compat.
+		default:
+			return fmt.Errorf(
+				"agent: spec.retry.backoff_strategy %q is unsupported (want fixed|exponential)",
+				s.Retry.BackoffStrategy)
+		}
+		if s.Retry.BackoffMax > 0 && s.Retry.BackoffDelay > s.Retry.BackoffMax {
+			return fmt.Errorf(
+				"agent: spec.retry.backoff_max (%s) must be >= backoff_delay (%s)",
+				s.Retry.BackoffMax, s.Retry.BackoffDelay)
+		}
 	}
 	if s.Output != nil {
 		switch s.Output.Type {

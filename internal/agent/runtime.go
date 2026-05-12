@@ -62,16 +62,11 @@ func (r *Runtime) Run(ctx context.Context, agent Agent) (RunResult, error) {
 	result := RunResult{RunID: runID, AgentID: agent.ID}
 	_ = r.store.AppendLog(ctx, runID, "info", fmt.Sprintf("agent %q started (%d steps)", agent.ID, len(spec.Chain)))
 
-	maxAttempts := 1
-	var backoff time.Duration
-	if spec.Retry != nil {
-		maxAttempts = spec.Retry.MaxAttempts
-		backoff = spec.Retry.BackoffDelay
-	}
+	retry := spec.Retry
 
 	var stepErr error
 	for i, step := range spec.Chain {
-		stepResult, err := r.runOneStep(ctx, runID, i, step, maxAttempts, backoff)
+		stepResult, err := r.runOneStep(ctx, runID, i, step, retry)
 		result.Steps = append(result.Steps, stepResult)
 		if err != nil || stepResult.ExitCode != 0 {
 			stepErr = err
@@ -108,7 +103,14 @@ func (r *Runtime) Run(ctx context.Context, agent Agent) (RunResult, error) {
 
 // runOneStep handles the retry loop for a single chain step. It records every
 // attempt as its own log line so post-hoc analysis sees the full picture.
-func (r *Runtime) runOneStep(ctx context.Context, runID int64, idx int, step ChainStep, maxAttempts int, backoff time.Duration) (StepResult, error) {
+// The retry argument may be nil — that's interpreted as "no retry" (one
+// attempt, no backoff). When non-nil, computeBackoff selects the sleep
+// duration for each retry based on the policy's strategy + base + max.
+func (r *Runtime) runOneStep(ctx context.Context, runID int64, idx int, step ChainStep, retry *RetryPolicy) (StepResult, error) {
+	maxAttempts := 1
+	if retry != nil {
+		maxAttempts = retry.MaxAttempts
+	}
 	var last StepResult
 	var lastErr error
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
@@ -168,15 +170,61 @@ func (r *Runtime) runOneStep(ctx context.Context, runID int64, idx int, step Cha
 			return last, nil
 		}
 
-		if attempt < maxAttempts && backoff > 0 {
+		if attempt < maxAttempts {
+			sleep := computeBackoff(retry, attempt)
+			if sleep <= 0 {
+				continue
+			}
+			_ = r.store.AppendLog(ctx, runID, "info",
+				fmt.Sprintf("step[%d] %s backoff %s before attempt %d",
+					idx, step.Command, sleep, attempt+1))
 			select {
 			case <-ctx.Done():
 				return last, ctx.Err()
-			case <-time.After(backoff):
+			case <-time.After(sleep):
 			}
 		}
 	}
 	return last, lastErr
+}
+
+// computeBackoff selects the wait duration before the next retry of a step,
+// given which attempt just failed (1-indexed). Returns 0 to skip the wait
+// (no policy / zero base / unreachable retry count).
+//
+// "fixed" (default) returns BackoffDelay verbatim — every retry waits the
+// same. "exponential" doubles per failed attempt, capped at BackoffMax when
+// BackoffMax > 0. The doubling is implemented as a *Duration multiply*
+// (BackoffDelay * 2^k) rather than a shift, with an overflow-safe cap: the
+// cap kicks in well before time.Duration's int64 range overflows in
+// realistic configurations (BackoffMax ≤ a few minutes).
+func computeBackoff(retry *RetryPolicy, attemptJustFailed int) time.Duration {
+	if retry == nil || retry.BackoffDelay <= 0 || attemptJustFailed < 1 {
+		return 0
+	}
+	switch retry.BackoffStrategy {
+	case "", BackoffStrategyFixed:
+		return retry.BackoffDelay
+	case BackoffStrategyExponential:
+		// attempt 1 fail → multiplier 1 (BackoffDelay)
+		// attempt 2 fail → multiplier 2 (2 × BackoffDelay)
+		// attempt 3 fail → multiplier 4 (4 × BackoffDelay)
+		// Cap the shift exponent so a misconfigured very-large MaxAttempts
+		// can't push 2^k past int64 wraparound. 30 doublings = 2^30 ≈ 1e9;
+		// even with BackoffDelay=1s that's already ~34 years, well beyond
+		// any realistic BackoffMax.
+		exp := min(attemptJustFailed-1, 30)
+		multiplier := time.Duration(1) << exp
+		wait := retry.BackoffDelay * multiplier
+		if retry.BackoffMax > 0 && wait > retry.BackoffMax {
+			return retry.BackoffMax
+		}
+		return wait
+	}
+	// Unknown strategy passes validation if and only if spec.go missed it.
+	// Falling through to the base delay is safer than panicking inside the
+	// retry loop.
+	return retry.BackoffDelay
 }
 
 func writeOutput(target *OutputTarget, result RunResult) error {
