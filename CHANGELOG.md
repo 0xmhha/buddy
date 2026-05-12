@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.4] — 2026-05-12
+
+Bundles the cli buddy `[Unreleased]` work that accumulated after v0.6.3: Tier 1.5 streaming log capture (new behavior surface, strictly additive) plus the verify-quality-driven cleanup of the streaming-path internals (F1–F4, pure refactor). One feature + one quality follow-up that together exercise the full *build → verify → fix → re-verify → ship* loop the buddy plugin describes.
+
 ### Added — streaming log capture for agent step runs (Tier 1.5)
 
 Before v0.6.4, `SubprocessExecutor.Run` collected the child process's stdout / stderr into a single `bytes.Buffer` and returned only after the step finished. For a step that takes minutes (e.g. a Claude Code subprocess walking a 12-stage PROCEDURE) the user saw nothing in `buddy agent log <id>` until the very end. This change adds line-by-line streaming so each line surfaces in `agent_logs` *as it is emitted*.
@@ -40,6 +44,31 @@ Bumps the `cmd/buddy/agent log <agent-id>` command from "shows the final tail of
 - **F4** — Simplified the streaming-path return: dropped the `stdoutStr, stderrStr := stdout.String(), stderr.String()` intermediate, the `_ = exitErr` no-op, and a stale comment about `translateExitCode` returning four values. The path now reads `exitCode, exitErr := translateExitCode(cmd.Wait()); return stdout.String(), stderr.String(), exitCode, exitErr` — a direct mirror of the fast path's shape.
 
 Net diff: `internal/agent/executor.go` loses ~10 lines of noise, gains ~6 lines of error-path cleanup + doc — readability higher, FD-leak surface smaller, behavior unchanged.
+
+### Changed (release-only)
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.6.3` → `0.6.4`.
+- `internal/mcp/server.go` MCP server `Version` `0.6.3` → `0.6.4`.
+- `cmd/buddy/main.go` `var version` `0.6.3` → `0.6.4`.
+- `Makefile` `RELEASE_VERSION` `0.6.3` → `0.6.4`.
+- `README.md` install snippet + sample output bumped to `0.6.4`.
+
+### Versioning policy note
+
+Tier 1.5 (streaming log capture) introduces a new behavior surface: the `Executor` interface gains a `sink LogSink` parameter, `Runtime` writes per-line streaming entries into `agent_logs`, and `buddy agent log <agent-id>` now shows mid-progress rather than only the post-step summary. By ADR-004 §2.3 this is borderline minor — but the surface is *strictly additive at the user level*:
+
+- Existing agent specs run identically (the runtime always passes a non-nil sink internally, but the sink only *adds* log rows; nothing the executor returned before is gone or shaped differently).
+- External Executor implementers do see a breaking signature change, but no external implementers exist today (the buddy plugin is the only consumer).
+- `StepResult.Stdout` / `StepResult.Stderr` retain the full captured strings byte-identically.
+
+Shipping as a patch (`v0.6.3 → v0.6.4`) at user direction, consistent with the v0.6.3 precedent of treating backward-compatible additions as patch. The F1–F4 cleanup contributes zero to the SemVer decision (internal refactor only).
+
+### Migration notes
+
+- **plugin users**: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` re-fetches and upgrades to 0.6.4. Skill catalog + command surface unchanged from 0.6.x (148 skills / 99 commands).
+- **cli binary users**: pull v0.6.4 if you want mid-progress visibility in `buddy agent log <agent-id>` for long-running steps. v0.6.3 binaries continue to work; the on-disk DB stays compatible.
+- **External Executor implementers**: the `Executor.Run` signature gains a trailing `sink LogSink` argument. Implementations need a one-line update (pass `nil` to keep v0.6.3 behavior, or use the sink to surface progress). No such implementers exist in the wild yet — internal-only change in practice.
+- **`agent_logs` consumers**: expect new info / warn-level lines of the form `step[N] <cmd> stdout: <line>` and `step[N] <cmd> stderr: <line>` interleaved with the existing attempt / self-check / next-phase entries. Parsers that match exact line prefixes may need to recognise the new shapes; consumers using SQL filters on `level` or substring searches keep working unchanged.
 
 ## [0.6.3] — 2026-05-12
 
@@ -963,7 +992,8 @@ performance, and recent activity through read-only commands.
   reads only `~/.buddy/config.json`).
 - AGENTS.md, the plugin model, and an MCP server (v1.0+ scope).
 
-[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.3...HEAD
+[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.4...HEAD
+[0.6.4]: https://github.com/0xmhha/buddy/releases/tag/v0.6.4
 [0.6.3]: https://github.com/0xmhha/buddy/releases/tag/v0.6.3
 [0.6.2]: https://github.com/0xmhha/buddy/releases/tag/v0.6.2
 [0.6.1]: https://github.com/0xmhha/buddy/releases/tag/v0.6.1

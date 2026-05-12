@@ -19,7 +19,7 @@ LDFLAGS := -X main.gitSHA=$(GIT_SHA) -X main.buildDate=$(BUILD_DATE)
 # version for a release, update both. v0.2 may move to a single-source-of-truth
 # VERSION file or build-time embed if release cadence increases.
 # Roadmap §3 M6 T1.
-RELEASE_VERSION ?= 0.6.3
+RELEASE_VERSION ?= 0.6.4
 DIST := dist
 RELEASE_BINS := \
 	$(DIST)/buddy_$(RELEASE_VERSION)_linux_amd64 \
