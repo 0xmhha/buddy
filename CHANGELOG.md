@@ -30,6 +30,17 @@ v0.3 contract preserved: streaming is metadata. Step success / failure still tra
 
 Bumps the `cmd/buddy/agent log <agent-id>` command from "shows the final tail of a finished run" to "shows every line as the run progresses" — most useful when paired with the exponential backoff added in v0.6.3, since longer waits between retries make mid-progress visibility more valuable.
 
+### Refactored — `SubprocessExecutor` cleanup (verify-quality F1–F4 follow-up)
+
+`/buddy:verify-quality` on the v0.6.3 → Tier 1.5 streaming commit flagged four minor cleanups in `internal/agent/executor.go`. None block the quality gate, but cleaning them up keeps the streaming path readable for the next contributor. All four are behavior-preserving (zero diff in test outcomes — every streaming test stays byte-identical green).
+
+- **F1** — Removed the `defer r.Close()` from `streamLines`. `exec.Cmd.Wait()` closes both pipes automatically once the child exits, and the caller (`Run`) calls `Wait` after this goroutine joins. The explicit close was redundant and would confuse a future reader. Added a doc comment in `streamLines` explaining why the pipe close stays implicit.
+- **F2** — Closed `stdoutPipe` / `stderrPipe` explicitly in the spawn-error paths (`StderrPipe()` fail / `cmd.Start()` fail). Previously a spawn failure would leak the acquired pipe FDs until GC. Process-spawn failure is rare in practice but the leak path was real.
+- **F3** — Dropped the two unused `*bytes.Buffer` parameters from `translateExitCode`. The buffers were carried over from an earlier draft; the function only ever read `runErr`. Signature is now `translateExitCode(error) (int, error)`.
+- **F4** — Simplified the streaming-path return: dropped the `stdoutStr, stderrStr := stdout.String(), stderr.String()` intermediate, the `_ = exitErr` no-op, and a stale comment about `translateExitCode` returning four values. The path now reads `exitCode, exitErr := translateExitCode(cmd.Wait()); return stdout.String(), stderr.String(), exitCode, exitErr` — a direct mirror of the fast path's shape.
+
+Net diff: `internal/agent/executor.go` loses ~10 lines of noise, gains ~6 lines of error-path cleanup + doc — readability higher, FD-leak surface smaller, behavior unchanged.
+
 ## [0.6.3] — 2026-05-12
 
 Bundles the cli buddy `[Unreleased]` work that accumulated after v0.6.2: exponential retry backoff (Tier 1.4 — new YAML field, backward-compatible) plus the `cmd/buddy/main.go` decomposition refactor (W3-5 retrofit). No release noise besides version bumps and notes.

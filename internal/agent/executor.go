@@ -93,8 +93,7 @@ func (e *SubprocessExecutor) Run(ctx context.Context, command, args string, sink
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
-		runErr := cmd.Run()
-		exitCode, exitErr := translateExitCode(runErr, &stdout, &stderr)
+		exitCode, exitErr := translateExitCode(cmd.Run())
 		return stdout.String(), stderr.String(), exitCode, exitErr
 	}
 
@@ -104,9 +103,17 @@ func (e *SubprocessExecutor) Run(ctx context.Context, command, args string, sink
 	}
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
+		// stdoutPipe was acquired before this failed — close it explicitly
+		// so the pipe FD doesn't leak until GC.
+		_ = stdoutPipe.Close()
 		return "", "", -1, fmt.Errorf("agent: stderr pipe: %w", err)
 	}
 	if err := cmd.Start(); err != nil {
+		// Both pipes were acquired but the spawn failed; close them so the
+		// FDs are released immediately (cmd.Wait() would close them after
+		// a successful Start, but we never get there on this path).
+		_ = stdoutPipe.Close()
+		_ = stderrPipe.Close()
 		return "", "", -1, fmt.Errorf("agent: spawn claude: %w", err)
 	}
 
@@ -117,24 +124,22 @@ func (e *SubprocessExecutor) Run(ctx context.Context, command, args string, sink
 	go streamLines(stderrPipe, &stderr, sink, "stderr", &wg)
 	wg.Wait()
 
-	runErr := cmd.Wait()
-	stdoutStr, stderrStr := stdout.String(), stderr.String()
-	exitCode, exitErr := translateExitCode(runErr, &stdout, &stderr)
-	// translateExitCode returns 4 values when sink==nil path, but the
-	// streamed path discards the buffer fields it would return; we already
-	// have stdoutStr / stderrStr captured above so this is safe.
-	_ = exitErr
-	return stdoutStr, stderrStr, exitCode, exitErr
+	exitCode, exitErr := translateExitCode(cmd.Wait())
+	return stdout.String(), stderr.String(), exitCode, exitErr
 }
 
 // streamLines runs in a goroutine, reading newline-delimited lines from r,
 // invoking sink for each, and appending the line (with its trailing newline
 // re-attached so the buffer round-trips the original byte content) to buf.
-// The scanner uses bufio's default token size; lines longer than that get
-// emitted as multiple chunks, which is acceptable for log surface purposes.
+// Scanner uses a 1 MiB max line size so JSON-formatted PROCEDURE outputs
+// with embedded artefacts are not split mid-record; longer lines fall back
+// to multi-chunk emission.
+//
+// r is *not* explicitly closed here — exec.Cmd.Wait() closes the pipe
+// automatically once the child exits, and the caller (Run) calls Wait
+// after this goroutine joins. An explicit Close would be redundant.
 func streamLines(r io.ReadCloser, buf *bytes.Buffer, sink LogSink, stream string, wg *sync.WaitGroup) {
 	defer wg.Done()
-	defer r.Close()
 	scanner := bufio.NewScanner(r)
 	// Use a large-ish max line size so a JSON-formatted PROCEDURE output
 	// (could easily exceed 64KB with embedded artefacts) is not split mid-
@@ -158,7 +163,7 @@ func streamLines(r io.ReadCloser, buf *bytes.Buffer, sink LogSink, stream string
 // pair Run's contract expects: a non-zero child exit becomes (code, nil)
 // instead of an error, while a spawn/transport failure becomes (-1, wrapped
 // error). Used by both the fast path (bulk capture) and the streaming path.
-func translateExitCode(runErr error, _, _ *bytes.Buffer) (int, error) {
+func translateExitCode(runErr error) (int, error) {
 	if runErr == nil {
 		return 0, nil
 	}
