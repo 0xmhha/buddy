@@ -55,7 +55,7 @@
 
 - **Origin:** `github.com/0xmhha/buddy.git`
 - **License:** Apache 2.0
-- **Stack:** Go 1.25+, `modernc.org/sqlite` (pure Go), `spf13/cobra`, `stretchr/testify`
+- **Stack:** Go 1.25+ (SSoT: `go.mod` go directive — sync `.github/workflows/release.yml` + `README.md` when bumping; `make verify-go-version` checks this), `modernc.org/sqlite` (pure Go), `spf13/cobra`, `stretchr/testify`
 - **Binary:** `bin/buddy` (`make build`로 빌드, ~9.5MB static)
 - **Module path:** `github.com/wm-it-22-00661/buddy` (이전 머신 잔재 — v0.2 cleanup 후보)
 

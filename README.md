@@ -41,7 +41,7 @@ cli buddy *embeds* plugin buddy; plugin buddy stands alone. The Features table b
 
 ## Requirements
 
-- Go 1.25+ (build from source only)
+- Go 1.25+ — the exact minimum is the `go` directive in `go.mod` (SSoT); update this line and `.github/workflows/release.yml` whenever you bump it (build from source only)
 - macOS or Linux (Windows: v1.0+)
 - Claude Code (for the plugin)
 

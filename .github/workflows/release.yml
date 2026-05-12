@@ -36,6 +36,13 @@ jobs:
           # newer toolchain when go-version is older than go.mod requires.
           go-version: '1.25'
 
+      - name: Verify workflow go-version matches go.mod
+        # Guards against the same drift that broke the first v0.6.1 tag:
+        # go.mod's go directive at 1.25.0 vs workflow's go-version at 1.22,
+        # silently rescued by setup-go@v5's GOTOOLCHAIN=auto but broken by
+        # @v6's GOTOOLCHAIN=local default.
+        run: make verify-go-version
+
       - name: Verify tag matches Makefile RELEASE_VERSION
         run: |
           # The tag must be of the form v<release-version>; reject mismatches early

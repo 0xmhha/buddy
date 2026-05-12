@@ -1,4 +1,4 @@
-.PHONY: build test test-routing test-skill-form fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
+.PHONY: build test test-routing test-skill-form verify-go-version fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
 
 BIN     := bin/buddy
 BIN_MCP := bin/buddy-mcp
@@ -52,6 +52,35 @@ test-routing:
 # so strict mode is opt-in until B6 follow-up unifies them).
 test-skill-form:
 	@bash scripts/lint-skill-procedure.sh
+
+# verify-go-version guards against the drift that broke the first v0.6.1
+# tag: go.mod's `go` directive was bumped to 1.25.0 in commit becbcf1
+# (W3-3 scheduler) but .github/workflows/release.yml stayed at
+# `go-version: '1.22'` for four releases. setup-go@v5 hid this with
+# GOTOOLCHAIN=auto auto-download fallback; @v6 exports GOTOOLCHAIN=local
+# by default and removed the fallback, so the drift fails CI fast.
+#
+# This target reads go.mod's go directive and release.yml's go-version
+# input, compares major.minor (a `1.25` workflow value matches a
+# `1.25.0` go.mod directive), and exits non-zero with a clear message
+# on mismatch. Wired into the release workflow before the cross-compile
+# step.
+verify-go-version:
+	@mod_go=$$(awk '/^go [0-9]/ {print $$2; exit}' go.mod); \
+	wf_go=$$(grep -E "^[[:space:]]*go-version:" .github/workflows/release.yml | head -1 | sed -E "s/.*go-version:[[:space:]]*['\"]?([^'\"[:space:]]+).*/\1/"); \
+	mod_short=$$(echo "$$mod_go" | awk -F. '{print $$1"."$$2}'); \
+	wf_short=$$(echo "$$wf_go" | awk -F. '{print $$1"."$$2}'); \
+	if [ -z "$$mod_go" ] || [ -z "$$wf_go" ]; then \
+	  echo "verify-go-version: could not parse go.mod ($$mod_go) or release.yml ($$wf_go)"; \
+	  exit 2; \
+	fi; \
+	if [ "$$mod_short" != "$$wf_short" ]; then \
+	  echo "::error::go.mod go directive ($$mod_go) and release.yml go-version ($$wf_go) disagree on major.minor"; \
+	  echo "::error::setup-go@v6 exports GOTOOLCHAIN=local — workflow cannot auto-download a newer toolchain"; \
+	  echo "fix: align release.yml go-version with go.mod's $$mod_short or update go.mod via 'go mod edit -go=$$wf_short'"; \
+	  exit 1; \
+	fi; \
+	echo "verify-go-version: go.mod ($$mod_go) and release.yml ($$wf_go) agree on major.minor=$$mod_short"
 
 fmt:
 	gofmt -s -w .

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — go-version drift sanity check (root cause hardening for v0.6.1)
+
+The first v0.6.1 tag failed CI because `go.mod`'s `go` directive (1.25.0, bumped in `becbcf1` on 2026-05-11) had been silently out of sync with `.github/workflows/release.yml`'s `go-version: '1.22'` across four prior releases. `setup-go@v5`'s `GOTOOLCHAIN=auto` default had been auto-downloading the 1.25 toolchain on every CI run, hiding the drift. `setup-go@v6` exports `GOTOOLCHAIN=local` and removes that fallback, so the next tag after the action bump was the first one to break.
+
+The fix in v0.6.1 itself only synced the values once. This change hardens the workflow against recurrence.
+
+- **`make verify-go-version`** — new Makefile target. Reads `go.mod`'s `go` directive (e.g. `1.25.0`) and `release.yml`'s `go-version` input (e.g. `1.25`), compares major.minor, and exits non-zero with an explicit `::error::` line and a remediation hint on mismatch. Dry-run on a simulated drift (`go-version: '1.22'`) produces the exact error message future contributors will see.
+- **release.yml integration** — new `Verify workflow go-version matches go.mod` step runs `make verify-go-version` between `Set up Go` and the existing `Verify tag matches Makefile RELEASE_VERSION` step. Any future drift fails CI fast instead of silently regressing onto a runner that happens to provide a compatible toolchain.
+- **`README.md` + `docs/HANDOFF.md`** — Stack lines now point at `go.mod` as the source of truth alongside the explicit minimum, mirroring the workflow check so doc updates stay grouped.
+
+The pattern (drift accumulates → external dependency change surfaces it as a hard failure) is generic: similar drift candidates exist between the 5 version sources (plugin.json / marketplace.json / server.go Version / main.go var version / Makefile RELEASE_VERSION) and across the doc-only mirror lines. The Makefile's existing `print-RELEASE_VERSION` + `release.yml`'s `Verify tag matches Makefile RELEASE_VERSION` step already covers the tag↔Makefile axis; this change adds the go.mod↔workflow axis. Other axes remain candidates for follow-on hardening once a real drift surfaces or a contributor proposes one.
+
 ## [0.6.1] — 2026-05-12
 
 ### Fixed — GitHub Actions Node 20 deprecation
