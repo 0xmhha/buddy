@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-12 (**v0.6.2** — release pipeline hardening + `buddy agent log` viewer + push/PR CI gate. New `make verify-go-version` + `make verify-versions` cover the go.mod↔workflow and 5-version-sources drift axes; new `.github/workflows/ci.yml` runs race-clean tests + both drift checks on every push to main and every PR. `buddy agent log <agent-id>` surfaces the v0.5.0/v0.6.0-era self-check / candidates / branches log lines. **세션 인계 진입점: [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md)**)
+**Last updated:** 2026-05-12 (**v0.6.3** — exponential retry backoff (new YAML `backoff_strategy` + `backoff_max`, backward-compatible) + `cmd/buddy/main.go` 688→147 line split into per-feature siblings. Backoff is opt-in; existing specs keep v0.6.2 timing byte-identically. Refactor is zero-behavior. **세션 인계 진입점: [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md)**)
 
 ## 트랙 상태
 
@@ -37,8 +37,9 @@
 | **v0.5.0 release** (cli buddy W3-4 partial: PROCEDURE output parser — verdict + next-phase metadata) | ✅ Done | v0.5.0 (2026-05-12) | — |
 | **v0.6.0 release** (cli buddy W3-4 follow-on: conditional next-phase branches — `- cond → \`skill\`` cascade rule extraction) | ✅ Done | v0.6.0 (2026-05-12) | — |
 | **v0.6.1 patch** (release.yml: bump actions/checkout@v6, setup-go@v6, action-gh-release@v3 — Node 24 compatibility ahead of 2026-06-02 default switch) | ✅ Done | v0.6.1 (2026-05-12) | — |
-| **v0.6.2 patch** (release pipeline hardening: `make verify-go-version` + `make verify-versions` + push/PR `ci.yml` test gate + `buddy agent log <agent-id>` subcommand + `Store.LatestRun`) | ✅ Done — **본 publish 의 baseline** | **v0.6.2** (2026-05-12) | — |
-| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP analytics tools / 7 cli agent subcommands / PROCEDURE parser + conditional branches + drift gates** | **v0.6.2** (2026-05-12) | 148 |
+| **v0.6.2 patch** (release pipeline hardening: `make verify-go-version` + `make verify-versions` + push/PR `ci.yml` test gate + `buddy agent log <agent-id>` subcommand + `Store.LatestRun`) | ✅ Done | v0.6.2 (2026-05-12) | — |
+| **v0.6.3 patch** (Tier 1.4 exponential backoff: new `backoff_strategy` + `backoff_max` YAML fields, backward-compat. W3-5 retrofit: `cmd/buddy/main.go` 688→147 lines split into 6 sibling files + `agent.go` rename) | ✅ Done — **본 publish 의 baseline** | **v0.6.3** (2026-05-12) | — |
+| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP analytics tools / 7 cli agent subcommands / PROCEDURE parser + conditional branches + drift gates + exponential backoff** | **v0.6.3** (2026-05-12) | 148 |
 | Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
 | analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
 | feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy W3-3 agent runtime 진입 시 (spec lock-in 은 ADR-005 로 완료, 2026-05-11) | — |

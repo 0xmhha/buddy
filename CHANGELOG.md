@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.3] — 2026-05-12
+
+Bundles the cli buddy `[Unreleased]` work that accumulated after v0.6.2: exponential retry backoff (Tier 1.4 — new YAML field, backward-compatible) plus the `cmd/buddy/main.go` decomposition refactor (W3-5 retrofit). No release noise besides version bumps and notes.
+
 ### Added — exponential backoff for agent step retries (Tier 1.4)
 
 Agent specs can now ask the runtime to grow the wait between retries instead of using a fixed delay. Useful for steps that hammer a flaky upstream (rate limit, transient 5xx) — the next attempt waits 2×, 4×, 8× the base delay until a cap kicks in.
@@ -58,6 +62,27 @@ Decomposition into sibling `<feature>_cmd.go` files matches the pre-existing `co
 `main.go` after the split is 147 lines — boilerplate (`main()`, `newRootCmd()`, version helpers, error helpers) only. Import list trimmed accordingly (`context`, `errors`, `fmt`, `os`, `cobra`, `config`, `db`, `persona` — was 9 stdlib + 9 internal).
 
 Resolves `docs/HANDOFF.md` §11 "Immediate small things" item: *`cmd/buddy/main.go` 분할 (685 lines)*.
+
+### Changed (release-only)
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.6.2` → `0.6.3`.
+- `internal/mcp/server.go` MCP server `Version` `0.6.2` → `0.6.3`.
+- `cmd/buddy/main.go` `var version` `0.6.2` → `0.6.3`.
+- `Makefile` `RELEASE_VERSION` `0.6.2` → `0.6.3`.
+- `README.md` install snippet + sample output bumped to `0.6.3`.
+
+### Versioning policy note
+
+ADR-004 §2.3 treats a new YAML schema field (Tier 1.4's `backoff_strategy` + `backoff_max`) as a *user-visible surface addition* that would normally pull this release into a minor (`0.7.0`). Shipping as a patch (`v0.6.2 → v0.6.3`) at user direction because the addition is *strictly backward-compatible*: every existing spec (no `backoff_strategy` field, or `backoff_strategy: fixed`) gets byte-identical retry timing to v0.6.2. The new fields are opt-in. Future user-visible additions that change defaults or remove backward-compat will reset to the §2.3 default.
+
+The bundled W3-5 main.go split is internal refactor only (file layout, zero behavior change) so contributes nothing to the SemVer decision.
+
+### Migration notes
+
+- **plugin users**: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` re-fetches and upgrades to 0.6.3. Skill catalog + command surface unchanged from 0.6.x (148 skills / 99 commands).
+- **cli binary users**: optional bump. v0.6.2 binaries continue to work. Pull v0.6.3 if you want the exponential backoff schema in your agent specs, or for the matching version string.
+- **Existing agent specs**: no edit required — `backoff_strategy` omitted is treated as `"fixed"` and the retry timing matches v0.6.2 exactly.
+- **Plugin / cli contributors**: `cmd/buddy/main.go` is now 147 lines; new subcommands belong in their own `<feature>_cmd.go` sibling (events / stats / doctor / install / daemon / hookwrap / agent already follow this pattern).
 
 ## [0.6.2] — 2026-05-12
 
@@ -904,7 +929,8 @@ performance, and recent activity through read-only commands.
   reads only `~/.buddy/config.json`).
 - AGENTS.md, the plugin model, and an MCP server (v1.0+ scope).
 
-[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.3...HEAD
+[0.6.3]: https://github.com/0xmhha/buddy/releases/tag/v0.6.3
 [0.6.2]: https://github.com/0xmhha/buddy/releases/tag/v0.6.2
 [0.6.1]: https://github.com/0xmhha/buddy/releases/tag/v0.6.1
 [0.6.0]: https://github.com/0xmhha/buddy/releases/tag/v0.6.0
