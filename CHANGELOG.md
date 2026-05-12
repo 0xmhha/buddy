@@ -21,8 +21,16 @@ Fix: bump all three actions to their Node 24-compatible majors. Functionality un
   - `actions/checkout@v4` → `@v6` (latest v6.0.2 — Node 24 runtime).
   - `actions/setup-go@v5` → `@v6` (latest v6.4.0 — Node 24 runtime).
   - `softprops/action-gh-release@v2` → `@v3` (latest v3.0.0 — release notes explicitly state "moves the action runtime from Node 20 to Node 24").
+  - `go-version: '1.22'` → `'1.25'` to match `go.mod`'s `go 1.25.0` directive. setup-go@v6 introduces a breaking change — it exports `GOTOOLCHAIN=local` by default, so the runner no longer auto-downloads a newer toolchain when the requested `go-version` is older than `go.mod` requires. The first v0.6.1 build attempt failed on this; the workflow now pins the matching Go line explicitly.
 
 Floating-major tags (`@v6`, `@v6`, `@v3`) follow GitHub Actions convention; minor patch releases auto-apply without further workflow edits.
+
+### Changed (doc sync)
+
+- `README.md` requirement line: `Go 1.22+` → `Go 1.25+`.
+- `docs/HANDOFF.md` Stack line: `Go 1.22+` → `Go 1.25+`.
+
+  `go.mod` was bumped to 1.25.0 earlier in the cycle without these doc lines being touched; the v0.6.1 build failure surfaced the drift.
 
 ### Changed (release-only)
 

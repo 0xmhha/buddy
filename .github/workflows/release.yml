@@ -30,7 +30,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.22'
+          # Keep in sync with go.mod's `go` directive.
+          # setup-go@v6 exports GOTOOLCHAIN=local by default (breaking
+          # change from v5), so the runner can no longer auto-download a
+          # newer toolchain when go-version is older than go.mod requires.
+          go-version: '1.25'
 
       - name: Verify tag matches Makefile RELEASE_VERSION
         run: |
