@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.5] — 2026-05-12
+
+Ships the cli buddy `[Unreleased]` work accumulated after v0.6.4: scheduler live refresh (Tier 1.6 — backward-compatible, opt-out via `--no-refresh`). Closes the last open `cli-buddy-spec.md` §9 W3-3 follow-on item.
+
 ### Added — scheduler live refresh (Tier 1.6)
 
 Before v0.6.4, `buddy agent scheduler start` loaded the agent set once at startup and never re-read the store. Adding / deleting an agent (or editing its `schedule`) while the scheduler was running had no effect until the user killed and restarted the scheduler. `cli-buddy-spec.md` §9 W3-3 explicitly listed this as a follow-on. This change closes it.
@@ -43,6 +47,25 @@ Tests (`internal/agent/scheduler_test.go` — 4 new race-clean tests):
 - `RefreshDisabled = true` keeps `Entries()` empty even after a post-Start `Create` — opt-out works and startup log shows `refresh=disabled`.
 
 v0.3 contract preserved: the cron schedules themselves stay minute-precision, in-flight overlap is still dropped by the per-agent atomic flag, and on-demand agents (no `schedule` field) are still invisible to the cron tick.
+
+### Changed (release-only)
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.6.4` → `0.6.5`.
+- `internal/mcp/server.go` MCP server `Version` `0.6.4` → `0.6.5`.
+- `cmd/buddy/main.go` `var version` `0.6.4` → `0.6.5`.
+- `Makefile` `RELEASE_VERSION` `0.6.4` → `0.6.5`.
+- `README.md` install snippet + sample output bumped to `0.6.5`.
+
+### Versioning policy note
+
+Tier 1.6 changes the *default* scheduler behavior (live refresh is now on, polling every 60s). By ADR-004 §2.3 a default change leans toward minor — but the new behavior only *adds* automatic catch-up of DB-side agent edits, and `--no-refresh` (or `RefreshDisabled: true`) restores v0.6.4 behavior byte-identically. No existing agent spec runs differently. Shipping as patch (`v0.6.4 → v0.6.5`) at user direction, consistent with the v0.6.3 / v0.6.4 precedent of treating opt-out-restorable additions as patch. The next user-visible change that *removes* an escape hatch will reset to the §2.3 default.
+
+### Migration notes
+
+- **plugin users**: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` re-fetches and upgrades to 0.6.5. Skill catalog + command surface unchanged from 0.6.x (148 skills / 99 commands).
+- **cli binary users**: pull v0.6.5 if you run `buddy agent scheduler start` and want it to pick up agents created/deleted by another shell automatically. v0.6.4 binaries continue to work; DB stays compatible.
+- **Existing `buddy agent scheduler start` users**: behavior change at the default level — the scheduler now polls the store every 60s and reconciles its entry set with the DB. Pass `--no-refresh` to keep the v0.6.4 load-once behavior.
+- **CI / scripted callers**: the new flags are additive (`--refresh <duration>`, `--no-refresh`); existing invocations without these flags continue to work — they pick up the 60s default poll.
 
 ## [0.6.4] — 2026-05-12
 
@@ -1029,7 +1052,8 @@ performance, and recent activity through read-only commands.
   reads only `~/.buddy/config.json`).
 - AGENTS.md, the plugin model, and an MCP server (v1.0+ scope).
 
-[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.4...HEAD
+[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.5...HEAD
+[0.6.5]: https://github.com/0xmhha/buddy/releases/tag/v0.6.5
 [0.6.4]: https://github.com/0xmhha/buddy/releases/tag/v0.6.4
 [0.6.3]: https://github.com/0xmhha/buddy/releases/tag/v0.6.3
 [0.6.2]: https://github.com/0xmhha/buddy/releases/tag/v0.6.2

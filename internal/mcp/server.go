@@ -13,7 +13,7 @@ import (
 func NewBuddyServer(opts Options) *mcp.Server {
 	s := mcp.NewServer(&mcp.Implementation{
 		Name:    "buddy",
-		Version: "0.6.4",
+		Version: "0.6.5",
 	}, &mcp.ServerOptions{
 		Instructions: "buddy — Claude Code hook harness control plane + analytics surface. " +
 			"Use these tools to inspect hook health, query hook statistics, manage the " +
