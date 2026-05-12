@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.6] — 2026-05-12
+
+Ships the cli buddy `[Unreleased]` work accumulated after v0.6.5: Tier 1.8 webhook output target. With v0.6.4 streaming logs + v0.6.5 scheduler live refresh already in place, this closes the last dependency of the cli-buddy-spec §2.2 reference webtoon agent (W3-6) — agents can now self-publish to downstream services without a wrapper script.
+
 ### Added — webhook output target (Tier 1.8)
 
 `OutputTarget` gains a third type, `webhook`, alongside the existing `stdout` and `file`. Agents whose YAML declares `output: { type: webhook, url: ... }` now have their `RunResult` JSON POST'ed (or PUT'ed / PATCH'ed) to the configured URL after the chain finishes. This is the dependency the cli-buddy-spec §2.2 reference webtoon agent (W3-6) was waiting on — agents can now self-publish to downstream services without a wrapper script.
@@ -56,6 +60,25 @@ Tests (`internal/agent/runtime_test.go` + `spec` extension, 5 new race-clean):
 - `ParseSpec` rejects URLs with disallowed schemes.
 
 v0.3 contract preserved: webhook dispatch happens *after* the chain finishes; `ExitCode` still drives step success / failure. A failed webhook never converts a green run into a red one — it shows up in logs for diagnosis.
+
+### Changed (release-only)
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.6.5` → `0.6.6`.
+- `internal/mcp/server.go` MCP server `Version` `0.6.5` → `0.6.6`.
+- `cmd/buddy/main.go` `var version` `0.6.5` → `0.6.6`.
+- `Makefile` `RELEASE_VERSION` `0.6.5` → `0.6.6`.
+- `README.md` install snippet + sample output bumped to `0.6.6`.
+
+### Versioning policy note
+
+Tier 1.8 adds a new YAML schema option (`output.type: webhook` + four new sibling fields) — strictly additive. Existing agent specs with `output.type: stdout` or `output.type: file` are completely unaffected; running them produces the same bytes as v0.6.5. Per the v0.6.3 / v0.6.4 / v0.6.5 precedent of treating backward-compatible additions as patch, shipping as `v0.6.5 → v0.6.6`. ADR-004 §2.3 minor-bump trigger would activate if a future change *removed* a webhook escape hatch or changed the default header behavior.
+
+### Migration notes
+
+- **plugin users**: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` re-fetches and upgrades to 0.6.6. Skill catalog + command surface unchanged from 0.6.x (148 skills / 99 commands).
+- **cli binary users**: pull v0.6.6 if you want to declare `output.type: webhook` in agent specs. v0.6.5 binaries continue to work; DB stays compatible.
+- **Existing agent specs**: no edit required. The new `OutputTarget` fields (`URL`, `Method`, `Headers`, `Timeout`) are opt-in.
+- **Webhook target operators**: expect a JSON-encoded `RunResult` body via POST (or the configured method), Content-Type `application/json` unless the spec overrides it. Bodies up to ~64 KiB are normal; very long Stdout/Stderr captures from streaming runs can produce larger payloads.
 
 ## [0.6.5] — 2026-05-12
 
@@ -1102,7 +1125,8 @@ performance, and recent activity through read-only commands.
   reads only `~/.buddy/config.json`).
 - AGENTS.md, the plugin model, and an MCP server (v1.0+ scope).
 
-[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.5...HEAD
+[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.6...HEAD
+[0.6.6]: https://github.com/0xmhha/buddy/releases/tag/v0.6.6
 [0.6.5]: https://github.com/0xmhha/buddy/releases/tag/v0.6.5
 [0.6.4]: https://github.com/0xmhha/buddy/releases/tag/v0.6.4
 [0.6.3]: https://github.com/0xmhha/buddy/releases/tag/v0.6.3

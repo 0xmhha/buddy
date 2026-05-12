@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-12 (**v0.6.5** — Tier 1.6 scheduler live refresh. `buddy agent scheduler start` polls the store every `--refresh` (default 1m) and reconciles its cron entry set with the DB; agents created / deleted / re-scheduled in another shell are picked up without restart. Backward-compat via `--no-refresh` opt-out. Closes the last `cli-buddy-spec.md` §9 W3-3 follow-on item. **세션 인계 진입점: [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md)**)
+**Last updated:** 2026-05-12 (**v0.6.6** — Tier 1.8 webhook output target. `output.type: webhook` POSTs the `RunResult` JSON to a configurable URL after the chain finishes (method / headers / timeout overridable). Closes the last dependency of the cli-buddy-spec §2.2 reference webtoon agent (W3-6). Strictly additive — existing specs unaffected. **세션 인계 진입점: [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md)**)
 
 ## 트랙 상태
 
@@ -40,8 +40,9 @@
 | **v0.6.2 patch** (release pipeline hardening: `make verify-go-version` + `make verify-versions` + push/PR `ci.yml` test gate + `buddy agent log <agent-id>` subcommand + `Store.LatestRun`) | ✅ Done | v0.6.2 (2026-05-12) | — |
 | **v0.6.3 patch** (Tier 1.4 exponential backoff: new `backoff_strategy` + `backoff_max` YAML fields, backward-compat. W3-5 retrofit: `cmd/buddy/main.go` 688→147 lines split into 6 sibling files + `agent.go` rename) | ✅ Done | v0.6.3 (2026-05-12) | — |
 | **v0.6.4 patch** (Tier 1.5 streaming log capture: `Executor.Run` signature + `LogSink` + per-line `agent_logs` entries; `buddy agent log <id>` mid-progress visibility. Plus verify-quality F1–F4 cleanup: pipe-close hygiene, error-path FD leak fix, `translateExitCode` signature trim, dead-code prune) | ✅ Done | v0.6.4 (2026-05-12) | — |
-| **v0.6.5 patch** (Tier 1.6 scheduler live refresh: `RefreshInterval` polling + `tracked` map diff (add/remove/update) + CLI `--refresh` / `--no-refresh`. Closes the last cli-buddy-spec §9 W3-3 follow-on item) | ✅ Done — **본 publish 의 baseline** | **v0.6.5** (2026-05-12) | — |
-| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP analytics tools / 7 cli agent subcommands / PROCEDURE parser + conditional branches + drift gates + exponential backoff + streaming logs + scheduler live refresh** | **v0.6.5** (2026-05-12) | 148 |
+| **v0.6.5 patch** (Tier 1.6 scheduler live refresh: `RefreshInterval` polling + `tracked` map diff (add/remove/update) + CLI `--refresh` / `--no-refresh`. Closes the last cli-buddy-spec §9 W3-3 follow-on item) | ✅ Done | v0.6.5 (2026-05-12) | — |
+| **v0.6.6 patch** (Tier 1.8 webhook output target: `output.type: webhook` + URL/method/headers/timeout. Closes the last W3-6 reference webtoon agent dependency) | ✅ Done — **본 publish 의 baseline** | **v0.6.6** (2026-05-12) | — |
+| **Total** | **148 procedures / 99 commands / 14 ship-release stages / 7 MCP analytics tools / 7 cli agent subcommands / PROCEDURE parser + conditional branches + drift gates + exponential backoff + streaming logs + scheduler live refresh + webhook output** | **v0.6.6** (2026-05-12) | 148 |
 | Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
 | analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
 | feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy W3-3 agent runtime 진입 시 (spec lock-in 은 ADR-005 로 완료, 2026-05-11) | — |

@@ -28,7 +28,7 @@ import (
 //
 // Roadmap §3 M6 T3.
 var (
-	version   = "0.6.5"
+	version   = "0.6.6"
 	gitSHA    = "dev"
 	buildDate = "unknown"
 )
