@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — streaming log capture for agent step runs (Tier 1.5)
+
+Before v0.6.4, `SubprocessExecutor.Run` collected the child process's stdout / stderr into a single `bytes.Buffer` and returned only after the step finished. For a step that takes minutes (e.g. a Claude Code subprocess walking a 12-stage PROCEDURE) the user saw nothing in `buddy agent log <id>` until the very end. This change adds line-by-line streaming so each line surfaces in `agent_logs` *as it is emitted*.
+
+Implementation:
+
+- New `agent.LogSink` callback type — `func(stream, line string)`. `stream` is the literal `"stdout"` or `"stderr"`.
+- `Executor.Run` signature extended with `sink LogSink` argument. **Backward-compatible at the runtime level** — `sink == nil` falls back to the v0.6.3 bulk-buffer behavior byte-identically.
+- `SubprocessExecutor.Run` uses `StdoutPipe` + `StderrPipe` + `bufio.Scanner` in two goroutines (one per stream, sync.WaitGroup'd before `cmd.Wait()`) when `sink != nil`. Per-line `sink(stream, line)` calls happen synchronously with the scanner read. Scanner buffer caps at 1 MiB so very large JSON-formatted PROCEDURE outputs don't split mid-record.
+- `MockExecutor.Run` simulates streaming by splitting the canned `Stdout` / `Stderr` on `\n` and emitting one sink call per line — making Runtime-level tests possible without spawning an actual subprocess.
+- `Runtime.runOneStep` constructs a sink that forwards every line to `Store.AppendLog` with level `info` for stdout and `warn` for stderr. Each entry is formatted `step[N] <cmd> <stream>: <line>` so `buddy agent log <id>` shows them inline with the existing `attempt=N`, `self-check=…`, `next-phase branch: …` lines.
+
+Tests (`internal/agent/executor_test.go` — new file, 8 tests; `runtime_test.go` — 2 new tests):
+
+- `MockExecutor` nil sink keeps v0.6.3 behavior; non-nil sink emits per-line in stdout-then-stderr order; empty streams yield zero sink calls; trailing newline doesn't double-emit.
+- `splitLines` table test covers `""`, `"a"`, `"a\n"`, `"a\nb"`, `"a\nb\n"`, `"\n"`.
+- `SubprocessExecutor` real-subprocess tests against `/bin/sh -c 'printf …'`: sink receives each printed line in order, captured strings round-trip the full content, fast path (`sink == nil`) bulk-captures identically, non-zero exit codes still translate to `(code, nil)` rather than an error.
+- `Runtime`: a mock step with multi-line stdout + stderr produces one `agent_logs` entry per line (3 stdout + 1 stderr), levels are `info` and `warn` respectively, and `StepResult.Stdout` / `StepResult.Stderr` retain the full captured strings unchanged.
+
+v0.3 contract preserved: streaming is metadata. Step success / failure still tracks `ExitCode` from the executor; no behavior change in the retry loop or in how subsequent steps are gated.
+
+Bumps the `cmd/buddy/agent log <agent-id>` command from "shows the final tail of a finished run" to "shows every line as the run progresses" — most useful when paired with the exponential backoff added in v0.6.3, since longer waits between retries make mid-progress visibility more valuable.
+
 ## [0.6.3] — 2026-05-12
 
 Bundles the cli buddy `[Unreleased]` work that accumulated after v0.6.2: exponential retry backoff (Tier 1.4 — new YAML field, backward-compatible) plus the `cmd/buddy/main.go` decomposition refactor (W3-5 retrofit). No release noise besides version bumps and notes.

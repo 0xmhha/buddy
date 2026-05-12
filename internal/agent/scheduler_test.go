@@ -226,7 +226,7 @@ func newSlowExecutor(delay time.Duration) *slowExecutor {
 	return &slowExecutor{delay: delay}
 }
 
-func (s *slowExecutor) Run(ctx context.Context, _ string, _ string) (string, string, int, error) {
+func (s *slowExecutor) Run(ctx context.Context, _ string, _ string, _ LogSink) (string, string, int, error) {
 	s.calls.Add(1)
 	select {
 	case <-ctx.Done():

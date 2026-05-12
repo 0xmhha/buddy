@@ -117,7 +117,20 @@ func (r *Runtime) runOneStep(ctx context.Context, runID int64, idx int, step Cha
 		_ = r.store.AppendLog(ctx, runID, "info",
 			fmt.Sprintf("step[%d] %s attempt=%d", idx, step.Command, attempt))
 
-		stdout, stderr, code, err := r.executor.Run(ctx, step.Command, step.Args)
+		// Stream sink: forwards every line the executor emits straight into
+		// agent_logs so `buddy agent log <id>` shows mid-progress on long
+		// steps instead of waiting for the whole step to finish. Stdout
+		// lines become info-level; stderr becomes warn — matching the
+		// runtime's convention for the post-step ok / warn / error lines.
+		sink := func(stream, line string) {
+			level := "info"
+			if stream == "stderr" {
+				level = "warn"
+			}
+			_ = r.store.AppendLog(ctx, runID, level,
+				fmt.Sprintf("step[%d] %s %s: %s", idx, step.Command, stream, line))
+		}
+		stdout, stderr, code, err := r.executor.Run(ctx, step.Command, step.Args, sink)
 		last = StepResult{
 			Command: NormalizeCommand(step.Command), Args: step.Args, Attempt: attempt,
 			ExitCode: code, Stdout: stdout, Stderr: stderr,

@@ -380,6 +380,102 @@ func TestRuntime_Run_ParsesConditionalBranches(t *testing.T) {
 	require.True(t, noSkillLogged, "expected USA/EU/기타 branch log line, got %+v", logs)
 }
 
+// TestRuntime_Run_StreamsStdoutLinesToAgentLogs covers Tier 1.5 streaming
+// log capture: each line emitted by the executor surfaces in agent_logs in
+// the order it was produced, with one log entry per line. This is what
+// makes `buddy agent log <id>` show mid-progress on long-running steps
+// instead of only the final post-step summary.
+func TestRuntime_Run_StreamsStdoutLinesToAgentLogs(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	spec, err := ParseSpec([]byte(minimalSpecYAML))
+	require.NoError(t, err)
+	agent, err := store.Create(ctx, spec, minimalSpecYAML)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{
+		Stdout:   "compiling…\nlinking…\nready\n",
+		Stderr:   "deprecation: foo() will be removed\n",
+		ExitCode: 0,
+	}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, agent)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, 1)
+
+	logs, err := store.Logs(ctx, res.RunID, 0)
+	require.NoError(t, err)
+
+	var stdoutLines []string
+	var stderrLines []string
+	for _, l := range logs {
+		switch {
+		case strings.Contains(l.Message, " stdout: "):
+			stdoutLines = append(stdoutLines, l.Message)
+		case strings.Contains(l.Message, " stderr: "):
+			stderrLines = append(stderrLines, l.Message)
+		}
+	}
+
+	require.Len(t, stdoutLines, 3, "every stdout line should produce one log entry")
+	require.Contains(t, stdoutLines[0], "stdout: compiling…")
+	require.Contains(t, stdoutLines[1], "stdout: linking…")
+	require.Contains(t, stdoutLines[2], "stdout: ready")
+
+	require.Len(t, stderrLines, 1)
+	require.Contains(t, stderrLines[0], "stderr: deprecation: foo() will be removed")
+
+	// StepResult.Stdout / Stderr still hold the full captured output so the
+	// post-step JSON-encoded result keeps the same shape it had in v0.6.x.
+	require.Equal(t, "compiling…\nlinking…\nready\n", res.Steps[0].Stdout)
+	require.Equal(t, "deprecation: foo() will be removed\n", res.Steps[0].Stderr)
+}
+
+// TestRuntime_Run_StreamingHasCorrectLevels asserts that stdout lines are
+// recorded as info while stderr lines are recorded as warn — matching the
+// runtime's pre-existing convention for the post-step ok / warn / error
+// summary lines so log consumers can filter consistently.
+func TestRuntime_Run_StreamingHasCorrectLevels(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	spec, err := ParseSpec([]byte(minimalSpecYAML))
+	require.NoError(t, err)
+	agent, err := store.Create(ctx, spec, minimalSpecYAML)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{
+		Stdout:   "hello\n",
+		Stderr:   "uh oh\n",
+		ExitCode: 0,
+	}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, agent)
+	require.NoError(t, err)
+
+	logs, err := store.Logs(ctx, res.RunID, 0)
+	require.NoError(t, err)
+
+	var stdoutLevel, stderrLevel string
+	for _, l := range logs {
+		if strings.Contains(l.Message, "stdout: hello") {
+			stdoutLevel = l.Level
+		}
+		if strings.Contains(l.Message, "stderr: uh oh") {
+			stderrLevel = l.Level
+		}
+	}
+	require.Equal(t, "info", stdoutLevel)
+	require.Equal(t, "warn", stderrLevel)
+}
+
 func TestRuntime_Run_FileOutputWritesResult(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

@@ -1,12 +1,24 @@
 package agent
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os/exec"
+	"strings"
+	"sync"
 )
+
+// LogSink is the streaming callback Runtime supplies to executors so that
+// each line emitted by the child process can be persisted in real time
+// (rather than only after the whole step completes). stream is the literal
+// "stdout" or "stderr". sink == nil means "do not stream" — Run still
+// returns the full captured strings via its return values, so callers that
+// did not opt in keep their v0.6.x behavior byte-identically.
+type LogSink func(stream, line string)
 
 // Executor abstracts "run one buddy command and return its captured output".
 // Production uses SubprocessExecutor (spawns `claude` CLI per ADR-005's
@@ -19,7 +31,12 @@ type Executor interface {
 	// Run executes `<command> "<args>"` against the embedding layer (Claude
 	// Code subprocess for SubprocessExecutor) and returns captured stdout +
 	// stderr + exit code. Cancellation honours ctx.
-	Run(ctx context.Context, command, args string) (stdout string, stderr string, exitCode int, err error)
+	//
+	// sink, when non-nil, is invoked once per output line (newline-trimmed)
+	// as the child process emits it — enabling `buddy agent log <id>` to
+	// surface mid-progress on long-running steps. Passing nil disables
+	// streaming and matches the v0.6.x behavior exactly.
+	Run(ctx context.Context, command, args string, sink LogSink) (stdout string, stderr string, exitCode int, err error)
 }
 
 // SubprocessExecutor implements Executor by spawning `claude` once per step
@@ -51,7 +68,13 @@ var ErrClaudeMissing = errors.New("agent: claude CLI not found on PATH (install 
 
 // Run spawns the claude subprocess. The dispatch payload is sent on stdin —
 // matching cli-buddy-spec §4.2 step (b).
-func (e *SubprocessExecutor) Run(ctx context.Context, command, args string) (string, string, int, error) {
+//
+// When sink != nil, stdout / stderr are scanned line-by-line as the child
+// emits them: each line is forwarded to sink immediately and also collected
+// into the returned buffers (so callers that read the full strings get the
+// same content they always did). When sink == nil, the implementation falls
+// back to bulk buffer capture — byte-identical to the v0.6.x behavior.
+func (e *SubprocessExecutor) Run(ctx context.Context, command, args string, sink LogSink) (string, string, int, error) {
 	bin := e.ClaudeBinary
 	if bin == "" {
 		bin = "claude"
@@ -63,22 +86,89 @@ func (e *SubprocessExecutor) Run(ctx context.Context, command, args string) (str
 	payload := fmt.Sprintf("/buddy:%s %s\n", NormalizeCommand(command), args)
 	cmd := exec.CommandContext(ctx, bin, e.ExtraArgs...) // #nosec G204 — bin is config-controlled, args are spec-controlled and routed via stdin
 	cmd.Stdin = bytes.NewReader([]byte(payload))
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
 
-	runErr := cmd.Run()
-	exitCode := 0
-	if runErr != nil {
-		var ee *exec.ExitError
-		if errors.As(runErr, &ee) {
-			exitCode = ee.ExitCode()
-		} else {
-			return stdout.String(), stderr.String(), -1, fmt.Errorf("agent: spawn claude: %w", runErr)
-		}
+	if sink == nil {
+		// Fast path: no streaming requested. Keep the previous bulk-buffer
+		// behavior exactly so v0.6.x callers see no change.
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		runErr := cmd.Run()
+		exitCode, exitErr := translateExitCode(runErr, &stdout, &stderr)
+		return stdout.String(), stderr.String(), exitCode, exitErr
 	}
-	return stdout.String(), stderr.String(), exitCode, nil
+
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return "", "", -1, fmt.Errorf("agent: stdout pipe: %w", err)
+	}
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return "", "", -1, fmt.Errorf("agent: stderr pipe: %w", err)
+	}
+	if err := cmd.Start(); err != nil {
+		return "", "", -1, fmt.Errorf("agent: spawn claude: %w", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go streamLines(stdoutPipe, &stdout, sink, "stdout", &wg)
+	go streamLines(stderrPipe, &stderr, sink, "stderr", &wg)
+	wg.Wait()
+
+	runErr := cmd.Wait()
+	stdoutStr, stderrStr := stdout.String(), stderr.String()
+	exitCode, exitErr := translateExitCode(runErr, &stdout, &stderr)
+	// translateExitCode returns 4 values when sink==nil path, but the
+	// streamed path discards the buffer fields it would return; we already
+	// have stdoutStr / stderrStr captured above so this is safe.
+	_ = exitErr
+	return stdoutStr, stderrStr, exitCode, exitErr
 }
+
+// streamLines runs in a goroutine, reading newline-delimited lines from r,
+// invoking sink for each, and appending the line (with its trailing newline
+// re-attached so the buffer round-trips the original byte content) to buf.
+// The scanner uses bufio's default token size; lines longer than that get
+// emitted as multiple chunks, which is acceptable for log surface purposes.
+func streamLines(r io.ReadCloser, buf *bytes.Buffer, sink LogSink, stream string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer r.Close()
+	scanner := bufio.NewScanner(r)
+	// Use a large-ish max line size so a JSON-formatted PROCEDURE output
+	// (could easily exceed 64KB with embedded artefacts) is not split mid-
+	// record. 1 MiB matches the limit applied to log retention elsewhere.
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		line := scanner.Text()
+		buf.WriteString(line)
+		buf.WriteByte('\n')
+		sink(stream, line)
+	}
+	// Scanner errors are surfaced indirectly: a truncated read shows up as a
+	// missing trailing line in the captured buffer. Surfacing them to the
+	// caller would race with cmd.Wait() and complicate Run's return contract;
+	// the executor treats them as best-effort streaming and falls back on
+	// exit code for success/failure.
+	_ = scanner.Err()
+}
+
+// translateExitCode converts os/exec's run-error into the (exitCode, error)
+// pair Run's contract expects: a non-zero child exit becomes (code, nil)
+// instead of an error, while a spawn/transport failure becomes (-1, wrapped
+// error). Used by both the fast path (bulk capture) and the streaming path.
+func translateExitCode(runErr error, _, _ *bytes.Buffer) (int, error) {
+	if runErr == nil {
+		return 0, nil
+	}
+	var ee *exec.ExitError
+	if errors.As(runErr, &ee) {
+		return ee.ExitCode(), nil
+	}
+	return -1, fmt.Errorf("agent: spawn claude: %w", runErr)
+}
+
 
 // MockExecutor is the test double. It records every call so tests can assert
 // the sequence and surfaces canned responses keyed by command name.
@@ -108,11 +198,40 @@ func NewMockExecutor() *MockExecutor {
 	return &MockExecutor{Responses: map[string]MockResponse{}}
 }
 
-// Run records the call and returns the canned response (or Default).
-func (m *MockExecutor) Run(_ context.Context, command, args string) (string, string, int, error) {
+// Run records the call and returns the canned response (or Default). When
+// sink != nil the mock simulates streaming by splitting the canned Stdout /
+// Stderr on newlines and emitting one sink call per line — matching the
+// SubprocessExecutor's contract closely enough that Runtime-level tests can
+// assert mid-progress log behavior against the mock alone.
+func (m *MockExecutor) Run(_ context.Context, command, args string, sink LogSink) (string, string, int, error) {
 	m.Calls = append(m.Calls, MockCall{Command: NormalizeCommand(command), Args: args})
+	resp := m.Default
 	if r, ok := m.Responses[NormalizeCommand(command)]; ok {
-		return r.Stdout, r.Stderr, r.ExitCode, r.Err
+		resp = r
 	}
-	return m.Default.Stdout, m.Default.Stderr, m.Default.ExitCode, m.Default.Err
+	if sink != nil {
+		for _, line := range splitLines(resp.Stdout) {
+			sink("stdout", line)
+		}
+		for _, line := range splitLines(resp.Stderr) {
+			sink("stderr", line)
+		}
+	}
+	return resp.Stdout, resp.Stderr, resp.ExitCode, resp.Err
+}
+
+// splitLines is the mock-side counterpart to bufio.Scanner: returns the
+// newline-delimited lines of s with their trailing newline stripped. Empty
+// trailing lines (e.g. "a\nb\n" → ["a", "b"]) are dropped so the mock
+// doesn't synthesise a phantom blank line per response.
+func splitLines(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, "\n")
+	// Drop the final empty element produced when s ends with "\n".
+	if len(parts) > 0 && parts[len(parts)-1] == "" {
+		parts = parts[:len(parts)-1]
+	}
+	return parts
 }
