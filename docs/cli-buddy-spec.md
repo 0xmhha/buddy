@@ -359,7 +359,7 @@ cli buddy spec 작성 자체가 *roadmap.md §4/§5/§6 outline 의 actual rewri
 - production-proven dogfood (사용자 실 agent 등록 시)
 - webhook / API output target (현재 stdout / file 만)
 - `buddy agent log <id>` / `buddy agent edit <id>` 등 추가 subcommand
-- scheduler live-refresh (현재 startup 시 load only — agent 추가/삭제는 restart 필요)
+- ~~scheduler live-refresh (현재 startup 시 load only — agent 추가/삭제는 restart 필요)~~ ✅ Done (Tier 1.6, 2026-05-12 — `RefreshInterval` polling + `RefreshDisabled` opt-out; CLI: `--refresh <duration>` / `--no-refresh`)
 
 → 6 phase × 평균 1~3 week = **3~6 month** estimate (single-dev cadence).
 

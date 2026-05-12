@@ -310,13 +310,20 @@ func newAgentSchedulerCmd() *cobra.Command {
 
 func newAgentSchedulerStartCmd() *cobra.Command {
 	var (
-		dbFlag       string
-		claudeBinary string
+		dbFlag          string
+		claudeBinary    string
+		refreshInterval time.Duration
+		noRefresh       bool
 	)
 	c := &cobra.Command{
 		Use:   "start",
 		Short: "Run the scheduler in the foreground (blocks until Ctrl-C)",
-		Args:  cobra.NoArgs,
+		Long: "Runs the cli buddy agent scheduler in the foreground. By default,\n" +
+			"the scheduler polls the store every --refresh duration (1m default)\n" +
+			"to pick up agents added / deleted / re-scheduled by another shell\n" +
+			"without requiring a restart. Pass --no-refresh to disable polling\n" +
+			"and revert to the v0.6.4 behavior (load once at startup).",
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
 			store, closer, err := openAgentStore(dbFlag)
@@ -330,7 +337,11 @@ func newAgentSchedulerStartCmd() *cobra.Command {
 				exec.ClaudeBinary = claudeBinary
 			}
 			rt := agent.NewRuntime(store, exec)
-			sched := agent.NewScheduler(store, rt, agent.SchedulerOptions{Logger: cmd.ErrOrStderr()})
+			sched := agent.NewScheduler(store, rt, agent.SchedulerOptions{
+				Logger:          cmd.ErrOrStderr(),
+				RefreshInterval: refreshInterval,
+				RefreshDisabled: noRefresh,
+			})
 
 			loaded, skipped, err := sched.Load(ctx)
 			if err != nil {
@@ -353,6 +364,10 @@ func newAgentSchedulerStartCmd() *cobra.Command {
 	}
 	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
 	c.Flags().StringVar(&claudeBinary, "claude-binary", "", "override claude CLI path (default: 'claude' on PATH)")
+	c.Flags().DurationVar(&refreshInterval, "refresh", time.Minute,
+		"how often to poll the store for added / deleted / re-scheduled agents (default: 1m)")
+	c.Flags().BoolVar(&noRefresh, "no-refresh", false,
+		"disable live refresh — load agents once at startup and never re-read the store")
 	return c
 }
 

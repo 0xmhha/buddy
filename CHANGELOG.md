@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — scheduler live refresh (Tier 1.6)
+
+Before v0.6.4, `buddy agent scheduler start` loaded the agent set once at startup and never re-read the store. Adding / deleting an agent (or editing its `schedule`) while the scheduler was running had no effect until the user killed and restarted the scheduler. `cli-buddy-spec.md` §9 W3-3 explicitly listed this as a follow-on. This change closes it.
+
+How it works:
+
+- New `SchedulerOptions.RefreshInterval` (default 1m; tests pass 20ms) and `SchedulerOptions.RefreshDisabled` (escape hatch for the v0.6.4 load-once behavior).
+- `Scheduler.tracked map[agentID]trackedEntry` records which cron entry each registered agent owns plus the schedule string it was registered with. Guarded by `trackedMu`.
+- `Scheduler.refreshOnce(ctx)` is the diff engine: it lists every agent, registers the new ones, drops the deleted ones, and re-registers the ones whose `schedule` field changed (`cron.Remove(old) + AddFunc(new)`). Idempotent — calling it twice in a row with no DB changes produces an empty diff. `Load` is now a thin wrapper over `refreshOnce` so the initial-load path and the polling path share their logic.
+- `Scheduler.Start` launches a `pollLoop` goroutine when `refreshInterval > 0`. The loop tickers at the configured cadence, calls `refreshOnce`, logs the `+N / -N / ~N` diff (added / removed / updated) only when anything actually moved, and exits cleanly when `ctx` is cancelled. Transient DB read failures log an error and continue rather than freezing the loop.
+- `cmd/buddy/agent_cmd.go` exposes the cadence on the CLI: `buddy agent scheduler start --refresh 30s` (custom), `buddy agent scheduler start --no-refresh` (disabled).
+
+What this enables in practice:
+
+```bash
+# shell A
+$ buddy agent scheduler start --refresh 10s
+scheduler: started (location=Asia/Seoul, entries=2, refresh=10s)
+
+# shell B (any time)
+$ buddy agent create new-spec.yaml
+created agent "new-spec"
+
+# shell A picks it up within ~10s:
+# scheduler: agent "new-spec" scheduled (cron="@every 1h" entry_id=3)
+# scheduler: refresh poll applied (+1 / -0 / ~0)
+```
+
+Tests (`internal/agent/scheduler_test.go` — 4 new race-clean tests):
+
+- New agent created post-Start surfaces in `Entries()` within the deadline; log line records the registration.
+- Deleted agent disappears from `Entries()` on the next poll; log line records the unschedule.
+- Schedule change (simulated via direct DB `UPDATE agents SET schedule = …`) re-registers the agent under a fresh cron entry ID so stale ticks don't keep firing.
+- `RefreshDisabled = true` keeps `Entries()` empty even after a post-Start `Create` — opt-out works and startup log shows `refresh=disabled`.
+
+v0.3 contract preserved: the cron schedules themselves stay minute-precision, in-flight overlap is still dropped by the per-agent atomic flag, and on-demand agents (no `schedule` field) are still invisible to the cron tick.
+
 ## [0.6.4] — 2026-05-12
 
 Bundles the cli buddy `[Unreleased]` work that accumulated after v0.6.3: Tier 1.5 streaming log capture (new behavior surface, strictly additive) plus the verify-quality-driven cleanup of the streaming-path internals (F1–F4, pure refactor). One feature + one quality follow-up that together exercise the full *build → verify → fix → re-verify → ship* loop the buddy plugin describes.
