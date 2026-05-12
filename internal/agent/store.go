@@ -221,6 +221,47 @@ func (s *Store) Logs(ctx context.Context, runID int64, limit int) ([]AgentLog, e
 	return out, rows.Err()
 }
 
+// LatestRun returns the most recent run row for an agent (highest id wins,
+// since agent_runs.id is the SQLite rowid alias and monotonic). Returns
+// ErrNotFound when the agent has no runs yet — distinct from a database
+// error so the caller can produce a friendly empty-state message.
+func (s *Store) LatestRun(ctx context.Context, agentID string) (AgentRun, error) {
+	const q = `
+		SELECT id, agent_id, started_at, ended_at, exit_code, error, result_json
+		FROM agent_runs
+		WHERE agent_id = ?
+		ORDER BY id DESC
+		LIMIT 1`
+	var r AgentRun
+	var startedAt int64
+	var endedAt sql.NullInt64
+	var exitCode sql.NullInt64
+	var errStr sql.NullString
+	var resultJSON sql.NullString
+	row := s.db.QueryRowContext(ctx, q, agentID)
+	if err := row.Scan(&r.ID, &r.AgentID, &startedAt, &endedAt, &exitCode, &errStr, &resultJSON); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return AgentRun{}, ErrNotFound
+		}
+		return AgentRun{}, fmt.Errorf("agent: latest run: %w", err)
+	}
+	r.StartedAt = time.UnixMilli(startedAt).UTC()
+	if endedAt.Valid {
+		t := time.UnixMilli(endedAt.Int64).UTC()
+		r.EndedAt = &t
+	}
+	if exitCode.Valid {
+		r.ExitCode = int(exitCode.Int64)
+	}
+	if errStr.Valid {
+		r.Error = errStr.String
+	}
+	if resultJSON.Valid {
+		r.ResultJSON = resultJSON.String
+	}
+	return r, nil
+}
+
 // nullableString turns empty strings into sql.NullString{Valid:false} so the
 // agent_runs.error column ends up NULL rather than the literal "".
 func nullableString(s string) any {

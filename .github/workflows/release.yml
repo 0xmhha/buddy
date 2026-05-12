@@ -55,6 +55,15 @@ jobs:
           fi
           echo "Tag and RELEASE_VERSION agree: $mk"
 
+      - name: Verify all 5 version sources agree with Makefile
+        # Guards the second drift axis from v0.6.1's post-mortem:
+        # plugin.json, marketplace.json, internal/mcp/server.go Version,
+        # cmd/buddy/main.go var version, and Makefile RELEASE_VERSION
+        # must all read the same value. Without this, a half-bumped
+        # release could publish binaries whose --version disagrees with
+        # plugin.json's published version.
+        run: make verify-versions
+
       - name: Build cross-compile matrix
         run: make release-binaries
 

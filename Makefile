@@ -1,4 +1,4 @@
-.PHONY: build test test-routing test-skill-form verify-go-version fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
+.PHONY: build test test-routing test-skill-form verify-go-version verify-versions fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
 
 BIN     := bin/buddy
 BIN_MCP := bin/buddy-mcp
@@ -19,7 +19,7 @@ LDFLAGS := -X main.gitSHA=$(GIT_SHA) -X main.buildDate=$(BUILD_DATE)
 # version for a release, update both. v0.2 may move to a single-source-of-truth
 # VERSION file or build-time embed if release cadence increases.
 # Roadmap §3 M6 T1.
-RELEASE_VERSION ?= 0.6.1
+RELEASE_VERSION ?= 0.6.2
 DIST := dist
 RELEASE_BINS := \
 	$(DIST)/buddy_$(RELEASE_VERSION)_linux_amd64 \
@@ -81,6 +81,36 @@ verify-go-version:
 	  exit 1; \
 	fi; \
 	echo "verify-go-version: go.mod ($$mod_go) and release.yml ($$wf_go) agree on major.minor=$$mod_short"
+
+# verify-versions guards the second drift axis identified in v0.6.1's
+# post-mortem: the five version sources that must stay synchronized for
+# every release. The existing release.yml step covers tag↔Makefile;
+# verify-go-version covers go.mod↔workflow; this target covers the
+# Makefile↔plugin.json↔marketplace.json↔server.go↔main.go axis.
+#
+# All five values must equal RELEASE_VERSION exactly. Any mismatch is
+# almost certainly a half-finished release bump that would publish
+# inconsistent binaries (e.g. plugin.json says 0.6.1 but the cli binary
+# self-reports 0.6.0). Run as part of the release workflow before
+# cross-compile.
+verify-versions:
+	@want="$(RELEASE_VERSION)"; \
+	mk="$$want"; \
+	pj=$$(awk -F'"' '/^  "version":/ {print $$4; exit}' plugin/.claude-plugin/plugin.json); \
+	mp=$$(awk -F'"' '/"version":[[:space:]]*"/ {print $$4; exit}' .claude-plugin/marketplace.json); \
+	sv=$$(awk -F'"' '/Version:[[:space:]]*"/ {print $$2; exit}' internal/mcp/server.go); \
+	mn=$$(awk -F'"' '/version[[:space:]]*=[[:space:]]*"/ {print $$2; exit}' cmd/buddy/main.go); \
+	miss=""; \
+	for pair in "Makefile:$$mk" "plugin.json:$$pj" "marketplace.json:$$mp" "server.go:$$sv" "main.go:$$mn"; do \
+	  name=$${pair%%:*}; val=$${pair#*:}; \
+	  if [ "$$val" != "$$want" ]; then miss="$$miss $$name=$$val"; fi; \
+	done; \
+	if [ -n "$$miss" ]; then \
+	  echo "::error::version sources disagree with Makefile RELEASE_VERSION ($$want):$$miss"; \
+	  echo "fix: bump every disagreeing source to $$want, or update Makefile RELEASE_VERSION to match the intended release"; \
+	  exit 1; \
+	fi; \
+	echo "verify-versions: all 5 sources agree on $$want"
 
 fmt:
 	gofmt -s -w .

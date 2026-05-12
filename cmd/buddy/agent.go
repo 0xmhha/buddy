@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -29,6 +30,7 @@ func newAgentCmd() *cobra.Command {
 		newAgentListCmd(),
 		newAgentShowCmd(),
 		newAgentRunCmd(),
+		newAgentLogCmd(),
 		newAgentDeleteCmd(),
 		newAgentSchedulerCmd(),
 	)
@@ -162,6 +164,70 @@ func newAgentShowCmd() *cobra.Command {
 		},
 	}
 	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	return c
+}
+
+// ─── log ───────────────────────────────────────────────────────────────────
+
+func newAgentLogCmd() *cobra.Command {
+	var (
+		dbFlag string
+		limit  int
+	)
+	c := &cobra.Command{
+		Use:   "log <agent-id>",
+		Short: "Tail logs from the agent's most recent run",
+		Long: "Reads agent_logs for the latest run of <agent-id>, oldest first.\n" +
+			"Surfaces the per-step info / warn / error lines the runtime writes,\n" +
+			"including the v0.5.0+ self-check verdict line and the v0.6.0+\n" +
+			"next-phase branch lines. Use --limit to cap rows when a run\n" +
+			"produced many lines.",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			store, closer, err := openAgentStore(dbFlag)
+			if err != nil {
+				return err
+			}
+			defer closer()
+			run, err := store.LatestRun(ctx, args[0])
+			if err != nil {
+				if errors.Is(err, agent.ErrNotFound) {
+					fmt.Fprintf(cmd.ErrOrStderr(),
+						"agent %q has no runs yet (or does not exist). Try `buddy agent run %s`.\n",
+						args[0], args[0])
+					return err
+				}
+				return err
+			}
+			logs, err := store.Logs(ctx, run.ID, limit)
+			if err != nil {
+				return err
+			}
+			out := cmd.OutOrStdout()
+			fmt.Fprintf(out, "Run ID:     %d\n", run.ID)
+			fmt.Fprintf(out, "Started:    %s\n", run.StartedAt.Format("2006-01-02 15:04:05 MST"))
+			if run.EndedAt != nil {
+				fmt.Fprintf(out, "Ended:      %s\n", run.EndedAt.Format("2006-01-02 15:04:05 MST"))
+			}
+			fmt.Fprintf(out, "Exit code:  %d\n", run.ExitCode)
+			if run.Error != "" {
+				fmt.Fprintf(out, "Error:      %s\n", run.Error)
+			}
+			fmt.Fprintln(out, "Log:")
+			if len(logs) == 0 {
+				fmt.Fprintln(out, "    (no log lines)")
+				return nil
+			}
+			for _, l := range logs {
+				fmt.Fprintf(out, "    %s  %-5s  %s\n",
+					l.Ts.Format("2006-01-02 15:04:05"), l.Level, l.Message)
+			}
+			return nil
+		},
+	}
+	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	c.Flags().IntVar(&limit, "limit", 0, "maximum log lines to print (0 = all)")
 	return c
 }
 

@@ -7,17 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added — go-version drift sanity check (root cause hardening for v0.6.1)
+## [0.6.2] — 2026-05-12
 
-The first v0.6.1 tag failed CI because `go.mod`'s `go` directive (1.25.0, bumped in `becbcf1` on 2026-05-11) had been silently out of sync with `.github/workflows/release.yml`'s `go-version: '1.22'` across four prior releases. `setup-go@v5`'s `GOTOOLCHAIN=auto` default had been auto-downloading the 1.25 toolchain on every CI run, hiding the drift. `setup-go@v6` exports `GOTOOLCHAIN=local` and removes that fallback, so the next tag after the action bump was the first one to break.
+Bundles two release-pipeline hardening rounds (go-version + 5-version-sources drift checks) with a long-awaited `buddy agent log` viewer and a push/PR CI gate. All four entries derive from the v0.6.1 root-cause analysis surfacing how thin the test/sanity coverage on `main` had been before tag time.
 
-The fix in v0.6.1 itself only synced the values once. This change hardens the workflow against recurrence.
+### Added — release-pipeline drift sanity checks
 
-- **`make verify-go-version`** — new Makefile target. Reads `go.mod`'s `go` directive (e.g. `1.25.0`) and `release.yml`'s `go-version` input (e.g. `1.25`), compares major.minor, and exits non-zero with an explicit `::error::` line and a remediation hint on mismatch. Dry-run on a simulated drift (`go-version: '1.22'`) produces the exact error message future contributors will see.
-- **release.yml integration** — new `Verify workflow go-version matches go.mod` step runs `make verify-go-version` between `Set up Go` and the existing `Verify tag matches Makefile RELEASE_VERSION` step. Any future drift fails CI fast instead of silently regressing onto a runner that happens to provide a compatible toolchain.
-- **`README.md` + `docs/HANDOFF.md`** — Stack lines now point at `go.mod` as the source of truth alongside the explicit minimum, mirroring the workflow check so doc updates stay grouped.
+The first v0.6.1 tag failed CI because `go.mod`'s `go` directive (1.25.0, bumped in `becbcf1` on 2026-05-11) had been silently out of sync with `.github/workflows/release.yml`'s `go-version: '1.22'` across four prior releases. `setup-go@v5`'s `GOTOOLCHAIN=auto` default had been auto-downloading the 1.25 toolchain on every CI run, hiding the drift. `setup-go@v6` exports `GOTOOLCHAIN=local` and removes that fallback, so the next tag after the action bump was the first one to break. v0.6.2 hardens against recurrence on both that axis and a sibling axis (the 5 version sources).
 
-The pattern (drift accumulates → external dependency change surfaces it as a hard failure) is generic: similar drift candidates exist between the 5 version sources (plugin.json / marketplace.json / server.go Version / main.go var version / Makefile RELEASE_VERSION) and across the doc-only mirror lines. The Makefile's existing `print-RELEASE_VERSION` + `release.yml`'s `Verify tag matches Makefile RELEASE_VERSION` step already covers the tag↔Makefile axis; this change adds the go.mod↔workflow axis. Other axes remain candidates for follow-on hardening once a real drift surfaces or a contributor proposes one.
+- **`make verify-go-version`** — new Makefile target. Reads `go.mod`'s `go` directive (e.g. `1.25.0`) and `release.yml`'s `go-version` input (e.g. `1.25`), compares major.minor, and exits non-zero with an explicit `::error::` line + remediation hint on mismatch. Dry-run on a simulated drift (`go-version: '1.22'`) produces the exact message future contributors will see.
+- **`make verify-versions`** — new Makefile target. Reads `RELEASE_VERSION` + four other version sources (`plugin/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `internal/mcp/server.go` Version, `cmd/buddy/main.go` var version) and reports any disagreeing source by name. Half-bumped releases that would publish e.g. a plugin manifest at `0.6.2` with a cli binary self-reporting `0.6.1` now fail CI before cross-compile.
+- **`.github/workflows/release.yml`** runs both checks between `Set up Go` and the existing `Verify tag matches Makefile RELEASE_VERSION` step. Any future drift on either axis fails fast rather than silently regressing.
+- **`README.md` + `docs/HANDOFF.md`** Stack / requirement lines now point at `go.mod` as the source of truth alongside the explicit minimum, mirroring the workflow check so doc updates stay grouped.
+
+The pattern (drift accumulates → external dependency change surfaces it as a hard failure) is generic. The tag↔Makefile axis was already covered (`Verify tag matches Makefile RELEASE_VERSION`); v0.6.2 adds the go.mod↔workflow and Makefile↔(plugin.json+marketplace.json+server.go+main.go) axes. Other axes (e.g. README install snippet ↔ Makefile) remain candidates for follow-on hardening if a real drift surfaces.
+
+### Added — `buddy agent log <agent-id>` subcommand
+
+The v0.5.0 / v0.6.0 cycles added three new log line classes to `agent_logs` (per-step `self-check=<verdict> (M/T passed)`, `next-phase candidates: <list>`, and `next-phase branch: "<cond>" → <skills>`), but the CLI had no way to surface them. Users had to `sqlite3 buddy.db 'SELECT * FROM agent_logs WHERE run_id = ?'` to read them. v0.6.2 ships a friendly viewer.
+
+- **`buddy agent log <agent-id> [--limit N] [--db path]`** — resolves the agent's most recent run, prints `Run ID`, `Started` / `Ended` / `Exit code` / `Error` header, then each log line in `YYYY-MM-DD HH:MM:SS  <level>  <message>` form (oldest first). Empty-state friendly: an agent that exists but has never run yields `agent <id> has no runs yet. Try \`buddy agent run <id>\``; an unknown agent surfaces the same `agent.ErrNotFound` path.
+- **`Store.LatestRun(ctx, agentID)`** — new method backing the subcommand. Returns the highest-id row from `agent_runs` keyed by `agent_id`, or `ErrNotFound` when there is none.
+- **`internal/agent/store_test.go`** — 3 new race-clean tests covering the empty-state, multi-run-picks-highest-id, and unknown-agent paths.
+
+### Added — push/PR CI workflow (`ci.yml`)
+
+Before v0.6.2 the only CI signal on `main` came from `release.yml`, which fires only on tag pushes. Anything that broke between tags surfaced as a failed release run rather than a failed PR — exactly the gap that let the v0.6.1 build break ship in the first place. `ci.yml` closes it.
+
+- **`.github/workflows/ci.yml`** — runs on every push to `main` and every pull request targeting `main`. Steps: `actions/checkout@v6`, `actions/setup-go@v6` (go-version 1.25), `make verify-go-version`, `make verify-versions`, `go vet ./...`, `go test -race -count=1 -timeout=120s ./...`. Same drift checks as the release workflow so a contributor pushing a half-bumped version sees the failure in their PR, not at tag time.
+- Consumes no `github.event.*` user-controlled input (explicit security note inline in the workflow file), so the GitHub Actions workflow-injection class of issues does not apply.
+
+### Changed (release-only)
+
+- `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` version `0.6.1` → `0.6.2`.
+- `internal/mcp/server.go` MCP server `Version` `0.6.1` → `0.6.2`.
+- `cmd/buddy/main.go` `var version` `0.6.1` → `0.6.2`.
+- `Makefile` `RELEASE_VERSION` `0.6.1` → `0.6.2`.
+- `README.md` install snippet + sample output bumped to `0.6.2`.
+
+### Versioning policy note
+
+The new `buddy agent log` subcommand is a *user-visible surface addition*; ADR-004 §2.3 would normally pull this into a minor (`0.7.0`). Bundled as a patch in v0.6.2 at user direction — the surrounding entries (drift checks, CI gate) are all internal hardening + the subcommand wraps existing storage with no schema or behavior change. Future user-visible additions of similar scope will reset to the §2.3 default.
+
+### Migration notes
+
+- **plugin users**: `claude plugin marketplace add 0xmhha/buddy && claude plugin install buddy@buddy` re-fetches and upgrades to 0.6.2. Skill catalog + command surface unchanged from 0.6.x (148 skills / 99 commands).
+- **cli binary users**: optional bump. v0.6.1 binaries continue to work; pull v0.6.2 only if you want `buddy agent log <id>` and the matching version string.
+- **Plugin / cli contributors / fork maintainers**: `ci.yml` now runs on every PR — local `make verify-versions verify-go-version test` before pushing avoids round-trips through the PR queue.
+- **Existing buddy DBs**: no schema migration. `Store.LatestRun` reads the existing `agent_runs` table.
 
 ## [0.6.1] — 2026-05-12
 
@@ -815,7 +852,8 @@ performance, and recent activity through read-only commands.
   reads only `~/.buddy/config.json`).
 - AGENTS.md, the plugin model, and an MCP server (v1.0+ scope).
 
-[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/0xmhha/buddy/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/0xmhha/buddy/releases/tag/v0.6.2
 [0.6.1]: https://github.com/0xmhha/buddy/releases/tag/v0.6.1
 [0.6.0]: https://github.com/0xmhha/buddy/releases/tag/v0.6.0
 [0.5.0]: https://github.com/0xmhha/buddy/releases/tag/v0.5.0

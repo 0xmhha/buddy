@@ -1,0 +1,59 @@
+name: CI
+
+# Push / PR test gate. The release workflow (release.yml) only fires on
+# tag pushes, so prior to v0.6.2 the only signal that main was green
+# came from the contributor running tests locally. setup-go@v6's
+# GOTOOLCHAIN=local breaking change broke v0.6.1 in CI without any
+# pre-tag indication; this workflow closes that gap by running the
+# full race-clean test suite plus the two new drift checks on every
+# push to main and every pull request.
+#
+# Security note: this workflow does not consume any github.event.* user-
+# controlled input (no PR titles, commit messages, comment bodies, etc.),
+# so the workflow-injection guidance does not apply here. Every `run:`
+# step is a static command with no string interpolation from untrusted
+# sources.
+#
+# Roadmap §3 M6 deferred follow-on, surfaced as concrete need after
+# v0.6.1 root-cause analysis.
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (race, drift checks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          # Same SSoT discipline as release.yml — keep in sync with
+          # go.mod's go directive. `make verify-go-version` enforces it
+          # below.
+          go-version: '1.25'
+
+      - name: Verify workflow go-version matches go.mod
+        run: make verify-go-version
+
+      - name: Verify all 5 version sources agree with Makefile
+        run: make verify-versions
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test (race, count=1)
+        # -timeout=120s mirrors the release-side suite. Tests that exceed
+        # this in CI are an indicator of regression, not a reason to bump.
+        run: go test -race -count=1 -timeout=120s ./...
