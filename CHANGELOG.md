@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — split `cmd/buddy/main.go` (W3-5 retrofit)
+
+The `cmd/buddy/main.go` file had grown to 688 lines hosting eight unrelated sub-feature wirings (events / stats / doctor / install / uninstall / daemon-tree / hookwrap / boilerplate). `coding-style.md` recommends ≤400 lines per file and warns that mixing domains in one file is a single-responsibility violation regardless of size. The next subcommand addition would have pushed `main.go` past 800.
+
+Decomposition into sibling `<feature>_cmd.go` files matches the pre-existing `config_cmd.go` / `feature_cmd.go` / `mcp_cmd.go` / `purge_cmd.go` pattern. No behavior change — pure refactor; all 20 packages stay race-clean under `go test -race -count=1 -timeout=120s ./...`.
+
+| New file | Lines | Functions moved |
+|---|---|---|
+| `events_cmd.go` | 72 | `newEventsCmd` |
+| `stats_cmd.go` | 55 | `newStatsCmd` |
+| `doctor_cmd.go` | 52 | `newDoctorCmd` |
+| `install_cmd.go` | 120 | `newInstallCmd`, `newUninstallCmd`, `translateInstallError` |
+| `daemon_cmd.go` | 221 | `newDaemonCmd` + 4 subs (`run` / `start` / `stop` / `status`) + `resolvePIDFile`, `defaultPIDFromDB`, `spawnDetached` |
+| `hookwrap_cmd.go` | 85 | `newHookWrapCmd`, `parseTags` |
+
+`agent.go` → `agent_cmd.go` rename for naming consistency (`git mv` preserves history).
+
+`main.go` after the split is 147 lines — boilerplate (`main()`, `newRootCmd()`, version helpers, error helpers) only. Import list trimmed accordingly (`context`, `errors`, `fmt`, `os`, `cobra`, `config`, `db`, `persona` — was 9 stdlib + 9 internal).
+
+Resolves `docs/HANDOFF.md` §11 "Immediate small things" item: *`cmd/buddy/main.go` 분할 (685 lines)*.
+
 ## [0.6.2] — 2026-05-12
 
 Bundles two release-pipeline hardening rounds (go-version + 5-version-sources drift checks) with a long-awaited `buddy agent log` viewer and a push/PR CI gate. All four entries derive from the v0.6.1 root-cause analysis surfacing how thin the test/sanity coverage on `main` had been before tag time.

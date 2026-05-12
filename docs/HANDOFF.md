@@ -311,7 +311,7 @@ rm -rf $SANDBOX
 - ~~Versioned binary~~ ✅ M6 T3.
 - ~~Cross-compile + release workflow~~ ✅ M6 T1+T2.
 - ~~Plugin command context bloat (N-1)~~ ✅ ADR-001 (`disable-model-invocation: true` × 57 commands, commit `ca99762`). **신규 command 추가 시 이 컨벤션 강제** — `plugin/commands/*.md` 모든 신규 파일은 frontmatter에 `disable-model-invocation: true`를 포함해야 한다.
-- **`cmd/buddy/main.go` 분할 (685 lines):** v0.1.0 release 후 685 lines. v0.2 새 명령 추가 전에 install/daemon/doctor/stats/events/hookwrap 도 sibling으로 옮기면 좋음. ([`tasks.md`](./tasks.md) C-1)
+- ~~**`cmd/buddy/main.go` 분할 (685 lines)**~~ ✅ Done (2026-05-12, post-v0.6.2). 688 → 147 lines. 8 sub-feature 가 sibling `<feature>_cmd.go` 로 분리됨 (events / stats / doctor / install / daemon / hookwrap) + `agent.go` → `agent_cmd.go` rename. [Unreleased] 에 entry 보존.
 - ~~**모듈 path:** `github.com/wm-it-22-00661/buddy` — 이전 머신 잔재.~~ ✅ commit `4ce3ccb` 으로 `github.com/0xmhha/buddy` 일괄 변경 완료 (43 파일 / 91 import / go.mod 1 줄).
 - **gofmt drift 한 번 정리:** `gofmt -l .`이 가끔 비어있지 않으면 한 commit으로 정리 (현재는 clean). ([`tasks.md`](./tasks.md) C-3)
 
