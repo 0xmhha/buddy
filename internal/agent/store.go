@@ -221,6 +221,50 @@ func (s *Store) Logs(ctx context.Context, runID int64, limit int) ([]AgentLog, e
 	return out, rows.Err()
 }
 
+// CountRunsBefore returns the number of agent_runs rows whose ended_at
+// is older than threshold. Used by the dry-run preview of
+// `buddy agent log purge --before <duration>` so the user sees how many
+// runs will be affected before passing --apply.
+//
+// Runs that are still in flight (ended_at IS NULL) are *never* counted —
+// the threshold compares against the run's end time, not start time, so
+// a long-running step on a stale schedule does not get purged out from
+// under itself.
+func (s *Store) CountRunsBefore(ctx context.Context, threshold time.Time) (int64, error) {
+	var count int64
+	err := s.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM agent_runs WHERE ended_at IS NOT NULL AND ended_at < ?`,
+		threshold.UnixMilli(),
+	).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("agent: count old runs: %w", err)
+	}
+	return count, nil
+}
+
+// PurgeRunsBefore deletes agent_runs older than threshold. The FK
+// constraint on agent_logs.run_id is declared ON DELETE CASCADE
+// (see migration v4), so the matching log lines are removed
+// transactionally as part of the same DELETE. Returns the number of
+// agent_runs rows actually deleted.
+//
+// In-flight runs (ended_at IS NULL) are preserved unconditionally —
+// matches the CountRunsBefore semantics.
+func (s *Store) PurgeRunsBefore(ctx context.Context, threshold time.Time) (int64, error) {
+	res, err := s.db.ExecContext(ctx,
+		`DELETE FROM agent_runs WHERE ended_at IS NOT NULL AND ended_at < ?`,
+		threshold.UnixMilli(),
+	)
+	if err != nil {
+		return 0, fmt.Errorf("agent: purge old runs: %w", err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("agent: rows affected: %w", err)
+	}
+	return rows, nil
+}
+
 // LatestRun returns the most recent run row for an agent (highest id wins,
 // since agent_runs.id is the SQLite rowid alias and monotonic). Returns
 // ErrNotFound when the agent has no runs yet — distinct from a database

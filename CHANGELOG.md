@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — agent log retention (verify-quality F5 follow-on)
+
+The v0.6.4 verify-quality audit flagged F5 as a *medium* open finding: every line the executor emits becomes one `INSERT` into `agent_logs`, and there's no retention path — long-running steps over many days accumulate row counts without bound. This change adds a manual retention command. Auto-purge / batching remain follow-ons pending real-dogfood signal.
+
+- **`buddy agent purge --before <duration> [--apply]`** — new subcommand. `--before` accepts the same shapes as `buddy purge` (relative `30d`, date `2026-04-01`, RFC 3339). Dry-run by default (prints the count of runs that *would* be deleted); pass `--apply` to actually perform the delete. In-flight runs (`ended_at IS NULL`) are never deleted regardless of cutoff.
+- **`Store.CountRunsBefore(ctx, threshold)`** — preview helper. Counts `agent_runs` rows finished before `threshold`; in-flight runs excluded.
+- **`Store.PurgeRunsBefore(ctx, threshold)`** — delete helper. Drops the matching `agent_runs`; the existing `agent_logs.run_id ... ON DELETE CASCADE` constraint (migration v4) drops the matching log lines in the same transaction.
+
+Test coverage (3 new race-clean store tests):
+
+- `CountRunsBefore` excludes in-flight runs (`ended_at IS NULL`) and respects strict less-than against the cutoff.
+- `PurgeRunsBefore` deletes only the qualifying runs, preserves recent + in-flight runs, and the FK cascade actually drops the log rows transactionally (`SELECT COUNT(*) FROM agent_logs` drops by the expected amount).
+- `PurgeRunsBefore` on an empty DB returns `(0, nil)` rather than an error.
+
+CLI smoke verified against an empty DB (dry-run + apply both produce friendly zero-count messages).
+
+What stays open from F5:
+
+- **Per-line batching** — `AppendLog` still does one `INSERT` per line. Acceptable for moderate output volumes; the right batching design needs measurement against a real workload (Tier 6.1 dogfood would surface it). Tracked as a follow-on rather than guessed at here.
+- **Auto-purge** — no scheduled cleanup yet. Users with `cron` available can wrap the manual command (`0 4 * * * buddy agent purge --before 30d --apply`). A built-in periodic purge is a future cycle once the right default cadence + threshold becomes clear from dogfood.
+
 ### Added — W3-6 reference webtoon agent example
 
 `examples/webtoon-agent/` is the canonical end-to-end agent spec from `cli-buddy-spec.md` §2.2 — a daily-scheduled chain (`concretize-idea → write-prd → design-system → build-feature`) that publishes its `RunResult` to a downstream webtoon API via webhook. With v0.6.3 (exponential backoff) + v0.6.4 (streaming logs) + v0.6.5 (scheduler live refresh) + v0.6.6 (webhook output) shipped, the example exercises every cli buddy capability in one spec.

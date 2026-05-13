@@ -12,6 +12,7 @@ import (
 
 	"github.com/0xmhha/buddy/internal/agent"
 	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/purge"
 )
 
 // newAgentCmd assembles the `buddy agent ...` subtree. Per cli-buddy-spec §6.2
@@ -31,6 +32,7 @@ func newAgentCmd() *cobra.Command {
 		newAgentShowCmd(),
 		newAgentRunCmd(),
 		newAgentLogCmd(),
+		newAgentPurgeCmd(),
 		newAgentDeleteCmd(),
 		newAgentSchedulerCmd(),
 	)
@@ -228,6 +230,72 @@ func newAgentLogCmd() *cobra.Command {
 	}
 	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
 	c.Flags().IntVar(&limit, "limit", 0, "maximum log lines to print (0 = all)")
+	return c
+}
+
+// ─── purge ─────────────────────────────────────────────────────────────────
+
+func newAgentPurgeCmd() *cobra.Command {
+	var (
+		dbFlag     string
+		beforeFlag string
+		applyFlag  bool
+	)
+	c := &cobra.Command{
+		Use:   "purge",
+		Short: "Delete agent runs (and their logs) older than --before",
+		Long: "Trims agent_runs whose ended_at is older than --before. The FK\n" +
+			"constraint on agent_logs cascades the delete so every log line\n" +
+			"that belonged to a purged run is removed transactionally. In-flight\n" +
+			"runs (ended_at IS NULL) are never deleted.\n\n" +
+			"--before accepts the same shapes as `buddy purge`: a relative\n" +
+			"duration like '30d', a date '2026-04-01', or an RFC 3339 timestamp.\n\n" +
+			"Default mode is dry-run: the count of runs that *would* be\n" +
+			"deleted is printed. Pass --apply to actually perform the delete.\n\n" +
+			"Closes the v0.6.4 verify-quality F5 medium finding (DB write\n" +
+			"per-line + no retention path).",
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
+			if beforeFlag == "" {
+				return newFriendError("buddy: --before is required (e.g. --before 30d)")
+			}
+			cutoff, err := purge.ParseBefore(beforeFlag, time.Now().UTC())
+			if err != nil {
+				return newFriendError(fmt.Sprintf("buddy: invalid --before %q: %v", beforeFlag, err))
+			}
+			store, closer, err := openAgentStore(dbFlag)
+			if err != nil {
+				return err
+			}
+			defer closer()
+
+			if !applyFlag {
+				count, err := store.CountRunsBefore(ctx, cutoff)
+				if err != nil {
+					return err
+				}
+				fmt.Fprintf(cmd.OutOrStdout(),
+					"agent purge (dry-run): %d run(s) ended before %s would be deleted (with all their log lines). Pass --apply to confirm.\n",
+					count, cutoff.Format("2006-01-02 15:04:05 MST"))
+				return nil
+			}
+
+			deleted, err := store.PurgeRunsBefore(ctx, cutoff)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(),
+				"agent purge: deleted %d run(s) ended before %s (and their log lines via FK cascade).\n",
+				deleted, cutoff.Format("2006-01-02 15:04:05 MST"))
+			return nil
+		},
+	}
+	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	c.Flags().StringVar(&beforeFlag, "before", "",
+		"cutoff: relative ('30d'), date ('2026-04-01'), or RFC 3339")
+	c.Flags().BoolVar(&applyFlag, "apply", false,
+		"actually perform the delete (default is dry-run with a preview count)")
 	return c
 }
 
