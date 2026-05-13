@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — W3-2 TUI minimum-viable (cli-buddy-spec §9)
+
+`buddy tui` is the new entry point for the long-deferred W3-2 terminal UI. v0.6.6 ships the *minimum-viable* subset — a read-only agent list with vi-style navigation — using `charmbracelet/bubbletea` + `charmbracelet/lipgloss`. Detail view, create form, scheduler status, and live log tail land in W3-2 follow-on cycles, matching the partial-Done pattern used for W3-3 / W3-4.
+
+What ships:
+
+- New `internal/tui/` package: `Model` / `Update` / `View` with a pure-function reducer. The `AgentLister` interface narrows the Store dependency to a single `List(ctx)` method so reducer tests inject canned data without touching SQLite.
+- New `buddy tui [--db <path>]` subcommand wires `tea.NewProgram(tui.NewModel(store), WithAltScreen, WithContext)`. AltScreen preserves the user's prior shell content; `q` or `Ctrl-C` exits cleanly and restores the terminal.
+- Key bindings:
+  - `j` / `↓` — move cursor down (clamped at last row)
+  - `k` / `↑` — move cursor up (clamped at row 0)
+  - `g` / `Home` — jump to first
+  - `G` / `End` — jump to last
+  - `r` — refresh (re-reads the store; useful when `buddy agent create` runs in another shell and the scheduler refresh has not yet ticked)
+  - `q` / `Ctrl-C` — quit
+- Empty / loading / error states each have a friend-tone copy: `loading agents…`, `(no agents yet — run \`buddy agent create <spec.yaml>\` in another shell)`, `error: <message>`. Footer hint (`j/k or ↑/↓ move · g/G top/bottom · r refresh · q quit`) is always visible.
+- Cursor clamps when the list shrinks across reloads — deleting an agent while the cursor sat on it doesn't leave the cursor pointing past the end.
+
+Test coverage (`internal/tui/model_test.go` — 13 race-clean tests):
+
+- Update reducer: q quits, Ctrl-C quits, AgentsLoadedMsg folds into state, cursor clamps on list shrink, ErrMsg records error + marks Loaded, navigation respects bounds (j past end stays at end, k past top stays at 0), g/G jump to ends, r flips Loaded to false and returns a reload Cmd, WindowSizeMsg tracks width/height.
+- View smoke: loading placeholder visible before first load, empty-state copy visible, agent rows render with ID + schedule (or `(on-demand)`) + status, cursor marker `▸` present on the selected row, error string visible in the error state.
+
+`AltScreen` + `tea.QuitMsg` lifecycle is exercised through bubbletea's own goroutine model — the production path is not unit-tested, but bubbletea's contract is well-established and the reducer / View tests cover the Model surface.
+
+What stays open (W3-2 follow-on):
+
+- **Detail view** (`buddy agent show <id>` equivalent inline)
+- **Create form** (interactive spec builder vs. `buddy agent create` shell-out)
+- **Scheduler status pane** (`buddy agent scheduler status` inline)
+- **Live log tail** (per-line streaming view of an in-flight run; pairs with v0.6.4 `agent_logs` streaming)
+- **In-app delete / edit** (currently the user shells out to `buddy agent delete`)
+
+New direct deps:
+
+- `github.com/charmbracelet/bubbletea` (MIT)
+- `github.com/charmbracelet/lipgloss` (MIT)
+
+(Plus transitive `charmbracelet/x/*`, `mattn/go-runewidth`, `muesli/termenv`, etc. — all MIT or BSD-licensed.)
+
+`docs/cli-buddy-spec.md` §9 W3-2 row marked "partial Done 2026-05-13 — minimum-viable subset". This makes W3-2 the last `cli-buddy-spec` line item to enter Done state (every other W3-x cell now reads ✅ Done or partial Done).
+
 ### Added — agent log retention (verify-quality F5 follow-on)
 
 The v0.6.4 verify-quality audit flagged F5 as a *medium* open finding: every line the executor emits becomes one `INSERT` into `agent_logs`, and there's no retention path — long-running steps over many days accumulate row counts without bound. This change adds a manual retention command. Auto-purge / batching remain follow-ons pending real-dogfood signal.
