@@ -1,0 +1,73 @@
+# Reference webtoon agent — cli-buddy-spec.md §2.2 W3-6
+#
+# A daily-scheduled agent that walks a webtoon-creation PROCEDURE chain
+# (concretize-idea → write-prd → design-system → build-feature) and POSTs
+# the result to a downstream "webtoon-by-ai" publishing API. This is the
+# canonical end-to-end example exercising every cli buddy capability
+# shipped in v0.6.x:
+#
+#   - on-demand + scheduled runs (W3-3 v0.4.0)
+#   - cron live refresh (Tier 1.6 v0.6.5)
+#   - per-step output streaming into agent_logs (Tier 1.5 v0.6.4)
+#   - exponential retry backoff (Tier 1.4 v0.6.3)
+#   - PROCEDURE §self-check + §next-phase parsing including conditional
+#     branches (W3-4 v0.5.0 + v0.6.0)
+#   - webhook output dispatch (Tier 1.8 v0.6.6)
+#
+# Customise the `url` and `Authorization` header for your own publishing
+# endpoint before running. The Authorization header value is written
+# literally — template this file before `buddy agent create` if you need
+# to inject a secret from the environment.
+
+id: webtoon-publish
+name: "Daily webtoon publish (reference example)"
+
+# Run every day at 03:00 in the scheduler's local timezone. Pair with
+# `buddy agent scheduler start --refresh 1m` so a tweak via
+# `buddy agent delete webtoon-publish && buddy agent create <new-spec>`
+# is picked up without restarting the scheduler.
+schedule: "0 3 * * *"
+
+# Each chain step spawns a fresh Claude Code subprocess (per ADR-005
+# §4.1) running the named `/buddy:<command>`. Stdout from each step is
+# streamed line-by-line into agent_logs so a long-running step is
+# observable via `buddy agent log webtoon-publish`.
+chain:
+  - command: concretize-idea
+    args: '"Today''s webtoon: <theme>"'
+
+  - command: write-prd
+    args: '"webtoon strip — short comedic ending"'
+
+  - command: design-system
+    args: '"webtoon publishing pipeline"'
+
+  - command: build-feature
+    args: '"draft today''s strip + render panels"'
+
+# Retry policy — Claude subprocess flakiness (API rate limits, transient
+# 5xx) is handled with exponential backoff up to a 2-minute ceiling.
+# Step success/failure still tracks ExitCode; metadata-only self-check
+# verdicts from the parser do not flip the retry decision.
+retry:
+  max_attempts: 5
+  backoff_delay: 1s
+  backoff_strategy: exponential
+  backoff_max: 2m
+
+# Publish the RunResult to the webtoon API. The full JSON body includes
+# every step's stdout/stderr capture + parsed self-check + next-phase
+# candidates + conditional branches.
+output:
+  type: webhook
+  url: https://webtoon-by-ai.example.com/api/v1/episodes
+  method: POST
+  headers:
+    # Replace with a real token before `buddy agent create`. The runtime
+    # writes header values literally — no `${ENV}` expansion.
+    Authorization: "Bearer REPLACE-WITH-YOUR-TOKEN"
+    X-Source: buddy-agent
+    X-Agent-Version: "0.6.6"
+  # Bigger than the default 30s because the receiving API does a
+  # synchronous render pass on the body.
+  timeout: 90s

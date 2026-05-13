@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — W3-6 reference webtoon agent example
+
+`examples/webtoon-agent/` is the canonical end-to-end agent spec from `cli-buddy-spec.md` §2.2 — a daily-scheduled chain (`concretize-idea → write-prd → design-system → build-feature`) that publishes its `RunResult` to a downstream webtoon API via webhook. With v0.6.3 (exponential backoff) + v0.6.4 (streaming logs) + v0.6.5 (scheduler live refresh) + v0.6.6 (webhook output) shipped, the example exercises every cli buddy capability in one spec.
+
+- `examples/webtoon-agent/spec.yaml` — 4-step chain, daily cron (`0 3 * * *`), exponential retry (1s base, 2m cap, 5 attempts), webhook POST to `https://webtoon-by-ai.example.com/api/v1/episodes` with `Authorization` + `X-Source` + `X-Agent-Version` headers and a 90s timeout. Inline comments call out which v0.6.x feature each section depends on.
+- `examples/webtoon-agent/README.md` — usage walkthrough: customise the spec (template the Authorization header out-of-process), register via `buddy agent create`, start `buddy agent scheduler start --refresh 1m`, observe progress via `buddy agent log webtoon-publish`, modify-without-restart via the scheduler refresh, expected webhook payload shape, troubleshooting matrix.
+- `internal/agent/runtime_test.go` gains `TestParseSpec_ReferenceWebtoonAgentValidates` — reads `examples/webtoon-agent/spec.yaml` from disk, runs it through `ParseSpec`, and asserts every notable field (schedule, chain length, exponential backoff strategy + 2-minute cap, webhook type + URL scheme + 90s timeout + Authorization header). Functions as a regression gate so a future schema change can't silently break the shipped example.
+
+`docs/cli-buddy-spec.md` §9 W3-6 row marked Done.
+
 ## [0.6.6] — 2026-05-12
 
 Ships the cli buddy `[Unreleased]` work accumulated after v0.6.5: Tier 1.8 webhook output target. With v0.6.4 streaming logs + v0.6.5 scheduler live refresh already in place, this closes the last dependency of the cli-buddy-spec §2.2 reference webtoon agent (W3-6) — agents can now self-publish to downstream services without a wrapper script.

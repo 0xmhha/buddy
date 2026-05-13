@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -59,6 +60,34 @@ func TestParseSpec_MinimalValid(t *testing.T) {
 	require.Equal(t, "Hello agent", spec.Name)
 	require.Len(t, spec.Chain, 1)
 	require.Equal(t, "status", spec.Chain[0].Command)
+}
+
+// TestParseSpec_ReferenceWebtoonAgentValidates pins the W3-6 reference
+// example to ParseSpec so a future schema change can't silently break
+// the shipped example. The example sits in examples/webtoon-agent/spec.yaml
+// and exercises every v0.6.x cli buddy capability (retry exponential,
+// webhook output, multi-step chain). Path is relative to this test file.
+func TestParseSpec_ReferenceWebtoonAgentValidates(t *testing.T) {
+	t.Parallel()
+	body, err := os.ReadFile("../../examples/webtoon-agent/spec.yaml")
+	require.NoError(t, err, "the reference webtoon agent example must remain on disk")
+
+	spec, err := ParseSpec(body)
+	require.NoError(t, err, "examples/webtoon-agent/spec.yaml must always parse cleanly")
+	require.Equal(t, "webtoon-publish", spec.ID)
+	require.Equal(t, "0 3 * * *", spec.Schedule)
+	require.Len(t, spec.Chain, 4)
+
+	require.NotNil(t, spec.Retry)
+	require.Equal(t, BackoffStrategyExponential, spec.Retry.BackoffStrategy)
+	require.Equal(t, 2*time.Minute, spec.Retry.BackoffMax)
+
+	require.NotNil(t, spec.Output)
+	require.Equal(t, "webhook", spec.Output.Type)
+	require.Contains(t, spec.Output.URL, "https://")
+	require.Equal(t, "POST", spec.Output.Method)
+	require.Equal(t, 90*time.Second, spec.Output.Timeout)
+	require.NotEmpty(t, spec.Output.Headers["Authorization"])
 }
 
 func TestParseSpec_RejectsEmptyID(t *testing.T) {

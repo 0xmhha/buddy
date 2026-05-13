@@ -329,7 +329,7 @@ cli buddy spec 작성 자체가 *roadmap.md §4/§5/§6 outline 의 actual rewri
 | W3-3 agent runtime | scheduler (cron) + executor + retry | HIGH (partial Done 2026-05-11 — minimum-viable subset) | W3-1 |
 | W3-4 plugin buddy embedding | Claude Code subprocess + PROCEDURE parse | MED-HIGH (partial Done 2026-05-12 — parser ship in v0.5.0 + conditional branches ship in v0.6.0, retry/fail 의미 변경 + auto-cascade deferred) | W3-1 (Subprocess executor 의 spawn 부분 W3-3 안에서 ship — PROCEDURE §6/§7 parser + branches 는 W3-4 ship) |
 | W3-5 v0.1.0 재배치 | main.go 분할 + sub-feature 재배치 | MED (W6-1 묶음) | W3-2 / W3-3 / W3-4 (1 부분만) |
-| W3-6 reference agent | 웹툰 agent example | HIGH | W3-2 ~ W3-5 |
+| W3-6 reference agent | 웹툰 agent example | HIGH (Done 2026-05-12 — `examples/webtoon-agent/spec.yaml` + README; ParseSpec regression test gates the example. Exercises Tier 1.4 backoff / 1.5 streaming / 1.6 scheduler refresh / 1.8 webhook + W3-3 chain) | W3-2 ~ W3-5 |
 
 ### W3-3 partial Done — 2026-05-11 ship summary
 
