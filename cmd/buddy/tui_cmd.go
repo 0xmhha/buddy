@@ -9,10 +9,11 @@ import (
 	"github.com/0xmhha/buddy/internal/tui"
 )
 
-// newTuiCmd wires `buddy tui` — the W3-2 minimum-viable terminal UI. v0.6.6
-// ships a read-only agent list view (j/k or arrow-key navigation, q to
-// quit, r to refresh). The detail / create / live-log views remain
-// follow-on per cli-buddy-spec §9 W3-2.
+// newTuiCmd wires `buddy tui` — the W3-2 terminal UI. v0.6.6 shipped the
+// minimum-viable list. The current cycle adds the detail pane (Enter or
+// l on a row → latest-run summary; Esc or h returns). Create form, live
+// log tail, and scheduler status pane remain follow-on per
+// cli-buddy-spec §9 W3-2.
 //
 // AltScreen is enabled so the previous shell content is preserved and
 // restored on quit — the friend-tone "silent default" stays intact.
@@ -20,12 +21,12 @@ func newTuiCmd() *cobra.Command {
 	var dbFlag string
 	c := &cobra.Command{
 		Use:   "tui",
-		Short: "Open the cli buddy terminal UI (agent list, navigation, refresh)",
-		Long: "Launches the bubbletea-based TUI. v0.6.6 ships a read-only\n" +
-			"agent list; create/edit/log views land in follow-on cycles.\n\n" +
-			"Keys: j/k or ↑/↓ to move, g/G to jump to top/bottom, r to\n" +
-			"refresh, q (or Ctrl-C) to quit. AltScreen is used so your\n" +
-			"prior shell content is restored on exit.",
+		Short: "Open the cli buddy terminal UI (agent list + detail view)",
+		Long: "Launches the bubbletea-based TUI. List view: j/k or ↑/↓ to move,\n" +
+			"g/G to jump to top/bottom, r to refresh, enter/l to open detail,\n" +
+			"q (or Ctrl-C) to quit. Detail view: esc/h to return, r to\n" +
+			"refresh the latest-run summary. AltScreen is used so your prior\n" +
+			"shell content is restored on exit.",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			store, closer, err := openAgentStore(dbFlag)

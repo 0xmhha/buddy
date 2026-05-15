@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — W3-2 TUI detail view (follow-on of v0.6.6 minimum-viable)
+
+The v0.6.6 minimum-viable TUI shipped a read-only agent list and explicitly deferred the detail / create / log views. This change closes the first of those — pressing `enter` (or `l`) on a list row opens an inline detail pane showing the agent's metadata plus a summary of its most recent run (id, started/ended, duration, exit code, error). `esc` (or `h`) returns to the list with the cursor preserved.
+
+What ships:
+
+- `AgentLister` interface widened from a single-method (`List`) to two methods (`List` + `LatestRun`). The existing `*agent.Store` already implements `LatestRun` from v0.6.2, so the production wiring is transparent — only the test-side `fakeLister` had to grow a stubbed implementation.
+- New `Model` fields: `Mode` (`ModeList` / `ModeDetail`), `Selected` (agent ID locked in for the pane), `Detail` (`agent.AgentRun`), `DetailErr`, `DetailLoaded`. Reducer test fixtures inspect these directly without going through a helper.
+- New reducer messages: `AgentDetailLoadedMsg{Run}` and `AgentDetailErrMsg{Err}`. The detail fetch runs as a `tea.Cmd` (`loadDetailCmd`) so the reducer stays pure — same pattern v0.6.6 used for `loadAgentsCmd`.
+- Key bindings (additive — list-mode shortcuts are unchanged):
+  - `enter` / `l` / `→` (list mode) — open the detail pane for the cursor row. No-op on an empty list.
+  - `esc` / `h` (detail mode) — back to the list, cursor + list state preserved.
+  - `r` (detail mode) — refetch `LatestRun` for the locked-in agent (useful while a run is in-flight).
+  - `q` / `Ctrl-C` (both modes) — quit.
+  - `j` / `k` / `g` / `G` are scoped to list mode; in detail mode they are intentionally inert (the pane is read-only).
+- Detail render shows: agent ID + optional `(name)` in the header, schedule (`(on-demand)` when empty), status, created/updated timestamps (RFC3339 UTC). For the latest run: `started`, `ended` (or `(in-flight)`), `duration`, `exit code`, and `error` when present.
+- Friend-tone empty / loading / error copy: `loading latest run…` until the fetch resolves; `(no runs yet — try \`buddy agent run <id>\`)` when `LatestRun` returns `ErrNotFound`; `error: <message>` for any other error. Footer hint switches per-mode (`enter/l detail · …` in list, `esc/h back · r refresh · q quit` in detail).
+
+Test coverage (`internal/tui/model_test.go` — 14 new race-clean tests, 27 total in the package):
+
+- Update reducer: `enter` switches to detail + fires `LatestRun` cmd, `enter` on empty list is a no-op, `l` aliases `enter`, `AgentDetailLoadedMsg` folds into state, `AgentDetailErrMsg` records error + flips `DetailLoaded`, `esc` returns to list preserving cursor, `h` aliases `esc`, `q` quits from detail, list nav keys (`j/k/g/G`) are inert in detail mode, `r` in detail mode refetches `LatestRun`.
+- View smoke: detail pane renders agent fields (ID / name / schedule / status / exit code label / esc footer hint), `ErrNotFound` produces the "no runs yet" copy + `buddy agent run` hint, generic errors produce `error: <message>`, `DetailLoaded=false` renders the loading placeholder.
+
+What stays open from W3-2 follow-on (unchanged):
+
+- **Create form** (interactive spec builder vs. `buddy agent create` shell-out)
+- **Scheduler status pane** (`buddy agent scheduler status` inline)
+- **Live log tail** (per-line streaming view of an in-flight run; pairs with v0.6.4 `agent_logs` streaming)
+- **In-app delete / edit** (currently the user shells out to `buddy agent delete`)
+
+`docs/cli-buddy-spec.md` §9 W3-2 row note updated: minimum-viable + detail view shipped 2026-05-15.
+
 ### Added — W3-2 TUI minimum-viable (cli-buddy-spec §9)
 
 `buddy tui` is the new entry point for the long-deferred W3-2 terminal UI. v0.6.6 ships the *minimum-viable* subset — a read-only agent list with vi-style navigation — using `charmbracelet/bubbletea` + `charmbracelet/lipgloss`. Detail view, create form, scheduler status, and live log tail land in W3-2 follow-on cycles, matching the partial-Done pattern used for W3-3 / W3-4.
@@ -32,9 +64,9 @@ Test coverage (`internal/tui/model_test.go` — 13 race-clean tests):
 
 `AltScreen` + `tea.QuitMsg` lifecycle is exercised through bubbletea's own goroutine model — the production path is not unit-tested, but bubbletea's contract is well-established and the reducer / View tests cover the Model surface.
 
-What stays open (W3-2 follow-on):
+What stays open (W3-2 follow-on — at v0.6.6 ship time):
 
-- **Detail view** (`buddy agent show <id>` equivalent inline)
+- **Detail view** (`buddy agent show <id>` equivalent inline) — *shipped above, 2026-05-15*
 - **Create form** (interactive spec builder vs. `buddy agent create` shell-out)
 - **Scheduler status pane** (`buddy agent scheduler status` inline)
 - **Live log tail** (per-line streaming view of an in-flight run; pairs with v0.6.4 `agent_logs` streaming)

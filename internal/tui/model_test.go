@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/require"
@@ -18,6 +19,14 @@ import (
 type fakeLister struct {
 	agents []agent.Agent
 	err    error
+	// run is returned by LatestRun, keyed by agent ID. If runErr is set
+	// (per ID), LatestRun returns that error instead. A missing key falls
+	// back to runDefault / runDefaultErr — handy for "every agent has the
+	// same canned run" tests.
+	run           map[string]agent.AgentRun
+	runErr        map[string]error
+	runDefault    agent.AgentRun
+	runDefaultErr error
 }
 
 func (f *fakeLister) List(_ context.Context) ([]agent.Agent, error) {
@@ -25,6 +34,19 @@ func (f *fakeLister) List(_ context.Context) ([]agent.Agent, error) {
 		return nil, f.err
 	}
 	return f.agents, nil
+}
+
+func (f *fakeLister) LatestRun(_ context.Context, agentID string) (agent.AgentRun, error) {
+	if err, ok := f.runErr[agentID]; ok {
+		return agent.AgentRun{}, err
+	}
+	if r, ok := f.run[agentID]; ok {
+		return r, nil
+	}
+	if f.runDefaultErr != nil {
+		return agent.AgentRun{}, f.runDefaultErr
+	}
+	return f.runDefault, nil
 }
 
 // keyMsg builds a tea.KeyMsg for the given rune/key — bubbletea exposes
@@ -39,6 +61,10 @@ func keyMsg(s string) tea.KeyMsg {
 		return tea.KeyMsg{Type: tea.KeyDown}
 	case "up":
 		return tea.KeyMsg{Type: tea.KeyUp}
+	case "enter":
+		return tea.KeyMsg{Type: tea.KeyEnter}
+	case "esc":
+		return tea.KeyMsg{Type: tea.KeyEsc}
 	default:
 		return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(s)}
 	}
@@ -236,4 +262,230 @@ func TestView_ErrorState(t *testing.T) {
 	require.True(t,
 		strings.Contains(out, "error") && strings.Contains(out, "db locked"),
 		"error message must be visible in View output, got:\n%s", out)
+}
+
+// ─── Detail view (W3-2 follow-on) ──────────────────────────────────────
+
+// TestUpdate_EnterSwitchesToDetailAndFiresLoad — Enter on a populated list
+// transitions Mode to Detail, marks DetailLoaded=false, and returns the
+// LatestRun fetch command so the reducer stays pure (no I/O on the path).
+func TestUpdate_EnterSwitchesToDetailAndFiresLoad(t *testing.T) {
+	t.Parallel()
+	loader := &fakeLister{}
+	m := Model{Store: loader, Loaded: true, Agents: []agent.Agent{
+		{ID: "alpha"}, {ID: "beta"},
+	}, Cursor: 1}
+
+	next, cmd := m.Update(keyMsg("enter"))
+	mm := next.(Model)
+	require.Equal(t, ModeDetail, mm.Mode, "enter must switch to detail mode")
+	require.False(t, mm.DetailLoaded, "DetailLoaded must reset until LatestRun resolves")
+	require.Equal(t, "beta", mm.SelectedID(), "SelectedID must echo the cursor row's ID")
+	require.NotNil(t, cmd, "enter must schedule a LatestRun fetch")
+}
+
+// TestUpdate_EnterOnEmptyListIsNoOp — Enter when the list is empty must not
+// switch modes (there is nothing to show).
+func TestUpdate_EnterOnEmptyListIsNoOp(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Loaded: true}
+	next, cmd := m.Update(keyMsg("enter"))
+	mm := next.(Model)
+	require.Equal(t, ModeList, mm.Mode, "enter on empty list must stay in list mode")
+	require.Nil(t, cmd, "enter on empty list must not fire a fetch")
+}
+
+// TestUpdate_LSwitchesToDetailLikeEnter — vi-style 'l' is an alias for Enter
+// so right-hand-side keyboard users have the same affordance.
+func TestUpdate_LSwitchesToDetailLikeEnter(t *testing.T) {
+	t.Parallel()
+	loader := &fakeLister{}
+	m := Model{Store: loader, Loaded: true, Agents: []agent.Agent{{ID: "alpha"}}}
+	next, cmd := m.Update(keyMsg("l"))
+	mm := next.(Model)
+	require.Equal(t, ModeDetail, mm.Mode)
+	require.NotNil(t, cmd)
+}
+
+// TestUpdate_DetailLoadedFoldsIntoState — the AgentDetailLoadedMsg payload
+// lands on the model and DetailLoaded flips to true.
+func TestUpdate_DetailLoadedFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	started := time.Date(2026, 5, 13, 18, 10, 0, 0, time.UTC)
+	ended := started.Add(82 * time.Second)
+	run := agent.AgentRun{
+		ID: 42, AgentID: "alpha",
+		StartedAt: started, EndedAt: &ended,
+		ExitCode: 0,
+	}
+	m := Model{Mode: ModeDetail, Selected: "alpha"}
+	next, cmd := m.Update(AgentDetailLoadedMsg{Run: run})
+	mm := next.(Model)
+	require.Nil(t, cmd)
+	require.True(t, mm.DetailLoaded)
+	require.Equal(t, int64(42), mm.Detail.ID)
+	require.Equal(t, 0, mm.Detail.ExitCode)
+	require.Nil(t, mm.DetailErr, "successful load clears any prior DetailErr")
+}
+
+// TestUpdate_DetailErrFoldsIntoState — AgentDetailErrMsg records the error,
+// flips DetailLoaded to true (so the View knows the fetch resolved), and
+// leaves Detail itself unchanged.
+func TestUpdate_DetailErrFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("db locked")
+	m := Model{Mode: ModeDetail, Selected: "alpha"}
+	next, _ := m.Update(AgentDetailErrMsg{Err: bang})
+	mm := next.(Model)
+	require.True(t, mm.DetailLoaded)
+	require.ErrorIs(t, mm.DetailErr, bang)
+}
+
+// TestUpdate_EscReturnsToList — Esc in detail mode goes back to the list,
+// preserving cursor + list state.
+func TestUpdate_EscReturnsToList(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeDetail, Loaded: true,
+		Agents:   []agent.Agent{{ID: "a"}, {ID: "b"}},
+		Cursor:   1,
+		Selected: "b",
+	}
+	next, cmd := m.Update(keyMsg("esc"))
+	mm := next.(Model)
+	require.Equal(t, ModeList, mm.Mode)
+	require.Equal(t, 1, mm.Cursor, "Esc must preserve list cursor")
+	require.Len(t, mm.Agents, 2, "Esc must not touch the list")
+	require.Nil(t, cmd)
+}
+
+// TestUpdate_HReturnsToListLikeEsc — vi-style 'h' is an alias for Esc.
+func TestUpdate_HReturnsToListLikeEsc(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeDetail, Loaded: true,
+		Agents: []agent.Agent{{ID: "a"}}, Selected: "a"}
+	next, _ := m.Update(keyMsg("h"))
+	require.Equal(t, ModeList, next.(Model).Mode)
+}
+
+// TestUpdate_QuitWorksInDetailMode — q / ctrl+c must still quit when the
+// user is in the detail pane.
+func TestUpdate_QuitWorksInDetailMode(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeDetail}
+	_, cmd := m.Update(keyMsg("q"))
+	require.NotNil(t, cmd)
+	_, ok := cmd().(tea.QuitMsg)
+	require.True(t, ok, "q in detail mode must produce QuitMsg")
+}
+
+// TestUpdate_ListNavKeysIgnoredInDetail — j/k/g/G must not move the list
+// cursor while the user is reading the detail pane (they're scoped to
+// list mode).
+func TestUpdate_ListNavKeysIgnoredInDetail(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeDetail, Loaded: true,
+		Agents: []agent.Agent{{ID: "a"}, {ID: "b"}, {ID: "c"}}, Cursor: 0}
+	for _, k := range []string{"j", "G", "k", "g"} {
+		next, _ := m.Update(keyMsg(k))
+		require.Equal(t, 0, next.(Model).Cursor,
+			"%s must not move cursor in detail mode", k)
+		require.Equal(t, ModeDetail, next.(Model).Mode)
+	}
+}
+
+// TestUpdate_RInDetailRefetchesDetail — r refresh in detail mode re-fires
+// the LatestRun cmd (so the user sees the in-progress run's latest exit).
+func TestUpdate_RInDetailRefetchesDetail(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeDetail, Selected: "alpha",
+		DetailLoaded: true}
+	next, cmd := m.Update(keyMsg("r"))
+	mm := next.(Model)
+	require.NotNil(t, cmd, "r in detail mode must schedule a LatestRun fetch")
+	require.False(t, mm.DetailLoaded, "DetailLoaded flips back to false until fetch resolves")
+	require.Equal(t, ModeDetail, mm.Mode)
+}
+
+// TestView_DetailRendersAgentFields — the detail pane shows the selected
+// agent's ID, schedule, status, and the latest-run summary fields. We
+// assert via substring so lipgloss padding doesn't break the test.
+func TestView_DetailRendersAgentFields(t *testing.T) {
+	t.Parallel()
+	started := time.Date(2026, 5, 13, 18, 10, 0, 0, time.UTC)
+	ended := started.Add(82 * time.Second)
+	m := Model{
+		Mode:         ModeDetail,
+		Loaded:       true,
+		DetailLoaded: true,
+		Agents: []agent.Agent{{
+			ID: "alpha", Name: "webtoon pipeline",
+			Schedule: "@daily", Status: agent.StatusIdle,
+		}},
+		Cursor:   0,
+		Selected: "alpha",
+		Detail: agent.AgentRun{
+			ID: 42, AgentID: "alpha",
+			StartedAt: started, EndedAt: &ended,
+			ExitCode: 0,
+		},
+	}
+	out := m.View()
+	require.Contains(t, out, "alpha")
+	require.Contains(t, out, "@daily")
+	require.Contains(t, out, "webtoon pipeline")
+	require.Contains(t, out, "exit", "exit code label must be visible")
+	require.Contains(t, out, "esc", "footer hint must show how to return")
+}
+
+// TestView_DetailEmptyRunCopy — ErrNotFound means "agent exists but has
+// never run yet". Surface the friend-tone copy, not a stack trace.
+func TestView_DetailEmptyRunCopy(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:         ModeDetail,
+		Loaded:       true,
+		DetailLoaded: true,
+		Agents:       []agent.Agent{{ID: "alpha"}},
+		Cursor:       0,
+		Selected:     "alpha",
+		DetailErr:    agent.ErrNotFound,
+	}
+	out := m.View()
+	require.Contains(t, out, "no runs yet")
+	require.Contains(t, out, "buddy agent run", "hint must point to how to trigger a run")
+}
+
+// TestView_DetailGenericErrorCopy — any non-ErrNotFound detail error must
+// render the error message (mirrors the list-mode error state, not the
+// empty-state copy).
+func TestView_DetailGenericErrorCopy(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:         ModeDetail,
+		Loaded:       true,
+		DetailLoaded: true,
+		Agents:       []agent.Agent{{ID: "alpha"}},
+		Cursor:       0,
+		Selected:     "alpha",
+		DetailErr:    errors.New("disk full"),
+	}
+	out := m.View()
+	require.Contains(t, out, "error")
+	require.Contains(t, out, "disk full")
+}
+
+// TestView_DetailLoadingPlaceholder — before the detail fetch resolves,
+// View must show "loading…" rather than an empty pane.
+func TestView_DetailLoadingPlaceholder(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:         ModeDetail,
+		Loaded:       true,
+		DetailLoaded: false,
+		Agents:       []agent.Agent{{ID: "alpha"}},
+		Cursor:       0,
+		Selected:     "alpha",
+	}
+	out := m.View()
+	require.Contains(t, out, "loading")
 }
