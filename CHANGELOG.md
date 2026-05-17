@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-05-17
+
+Bundle release of the four W3-2 follow-on items shipped since v0.6.6, plus the F5 log-retention command and the W3-6 reference webtoon agent example. Strictly additive — no breaking changes to specs, CLI flags, MCP tools, or stored DB rows.
+
+What's in this release (newest commit first):
+
+- `5aa89b3` — **W3-2 in-app delete with confirm**. `d` on a list row → modal y/N confirm → `Store.Delete` (FK cascade drops runs + logs). Default is cancel; nav keys inert in confirm; failure surfaces in the list error pane without optimistic removal.
+- `9044aeb` — **W3-2 scheduler-preview pane**. `s` opens an inline pane showing when each scheduled agent would fire next. Preview-only (does not start cron / fire jobs); decoupled from any running `Scheduler` instance via the new `agent.PreviewSchedule(schedule, now) SchedulePreview` helper. Per-row parse errors surface inline.
+- `67e571e` — **W3-2 detail view**. `enter`/`l` on a list row opens an inline pane with agent metadata + latest-run summary (started/ended/duration/exit code). `Store.LatestRun` was already implemented from v0.6.2; the `AgentLister` interface widened to expose it. Friend-tone "no runs yet" copy on `agent.ErrNotFound`.
+- `b83a13d` — **W3-2 minimum-viable TUI** (originally landed pre-v0.7.0 cut but released here). Read-only agent list, vi/arrow navigation, refresh, AltScreen lifecycle.
+- `8995577` — **F5 log retention** (`buddy agent purge --before <dur> [--apply]`). Dry-run by default; in-flight runs never deleted. FK cascade drops `agent_logs` rows transactionally.
+- `ccc2170` — **W3-6 reference webtoon agent example** (`examples/webtoon-agent/spec.yaml` + README). Exercises Tier 1.4 backoff / 1.5 streaming / 1.6 scheduler refresh / 1.8 webhook + W3-3 chain. `ParseSpec` regression test gates the example.
+
+Counts and gates:
+
+- 5 version sources (Makefile, plugin.json, marketplace.json, server.go, main.go) all on `0.7.0` (`make verify-versions` passes).
+- `go build ./...` clean; `go vet ./...` clean.
+- `go test -race -count=1 -timeout=180s ./...` — 23 packages pass. `internal/tui` is at 51 tests (38 new since v0.6.6).
+- `internal/agent` adds `PreviewSchedule` helper (+4 race-clean tests).
+- `cli-buddy-spec.md §9` W3-2 row updated with three 2026-05-17 follow-on entries; W3-3/W3-4/W3-6 unchanged.
+
+What stays open after v0.7.0:
+
+- **W3-2 follow-on**: create form (interactive spec builder), live log tail (per-line `agent_logs` streaming), in-app edit.
+- **Live "currently running" indicator on the scheduler pane** (requires sharing state with a running `Scheduler` instance).
+- **Plugin v1.0.0 entry condition #2**: production dogfood (still user-paced).
+- **B6 follow-up**: 43 PROCEDURE deviations (`make test-skill-form` still report-only).
+
 ### Added — W3-2 TUI in-app delete with confirm (follow-on of v0.6.6 minimum-viable)
 
 The third W3-2 follow-on: pressing `d` on a list row opens a modal-style confirmation pane (`y` confirm, `N` / `esc` cancel — default is cancel). On confirm, the TUI calls `Store.Delete` for the locked-in ID; FK cascade drops the agent's runs + logs in the same transaction. Friend-tone success is silent — the row simply disappears on the post-delete reload.
