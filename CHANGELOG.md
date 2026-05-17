@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — W3-2 TUI scheduler-preview pane (follow-on of v0.6.6 minimum-viable)
+
+The second W3-2 follow-on item: pressing `s` in the list view opens an inline scheduler-preview pane that shows when each scheduled agent would fire next based on its cron expression. The pane is **preview-only** — it does not start cron, share state with a running `buddy agent scheduler` process, or fire any jobs. It exists so the user can sanity-check the schedule strings in their YAML specs without leaving the TUI.
+
+What ships:
+
+- New `agent.PreviewSchedule(schedule string, now time.Time) SchedulePreview` helper in `internal/agent/schedule_preview.go`. Uses the same `cron.ParseStandard` parser the scheduler uses (5-field cron + descriptors like `@daily` / `@every 30s`; second-precision intentionally off). `now` is passed in explicitly so callers stay deterministic and the helper is unit-testable. Parse failures are captured in `SchedulePreview.Err` rather than returned as a separate error — the TUI surfaces them inline on the offending row.
+- New `Mode` value `ModeScheduler` on `tui.Model` + state fields (`SchedulerNow`, `SchedulerEntries []SchedulerPreviewEntry`, `SchedulerErr`, `SchedulerLoaded`). Two new reducer messages (`SchedulerStatusLoadedMsg{Now, Entries}` / `SchedulerStatusErrMsg{Err}`). Fetch runs via `loadSchedulerStatusCmd` — same `tea.Cmd` pattern as `loadAgentsCmd` / `loadDetailCmd`.
+- Key bindings (additive — list/detail bindings unchanged):
+  - `s` (list mode) — open the scheduler-preview pane. Filters agents with non-empty `schedule` only (on-demand agents already show up in the list).
+  - `esc` / `h` (scheduler mode) — return to the list.
+  - `r` (scheduler mode) — refetch the preview (re-captures `Now`, useful for "what's the next fire after I just edited a spec via another shell").
+  - `q` / `Ctrl-C` — quit (works in every mode).
+- Render layout: a `reference now: <RFC3339>` line at the top (so users know what clock the `next` times were computed against), then one row per scheduled agent showing `ID  schedule  next <RFC3339>`. Per-row parse failures render `<ID>  <bad-schedule>  invalid: <parser msg>` in the error style without wiping the rest of the pane.
+- Friend-tone empty / loading / error copy: `loading scheduler preview…` until the fetch resolves; `(no scheduled agents — every agent in the list is on-demand)` for the empty case; `error: <message>` for a List() failure.
+
+Test coverage (`internal/tui/model_test.go` — 12 new race-clean tests, 39 total in the package; plus 4 helper tests in `internal/agent/schedule_preview_test.go`):
+
+- `PreviewSchedule`: 5-field cron rounds to next minute, `@daily` rolls to next 00:00, empty schedule is on-demand (no err), invalid string preserves the offending text + non-nil Err.
+- Update reducer: `s` switches to scheduler + fires preview cmd, `SchedulerStatusLoadedMsg` folds state + clears any prior err, `SchedulerStatusErrMsg` records err + flips Loaded, `esc` / `h` return to list preserving cursor, `q` quits from scheduler mode, `r` refetches + flips Loaded back to false, `s` in detail mode is intentionally inert (no mode hijack).
+- View smoke: pane renders agent IDs / schedules / esc hint, empty state shows `(no scheduled agents — …)`, parse-fail rows render inline without breaking the pane, loading placeholder visible before fetch resolves, `error: db locked` visible in the whole-pane error state.
+
+What stays open from W3-2 follow-on (unchanged):
+
+- **Create form** (interactive spec builder vs. `buddy agent create` shell-out)
+- **Live log tail** (per-line streaming view of an in-flight run; pairs with v0.6.4 `agent_logs` streaming)
+- **In-app delete / edit** (currently the user shells out to `buddy agent delete`)
+- **Live "currently running" indicator on the scheduler pane** (requires sharing state with a running `Scheduler` instance; this preview iteration intentionally avoided that coupling)
+
+`docs/cli-buddy-spec.md` §9 W3-2 row note updated with the 2026-05-17 scheduler-pane follow-on entry.
+
 ### Added — W3-2 TUI detail view (follow-on of v0.6.6 minimum-viable)
 
 The v0.6.6 minimum-viable TUI shipped a read-only agent list and explicitly deferred the detail / create / log views. This change closes the first of those — pressing `enter` (or `l`) on a list row opens an inline detail pane showing the agent's metadata plus a summary of its most recent run (id, started/ended, duration, exit code, error). `esc` (or `h`) returns to the list with the cursor preserved.
@@ -30,10 +61,10 @@ Test coverage (`internal/tui/model_test.go` — 14 new race-clean tests, 27 tota
 - Update reducer: `enter` switches to detail + fires `LatestRun` cmd, `enter` on empty list is a no-op, `l` aliases `enter`, `AgentDetailLoadedMsg` folds into state, `AgentDetailErrMsg` records error + flips `DetailLoaded`, `esc` returns to list preserving cursor, `h` aliases `esc`, `q` quits from detail, list nav keys (`j/k/g/G`) are inert in detail mode, `r` in detail mode refetches `LatestRun`.
 - View smoke: detail pane renders agent fields (ID / name / schedule / status / exit code label / esc footer hint), `ErrNotFound` produces the "no runs yet" copy + `buddy agent run` hint, generic errors produce `error: <message>`, `DetailLoaded=false` renders the loading placeholder.
 
-What stays open from W3-2 follow-on (unchanged):
+What stays open from W3-2 follow-on (at detail-view ship time):
 
 - **Create form** (interactive spec builder vs. `buddy agent create` shell-out)
-- **Scheduler status pane** (`buddy agent scheduler status` inline)
+- **Scheduler status pane** (`buddy agent scheduler status` inline) — *shipped above as scheduler-preview pane, 2026-05-17*
 - **Live log tail** (per-line streaming view of an in-flight run; pairs with v0.6.4 `agent_logs` streaming)
 - **In-app delete / edit** (currently the user shells out to `buddy agent delete`)
 

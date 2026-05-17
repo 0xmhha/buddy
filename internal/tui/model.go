@@ -37,13 +37,27 @@ type AgentLister interface {
 	LatestRun(ctx context.Context, agentID string) (agent.AgentRun, error)
 }
 
-// Mode is the top-level view state: list (default) vs detail.
+// Mode is the top-level view state: list (default), detail, or the
+// scheduler-preview pane.
 type Mode int
 
 const (
 	ModeList Mode = iota
 	ModeDetail
+	ModeScheduler
 )
+
+// SchedulerPreviewEntry is one row in the scheduler-status pane. It is
+// computed by walking the agent list and asking agent.PreviewSchedule to
+// turn each non-empty cron string into a next-fire time. Per-row Err
+// surfaces parse failures inline so a single typo'd spec doesn't blank
+// the whole pane.
+type SchedulerPreviewEntry struct {
+	AgentID  string
+	Schedule string
+	Next     time.Time
+	Err      error
+}
 
 // Model is the bubbletea model. Fields are exported so reducer tests can
 // inspect state directly without going through a helper.
@@ -62,6 +76,12 @@ type Model struct {
 	Detail       agent.AgentRun
 	DetailErr    error
 	DetailLoaded bool // false until the first AgentDetailLoadedMsg / AgentDetailErrMsg lands
+
+	// Scheduler-pane state — only meaningful when Mode==ModeScheduler.
+	SchedulerNow     time.Time
+	SchedulerEntries []SchedulerPreviewEntry
+	SchedulerErr     error
+	SchedulerLoaded  bool
 }
 
 // SelectedID returns the agent ID currently focused for detail rendering.
@@ -80,10 +100,15 @@ func (m Model) SelectedID() string {
 // Msg variants the reducer consumes. Kept exported so tests can post them
 // directly to Update.
 type (
-	AgentsLoadedMsg       struct{ Agents []agent.Agent }
-	ErrMsg                struct{ Err error }
-	AgentDetailLoadedMsg  struct{ Run agent.AgentRun }
-	AgentDetailErrMsg     struct{ Err error }
+	AgentsLoadedMsg          struct{ Agents []agent.Agent }
+	ErrMsg                   struct{ Err error }
+	AgentDetailLoadedMsg     struct{ Run agent.AgentRun }
+	AgentDetailErrMsg        struct{ Err error }
+	SchedulerStatusLoadedMsg struct {
+		Now     time.Time
+		Entries []SchedulerPreviewEntry
+	}
+	SchedulerStatusErrMsg struct{ Err error }
 )
 
 // NewModel constructs an empty Model around an AgentLister. The Init
@@ -124,6 +149,37 @@ func loadDetailCmd(store AgentLister, agentID string) tea.Cmd {
 	}
 }
 
+// loadSchedulerStatusCmd computes the scheduler-preview snapshot by
+// listing agents and turning each non-empty cron string into a next-fire
+// time via agent.PreviewSchedule. Now() is captured once per fetch so the
+// pane has a stable reference clock between user-driven refreshes.
+//
+// Agents without a schedule are filtered out — the pane is "what's
+// scheduled", on-demand agents already show up in the list pane.
+func loadSchedulerStatusCmd(store AgentLister) tea.Cmd {
+	return func() tea.Msg {
+		agents, err := store.List(context.Background())
+		if err != nil {
+			return SchedulerStatusErrMsg{Err: err}
+		}
+		now := time.Now()
+		entries := make([]SchedulerPreviewEntry, 0, len(agents))
+		for _, a := range agents {
+			if a.Schedule == "" {
+				continue
+			}
+			p := agent.PreviewSchedule(a.Schedule, now)
+			entries = append(entries, SchedulerPreviewEntry{
+				AgentID:  a.ID,
+				Schedule: a.Schedule,
+				Next:     p.Next,
+				Err:      p.Err,
+			})
+		}
+		return SchedulerStatusLoadedMsg{Now: now, Entries: entries}
+	}
+}
+
 // Update is the pure-function reducer. It maps (state, msg) → (state', cmd).
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -157,6 +213,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.DetailLoaded = true
 		return m, nil
 
+	case SchedulerStatusLoadedMsg:
+		m.SchedulerNow = msg.Now
+		m.SchedulerEntries = msg.Entries
+		m.SchedulerLoaded = true
+		m.SchedulerErr = nil
+		return m, nil
+
+	case SchedulerStatusErrMsg:
+		m.SchedulerErr = msg.Err
+		m.SchedulerLoaded = true
+		return m, nil
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -188,6 +256,18 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		// In detail mode every other key (j/k/g/G/etc.) is intentionally
 		// inert — the detail pane is read-only.
+		return m, nil
+	}
+
+	if m.Mode == ModeScheduler {
+		switch key {
+		case "esc", "h":
+			m.Mode = ModeList
+			return m, nil
+		case "r":
+			m.SchedulerLoaded = false
+			return m, loadSchedulerStatusCmd(m.Store)
+		}
 		return m, nil
 	}
 
@@ -232,6 +312,12 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.DetailErr = nil
 		m.Detail = agent.AgentRun{}
 		return m, loadDetailCmd(m.Store, m.Selected)
+
+	case "s":
+		m.Mode = ModeScheduler
+		m.SchedulerLoaded = false
+		m.SchedulerErr = nil
+		return m, loadSchedulerStatusCmd(m.Store)
 	}
 	return m, nil
 }
@@ -240,10 +326,14 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 // kept restrained: cli buddy's persona is "친구 — silent default", and a
 // neon dashboard works against that.
 func (m Model) View() string {
-	if m.Mode == ModeDetail {
+	switch m.Mode {
+	case ModeDetail:
 		return m.renderDetail()
+	case ModeScheduler:
+		return m.renderScheduler()
+	default:
+		return m.renderList()
 	}
-	return m.renderList()
 }
 
 func (m Model) renderList() string {
@@ -355,6 +445,55 @@ func (m Model) renderDetail() string {
 	return b.String()
 }
 
+func (m Model) renderScheduler() string {
+	var b strings.Builder
+
+	b.WriteString(headerStyle.Render("buddy scheduler — preview"))
+	b.WriteString("\n\n")
+
+	if !m.SchedulerLoaded {
+		b.WriteString(dimStyle.Render("  loading scheduler preview…"))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintScheduler())
+		return b.String()
+	}
+
+	if m.SchedulerErr != nil {
+		b.WriteString(errorStyle.Render("  error: " + m.SchedulerErr.Error()))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintScheduler())
+		return b.String()
+	}
+
+	b.WriteString(dimStyle.Render(fmt.Sprintf(
+		"  reference now: %s   (preview only — does not run jobs)\n\n",
+		m.SchedulerNow.UTC().Format(time.RFC3339))))
+
+	if len(m.SchedulerEntries) == 0 {
+		b.WriteString(dimStyle.Render("  (no scheduled agents — every agent in the list is on-demand)"))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintScheduler())
+		return b.String()
+	}
+
+	for _, e := range m.SchedulerEntries {
+		if e.Err != nil {
+			b.WriteString(fmt.Sprintf("  %-30s %-20s %s\n",
+				e.AgentID,
+				e.Schedule,
+				errorStyle.Render("invalid: "+e.Err.Error())))
+			continue
+		}
+		b.WriteString(fmt.Sprintf("  %-30s %-20s next %s\n",
+			e.AgentID,
+			e.Schedule,
+			e.Next.UTC().Format(time.RFC3339)))
+	}
+	b.WriteString("\n")
+	b.WriteString(footerHintScheduler())
+	return b.String()
+}
+
 // renderAgentRow formats one agent in the list. Caller passes whether the
 // row is currently selected; that toggles the highlight.
 func renderAgentRow(a agent.Agent, selected bool) string {
@@ -372,10 +511,14 @@ func renderAgentRow(a agent.Agent, selected bool) string {
 }
 
 func footerHintList() string {
-	return footerStyle.Render("j/k or ↑/↓ move · g/G top/bottom · enter/l detail · r refresh · q quit")
+	return footerStyle.Render("j/k or ↑/↓ move · g/G top/bottom · enter/l detail · s scheduler · r refresh · q quit")
 }
 
 func footerHintDetail() string {
+	return footerStyle.Render("esc/h back · r refresh · q quit")
+}
+
+func footerHintScheduler() string {
 	return footerStyle.Render("esc/h back · r refresh · q quit")
 }
 

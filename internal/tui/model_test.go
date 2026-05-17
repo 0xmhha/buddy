@@ -489,3 +489,187 @@ func TestView_DetailLoadingPlaceholder(t *testing.T) {
 	out := m.View()
 	require.Contains(t, out, "loading")
 }
+
+// ─── Scheduler status pane (W3-2 follow-on #2) ─────────────────────────
+
+// TestUpdate_SSwitchesToScheduler — pressing `s` in list mode opens the
+// scheduler pane, marks SchedulerLoaded=false, and fires the preview cmd.
+func TestUpdate_SSwitchesToScheduler(t *testing.T) {
+	t.Parallel()
+	loader := &fakeLister{}
+	m := Model{Store: loader, Loaded: true, Agents: []agent.Agent{
+		{ID: "alpha", Schedule: "@daily"},
+	}}
+	next, cmd := m.Update(keyMsg("s"))
+	mm := next.(Model)
+	require.Equal(t, ModeScheduler, mm.Mode)
+	require.False(t, mm.SchedulerLoaded, "SchedulerLoaded resets until the preview resolves")
+	require.NotNil(t, cmd, "s must schedule a preview fetch")
+}
+
+// TestUpdate_SchedulerStatusLoadedFoldsIntoState — the Loaded message
+// populates entries + Now and flips SchedulerLoaded.
+func TestUpdate_SchedulerStatusLoadedFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 5, 15, 12, 34, 17, 0, time.UTC)
+	entries := []SchedulerPreviewEntry{
+		{AgentID: "alpha", Schedule: "@daily", Next: now.Add(time.Hour)},
+		{AgentID: "beta", Schedule: "broken", Err: errors.New("parse fail")},
+	}
+	m := Model{Mode: ModeScheduler}
+	next, cmd := m.Update(SchedulerStatusLoadedMsg{Now: now, Entries: entries})
+	mm := next.(Model)
+	require.Nil(t, cmd)
+	require.True(t, mm.SchedulerLoaded)
+	require.Equal(t, now, mm.SchedulerNow)
+	require.Len(t, mm.SchedulerEntries, 2)
+	require.Nil(t, mm.SchedulerErr, "successful load clears any prior SchedulerErr")
+}
+
+// TestUpdate_SchedulerStatusErrFoldsIntoState — SchedulerStatusErrMsg
+// records the error + flips SchedulerLoaded=true so View knows the fetch
+// resolved (with an error).
+func TestUpdate_SchedulerStatusErrFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("db locked")
+	m := Model{Mode: ModeScheduler}
+	next, _ := m.Update(SchedulerStatusErrMsg{Err: bang})
+	mm := next.(Model)
+	require.True(t, mm.SchedulerLoaded)
+	require.ErrorIs(t, mm.SchedulerErr, bang)
+}
+
+// TestUpdate_EscFromSchedulerReturnsToList — Esc in scheduler mode
+// returns to the list, list cursor preserved.
+func TestUpdate_EscFromSchedulerReturnsToList(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeScheduler, Loaded: true,
+		Agents: []agent.Agent{{ID: "a"}, {ID: "b"}}, Cursor: 1}
+	next, _ := m.Update(keyMsg("esc"))
+	mm := next.(Model)
+	require.Equal(t, ModeList, mm.Mode)
+	require.Equal(t, 1, mm.Cursor)
+}
+
+// TestUpdate_HFromSchedulerReturnsToList — vi-style 'h' alias.
+func TestUpdate_HFromSchedulerReturnsToList(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeScheduler}
+	next, _ := m.Update(keyMsg("h"))
+	require.Equal(t, ModeList, next.(Model).Mode)
+}
+
+// TestUpdate_QuitWorksInSchedulerMode — q must still quit.
+func TestUpdate_QuitWorksInSchedulerMode(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeScheduler}
+	_, cmd := m.Update(keyMsg("q"))
+	require.NotNil(t, cmd)
+	_, ok := cmd().(tea.QuitMsg)
+	require.True(t, ok)
+}
+
+// TestUpdate_RInSchedulerRefetchesPreview — r in scheduler mode re-fires
+// the preview cmd and flips SchedulerLoaded back to false.
+func TestUpdate_RInSchedulerRefetchesPreview(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeScheduler, SchedulerLoaded: true}
+	next, cmd := m.Update(keyMsg("r"))
+	mm := next.(Model)
+	require.NotNil(t, cmd, "r in scheduler mode must schedule a preview refresh")
+	require.False(t, mm.SchedulerLoaded)
+	require.Equal(t, ModeScheduler, mm.Mode)
+}
+
+// TestUpdate_SInDetailIsNoOp — `s` is a list-mode shortcut; it must not
+// hijack the detail pane.
+func TestUpdate_SInDetailIsNoOp(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeDetail, Selected: "alpha"}
+	next, cmd := m.Update(keyMsg("s"))
+	require.Equal(t, ModeDetail, next.(Model).Mode, "s must not leak into detail mode")
+	require.Nil(t, cmd)
+}
+
+// TestView_SchedulerRendersEntries — the pane shows each entry's agent ID,
+// schedule, and the next-fire time (formatted RFC3339). The Now header is
+// also visible so users know the reference clock.
+func TestView_SchedulerRendersEntries(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 5, 15, 12, 34, 17, 0, time.UTC)
+	m := Model{
+		Mode:            ModeScheduler,
+		SchedulerLoaded: true,
+		SchedulerNow:    now,
+		SchedulerEntries: []SchedulerPreviewEntry{
+			{AgentID: "alpha", Schedule: "@daily", Next: now.Add(time.Hour)},
+			{AgentID: "beta", Schedule: "*/5 * * * *", Next: now.Add(3 * time.Minute)},
+		},
+	}
+	out := m.View()
+	require.Contains(t, out, "alpha")
+	require.Contains(t, out, "@daily")
+	require.Contains(t, out, "beta")
+	require.Contains(t, out, "*/5 * * * *")
+	require.Contains(t, out, "esc", "footer hint must show how to return")
+}
+
+// TestView_SchedulerEmptyState — when there are no scheduled agents the
+// pane shows a friend-tone copy instead of a blank list.
+func TestView_SchedulerEmptyState(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:            ModeScheduler,
+		SchedulerLoaded: true,
+		SchedulerNow:    time.Now(),
+		SchedulerEntries: nil,
+	}
+	out := m.View()
+	require.Contains(t, out, "no scheduled agents")
+}
+
+// TestView_SchedulerInvalidEntryShowsErrInline — a row whose Schedule
+// failed to parse renders inline (the offending agent + a hint), the
+// rest of the pane stays usable.
+func TestView_SchedulerInvalidEntryShowsErrInline(t *testing.T) {
+	t.Parallel()
+	now := time.Now()
+	m := Model{
+		Mode:            ModeScheduler,
+		SchedulerLoaded: true,
+		SchedulerNow:    now,
+		SchedulerEntries: []SchedulerPreviewEntry{
+			{AgentID: "alpha", Schedule: "@daily", Next: now.Add(time.Hour)},
+			{AgentID: "broken", Schedule: "not-a-cron", Err: errors.New("expected exactly 5 fields")},
+		},
+	}
+	out := m.View()
+	require.Contains(t, out, "alpha")
+	require.Contains(t, out, "broken")
+	require.Contains(t, out, "invalid",
+		"per-row parse-fail must surface in the pane without wiping good rows")
+}
+
+// TestView_SchedulerLoadingPlaceholder — before the preview cmd resolves
+// the pane shows "loading…".
+func TestView_SchedulerLoadingPlaceholder(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeScheduler, SchedulerLoaded: false}
+	out := m.View()
+	require.Contains(t, out, "loading")
+}
+
+// TestView_SchedulerErrorState — a whole-pane error (e.g. the AgentLister
+// List() call failed) renders the error string + the back hint.
+func TestView_SchedulerErrorState(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:            ModeScheduler,
+		SchedulerLoaded: true,
+		SchedulerErr:    errors.New("db locked"),
+	}
+	out := m.View()
+	require.Contains(t, out, "error")
+	require.Contains(t, out, "db locked")
+	require.Contains(t, out, "esc")
+}
