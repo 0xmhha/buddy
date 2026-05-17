@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — W3-4 chain control: per-step `continue_on_fail` + chain-level `auto_cascade`
+
+Two W3-4 cascade items shipped together. They were paired because both touch the runtime's chain-loop semantics, and shipping them in one commit keeps the spec field additions visible side-by-side.
+
+**Per-step `continue_on_fail`** (P2-1): adds a per-`ChainStep` boolean that lets the chain continue past a step that exhausts its retry budget without success. Default `false` preserves the v0.6.x fail-fast behaviour verbatim.
+
+- New spec field `chain[].continue_on_fail` (bool, default `false`). The failed step is still recorded in `RunResult.Steps` with its non-zero exit code; what changes is that the chain does NOT short-circuit. A `warn`-level log line is emitted at the runtime: `step[N] <command> failed (exit=X) — continue_on_fail=true, chain continues`.
+- Final `RunResult.ExitCode` is the LAST non-zero step exit when any step failed (so a single failing cleanup step at the end still surfaces failure at the run level); 0 only when every step (including continue_on_fail ones) succeeded. Agent row transitions to `failed` whenever the run-level exit code is non-zero.
+- Strictly backward-compatible: every existing spec gets default `false` and behaves exactly as before.
+
+**Chain-level `auto_cascade`** (P2-2): adds an opt-in `auto_cascade: {}` block on the spec that turns on §next-phase-driven chain extension. After every *successful* step, the runtime looks at `ParsedOutput.NextPhase.Skills` and, if non-empty, appends the first listed skill as a new chain step. Cascading is bounded by `max_depth` (default 5 — wide enough for the §1→§9 happy-path orchestrator chain plus one tier of slack).
+
+- New spec field `auto_cascade` (optional `AutoCascadeConfig` struct). A bare `auto_cascade: {}` enables with default depth; `auto_cascade: { max_depth: 10 }` raises the cap. Omitting the field preserves v0.6.x sequential semantics.
+- New `agent.DefaultCascadeMaxDepth = 5` constant.
+- New `StepResult.CascadeDepth int` field: 0 for original chain steps, N+1 for steps appended via §next-phase from a step at depth N. Lets `buddy agent log` / TUI distinguish "user wrote this step" from "the runtime inferred it".
+- Runtime loop refactored from `for i, step := range spec.Chain` to a queue-based `for len(queue) > 0`. Original chain seeds the queue at depth 0; cascade `append`s to the same queue at `depth+1`. The queue can grow during iteration (Go-safe — we're indexing by element, not a fixed slice header).
+- Cascade selection rule (minimum-viable): `pickCascadeTarget(NextPhase)` returns `NextPhase.Skills[0]`. PROCEDURE-side conditional branches (`Branches`) are surfaced in the run log but NOT followed automatically — they need runtime context (e.g., target-market env vars) the runtime doesn't have. A follow-on can add branch-aware selection once dogfood signal arrives.
+- Cascade is strictly *skip-on-failure*: a step that exits non-zero or errors does NOT contribute a cascaded successor, even with `continue_on_fail: true`. This avoids "broken §next-phase cascades down a fault path".
+- A new info-level log line on every cascade: `step[N] <command> auto-cascade → <skill> (depth K)`.
+
+Interaction with `continue_on_fail`: orthogonal. A failed step with `continue_on_fail: true` keeps the *original* chain alive but does NOT cascade. A succeeded step with `auto_cascade` enabled queues its §next-phase successor regardless of whether any earlier step had `continue_on_fail` set.
+
+Test coverage (`internal/agent/runtime_test.go` — 10 new race-clean tests):
+
+- `continue_on_fail`: failed step advances chain to step 2; run-level exit is the last non-zero (cleanup-fails-at-end case); default `false` still short-circuits (regression guard); all-success path still returns exit 0.
+- `auto_cascade`: parsed §next-phase appends a new step (CascadeDepth=1); MaxDepth caps the chain at depth 0..MaxDepth inclusive; disabled `auto_cascade` does NOT cascade (regression guard); failed step does NOT cascade even with continue_on_fail; absent §next-phase = no cascade (terminal-phase case); default cap = `DefaultCascadeMaxDepth` constant.
+
+`docs/cli-buddy-spec.md` §9 W3-4 row updated: now reads `Done 2026-05-17` (was `partial Done 2026-05-12 — parser ship in v0.5.0 + conditional branches ship in v0.6.0, retry/fail 의미 변경 + auto-cascade deferred`). The deferred sub-items are now shipped.
+
 ### Added — W3-2 TUI create form (the last named W3-2 follow-on)
 
 The sixth — and final — W3-2 follow-on item: pressing `c` in list mode opens `$EDITOR` (fall back to `$VISUAL`, then `vi`) on a starter YAML template (`new-agent` placeholder + commented hints). On exit, the TUI parses the saved content with `agent.ParseSpec` and persists via `Store.Create`. Success silently reloads the list; failure (parse error, duplicate id from SQLite UNIQUE, IO problem) surfaces in the existing list-pane error state.

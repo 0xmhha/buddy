@@ -763,3 +763,383 @@ type statResult struct {
 
 func (s statResult) Size() int64        { return s.size }
 func (s statResult) ModTime() time.Time { return s.modTime }
+
+// ─── continue_on_fail (P2-1) ──────────────────────────────────────────
+
+// TestRuntime_Run_ContinueOnFail_AdvancesPastFailedStep — when the first
+// step has continue_on_fail=true and fails (non-zero exit), the chain
+// must continue to step 2 instead of short-circuiting. Both steps end
+// up in RunResult.Steps; mock.Calls records both executor invocations.
+func TestRuntime_Run_ContinueOnFail_AdvancesPastFailedStep(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	yamlSrc := `
+id: cleanup-then-release
+name: "Cleanup then release"
+chain:
+  - command: status
+    args: ""
+    continue_on_fail: true
+  - command: concretize-idea
+    args: "after cleanup"
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{ExitCode: 7, Stderr: "cleanup hiccup"}
+	mock.Responses["concretize-idea"] = MockResponse{ExitCode: 0, Stdout: "ok"}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, 2, "step 2 must run despite step 1 failure")
+	require.Equal(t, 7, res.Steps[0].ExitCode, "step 1's failure exit preserved in Steps")
+	require.Equal(t, 0, res.Steps[1].ExitCode)
+	require.Equal(t, []MockCall{
+		{"status", ""},
+		{"concretize-idea", "after cleanup"},
+	}, mock.Calls)
+}
+
+// TestRuntime_Run_ContinueOnFail_FinalExitCodeIsLastNonZero — the
+// run-level exit code surfaces failure even when continue_on_fail
+// stopped the chain from short-circuiting. The contract is "last
+// non-zero step exit wins" so a single failing cleanup step at the end
+// is not silently swallowed.
+func TestRuntime_Run_ContinueOnFail_FinalExitCodeIsLastNonZero(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	yamlSrc := `
+id: failing-cleanup
+name: "Failing cleanup"
+chain:
+  - command: status
+    args: ""
+    continue_on_fail: true
+  - command: concretize-idea
+    args: "ok step"
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{ExitCode: 9, Stderr: "boom"}
+	mock.Responses["concretize-idea"] = MockResponse{ExitCode: 0, Stdout: "ok"}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Equal(t, 9, res.ExitCode,
+		"run-level exit must surface the failed step's exit code even though chain continued")
+
+	after, err := store.Get(ctx, a.ID)
+	require.NoError(t, err)
+	require.Equal(t, StatusFailed, after.Status,
+		"agent status must reflect overall failure when any step failed")
+}
+
+// TestRuntime_Run_ContinueOnFail_DefaultFalseStillStops — a step
+// without continue_on_fail behaves exactly like v0.6.x: failure
+// short-circuits the chain. This guards backward compatibility — every
+// existing spec must keep its v0.6.x semantics verbatim.
+func TestRuntime_Run_ContinueOnFail_DefaultFalseStillStops(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	// twoStepSpecYAML has neither step marked continue_on_fail.
+	spec, err := ParseSpec([]byte(twoStepSpecYAML))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, twoStepSpecYAML)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{ExitCode: 3, Stderr: "fail"}
+	mock.Responses["concretize-idea"] = MockResponse{ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, 1, "default behavior must short-circuit after first failure")
+	require.Len(t, mock.Calls, 1)
+	require.Equal(t, 3, res.ExitCode)
+}
+
+// ─── auto-cascade (P2-2) ──────────────────────────────────────────────
+
+// procWithNextPhase returns a stdout body that looks like a buddy
+// PROCEDURE output with a §next-phase block listing the given skill
+// as a backtick-wrapped identifier. This is the minimum substring the
+// parser needs to populate ParsedOutput.NextPhase.Skills.
+func procWithNextPhase(skill string) string {
+	return "## 6. 검증 (self-check)\n" +
+		"- [x] all good\n\n" +
+		"## 7. 다음 phase\n\n" +
+		"- `" + skill + "`\n"
+}
+
+// TestRuntime_Run_AutoCascade_AppendsParsedNextPhase — when auto_cascade
+// is enabled and a step's parsed §next-phase has a skill, the runtime
+// appends it as a new chain step. Two-step original chain + one
+// cascade = three executor calls total.
+func TestRuntime_Run_AutoCascade_AppendsParsedNextPhase(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	yamlSrc := `
+id: cascade-agent
+name: "Cascade demo"
+auto_cascade: {}
+chain:
+  - command: status
+    args: ""
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{Stdout: procWithNextPhase("concretize-idea"), ExitCode: 0}
+	mock.Responses["concretize-idea"] = MockResponse{Stdout: "", ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, 2, "auto-cascade must append a step from §next-phase")
+	require.Equal(t, "status", res.Steps[0].Command)
+	require.Equal(t, 0, res.Steps[0].CascadeDepth, "original step is depth 0")
+	require.Equal(t, "concretize-idea", res.Steps[1].Command)
+	require.Equal(t, 1, res.Steps[1].CascadeDepth, "cascaded step is depth 1")
+	require.Len(t, mock.Calls, 2)
+}
+
+// TestRuntime_Run_AutoCascade_RespectsMaxDepth — every cascade can
+// produce one more cascade, but the runtime stops appending once depth
+// reaches MaxDepth. Final step at MaxDepth still executes.
+func TestRuntime_Run_AutoCascade_RespectsMaxDepth(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	yamlSrc := `
+id: deep-cascade
+name: "Deep cascade"
+auto_cascade:
+  max_depth: 2
+chain:
+  - command: status
+    args: ""
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	// Every command emits a §next-phase pointing to the next.
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{Stdout: procWithNextPhase("concretize-idea"), ExitCode: 0}
+	mock.Responses["concretize-idea"] = MockResponse{Stdout: procWithNextPhase("define-features"), ExitCode: 0}
+	mock.Responses["define-features"] = MockResponse{Stdout: procWithNextPhase("design-system"), ExitCode: 0}
+	mock.Responses["design-system"] = MockResponse{Stdout: procWithNextPhase("plan-build"), ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	// Original at depth 0 → cascade to depth 1 → cascade to depth 2 → STOP.
+	// (depth 2 step runs, but its §next-phase is NOT followed.)
+	require.Len(t, res.Steps, 3, "max_depth=2 must cap the chain at depth 0/1/2")
+	require.Equal(t, 0, res.Steps[0].CascadeDepth)
+	require.Equal(t, 1, res.Steps[1].CascadeDepth)
+	require.Equal(t, 2, res.Steps[2].CascadeDepth)
+	require.Equal(t, []MockCall{
+		{"status", ""},
+		{"concretize-idea", ""},
+		{"define-features", ""},
+	}, mock.Calls)
+}
+
+// TestRuntime_Run_AutoCascade_NoEffectWhenDisabled — without
+// auto_cascade in the spec, parsed §next-phase is logged but does NOT
+// drive new chain steps (preserves v0.6.x backward compat).
+func TestRuntime_Run_AutoCascade_NoEffectWhenDisabled(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	// Same as the AppendsParsedNextPhase fixture but WITHOUT auto_cascade.
+	yamlSrc := `
+id: no-cascade
+name: "No cascade"
+chain:
+  - command: status
+    args: ""
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{Stdout: procWithNextPhase("concretize-idea"), ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, 1, "auto-cascade disabled must not add steps")
+	require.Len(t, mock.Calls, 1)
+}
+
+// TestRuntime_Run_AutoCascade_SkipsFromFailedStep — a failed step does
+// NOT cascade. Even with `continue_on_fail: true` to keep the chain
+// alive, the runtime does not auto-append §next-phase from a fault path.
+func TestRuntime_Run_AutoCascade_SkipsFromFailedStep(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	yamlSrc := `
+id: fail-no-cascade
+name: "Fail no cascade"
+auto_cascade: {}
+chain:
+  - command: status
+    args: ""
+    continue_on_fail: true
+  - command: concretize-idea
+    args: "follow-up"
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	// status FAILS but still emits a §next-phase. Must not be followed.
+	mock.Responses["status"] = MockResponse{Stdout: procWithNextPhase("define-features"), ExitCode: 5}
+	mock.Responses["concretize-idea"] = MockResponse{Stdout: "", ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, 2, "chain proceeds via continue_on_fail but NO cascade from failed step")
+	require.Equal(t, "status", res.Steps[0].Command)
+	require.Equal(t, "concretize-idea", res.Steps[1].Command)
+	// define-features was never invoked.
+	for _, c := range mock.Calls {
+		require.NotEqual(t, "define-features", c.Command,
+			"failed step must not cascade into §next-phase target")
+	}
+}
+
+// TestRuntime_Run_AutoCascade_NoSkillsNoEffect — auto_cascade enabled
+// but the step's stdout has no §next-phase (or it's empty) → no
+// cascade. Common case for terminal phases like ship-release.
+func TestRuntime_Run_AutoCascade_NoSkillsNoEffect(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	yamlSrc := `
+id: terminal-step
+name: "Terminal step"
+auto_cascade: {}
+chain:
+  - command: status
+    args: ""
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{Stdout: "no §next-phase block here", ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, 1, "no §next-phase → no cascade")
+}
+
+// TestRuntime_Run_AutoCascade_DefaultMaxDepth — auto_cascade with empty
+// `{}` (no max_depth) uses DefaultCascadeMaxDepth. Build a chain that
+// would cascade indefinitely if unbounded; verify it stops exactly at
+// the default cap.
+func TestRuntime_Run_AutoCascade_DefaultMaxDepth(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	yamlSrc := `
+id: default-depth
+name: "Default depth"
+auto_cascade: {}
+chain:
+  - command: status
+    args: ""
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	// Self-referential cascade — every step says "cascade to self". We
+	// can't have skill names collide for the parser ("status" multiple
+	// times is fine — each invocation re-runs the same MockResponse).
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{Stdout: procWithNextPhase("status"), ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, DefaultCascadeMaxDepth+1,
+		"default cap allows depth 0..DefaultCascadeMaxDepth inclusive")
+	require.Equal(t, DefaultCascadeMaxDepth, res.Steps[len(res.Steps)-1].CascadeDepth)
+}
+
+// TestRuntime_Run_ContinueOnFail_AllPassExitZero — when continue_on_fail
+// is set but the step actually succeeds (and downstream steps also
+// succeed), the run-level exit must be 0 — no false-positive failure.
+func TestRuntime_Run_ContinueOnFail_AllPassExitZero(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	yamlSrc := `
+id: best-effort-all-ok
+name: "Best effort all ok"
+chain:
+  - command: status
+    args: ""
+    continue_on_fail: true
+  - command: concretize-idea
+    args: "ok"
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{ExitCode: 0}
+	mock.Responses["concretize-idea"] = MockResponse{ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Equal(t, 0, res.ExitCode)
+	after, err := store.Get(ctx, a.ID)
+	require.NoError(t, err)
+	require.Equal(t, StatusDone, after.Status)
+}

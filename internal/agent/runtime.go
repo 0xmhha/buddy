@@ -43,10 +43,16 @@ type RunResult struct {
 // receives the cancel via exec.CommandContext).
 //
 // Semantics:
-//   - First non-zero exit code OR executor error in any step short-circuits
-//     the chain. Subsequent steps are not invoked.
-//   - The output target (stdout / file) receives the JSON-serialised
-//     RunResult after the chain finishes (regardless of success/failure).
+//   - When a step exhausts its retry budget and still fails (non-zero exit
+//     or executor error), the chain stops UNLESS the step has
+//     `continue_on_fail: true` set. With continue_on_fail, the failure is
+//     still recorded in RunResult.Steps but the next step runs anyway.
+//     RunResult.ExitCode at the end is the LAST non-zero step exit seen
+//     (so a single failing cleanup step at the end still surfaces failure),
+//     or 0 when every step succeeded.
+//   - The output target (stdout / file / webhook) receives the JSON-
+//     serialised RunResult after the chain finishes (regardless of
+//     success/failure).
 //   - The agents row is transitioned: idle → running → done|failed.
 func (r *Runtime) Run(ctx context.Context, agent Agent) (RunResult, error) {
 	spec, err := ParseSpec([]byte(agent.SpecYAML))
@@ -68,17 +74,68 @@ func (r *Runtime) Run(ctx context.Context, agent Agent) (RunResult, error) {
 
 	retry := spec.Retry
 
+	// pendingStep wraps the next ChainStep to run with the cascade depth
+	// at which it was queued. Original chain steps are at depth 0;
+	// cascaded steps land at depth N+1. The queue lets auto-cascade
+	// append a successor without complicating the for-range index.
+	type pendingStep struct {
+		step  ChainStep
+		depth int
+	}
+	queue := make([]pendingStep, 0, len(spec.Chain))
+	for _, s := range spec.Chain {
+		queue = append(queue, pendingStep{step: s, depth: 0})
+	}
+
+	cascadeEnabled := spec.AutoCascade != nil
+	maxCascadeDepth := DefaultCascadeMaxDepth
+	if cascadeEnabled && spec.AutoCascade.MaxDepth > 0 {
+		maxCascadeDepth = spec.AutoCascade.MaxDepth
+	}
+
 	var stepErr error
-	for i, step := range spec.Chain {
-		stepResult, err := r.runOneStep(ctx, runID, i, step, retry)
+	stepIdx := 0
+	for len(queue) > 0 {
+		p := queue[0]
+		queue = queue[1:]
+		stepResult, err := r.runOneStep(ctx, runID, stepIdx, p.step, retry)
+		stepResult.CascadeDepth = p.depth
 		result.Steps = append(result.Steps, stepResult)
-		if err != nil || stepResult.ExitCode != 0 {
-			stepErr = err
+		stepIdx++
+
+		stepFailed := err != nil || stepResult.ExitCode != 0
+		if stepFailed {
+			// Always track the most recent failure as the run-level
+			// exit code so even continue_on_fail runs surface failure
+			// at the top level.
 			result.ExitCode = stepResult.ExitCode
 			if result.ExitCode == 0 {
 				result.ExitCode = 1 // executor error without exit code = generic failure
 			}
+			stepErr = err
+			if p.step.ContinueOnFail {
+				_ = r.store.AppendLog(ctx, runID, "warn",
+					fmt.Sprintf("step[%d] %s failed (exit=%d) — continue_on_fail=true, chain continues",
+						stepIdx-1, p.step.Command, stepResult.ExitCode))
+				continue
+			}
 			break
+		}
+
+		// Success branch: optionally cascade by appending the first
+		// parsed §next-phase skill as a new step at depth+1. We do NOT
+		// cascade from failed steps (broken §next-phase shouldn't
+		// drive a fault path).
+		if cascadeEnabled && p.depth < maxCascadeDepth {
+			if next := pickCascadeTarget(stepResult.Parsed.NextPhase); next != "" {
+				queue = append(queue, pendingStep{
+					step:  ChainStep{Command: next},
+					depth: p.depth + 1,
+				})
+				_ = r.store.AppendLog(ctx, runID, "info",
+					fmt.Sprintf("step[%d] %s auto-cascade → %s (depth %d)",
+						stepIdx-1, p.step.Command, next, p.depth+1))
+			}
 		}
 	}
 
@@ -243,6 +300,30 @@ func computeBackoff(retry *RetryPolicy, attemptJustFailed int) time.Duration {
 	// retry loop.
 	return retry.BackoffDelay
 }
+
+// pickCascadeTarget chooses the next-phase skill to auto-cascade into.
+// The minimum-viable selection rule is "first parsed Skills entry"; it
+// is intentionally simple so the cascade does NOT silently pick a
+// branch whose condition doesn't match the run's environment. When
+// PROCEDURE outputs use conditional Branches (e.g. "Korea → skill-a /
+// USA → skill-b"), the parser surfaces them in NextPhase.Branches and
+// the union in NextPhase.Skills — we use Skills[0], which is what a
+// PROCEDURE with a single sequential candidate (the common case)
+// produces.
+//
+// Returns "" when there is no cascade target.
+func pickCascadeTarget(np ParsedOutput_NextPhaseAlias) string {
+	if len(np.Skills) == 0 {
+		return ""
+	}
+	return np.Skills[0]
+}
+
+// ParsedOutput_NextPhaseAlias is a local alias so the helper signature
+// reads at the call site as "what part of the parser output we use"
+// without dragging the full NextPhase type name into every line. Kept
+// next to pickCascadeTarget because it has no other consumer.
+type ParsedOutput_NextPhaseAlias = NextPhase
 
 func writeOutput(target *OutputTarget, result RunResult) error {
 	switch target.Type {

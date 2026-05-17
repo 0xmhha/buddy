@@ -51,18 +51,60 @@ type Agent struct {
 //   - output           — optional terminal destination (stdout / file). v0.3
 //                        writes the JSON result to stdout when omitted.
 type AgentSpec struct {
-	ID       string         `yaml:"id"`
-	Name     string         `yaml:"name"`
-	Schedule string         `yaml:"schedule,omitempty"`
-	Chain    []ChainStep    `yaml:"chain"`
-	Retry    *RetryPolicy   `yaml:"retry,omitempty"`
-	Output   *OutputTarget  `yaml:"output,omitempty"`
+	ID          string              `yaml:"id"`
+	Name        string              `yaml:"name"`
+	Schedule    string              `yaml:"schedule,omitempty"`
+	Chain       []ChainStep         `yaml:"chain"`
+	Retry       *RetryPolicy        `yaml:"retry,omitempty"`
+	Output      *OutputTarget       `yaml:"output,omitempty"`
+	AutoCascade *AutoCascadeConfig  `yaml:"auto_cascade,omitempty"`
 }
+
+// AutoCascadeConfig opts an agent into auto-cascade: after every
+// successful step, the runtime looks at the parsed §next-phase block
+// (ParsedOutput.NextPhase.Skills) and, if non-empty, appends the first
+// listed skill as a new chain step.
+//
+// A non-nil AutoCascadeConfig enables the feature. The struct can be
+// empty (`auto_cascade: {}`) to take the default settings.
+//
+// Cascading is *strictly* skip-on-failure: a step that exits non-zero
+// or returns an executor error does NOT contribute a cascaded successor.
+// This avoids the obvious failure-mode of "broken §next-phase cascades
+// down a fault path".
+type AutoCascadeConfig struct {
+	// MaxDepth limits the cascade. Original chain steps are at depth 0;
+	// every step appended via §next-phase parsing is at depth N+1.
+	// Reaching MaxDepth halts further cascading from that branch (the
+	// step still executes). Default 5 when AutoCascadeConfig is non-nil
+	// but MaxDepth is zero.
+	MaxDepth int `yaml:"max_depth,omitempty"`
+}
+
+// DefaultCascadeMaxDepth is the cap applied when auto_cascade is enabled
+// without an explicit max_depth. Five covers the §1→§9 happy-path
+// orchestrator chain (idea → features → design → plan → build → quality
+// → release → operate → lifecycle) with one tier of slack.
+const DefaultCascadeMaxDepth = 5
 
 // ChainStep is one rung of an agent's command chain.
 type ChainStep struct {
 	Command string `yaml:"command"`        // buddy command name (no /buddy: prefix)
 	Args    string `yaml:"args,omitempty"` // free-form argument string passed to the command
+	// ContinueOnFail, when true, lets the runtime move on to the next
+	// step even if this step exhausts its retry budget without success.
+	// The failed step is still recorded in RunResult.Steps and the
+	// per-step exit code is preserved; what changes is that the chain
+	// does NOT short-circuit. Useful for cleanup or best-effort
+	// notification steps (e.g. "post-completion webhook" that should
+	// not block downstream "release-tag" if it fails).
+	//
+	// Default (false) preserves the v0.6.x behaviour: first non-zero
+	// step after retries stops the chain. The final RunResult.ExitCode
+	// is the *last* non-zero step's exit when any step failed (so a
+	// single failed cleanup step at the end still surfaces failure),
+	// or 0 when every step (including continue_on_fail ones) succeeded.
+	ContinueOnFail bool `yaml:"continue_on_fail,omitempty"`
 }
 
 // RetryPolicy is a uniform retry config for every step. v0.3 shipped a
@@ -153,4 +195,10 @@ type StepResult struct {
 	Stderr   string       `json:"stderr,omitempty"`
 	Error    string       `json:"error,omitempty"`
 	Parsed   ParsedOutput `json:"parsed"`
+	// CascadeDepth is 0 for original chain steps and N+1 for steps
+	// appended via auto-cascade from a step at depth N. Lets downstream
+	// callers distinguish "user wrote this step" from "the runtime
+	// inferred this step from §next-phase". Always 0 when AutoCascade
+	// is disabled.
+	CascadeDepth int `json:"cascade_depth,omitempty"`
 }
