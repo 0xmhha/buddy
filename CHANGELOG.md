@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — W3-2 TUI in-app delete with confirm (follow-on of v0.6.6 minimum-viable)
+
+The third W3-2 follow-on: pressing `d` on a list row opens a modal-style confirmation pane (`y` confirm, `N` / `esc` cancel — default is cancel). On confirm, the TUI calls `Store.Delete` for the locked-in ID; FK cascade drops the agent's runs + logs in the same transaction. Friend-tone success is silent — the row simply disappears on the post-delete reload.
+
+What ships:
+
+- `AgentLister` interface widened to include `Delete(ctx, id) error` (the existing `*agent.Store.Delete` already satisfies it). The interface docstring now flags that, despite the historical "Lister" name, the surface covers a destructive mutation too.
+- New `Mode` value `ModeDeleteConfirm` + `PendingDeleteID` field on `tui.Model`. The ID is captured when `d` is pressed so a list refresh that lands while the dialog is open does not retarget the deletion to a different row.
+- New reducer messages: `AgentDeletedMsg{ID}` and `AgentDeleteErrMsg{ID, Err}`. The delete cmd carries the ID in both messages so the reducer can produce error feedback (`delete agent "alpha": <wrapped>`) without reaching back into mutable state.
+- Key bindings (additive — list/detail/scheduler bindings unchanged):
+  - `d` (list mode) — open the confirm pane. No-op on an empty list. Cursor row's ID becomes `PendingDeleteID`.
+  - `y` / `Y` (confirm mode) — fire the delete cmd.
+  - `n` / `N` / `esc` (confirm mode) — cancel, return to list, clear `PendingDeleteID`.
+  - `q` / `Ctrl-C` (every mode) — quit.
+  - In confirm mode every other key (including nav keys) is intentionally inert — the user must explicitly answer y or n.
+- Post-delete flow: on success, mode flips to `ModeList`, `Loaded` resets to `false`, and `loadAgentsCmd` is dispatched so the deleted row disappears on the next reducer tick. On failure, mode flips to `ModeList` and `m.Err` is set to `delete agent "<id>": <wrapped>` — the existing list-pane error state surfaces it. The list rows are left untouched (no optimistic removal).
+- Render layout: bold header (`buddy agent — delete?`), the target ID called out explicitly (so a redraw can't trick the user into deleting the wrong row), a dim secondary line warning that runs + logs cascade with the delete, and an error-styled `press y to confirm · N / esc to cancel (default: cancel)` prompt. Footer hint `y confirm · n/esc cancel · q quit`.
+
+Test coverage (`internal/tui/model_test.go` — 12 new race-clean tests, 51 total in the package):
+
+- Update reducer: `d` enters confirm mode + captures cursor ID, `d` on empty list is a no-op, `y` schedules a delete cmd (success → `AgentDeletedMsg`, error → `AgentDeleteErrMsg`), `n` / `esc` cancel and clear `PendingDeleteID` + do NOT call Delete, `q` quits from confirm mode, `AgentDeletedMsg` returns to list + flips `Loaded=false` + dispatches reload cmd, `AgentDeleteErrMsg` returns to list and surfaces err via `m.Err` (and does not optimistically drop the row), nav keys (`j/k/g/G`) inert in confirm mode.
+- View smoke: confirm pane renders the target agent ID + the `y/N` hint convention, list view surfaces a wrapped delete-error string in its existing error state.
+
+What stays open from W3-2 follow-on:
+
+- **Create form** (interactive spec builder vs. `buddy agent create` shell-out) — HIGH cost, deserves a dedicated cycle
+- **Live log tail** (per-line streaming view of an in-flight run; pairs with v0.6.4 `agent_logs` streaming) — MED cost, polling vs `tea.Tick` channel decision deferred
+
+`docs/cli-buddy-spec.md` §9 W3-2 row note updated with the 2026-05-17 in-app delete follow-on entry.
+
 ### Added — W3-2 TUI scheduler-preview pane (follow-on of v0.6.6 minimum-viable)
 
 The second W3-2 follow-on item: pressing `s` in the list view opens an inline scheduler-preview pane that shows when each scheduled agent would fire next based on its cron expression. The pane is **preview-only** — it does not start cron, share state with a running `buddy agent scheduler` process, or fire any jobs. It exists so the user can sanity-check the schedule strings in their YAML specs without leaving the TUI.
@@ -29,11 +59,11 @@ Test coverage (`internal/tui/model_test.go` — 12 new race-clean tests, 39 tota
 - Update reducer: `s` switches to scheduler + fires preview cmd, `SchedulerStatusLoadedMsg` folds state + clears any prior err, `SchedulerStatusErrMsg` records err + flips Loaded, `esc` / `h` return to list preserving cursor, `q` quits from scheduler mode, `r` refetches + flips Loaded back to false, `s` in detail mode is intentionally inert (no mode hijack).
 - View smoke: pane renders agent IDs / schedules / esc hint, empty state shows `(no scheduled agents — …)`, parse-fail rows render inline without breaking the pane, loading placeholder visible before fetch resolves, `error: db locked` visible in the whole-pane error state.
 
-What stays open from W3-2 follow-on (unchanged):
+What stays open from W3-2 follow-on (at scheduler-pane ship time):
 
 - **Create form** (interactive spec builder vs. `buddy agent create` shell-out)
 - **Live log tail** (per-line streaming view of an in-flight run; pairs with v0.6.4 `agent_logs` streaming)
-- **In-app delete / edit** (currently the user shells out to `buddy agent delete`)
+- **In-app delete / edit** — *delete shipped above (2026-05-17); in-app edit still open*
 - **Live "currently running" indicator on the scheduler pane** (requires sharing state with a running `Scheduler` instance; this preview iteration intentionally avoided that coupling)
 
 `docs/cli-buddy-spec.md` §9 W3-2 row note updated with the 2026-05-17 scheduler-pane follow-on entry.

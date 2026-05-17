@@ -24,17 +24,26 @@ import (
 	"github.com/0xmhha/buddy/internal/agent"
 )
 
-// AgentLister is the read-only Store surface the TUI needs. Narrowing the
-// dependency to a two-method interface keeps Model tests decoupled from
-// SQLite and makes it easy to inject canned agents + runs in unit tests.
+// AgentLister is the Store surface the TUI needs. Narrowing the
+// dependency to a small interface keeps Model tests decoupled from
+// SQLite and makes it easy to inject canned data in unit tests.
+//
+// Despite the historical name, the interface now covers a non-trivial
+// in-app mutation (Delete). Renaming to "AgentStore" would be cleaner
+// but breaks every external caller — left as-is per cli-buddy-spec's
+// "additive only until v1.0" stance.
 //
 // LatestRun mirrors the Store method of the same name. Callers must
 // receive agent.ErrNotFound when the agent has never run — the View
 // renders that case as the friend-tone "no runs yet" copy rather than a
 // generic error.
+//
+// Delete mirrors Store.Delete: it removes the agent (FK cascade drops
+// runs + logs). Returns agent.ErrNotFound when the ID isn't there.
 type AgentLister interface {
 	List(ctx context.Context) ([]agent.Agent, error)
 	LatestRun(ctx context.Context, agentID string) (agent.AgentRun, error)
+	Delete(ctx context.Context, agentID string) error
 }
 
 // Mode is the top-level view state: list (default), detail, or the
@@ -45,6 +54,7 @@ const (
 	ModeList Mode = iota
 	ModeDetail
 	ModeScheduler
+	ModeDeleteConfirm
 )
 
 // SchedulerPreviewEntry is one row in the scheduler-status pane. It is
@@ -82,6 +92,12 @@ type Model struct {
 	SchedulerEntries []SchedulerPreviewEntry
 	SchedulerErr     error
 	SchedulerLoaded  bool
+
+	// Delete-confirm state — only meaningful when Mode==ModeDeleteConfirm.
+	// PendingDeleteID is the agent ID the user is about to delete; it is
+	// captured when `d` is pressed so a list refresh that lands while the
+	// dialog is open does not retarget the deletion to a different row.
+	PendingDeleteID string
 }
 
 // SelectedID returns the agent ID currently focused for detail rendering.
@@ -109,6 +125,11 @@ type (
 		Entries []SchedulerPreviewEntry
 	}
 	SchedulerStatusErrMsg struct{ Err error }
+	AgentDeletedMsg       struct{ ID string }
+	AgentDeleteErrMsg     struct {
+		ID  string
+		Err error
+	}
 )
 
 // NewModel constructs an empty Model around an AgentLister. The Init
@@ -146,6 +167,19 @@ func loadDetailCmd(store AgentLister, agentID string) tea.Cmd {
 			return AgentDetailErrMsg{Err: err}
 		}
 		return AgentDetailLoadedMsg{Run: run}
+	}
+}
+
+// deleteAgentCmd dispatches Store.Delete on a background goroutine and
+// emits AgentDeletedMsg / AgentDeleteErrMsg. Carries the agent ID in
+// both messages so the reducer can log it in error feedback without
+// reaching back into mutable state.
+func deleteAgentCmd(store AgentLister, agentID string) tea.Cmd {
+	return func() tea.Msg {
+		if err := store.Delete(context.Background(), agentID); err != nil {
+			return AgentDeleteErrMsg{ID: agentID, Err: err}
+		}
+		return AgentDeletedMsg{ID: agentID}
 	}
 }
 
@@ -225,6 +259,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.SchedulerLoaded = true
 		return m, nil
 
+	case AgentDeletedMsg:
+		// Delete succeeded — return to the list and refresh so the deleted
+		// row disappears. Friend-tone: success is silent (no toast banner),
+		// the disappearance of the row is itself the confirmation.
+		m.Mode = ModeList
+		m.PendingDeleteID = ""
+		m.Loaded = false
+		m.Err = nil
+		return m, loadAgentsCmd(m.Store)
+
+	case AgentDeleteErrMsg:
+		// Delete failed — return to list mode and surface the error via
+		// m.Err so the list-pane error state renders it. The list rows are
+		// left untouched (no optimistic removal).
+		m.Mode = ModeList
+		m.PendingDeleteID = ""
+		m.Err = fmt.Errorf("delete agent %q: %w", msg.ID, msg.Err)
+		return m, nil
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -268,6 +321,26 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.SchedulerLoaded = false
 			return m, loadSchedulerStatusCmd(m.Store)
 		}
+		return m, nil
+	}
+
+	if m.Mode == ModeDeleteConfirm {
+		switch key {
+		case "y", "Y":
+			if m.PendingDeleteID == "" {
+				// Defensive: nothing to delete — treat as cancel.
+				m.Mode = ModeList
+				return m, nil
+			}
+			return m, deleteAgentCmd(m.Store, m.PendingDeleteID)
+		case "n", "N", "esc":
+			m.Mode = ModeList
+			m.PendingDeleteID = ""
+			return m, nil
+		}
+		// In confirm mode every other key (including nav keys) is
+		// intentionally inert — the user must explicitly answer y or n
+		// (or esc / quit).
 		return m, nil
 	}
 
@@ -318,6 +391,14 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.SchedulerLoaded = false
 		m.SchedulerErr = nil
 		return m, loadSchedulerStatusCmd(m.Store)
+
+	case "d":
+		if len(m.Agents) == 0 {
+			return m, nil
+		}
+		m.Mode = ModeDeleteConfirm
+		m.PendingDeleteID = m.Agents[m.Cursor].ID
+		return m, nil
 	}
 	return m, nil
 }
@@ -331,6 +412,8 @@ func (m Model) View() string {
 		return m.renderDetail()
 	case ModeScheduler:
 		return m.renderScheduler()
+	case ModeDeleteConfirm:
+		return m.renderDeleteConfirm()
 	default:
 		return m.renderList()
 	}
@@ -494,6 +577,32 @@ func (m Model) renderScheduler() string {
 	return b.String()
 }
 
+// renderDeleteConfirm draws the modal-style confirmation prompt. The list
+// rows are NOT shown — the user's full attention is on the destructive
+// choice. ID is rendered explicitly so a redraw / refresh from another
+// shell can't trick the user into deleting the wrong row.
+func (m Model) renderDeleteConfirm() string {
+	var b strings.Builder
+
+	b.WriteString(headerStyle.Render("buddy agent — delete?"))
+	b.WriteString("\n\n")
+
+	id := m.PendingDeleteID
+	if id == "" {
+		id = "(no target — press n to return to the list)"
+	}
+	b.WriteString(fmt.Sprintf("  About to delete agent: %s\n", id))
+	b.WriteString(dimStyle.Render("  This also drops the agent's runs and logs (FK cascade)."))
+	b.WriteString("\n  ")
+	b.WriteString(dimStyle.Render("This cannot be undone."))
+	b.WriteString("\n\n")
+
+	b.WriteString(errorStyle.Render("  press y to confirm · N / esc to cancel (default: cancel)"))
+	b.WriteString("\n\n")
+	b.WriteString(footerHintConfirm())
+	return b.String()
+}
+
 // renderAgentRow formats one agent in the list. Caller passes whether the
 // row is currently selected; that toggles the highlight.
 func renderAgentRow(a agent.Agent, selected bool) string {
@@ -511,7 +620,7 @@ func renderAgentRow(a agent.Agent, selected bool) string {
 }
 
 func footerHintList() string {
-	return footerStyle.Render("j/k or ↑/↓ move · g/G top/bottom · enter/l detail · s scheduler · r refresh · q quit")
+	return footerStyle.Render("j/k or ↑/↓ move · g/G top/bottom · enter/l detail · s scheduler · d delete · r refresh · q quit")
 }
 
 func footerHintDetail() string {
@@ -520,6 +629,10 @@ func footerHintDetail() string {
 
 func footerHintScheduler() string {
 	return footerStyle.Render("esc/h back · r refresh · q quit")
+}
+
+func footerHintConfirm() string {
+	return footerStyle.Render("y confirm · n/esc cancel · q quit")
 }
 
 // ─── styles ────────────────────────────────────────────────────────────

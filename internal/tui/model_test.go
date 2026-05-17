@@ -27,6 +27,9 @@ type fakeLister struct {
 	runErr        map[string]error
 	runDefault    agent.AgentRun
 	runDefaultErr error
+
+	deleted   []string // ids that Delete was called with, in order
+	deleteErr error    // canned error from Delete (nil = success)
 }
 
 func (f *fakeLister) List(_ context.Context) ([]agent.Agent, error) {
@@ -47,6 +50,15 @@ func (f *fakeLister) LatestRun(_ context.Context, agentID string) (agent.AgentRu
 		return agent.AgentRun{}, f.runDefaultErr
 	}
 	return f.runDefault, nil
+}
+
+// Delete records the call into deleted so tests can assert what was
+// removed, and optionally returns deleteErr. The fake does not mutate
+// f.agents — reducer tests post AgentsLoadedMsg explicitly when they
+// need to simulate the post-delete reload.
+func (f *fakeLister) Delete(_ context.Context, agentID string) error {
+	f.deleted = append(f.deleted, agentID)
+	return f.deleteErr
 }
 
 // keyMsg builds a tea.KeyMsg for the given rune/key — bubbletea exposes
@@ -672,4 +684,176 @@ func TestView_SchedulerErrorState(t *testing.T) {
 	require.Contains(t, out, "error")
 	require.Contains(t, out, "db locked")
 	require.Contains(t, out, "esc")
+}
+
+// ─── In-app delete confirm (W3-2 follow-on #3) ─────────────────────────
+
+// TestUpdate_DEntersConfirmMode — pressing `d` on a populated list
+// transitions to ModeDeleteConfirm and locks PendingDeleteID to the
+// cursor row's ID.
+func TestUpdate_DEntersConfirmMode(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Loaded: true, Agents: []agent.Agent{
+		{ID: "alpha"}, {ID: "beta"},
+	}, Cursor: 1}
+	next, cmd := m.Update(keyMsg("d"))
+	mm := next.(Model)
+	require.Equal(t, ModeDeleteConfirm, mm.Mode)
+	require.Equal(t, "beta", mm.PendingDeleteID)
+	require.Nil(t, cmd, "d alone must not fire delete — confirmation required")
+}
+
+// TestUpdate_DOnEmptyListIsNoOp — d with no agents must not switch modes.
+func TestUpdate_DOnEmptyListIsNoOp(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Loaded: true}
+	next, cmd := m.Update(keyMsg("d"))
+	require.Equal(t, ModeList, next.(Model).Mode)
+	require.Nil(t, cmd)
+}
+
+// TestUpdate_YInConfirmFiresDeleteCmd — y in confirm mode dispatches the
+// delete cmd. The cmd, when executed, calls Delete on the store and
+// produces AgentDeletedMsg (success path).
+func TestUpdate_YInConfirmFiresDeleteCmd(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDeleteConfirm, PendingDeleteID: "beta",
+		Agents: []agent.Agent{{ID: "alpha"}, {ID: "beta"}}, Cursor: 1}
+	next, cmd := m.Update(keyMsg("y"))
+	require.NotNil(t, cmd, "y must schedule a delete command")
+	msg := cmd()
+	deleted, ok := msg.(AgentDeletedMsg)
+	require.True(t, ok, "expected AgentDeletedMsg, got %T", msg)
+	require.Equal(t, "beta", deleted.ID)
+	require.Equal(t, []string{"beta"}, store.deleted)
+	// Mode is allowed to stay in ModeDeleteConfirm until the message lands;
+	// what matters is that the cmd was dispatched.
+	_ = next
+}
+
+// TestUpdate_YInConfirmFiresDeleteCmd_Error — y + Delete() returning err
+// produces AgentDeleteErrMsg.
+func TestUpdate_YInConfirmFiresDeleteCmd_Error(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("disk full")
+	store := &fakeLister{deleteErr: bang}
+	m := Model{Store: store, Mode: ModeDeleteConfirm, PendingDeleteID: "alpha",
+		Agents: []agent.Agent{{ID: "alpha"}}, Cursor: 0}
+	_, cmd := m.Update(keyMsg("y"))
+	require.NotNil(t, cmd)
+	msg := cmd()
+	errMsg, ok := msg.(AgentDeleteErrMsg)
+	require.True(t, ok, "expected AgentDeleteErrMsg, got %T", msg)
+	require.Equal(t, "alpha", errMsg.ID)
+	require.ErrorIs(t, errMsg.Err, bang)
+}
+
+// TestUpdate_NInConfirmReturnsToList — n cancels and returns to list mode.
+func TestUpdate_NInConfirmReturnsToList(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDeleteConfirm, PendingDeleteID: "beta",
+		Agents: []agent.Agent{{ID: "alpha"}, {ID: "beta"}}, Cursor: 1}
+	next, cmd := m.Update(keyMsg("n"))
+	mm := next.(Model)
+	require.Equal(t, ModeList, mm.Mode)
+	require.Empty(t, mm.PendingDeleteID, "PendingDeleteID must clear on cancel")
+	require.Empty(t, store.deleted, "cancel must not call Delete")
+	require.Nil(t, cmd)
+}
+
+// TestUpdate_EscInConfirmReturnsToList — esc is also a cancel.
+func TestUpdate_EscInConfirmReturnsToList(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDeleteConfirm, PendingDeleteID: "alpha"}
+	next, _ := m.Update(keyMsg("esc"))
+	require.Equal(t, ModeList, next.(Model).Mode)
+	require.Empty(t, store.deleted)
+}
+
+// TestUpdate_QuitWorksInConfirmMode — q / ctrl+c still quits.
+func TestUpdate_QuitWorksInConfirmMode(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeDeleteConfirm, PendingDeleteID: "alpha"}
+	_, cmd := m.Update(keyMsg("q"))
+	require.NotNil(t, cmd)
+	_, ok := cmd().(tea.QuitMsg)
+	require.True(t, ok)
+}
+
+// TestUpdate_AgentDeletedMsgRefreshesList — AgentDeletedMsg returns the
+// user to list mode + schedules a reload (so the deleted row vanishes).
+func TestUpdate_AgentDeletedMsgRefreshesList(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeDeleteConfirm,
+		PendingDeleteID: "alpha"}
+	next, cmd := m.Update(AgentDeletedMsg{ID: "alpha"})
+	mm := next.(Model)
+	require.Equal(t, ModeList, mm.Mode)
+	require.Empty(t, mm.PendingDeleteID, "PendingDeleteID must clear after success")
+	require.False(t, mm.Loaded, "Loaded resets so the reload placeholder shows")
+	require.NotNil(t, cmd, "delete success must schedule a list reload")
+}
+
+// TestUpdate_AgentDeleteErrMsgRecordsErrInListMode — failure returns to
+// list mode and records the error so View can surface it.
+func TestUpdate_AgentDeleteErrMsgRecordsErrInListMode(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("disk full")
+	m := Model{Store: &fakeLister{}, Mode: ModeDeleteConfirm,
+		PendingDeleteID: "alpha", Loaded: true,
+		Agents: []agent.Agent{{ID: "alpha"}}}
+	next, _ := m.Update(AgentDeleteErrMsg{ID: "alpha", Err: bang})
+	mm := next.(Model)
+	require.Equal(t, ModeList, mm.Mode)
+	require.Empty(t, mm.PendingDeleteID)
+	require.ErrorIs(t, mm.Err, bang, "delete error must surface as the list Err so the user sees it")
+	require.Len(t, mm.Agents, 1, "delete failure must not drop the row optimistically")
+}
+
+// TestUpdate_NavKeysInertInConfirmMode — j/k/g/G do not move the cursor
+// while a confirm dialog is open.
+func TestUpdate_NavKeysInertInConfirmMode(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeDeleteConfirm, Loaded: true,
+		Agents: []agent.Agent{{ID: "a"}, {ID: "b"}, {ID: "c"}}, Cursor: 1,
+		PendingDeleteID: "b"}
+	for _, k := range []string{"j", "k", "G", "g"} {
+		next, _ := m.Update(keyMsg(k))
+		require.Equal(t, 1, next.(Model).Cursor,
+			"%s must not move cursor in confirm mode", k)
+		require.Equal(t, ModeDeleteConfirm, next.(Model).Mode)
+	}
+}
+
+// TestView_ConfirmModeRendersAgentIDAndYNHint — the confirm pane shows
+// the target agent ID and the y/N prompt copy.
+func TestView_ConfirmModeRendersAgentIDAndYNHint(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:            ModeDeleteConfirm,
+		Loaded:          true,
+		Agents:          []agent.Agent{{ID: "alpha"}, {ID: "beta"}},
+		Cursor:          1,
+		PendingDeleteID: "beta",
+	}
+	out := m.View()
+	require.Contains(t, out, "beta", "target agent ID must be visible")
+	require.Contains(t, out, "delete", "the action word must be visible")
+	require.True(t,
+		strings.Contains(out, "y") && strings.Contains(out, "N"),
+		"y/N hint must be visible: %s", out)
+}
+
+// TestView_DeleteErrorShowsInListAfterFailure — once an AgentDeleteErrMsg
+// folds in, the list view's error state surfaces the error string.
+func TestView_DeleteErrorShowsInListAfterFailure(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeList, Loaded: true,
+		Err: errors.New("delete agent \"alpha\": disk full")}
+	out := m.View()
+	require.Contains(t, out, "error")
+	require.Contains(t, out, "disk full")
 }
