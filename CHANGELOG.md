@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — W3-2 TUI in-app spec edit (follow-on of v0.7.0)
+
+The fifth W3-2 follow-on item: pressing `e` in the detail pane writes the agent's current `spec_yaml` to a temp file, suspends the TUI (AltScreen), and shells out to `$EDITOR` (fall back to `$VISUAL`, then `vi`). On exit, the TUI reads the file back, runs `agent.ParseSpec` for validation, rejects ID renames (would orphan runs/logs), and dispatches `Store.UpdateSpec` for a persisted save. Friend-tone: success silently reloads the list so the new name/schedule renders in the row; failure shows an `edit error: ...` banner in the detail pane with a `press e to try again` hint.
+
+What ships:
+
+- New `Store.UpdateSpec(ctx, spec, yaml) error` in `internal/agent/store.go`. Swaps `name` / `schedule` / `spec_yaml` in one UPDATE and bumps `updated_at`. `status`, `created_at`, `last_run_at` are preserved verbatim so an editorial change does NOT reset run history or in-progress state. Returns `ErrNotFound` when `spec.ID` matches no row (e.g., the agent was deleted between the user pressing `e` and the save round-trip).
+- `AgentLister` interface widened to include `UpdateSpec` (the existing `*agent.Store` already implements it).
+- New `EditErr error` field on `tui.Model`. Cleared on each `e` keypress (about to retry) and on `AgentSpecUpdatedMsg`; persists across other state changes so the banner survives a list reload.
+- New reducer messages: `EditorExitedMsg{AgentID, Content, Err}` (from the `tea.ExecProcess` callback), `AgentSpecUpdatedMsg{ID}` (save success), `AgentSpecUpdateErrMsg{ID, Err}` (parse-fail / rename-rejected / store-err).
+- New cmds:
+  - `beginEditCmd(agentID, currentSpec)` — writes `currentSpec` to `os.CreateTemp` (`buddy-edit-*.yaml`), launches `$EDITOR` via `tea.ExecProcess` (suspends/resumes AltScreen automatically), and emits `EditorExitedMsg` with the read-back content. Temp file is best-effort removed in the callback regardless of outcome.
+  - `saveEditedSpecCmd(store, originalID, yaml)` — runs `agent.ParseSpec`, rejects renames (`spec.ID != originalID`), calls `Store.UpdateSpec`, emits the success/err msg.
+- Key bindings (additive — list/detail/scheduler/log-tail bindings unchanged):
+  - `e` (detail mode) — open the spec editor. No-op if the selected agent isn't in `m.Agents` (rare — list shrank between detail entry and the e keypress).
+- Failure modes handled explicitly: temp-file create / write / close fails → `EditorExitedMsg.Err` with wrapped error; editor crashes / non-zero exit → same; read-back fails → same; ParseSpec fail → `AgentSpecUpdateErrMsg` with wrapped error; ID rename → `AgentSpecUpdateErrMsg` with `rename not allowed: spec id "X" != original "Y"`; `Store.UpdateSpec` err → same.
+- Render: when `EditErr != nil`, the detail pane appends an error-styled `edit error: <message>` banner and a dim `(press e to try again)` retry hint below the latest-run section. Footer hint adds `e edit spec`.
+
+Test coverage (`internal/tui/model_test.go` — 11 new race-clean tests, 76 total in the package; `internal/agent/store_test.go` — 3 new race-clean tests for `UpdateSpec`):
+
+- Store: `UpdateSpec` replaces name/schedule/spec_yaml and preserves status/created_at; unknown ID returns `ErrNotFound`; `last_run_at` is preserved across the edit so the list keeps its "X minutes ago" cue.
+- Save cmd unit tests: valid YAML dispatches Update + emits `AgentSpecUpdatedMsg`; rename rejected without calling `UpdateSpec`; invalid YAML returns `AgentSpecUpdateErrMsg` short-circuiting before the store; store err propagates as `AgentSpecUpdateErrMsg` with `errors.Is` chain preserved.
+- Update reducer: `e` in detail with a known agent dispatches the edit cmd + clears prior `EditErr`; `e` with `Selected` missing from `m.Agents` is a no-op; `EditorExitedMsg{Err}` records the err and does NOT chain a save cmd; `EditorExitedMsg{Content}` dispatches the save cmd; `AgentSpecUpdatedMsg` clears `EditErr` + resets `Loaded` + dispatches list reload; `AgentSpecUpdateErrMsg` records err + leaves list state intact.
+- View smoke: `EditErr != nil` renders the `edit error: ...` banner + `press e` retry hint.
+
+The `tea.ExecProcess` shell-out is intentionally NOT covered by unit tests — they would have to launch a real editor. Manual dogfood is where it gets verified.
+
+What stays open from W3-2 follow-on (after this):
+
+- **Create form** (interactive spec builder) — HIGH cost, deserves a dedicated cycle. The last W3-2 follow-on still open.
+- **Scheduler pane: live "currently running" indicator** (requires coupling the TUI to a running `Scheduler` instance).
+- **Log tail: scrollback + auto-stop on run-end** (right now the pane shows all accumulated lines and polls forever).
+
+`docs/cli-buddy-spec.md` §9 W3-2 row updated with the 2026-05-17 in-app-edit follow-on entry. With this, W3-2 has shipped 5 of its 6 named follow-on items (only create form remains).
+
 ### Added — W3-2 TUI live log tail (follow-on of v0.7.0)
 
 The fourth W3-2 follow-on item: pressing `t` in the detail pane opens a live log-tail view of the run shown above. The pane polls `agent_logs` every ~1s for new lines (incremental — only rows with `id` strictly greater than the high-water mark are fetched), accumulates them oldest-first, and renders `HH:MM:SS  <level>  <message>` per row. Pair with the v0.6.4 streaming-log infrastructure: as the runtime appends per-line, the TUI sees each line within a tick.

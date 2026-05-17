@@ -13,24 +13,30 @@ import (
 // minimum-viable list. Follow-on cycles add: detail pane (Enter/l opens
 // the latest-run summary), scheduler-preview pane (s shows when each
 // scheduled agent would fire next), in-app delete with confirmation
-// (d → y/N prompt → FK-cascading delete), and a live log-tail pane
-// (t from detail view → ~1s polling of `agent_logs` for the run shown).
-// Create form and in-app edit remain follow-on per cli-buddy-spec §9 W3-2.
+// (d → y/N prompt → FK-cascading delete), live log-tail pane (t from
+// detail view → ~1s polling of `agent_logs` for the run shown), and
+// in-app spec edit (e from detail view → $EDITOR shell-out → ParseSpec
+// validation → Store.UpdateSpec). Create form remains follow-on per
+// cli-buddy-spec §9 W3-2.
 //
 // AltScreen is enabled so the previous shell content is preserved and
 // restored on quit — the friend-tone "silent default" stays intact.
+// During an `e` edit the AltScreen is briefly suspended so $EDITOR can
+// take over the terminal; on exit the TUI redraws.
 func newTuiCmd() *cobra.Command {
 	var dbFlag string
 	c := &cobra.Command{
 		Use:   "tui",
-		Short: "Open the cli buddy terminal UI (list, detail, scheduler, delete, log tail)",
+		Short: "Open the cli buddy terminal UI (list, detail, scheduler, delete, log tail, edit)",
 		Long: "Launches the bubbletea-based TUI. List view: j/k or ↑/↓ to move,\n" +
 			"g/G to jump to top/bottom, r to refresh, enter/l to open detail,\n" +
 			"s to open the scheduler-preview pane, d to delete the cursor\n" +
 			"row (y/N confirm required — also drops the agent's runs + logs\n" +
 			"via FK cascade), q (or Ctrl-C) to quit.\n" +
 			"Detail view: esc/h to return, r to refetch the latest run,\n" +
-			"t to tail that run's logs (~1s auto-refresh; esc/h back).\n" +
+			"t to tail that run's logs (~1s auto-refresh; esc/h back),\n" +
+			"e to edit the agent spec via $EDITOR (fall back to $VISUAL,\n" +
+			"then vi). Renames are rejected — the spec id must match.\n" +
 			"Scheduler view: esc/h to return, r to refetch. The scheduler\n" +
 			"pane is preview-only (does not run jobs) — it shows when each\n" +
 			"scheduled agent would fire next based on its cron expression.\n" +

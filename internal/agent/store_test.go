@@ -72,6 +72,101 @@ func TestStore_LatestRun_UnknownAgentReturnsNotFound(t *testing.T) {
 	require.True(t, errors.Is(err, ErrNotFound))
 }
 
+// ─── UpdateSpec (TUI in-app edit follow-on, W3-2) ──────────────────────
+
+// TestStore_UpdateSpec_SuccessReplacesEditableFields — name / schedule /
+// spec_yaml are swapped in one UPDATE; status, created_at, last_run_at
+// are preserved verbatim.
+func TestStore_UpdateSpec_SuccessReplacesEditableFields(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	specOld, err := ParseSpec([]byte(minimalSpecYAML))
+	require.NoError(t, err)
+	created, err := store.Create(ctx, specOld, minimalSpecYAML)
+	require.NoError(t, err)
+
+	const newYAML = `
+id: hello-agent
+name: "Hello agent (edited)"
+schedule: "@hourly"
+chain:
+  - command: status
+`
+	specNew, err := ParseSpec([]byte(newYAML))
+	require.NoError(t, err)
+	require.NoError(t, store.UpdateSpec(ctx, specNew, newYAML))
+
+	got, err := store.Get(ctx, created.ID)
+	require.NoError(t, err)
+	require.Equal(t, "Hello agent (edited)", got.Name, "name must reflect the edit")
+	require.Equal(t, "@hourly", got.Schedule, "schedule must reflect the edit")
+	require.Contains(t, got.SpecYAML, "Hello agent (edited)", "spec_yaml must be the new bytes")
+	require.Equal(t, StatusIdle, got.Status, "status must NOT be reset by an editorial change")
+	require.WithinDuration(t, created.CreatedAt, got.CreatedAt, time.Second,
+		"created_at must be preserved (the row was not re-created)")
+	require.False(t, got.UpdatedAt.Before(created.UpdatedAt),
+		"updated_at must advance (or at minimum not go backwards)")
+}
+
+// TestStore_UpdateSpec_UnknownIDReturnsNotFound — a typo'd id (or one
+// that was deleted between the user pressing 'e' and the save round-trip)
+// must surface as ErrNotFound, not a silent zero-row UPDATE.
+func TestStore_UpdateSpec_UnknownIDReturnsNotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	spec, err := ParseSpec([]byte(minimalSpecYAML))
+	require.NoError(t, err)
+	// Note: not creating the agent in the store first.
+	err = store.UpdateSpec(ctx, spec, minimalSpecYAML)
+	require.Error(t, err)
+	require.True(t, errors.Is(err, ErrNotFound), "expected ErrNotFound, got %v", err)
+}
+
+// TestStore_UpdateSpec_PreservesLastRunAt — an agent with run history must
+// keep its last_run_at after a spec edit (otherwise the list would lose
+// its "X minutes ago" cue for editable rows).
+func TestStore_UpdateSpec_PreservesLastRunAt(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	spec, err := ParseSpec([]byte(minimalSpecYAML))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, minimalSpecYAML)
+	require.NoError(t, err)
+
+	// Manufacture a run + finish so last_run_at gets set.
+	runID, err := store.StartRun(ctx, a.ID)
+	require.NoError(t, err)
+	require.NoError(t, store.FinishRun(ctx, runID, 0, nil, nil))
+	require.NoError(t, store.UpdateStatus(ctx, a.ID, StatusDone))
+
+	before, err := store.Get(ctx, a.ID)
+	require.NoError(t, err)
+	require.NotNil(t, before.LastRunAt, "precondition: last_run_at populated")
+
+	// Edit the spec.
+	const editedYAML = `
+id: hello-agent
+name: "Hello (edit 2)"
+chain:
+  - command: status
+`
+	editedSpec, err := ParseSpec([]byte(editedYAML))
+	require.NoError(t, err)
+	require.NoError(t, store.UpdateSpec(ctx, editedSpec, editedYAML))
+
+	after, err := store.Get(ctx, a.ID)
+	require.NoError(t, err)
+	require.NotNil(t, after.LastRunAt, "last_run_at must survive UpdateSpec")
+	require.Equal(t, before.LastRunAt.UnixMilli(), after.LastRunAt.UnixMilli(),
+		"last_run_at value must be identical (preserved verbatim)")
+}
+
 // ─── LogsSince (TUI log-tail follow-on, W3-2) ──────────────────────────
 
 // TestStore_LogsSince_ReturnsOnlyNewerLines covers the incremental-poll

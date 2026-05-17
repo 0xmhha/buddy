@@ -35,11 +35,21 @@ type fakeLister struct {
 	logsDefault []agent.AgentLog           // fallback when no sinceID match
 	logsErr     error                      // forces error from LogsSince
 	logsCalls   []logsCall                 // recorded (runID, sinceID) pairs
+
+	updated   []updateCall // ids/specs that UpdateSpec was called with
+	updateErr error        // canned error from UpdateSpec
 }
 
 type logsCall struct {
 	RunID   int64
 	SinceID int64
+}
+
+type updateCall struct {
+	ID       string
+	Name     string
+	Schedule string
+	YAML     string
 }
 
 func (f *fakeLister) List(_ context.Context) ([]agent.Agent, error) {
@@ -82,6 +92,13 @@ func (f *fakeLister) LogsSince(_ context.Context, runID int64, sinceID int64) ([
 		return lines, nil
 	}
 	return f.logsDefault, nil
+}
+
+// UpdateSpec records the call into updated so tests can assert what was
+// saved + optionally returns updateErr. Mirrors Delete's pattern.
+func (f *fakeLister) UpdateSpec(_ context.Context, spec agent.AgentSpec, yaml string) error {
+	f.updated = append(f.updated, updateCall{ID: spec.ID, Name: spec.Name, Schedule: spec.Schedule, YAML: yaml})
+	return f.updateErr
 }
 
 // keyMsg builds a tea.KeyMsg for the given rune/key — bubbletea exposes
@@ -1089,4 +1106,201 @@ func TestView_LogTailErrorState(t *testing.T) {
 	out := m.View()
 	require.Contains(t, out, "error")
 	require.Contains(t, out, "db locked")
+}
+
+// ─── In-app edit (W3-2 follow-on #5 — P1-2) ────────────────────────────
+
+// minimalEditableYAML mirrors internal/agent's minimalSpecYAML — kept
+// local so the TUI test file doesn't have to reach into a sibling
+// package's unexported constant.
+const minimalEditableYAML = `
+id: alpha
+name: "Alpha agent"
+chain:
+  - command: status
+`
+
+// TestSaveEditedSpec_ValidYAMLDispatchesUpdate — the save cmd parses the
+// content, sees the id matches the original, calls UpdateSpec, and emits
+// AgentSpecUpdatedMsg. fakeLister.updated records what was passed.
+func TestSaveEditedSpec_ValidYAMLDispatchesUpdate(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	cmd := saveEditedSpecCmd(store, "alpha", []byte(minimalEditableYAML))
+	require.NotNil(t, cmd)
+	msg := cmd()
+	updated, ok := msg.(AgentSpecUpdatedMsg)
+	require.True(t, ok, "expected AgentSpecUpdatedMsg, got %T", msg)
+	require.Equal(t, "alpha", updated.ID)
+	require.Len(t, store.updated, 1)
+	require.Equal(t, "alpha", store.updated[0].ID)
+	require.Equal(t, "Alpha agent", store.updated[0].Name)
+}
+
+// TestSaveEditedSpec_RenameIsRejected — the cmd refuses to call
+// UpdateSpec when the parsed spec.ID differs from the original.
+// Renames are out of scope for the edit flow (would orphan runs/logs).
+func TestSaveEditedSpec_RenameIsRejected(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	renamed := []byte(`
+id: alpha-renamed
+name: "Alpha agent"
+chain:
+  - command: status
+`)
+	cmd := saveEditedSpecCmd(store, "alpha", renamed)
+	msg := cmd()
+	errMsg, ok := msg.(AgentSpecUpdateErrMsg)
+	require.True(t, ok, "expected AgentSpecUpdateErrMsg, got %T", msg)
+	require.Equal(t, "alpha", errMsg.ID, "ID in err must be the ORIGINAL (so the user can find it)")
+	require.Contains(t, errMsg.Err.Error(), "rename")
+	require.Empty(t, store.updated, "rename rejection must NOT call UpdateSpec")
+}
+
+// TestSaveEditedSpec_InvalidYAMLReturnsErr — ParseSpec failure short-
+// circuits before UpdateSpec is called.
+func TestSaveEditedSpec_InvalidYAMLReturnsErr(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	cmd := saveEditedSpecCmd(store, "alpha", []byte("not :: valid yaml ::"))
+	msg := cmd()
+	errMsg, ok := msg.(AgentSpecUpdateErrMsg)
+	require.True(t, ok)
+	require.Equal(t, "alpha", errMsg.ID)
+	require.Error(t, errMsg.Err)
+	require.Empty(t, store.updated)
+}
+
+// TestSaveEditedSpec_StoreErrPropagates — UpdateSpec failure surfaces as
+// AgentSpecUpdateErrMsg with the wrapped error.
+func TestSaveEditedSpec_StoreErrPropagates(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("disk full")
+	store := &fakeLister{updateErr: bang}
+	cmd := saveEditedSpecCmd(store, "alpha", []byte(minimalEditableYAML))
+	msg := cmd()
+	errMsg, ok := msg.(AgentSpecUpdateErrMsg)
+	require.True(t, ok)
+	require.ErrorIs(t, errMsg.Err, bang)
+}
+
+// TestUpdate_EInDetailWithSpecDispatchesEditCmd — e in detail mode when
+// the selected agent has spec_yaml dispatches a cmd. We can't verify
+// the inner tea.ExecProcess without spinning a real editor; what we
+// assert is the cmd is non-nil + EditErr is cleared (retry after a
+// prior failed edit).
+func TestUpdate_EInDetailWithSpecDispatchesEditCmd(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDetail, DetailLoaded: true,
+		Selected: "alpha",
+		Agents: []agent.Agent{
+			{ID: "alpha", SpecYAML: minimalEditableYAML, Name: "Alpha"},
+		},
+		EditErr: errors.New("prior error"),
+	}
+	next, cmd := m.Update(keyMsg("e"))
+	mm := next.(Model)
+	require.NotNil(t, cmd, "e must dispatch the edit cmd")
+	require.Nil(t, mm.EditErr, "EditErr must clear when the user retries")
+	require.Equal(t, ModeDetail, mm.Mode, "mode stays Detail; editor shell-out is opaque to the model")
+}
+
+// TestUpdate_EInDetailWithoutAgentInListIsNoOp — if Selected isn't found
+// in m.Agents (rare — list shrank between detail entry and the e
+// keypress) we don't dispatch the edit cmd.
+func TestUpdate_EInDetailWithoutAgentInListIsNoOp(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDetail, DetailLoaded: true,
+		Selected: "alpha",
+		Agents:   []agent.Agent{{ID: "beta", SpecYAML: "..."}}, // alpha gone
+	}
+	next, cmd := m.Update(keyMsg("e"))
+	require.Nil(t, cmd)
+	require.Equal(t, ModeDetail, next.(Model).Mode)
+}
+
+// TestUpdate_EditorExitedWithErrorRecordsErr — when EditorExitedMsg.Err
+// is non-nil (editor crash, file IO fail, etc.), the model records it
+// in EditErr and does NOT dispatch a save cmd.
+func TestUpdate_EditorExitedWithErrorRecordsErr(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("editor crashed")
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDetail, Selected: "alpha"}
+	next, cmd := m.Update(EditorExitedMsg{AgentID: "alpha", Err: bang})
+	mm := next.(Model)
+	require.ErrorIs(t, mm.EditErr, bang)
+	require.Nil(t, cmd, "editor error must not chain a save cmd")
+	require.Empty(t, store.updated)
+}
+
+// TestUpdate_EditorExitedWithContentDispatchesSaveCmd — successful editor
+// exit (Content non-nil, Err nil) dispatches the save cmd.
+func TestUpdate_EditorExitedWithContentDispatchesSaveCmd(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDetail, Selected: "alpha"}
+	next, cmd := m.Update(EditorExitedMsg{
+		AgentID: "alpha",
+		Content: []byte(minimalEditableYAML),
+	})
+	require.NotNil(t, cmd, "non-nil content must dispatch save cmd")
+	// Execute the save cmd; assert AgentSpecUpdatedMsg comes out.
+	msg := cmd()
+	_, ok := msg.(AgentSpecUpdatedMsg)
+	require.True(t, ok, "expected AgentSpecUpdatedMsg, got %T", msg)
+	require.Len(t, store.updated, 1)
+	_ = next
+}
+
+// TestUpdate_AgentSpecUpdatedMsgReloadsList — success returns to a
+// fresh-list state (Loaded=false) and dispatches loadAgentsCmd so the
+// edited spec's new name/schedule reflects in the list row.
+func TestUpdate_AgentSpecUpdatedMsgReloadsList(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDetail, Loaded: true,
+		Selected: "alpha", EditErr: errors.New("prior")}
+	next, cmd := m.Update(AgentSpecUpdatedMsg{ID: "alpha"})
+	mm := next.(Model)
+	require.Nil(t, mm.EditErr, "success must clear prior edit error")
+	require.False(t, mm.Loaded, "Loaded resets so the reload placeholder shows")
+	require.NotNil(t, cmd, "must schedule a list reload")
+}
+
+// TestUpdate_AgentSpecUpdateErrMsgRecordsErr — store err surfaces as
+// EditErr; mode stays Detail; list is not touched.
+func TestUpdate_AgentSpecUpdateErrMsgRecordsErr(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("disk full")
+	m := Model{Mode: ModeDetail, Loaded: true, Selected: "alpha",
+		Agents: []agent.Agent{{ID: "alpha"}}}
+	next, _ := m.Update(AgentSpecUpdateErrMsg{ID: "alpha", Err: bang})
+	mm := next.(Model)
+	require.ErrorIs(t, mm.EditErr, bang)
+	require.Equal(t, ModeDetail, mm.Mode)
+	require.True(t, mm.Loaded, "list state must NOT be reset on save failure")
+	require.Len(t, mm.Agents, 1, "list rows must stay intact")
+}
+
+// TestView_DetailRendersEditErrorBanner — when EditErr is set, the detail
+// pane shows an error banner with the message + a retry hint.
+func TestView_DetailRendersEditErrorBanner(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:         ModeDetail,
+		Loaded:       true,
+		DetailLoaded: true,
+		Agents:       []agent.Agent{{ID: "alpha"}},
+		Selected:     "alpha",
+		DetailErr:    agent.ErrNotFound, // empty-state body so we can focus on the banner
+		EditErr:      errors.New("rename not allowed: spec id \"beta\" != original \"alpha\""),
+	}
+	out := m.View()
+	require.Contains(t, out, "edit error", "banner label must be visible")
+	require.Contains(t, out, "rename not allowed")
+	require.Contains(t, out, "press e", "retry hint must guide the user")
 }

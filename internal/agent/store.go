@@ -110,6 +110,40 @@ func (s *Store) List(ctx context.Context) ([]Agent, error) {
 	return out, rows.Err()
 }
 
+// UpdateSpec replaces an agent's name / schedule / spec_yaml in one UPDATE
+// and bumps updated_at. Status, created_at, last_run_at are preserved so
+// an in-progress run does not get reset by an editorial change.
+//
+// Returns ErrNotFound when the spec.ID does not match any row — the TUI
+// edit flow surfaces this to the user via a friend-tone error banner.
+//
+// Callers are expected to have validated spec.ID against the original
+// agent ID upstream (the TUI rejects renames before reaching here); this
+// method does not enforce that itself, so a buggy caller could
+// repurpose an existing row to a different name — but the id column is
+// the primary key, so it cannot accidentally collide with a different
+// agent.
+func (s *Store) UpdateSpec(ctx context.Context, spec AgentSpec, specYAML string) error {
+	now := time.Now().UTC().UnixMilli()
+	res, err := s.db.ExecContext(ctx, `
+		UPDATE agents
+		SET name = ?, schedule = ?, spec_yaml = ?, updated_at = ?
+		WHERE id = ?`,
+		spec.Name, spec.Schedule, specYAML, now, spec.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("agent: update spec: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // Delete removes an agent and (via FK cascade) all its runs + logs.
 func (s *Store) Delete(ctx context.Context, id string) error {
 	res, err := s.db.ExecContext(ctx, `DELETE FROM agents WHERE id = ?`, id)

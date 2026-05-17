@@ -15,6 +15,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -45,6 +47,7 @@ type AgentLister interface {
 	LatestRun(ctx context.Context, agentID string) (agent.AgentRun, error)
 	Delete(ctx context.Context, agentID string) error
 	LogsSince(ctx context.Context, runID int64, sinceLogID int64) ([]agent.AgentLog, error)
+	UpdateSpec(ctx context.Context, spec agent.AgentSpec, yaml string) error
 }
 
 // Mode is the top-level view state: list (default), detail, or the
@@ -118,6 +121,12 @@ type Model struct {
 	LogTailLines  []agent.AgentLog
 	LogTailErr    error
 	LogTailLoaded bool
+
+	// Edit-flow state. EditErr stashes the most recent edit failure
+	// (editor crash, parse fail, rename rejected, store err); the detail
+	// pane renders it as a banner with a retry hint. Cleared on the next
+	// `e` keypress (about to retry) or on a successful save.
+	EditErr error
 }
 
 // SelectedID returns the agent ID currently focused for detail rendering.
@@ -153,6 +162,16 @@ type (
 	LogTailChunkMsg struct{ Lines []agent.AgentLog }
 	LogTailErrMsg   struct{ Err error }
 	LogTailTickMsg  struct{}
+	EditorExitedMsg struct {
+		AgentID string
+		Content []byte
+		Err     error
+	}
+	AgentSpecUpdatedMsg   struct{ ID string }
+	AgentSpecUpdateErrMsg struct {
+		ID  string
+		Err error
+	}
 )
 
 // NewModel constructs an empty Model around an AgentLister. The Init
@@ -190,6 +209,85 @@ func loadDetailCmd(store AgentLister, agentID string) tea.Cmd {
 			return AgentDetailErrMsg{Err: err}
 		}
 		return AgentDetailLoadedMsg{Run: run}
+	}
+}
+
+// beginEditCmd writes the agent's current spec_yaml to a temp file,
+// launches $EDITOR (fall back to $VISUAL then `vi`) on it via
+// tea.ExecProcess (which suspends bubbletea's AltScreen for the
+// duration), then reads the file back. The callback emits
+// EditorExitedMsg with either Content (success) or Err. The temp file
+// is best-effort removed before the callback returns.
+//
+// The shell-out is intentionally NOT covered by unit tests — they
+// would have to launch a real editor. Manual dogfood + the cmd's
+// downstream save flow (validateEditedSpec / Store.UpdateSpec) is
+// where the verification happens.
+func beginEditCmd(agentID, currentSpec string) tea.Cmd {
+	f, err := os.CreateTemp("", "buddy-edit-*.yaml")
+	if err != nil {
+		return func() tea.Msg {
+			return EditorExitedMsg{AgentID: agentID, Err: fmt.Errorf("temp file: %w", err)}
+		}
+	}
+	if _, err := f.WriteString(currentSpec); err != nil {
+		_ = f.Close()
+		_ = os.Remove(f.Name())
+		return func() tea.Msg {
+			return EditorExitedMsg{AgentID: agentID, Err: fmt.Errorf("write temp: %w", err)}
+		}
+	}
+	if err := f.Close(); err != nil {
+		_ = os.Remove(f.Name())
+		return func() tea.Msg {
+			return EditorExitedMsg{AgentID: agentID, Err: fmt.Errorf("close temp: %w", err)}
+		}
+	}
+
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = os.Getenv("VISUAL")
+	}
+	if editor == "" {
+		editor = "vi"
+	}
+
+	c := exec.Command(editor, f.Name())
+	return tea.ExecProcess(c, func(execErr error) tea.Msg {
+		defer os.Remove(f.Name())
+		if execErr != nil {
+			return EditorExitedMsg{AgentID: agentID, Err: fmt.Errorf("editor: %w", execErr)}
+		}
+		content, readErr := os.ReadFile(f.Name())
+		if readErr != nil {
+			return EditorExitedMsg{AgentID: agentID, Err: fmt.Errorf("read back: %w", readErr)}
+		}
+		return EditorExitedMsg{AgentID: agentID, Content: content}
+	})
+}
+
+// saveEditedSpecCmd validates yaml against the original ID, calls
+// Store.UpdateSpec, and emits AgentSpecUpdatedMsg / AgentSpecUpdateErrMsg.
+// originalID is the locked-in id from when the user pressed `e`; the
+// spec in yaml is rejected if its id has changed (renames are out of
+// scope for the edit flow — they would orphan runs/logs).
+func saveEditedSpecCmd(store AgentLister, originalID string, yaml []byte) tea.Cmd {
+	return func() tea.Msg {
+		spec, err := agent.ParseSpec(yaml)
+		if err != nil {
+			return AgentSpecUpdateErrMsg{ID: originalID, Err: fmt.Errorf("parse: %w", err)}
+		}
+		if spec.ID != originalID {
+			return AgentSpecUpdateErrMsg{
+				ID: originalID,
+				Err: fmt.Errorf("rename not allowed: spec id %q != original %q",
+					spec.ID, originalID),
+			}
+		}
+		if err := store.UpdateSpec(context.Background(), spec, string(yaml)); err != nil {
+			return AgentSpecUpdateErrMsg{ID: originalID, Err: err}
+		}
+		return AgentSpecUpdatedMsg{ID: originalID}
 	}
 }
 
@@ -352,6 +450,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, loadLogChunkCmd(m.Store, m.LogTailRunID, m.LogTailLastID)
 
+	case EditorExitedMsg:
+		if msg.Err != nil {
+			m.EditErr = msg.Err
+			return m, nil
+		}
+		// Editor exited cleanly with content. Dispatch the save cmd; its
+		// AgentSpecUpdatedMsg / AgentSpecUpdateErrMsg drives the rest.
+		return m, saveEditedSpecCmd(m.Store, msg.AgentID, msg.Content)
+
+	case AgentSpecUpdatedMsg:
+		// Spec saved. Clear any prior edit error and reload the list so
+		// the edited name/schedule shows up in the row immediately. Stay
+		// in detail mode — the user's context is preserved.
+		m.EditErr = nil
+		m.Loaded = false
+		return m, loadAgentsCmd(m.Store)
+
+	case AgentSpecUpdateErrMsg:
+		// Save failed. Stash the error so the detail banner renders it;
+		// list state is left intact (no optimistic mutation).
+		m.EditErr = msg.Err
+		return m, nil
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -393,6 +514,23 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.LogTailErr = nil
 			m.LogTailLoaded = false
 			return m, loadLogChunkCmd(m.Store, m.LogTailRunID, 0)
+		case "e":
+			// Edit the spec via $EDITOR shell-out. Need the current
+			// spec_yaml from m.Agents (list pane fetched it). No-op if
+			// Selected isn't in the current list (rare — list may have
+			// shrunk between detail entry and the e keypress).
+			var specYAML string
+			for _, a := range m.Agents {
+				if a.ID == m.Selected {
+					specYAML = a.SpecYAML
+					break
+				}
+			}
+			if specYAML == "" {
+				return m, nil
+			}
+			m.EditErr = nil // clear stale banner on retry
+			return m, beginEditCmd(m.Selected, specYAML)
 		}
 		// In detail mode every other key (j/k/g/G/etc.) is intentionally
 		// inert — the detail pane is read-only.
@@ -624,6 +762,14 @@ func (m Model) renderDetail() string {
 		}
 	}
 
+	if m.EditErr != nil {
+		b.WriteString("\n")
+		b.WriteString(errorStyle.Render("  edit error: " + m.EditErr.Error()))
+		b.WriteString("\n  ")
+		b.WriteString(dimStyle.Render("(press e to try again)"))
+		b.WriteString("\n")
+	}
+
 	b.WriteString("\n")
 	b.WriteString(footerHintDetail())
 	return b.String()
@@ -764,7 +910,7 @@ func footerHintList() string {
 }
 
 func footerHintDetail() string {
-	return footerStyle.Render("esc/h back · r refresh · t tail logs · q quit")
+	return footerStyle.Render("esc/h back · r refresh · t tail logs · e edit spec · q quit")
 }
 
 func footerHintLogTail() string {
