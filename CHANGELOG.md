@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — W3-2 TUI create form (the last named W3-2 follow-on)
+
+The sixth — and final — W3-2 follow-on item: pressing `c` in list mode opens `$EDITOR` (fall back to `$VISUAL`, then `vi`) on a starter YAML template (`new-agent` placeholder + commented hints). On exit, the TUI parses the saved content with `agent.ParseSpec` and persists via `Store.Create`. Success silently reloads the list; failure (parse error, duplicate id from SQLite UNIQUE, IO problem) surfaces in the existing list-pane error state.
+
+Design note — instead of a bubbletea form state machine (textinput / textarea components) the create flow reuses the same `tea.ExecProcess` shell-out pattern that landed in the in-app edit cycle. Trade-off: users get full YAML editor power (syntax-highlighted vim, multi-cursor goodness, paste from clipboard) at near-zero TUI-side cost; the cost is the AltScreen flicker as the editor takes over. Given cli buddy's "친구 — silent default" persona and the YAML-first spec format, the shell-out feels more honest than a half-baked in-TUI form.
+
+What ships:
+
+- New `agent.AgentSpec`-emitting helper not required (the existing `ParseSpec` covers the validation surface).
+- `AgentLister` interface widened with `Create(ctx, spec, yaml) (Agent, error)` — the existing `*agent.Store.Create` already matches the signature.
+- New `tui.CreateStarterYAML` package constant — the starter template the user gets on first `c`. Exported so tests can round-trip it through `ParseSpec` (the test gates against typos in the template that would make every fresh save land in the parse-fail branch).
+- New reducer messages: `NewSpecEditorExitedMsg{Content, Err}` (from the editor shell-out), `AgentCreatedMsg{ID}` (save success), `AgentCreateErrMsg{Err}` (parse fail / Store.Create err / IO). Distinct from the edit cycle's `EditorExitedMsg` so the reducer doesn't have to branch on an "is-create" flag.
+- New cmds:
+  - `beginCreateCmd()` — writes `CreateStarterYAML` to `os.CreateTemp` (`buddy-create-*.yaml`), launches editor via `tea.ExecProcess`, emits `NewSpecEditorExitedMsg` with read-back content. Best-effort temp file cleanup in the callback.
+  - `saveNewSpecCmd(store, yaml)` — `ParseSpec` + `Store.Create` + emits success/err msg. Unlike the edit path there's no rename guard (the user is naming the new agent for the first time); the id-uniqueness check is the SQLite UNIQUE constraint on `agents.id`, which `Store.Create` surfaces as a wrapped error.
+- Key bindings (additive — list/detail bindings unchanged):
+  - `c` (list mode) — open the create flow. No cursor dependency — works on an empty list too (otherwise users with no agents can't bootstrap). Clears any prior list-pane error before going to the editor.
+- Failure modes handled explicitly: temp-file create / write / close fails → `NewSpecEditorExitedMsg.Err` with wrapped error → surfaced as `m.Err = "create: <wrapped>"`; editor crash → same; read-back fail → same; ParseSpec fail → `AgentCreateErrMsg`; UNIQUE-constraint duplicate-id from `Store.Create` → `AgentCreateErrMsg` (the user sees the SQLite message and re-edits with a different id).
+- Render: re-uses the list-pane error state for create failures (same convention as delete failures). Footer hint adds `c create`.
+
+Test coverage (`internal/tui/model_test.go` — 9 new race-clean tests, 85 total in the package):
+
+- Save cmd: valid YAML dispatches `Store.Create` + emits `AgentCreatedMsg`; invalid YAML short-circuits with `AgentCreateErrMsg`; store err propagates with `errors.Is` chain preserved.
+- Update reducer: `c` in list dispatches the create cmd + clears prior list err; `c` on an empty list still dispatches (bootstrap path); `NewSpecEditorExitedMsg{Err}` records err with `create:` wrapper and does NOT chain a save cmd; `NewSpecEditorExitedMsg{Content}` dispatches save cmd; `AgentCreatedMsg` clears err + resets Loaded + dispatches list reload; `AgentCreateErrMsg` records err with `create:` wrapper and leaves list intact.
+- Starter template integrity: `agent.ParseSpec(CreateStarterYAML)` round-trips to a valid spec with at least one chain step.
+
+`docs/cli-buddy-spec.md` §9 W3-2 row updated: with this commit, the row reads "minimum-viable + 6/6 follow-on Done (detail, scheduler-preview, in-app delete, log tail, in-app edit, create)". W3-2 is no longer the limiting line item on the cli-buddy-spec cascade.
+
+What stays open from W3-2 follow-on-of-follow-on (deferred): scheduler pane live "currently running" indicator (requires coupling the TUI to a running `Scheduler` instance); log tail scrollback + auto-stop on run-end.
+
 ### Added — W3-2 TUI in-app spec edit (follow-on of v0.7.0)
 
 The fifth W3-2 follow-on item: pressing `e` in the detail pane writes the agent's current `spec_yaml` to a temp file, suspends the TUI (AltScreen), and shells out to `$EDITOR` (fall back to `$VISUAL`, then `vi`). On exit, the TUI reads the file back, runs `agent.ParseSpec` for validation, rejects ID renames (would orphan runs/logs), and dispatches `Store.UpdateSpec` for a persisted save. Friend-tone: success silently reloads the list so the new name/schedule renders in the row; failure shows an `edit error: ...` banner in the detail pane with a `press e to try again` hint.

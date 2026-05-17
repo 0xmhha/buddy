@@ -38,6 +38,9 @@ type fakeLister struct {
 
 	updated   []updateCall // ids/specs that UpdateSpec was called with
 	updateErr error        // canned error from UpdateSpec
+
+	created   []createCall // ids/specs that Create was called with
+	createErr error        // canned error from Create
 }
 
 type logsCall struct {
@@ -46,6 +49,13 @@ type logsCall struct {
 }
 
 type updateCall struct {
+	ID       string
+	Name     string
+	Schedule string
+	YAML     string
+}
+
+type createCall struct {
 	ID       string
 	Name     string
 	Schedule string
@@ -99,6 +109,17 @@ func (f *fakeLister) LogsSince(_ context.Context, runID int64, sinceID int64) ([
 func (f *fakeLister) UpdateSpec(_ context.Context, spec agent.AgentSpec, yaml string) error {
 	f.updated = append(f.updated, updateCall{ID: spec.ID, Name: spec.Name, Schedule: spec.Schedule, YAML: yaml})
 	return f.updateErr
+}
+
+// Create records the call into created and returns the canned agent
+// (zero-value Agent with ID echoed from spec.ID by default) + optional
+// createErr.
+func (f *fakeLister) Create(_ context.Context, spec agent.AgentSpec, yaml string) (agent.Agent, error) {
+	f.created = append(f.created, createCall{ID: spec.ID, Name: spec.Name, Schedule: spec.Schedule, YAML: yaml})
+	if f.createErr != nil {
+		return agent.Agent{}, f.createErr
+	}
+	return agent.Agent{ID: spec.ID, Name: spec.Name, Schedule: spec.Schedule}, nil
 }
 
 // keyMsg builds a tea.KeyMsg for the given rune/key — bubbletea exposes
@@ -1303,4 +1324,146 @@ func TestView_DetailRendersEditErrorBanner(t *testing.T) {
 	require.Contains(t, out, "edit error", "banner label must be visible")
 	require.Contains(t, out, "rename not allowed")
 	require.Contains(t, out, "press e", "retry hint must guide the user")
+}
+
+// ─── Create form (W3-2 follow-on #6 — P3-1) ────────────────────────────
+
+// TestSaveNewSpec_ValidYAMLDispatchesCreate — successful parse + Store
+// .Create → AgentCreatedMsg with the new agent's ID.
+func TestSaveNewSpec_ValidYAMLDispatchesCreate(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	cmd := saveNewSpecCmd(store, []byte(minimalEditableYAML))
+	require.NotNil(t, cmd)
+	msg := cmd()
+	created, ok := msg.(AgentCreatedMsg)
+	require.True(t, ok, "expected AgentCreatedMsg, got %T", msg)
+	require.Equal(t, "alpha", created.ID)
+	require.Len(t, store.created, 1)
+	require.Equal(t, "alpha", store.created[0].ID)
+}
+
+// TestSaveNewSpec_InvalidYAMLReturnsErr — ParseSpec failure short-
+// circuits before Store.Create is called.
+func TestSaveNewSpec_InvalidYAMLReturnsErr(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	cmd := saveNewSpecCmd(store, []byte("not :: valid yaml ::"))
+	msg := cmd()
+	errMsg, ok := msg.(AgentCreateErrMsg)
+	require.True(t, ok)
+	require.Error(t, errMsg.Err)
+	require.Empty(t, store.created)
+}
+
+// TestSaveNewSpec_StoreErrPropagates — duplicate-id (SQLite UNIQUE) or
+// other Store.Create errors surface as AgentCreateErrMsg.
+func TestSaveNewSpec_StoreErrPropagates(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("UNIQUE constraint failed: agents.id")
+	store := &fakeLister{createErr: bang}
+	cmd := saveNewSpecCmd(store, []byte(minimalEditableYAML))
+	msg := cmd()
+	errMsg, ok := msg.(AgentCreateErrMsg)
+	require.True(t, ok)
+	require.ErrorIs(t, errMsg.Err, bang)
+}
+
+// TestUpdate_CInListDispatchesCreateCmd — c in list mode dispatches the
+// create cmd (which launches the editor; we can't drive it but we can
+// assert the cmd is non-nil and m.Err is cleared).
+func TestUpdate_CInListDispatchesCreateCmd(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Loaded: true,
+		Err: errors.New("prior list err")}
+	next, cmd := m.Update(keyMsg("c"))
+	mm := next.(Model)
+	require.NotNil(t, cmd, "c must dispatch the create cmd")
+	require.Nil(t, mm.Err, "Err must clear before going to the editor")
+	require.Equal(t, ModeList, mm.Mode, "mode stays List; editor shell-out is opaque")
+}
+
+// TestUpdate_CInListWorksOnEmptyList — c does NOT depend on cursor; an
+// empty list must still allow creation.
+func TestUpdate_CInListWorksOnEmptyList(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Loaded: true}
+	_, cmd := m.Update(keyMsg("c"))
+	require.NotNil(t, cmd, "c must work on an empty list (otherwise users with no agents can't bootstrap)")
+}
+
+// TestUpdate_NewSpecEditorExitedWithErrorRecordsErr — editor IO / crash
+// surfaces as m.Err with a `create:` wrapper, and does NOT dispatch a
+// save cmd.
+func TestUpdate_NewSpecEditorExitedWithErrorRecordsErr(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("editor crashed")
+	store := &fakeLister{}
+	m := Model{Store: store, Loaded: true}
+	next, cmd := m.Update(NewSpecEditorExitedMsg{Err: bang})
+	mm := next.(Model)
+	require.Nil(t, cmd, "editor error must not chain a save cmd")
+	require.ErrorIs(t, mm.Err, bang)
+	require.Contains(t, mm.Err.Error(), "create:", "err must be wrapped with create context")
+	require.Empty(t, store.created)
+}
+
+// TestUpdate_NewSpecEditorExitedWithContentDispatchesSaveCmd — happy
+// path: content non-nil + nil err → save cmd dispatched; running it
+// emits AgentCreatedMsg.
+func TestUpdate_NewSpecEditorExitedWithContentDispatchesSaveCmd(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Loaded: true}
+	next, cmd := m.Update(NewSpecEditorExitedMsg{
+		Content: []byte(minimalEditableYAML),
+	})
+	require.NotNil(t, cmd)
+	msg := cmd()
+	_, ok := msg.(AgentCreatedMsg)
+	require.True(t, ok)
+	require.Len(t, store.created, 1)
+	_ = next
+}
+
+// TestUpdate_AgentCreatedMsgReloadsList — success clears m.Err, flips
+// Loaded=false, dispatches list reload.
+func TestUpdate_AgentCreatedMsgReloadsList(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Loaded: true, Mode: ModeList,
+		Err: errors.New("prior")}
+	next, cmd := m.Update(AgentCreatedMsg{ID: "alpha"})
+	mm := next.(Model)
+	require.Nil(t, mm.Err, "success must clear prior list err")
+	require.False(t, mm.Loaded)
+	require.NotNil(t, cmd)
+}
+
+// TestUpdate_AgentCreateErrMsgRecordsErr — store err surfaces as
+// m.Err with create wrapper; list is left alone.
+func TestUpdate_AgentCreateErrMsgRecordsErr(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("UNIQUE constraint failed")
+	m := Model{Loaded: true, Mode: ModeList,
+		Agents: []agent.Agent{{ID: "existing"}}}
+	next, _ := m.Update(AgentCreateErrMsg{Err: bang})
+	mm := next.(Model)
+	require.ErrorIs(t, mm.Err, bang)
+	require.Contains(t, mm.Err.Error(), "create:")
+	require.Len(t, mm.Agents, 1, "list rows untouched on create failure")
+}
+
+// TestCreateStarterYAML_ParsesAsValidSpec — the starter template the
+// user sees on first `c` must round-trip ParseSpec. If we typo the
+// template, every fresh save would land in the parse-fail branch and
+// users would think edit is broken.
+func TestCreateStarterYAML_ParsesAsValidSpec(t *testing.T) {
+	t.Parallel()
+	spec, err := agent.ParseSpec([]byte(CreateStarterYAML))
+	require.NoError(t, err, "starter template must parse as a valid AgentSpec")
+	require.Equal(t, "new-agent", spec.ID)
+	require.NotEmpty(t, spec.Chain, "starter template must contain at least one chain step")
 }

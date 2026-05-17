@@ -48,6 +48,7 @@ type AgentLister interface {
 	Delete(ctx context.Context, agentID string) error
 	LogsSince(ctx context.Context, runID int64, sinceLogID int64) ([]agent.AgentLog, error)
 	UpdateSpec(ctx context.Context, spec agent.AgentSpec, yaml string) error
+	Create(ctx context.Context, spec agent.AgentSpec, yaml string) (agent.Agent, error)
 }
 
 // Mode is the top-level view state: list (default), detail, or the
@@ -172,6 +173,12 @@ type (
 		ID  string
 		Err error
 	}
+	NewSpecEditorExitedMsg struct {
+		Content []byte
+		Err     error
+	}
+	AgentCreatedMsg     struct{ ID string }
+	AgentCreateErrMsg   struct{ Err error }
 )
 
 // NewModel constructs an empty Model around an AgentLister. The Init
@@ -264,6 +271,99 @@ func beginEditCmd(agentID, currentSpec string) tea.Cmd {
 		}
 		return EditorExitedMsg{AgentID: agentID, Content: content}
 	})
+}
+
+// CreateStarterYAML is the initial buffer the user gets when they press
+// `c` in list mode. Kept exported so tests + tui_cmd can reference the
+// same source-of-truth. Comments at the top guide first-time users; the
+// minimal `chain:` row keeps ParseSpec happy on an immediate save.
+const CreateStarterYAML = `# Edit this spec to create a new agent. Save and exit your editor to
+# submit. The id must be unique within the buddy.db you launched the
+# TUI against.
+
+id: new-agent
+name: "New agent"
+
+# Optional: a cron expression (e.g. "0 * * * *" or "@daily") to enable
+# scheduled runs. Leave empty for on-demand only.
+schedule: ""
+
+chain:
+  - command: status
+    args: ""
+`
+
+// beginCreateCmd is the create-agent twin of beginEditCmd: write
+// CreateStarterYAML to a temp file, launch $EDITOR, emit
+// NewSpecEditorExitedMsg on return. Distinct message type so the
+// reducer doesn't have to branch on an "is-create" flag inside the
+// shared EditorExitedMsg handler.
+func beginCreateCmd() tea.Cmd {
+	f, err := os.CreateTemp("", "buddy-create-*.yaml")
+	if err != nil {
+		return func() tea.Msg {
+			return NewSpecEditorExitedMsg{Err: fmt.Errorf("temp file: %w", err)}
+		}
+	}
+	if _, err := f.WriteString(CreateStarterYAML); err != nil {
+		_ = f.Close()
+		_ = os.Remove(f.Name())
+		return func() tea.Msg {
+			return NewSpecEditorExitedMsg{Err: fmt.Errorf("write temp: %w", err)}
+		}
+	}
+	if err := f.Close(); err != nil {
+		_ = os.Remove(f.Name())
+		return func() tea.Msg {
+			return NewSpecEditorExitedMsg{Err: fmt.Errorf("close temp: %w", err)}
+		}
+	}
+
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = os.Getenv("VISUAL")
+	}
+	if editor == "" {
+		editor = "vi"
+	}
+
+	c := exec.Command(editor, f.Name())
+	return tea.ExecProcess(c, func(execErr error) tea.Msg {
+		defer os.Remove(f.Name())
+		if execErr != nil {
+			return NewSpecEditorExitedMsg{Err: fmt.Errorf("editor: %w", execErr)}
+		}
+		content, readErr := os.ReadFile(f.Name())
+		if readErr != nil {
+			return NewSpecEditorExitedMsg{Err: fmt.Errorf("read back: %w", readErr)}
+		}
+		return NewSpecEditorExitedMsg{Content: content}
+	})
+}
+
+// saveNewSpecCmd is the create-agent twin of saveEditedSpecCmd. Parses
+// yaml + calls Store.Create. Unlike the edit path there's no rename
+// guard (the user is naming the new agent for the first time); the
+// id-uniqueness check is the SQLite UNIQUE constraint on agents.id,
+// which Store.Create surfaces as a wrapped error.
+//
+// Refusal path for an unchanged starter is intentional: if the user
+// exits the editor without changing the template, the spec id stays
+// "new-agent" and the SECOND `c` invocation will hit the UNIQUE
+// constraint — the resulting "create: UNIQUE constraint failed"
+// message tells the user to pick a real id rather than us guessing.
+func saveNewSpecCmd(store AgentLister, yaml []byte) tea.Cmd {
+	return func() tea.Msg {
+		spec, err := agent.ParseSpec(yaml)
+		if err != nil {
+			return AgentCreateErrMsg{Err: fmt.Errorf("parse: %w", err)}
+		}
+		created, err := store.Create(context.Background(), spec, string(yaml))
+		if err != nil {
+			return AgentCreateErrMsg{Err: err}
+		}
+		return AgentCreatedMsg{ID: created.ID}
+	}
 }
 
 // saveEditedSpecCmd validates yaml against the original ID, calls
@@ -473,6 +573,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.EditErr = msg.Err
 		return m, nil
 
+	case NewSpecEditorExitedMsg:
+		if msg.Err != nil {
+			// Surface in m.Err so the list pane renders the error state.
+			m.Err = fmt.Errorf("create: %w", msg.Err)
+			return m, nil
+		}
+		return m, saveNewSpecCmd(m.Store, msg.Content)
+
+	case AgentCreatedMsg:
+		// Spec created. Friend-tone: silent success. Reload the list so
+		// the new row appears at the top (List orders by updated_at DESC).
+		m.Err = nil
+		m.Loaded = false
+		return m, loadAgentsCmd(m.Store)
+
+	case AgentCreateErrMsg:
+		// Surface via m.Err — same convention as delete-failure / create-
+		// editor IO failure. Next list refresh clears it.
+		m.Err = fmt.Errorf("create: %w", msg.Err)
+		return m, nil
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -636,6 +757,12 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.Mode = ModeDeleteConfirm
 		m.PendingDeleteID = m.Agents[m.Cursor].ID
 		return m, nil
+
+	case "c":
+		// Create a new agent via $EDITOR shell-out on a starter YAML.
+		// No cursor dependency — works on an empty list too.
+		m.Err = nil // clear any prior list-pane error before going to editor
+		return m, beginCreateCmd()
 	}
 	return m, nil
 }
@@ -906,7 +1033,7 @@ func renderAgentRow(a agent.Agent, selected bool) string {
 }
 
 func footerHintList() string {
-	return footerStyle.Render("j/k or ↑/↓ move · g/G top/bottom · enter/l detail · s scheduler · d delete · r refresh · q quit")
+	return footerStyle.Render("j/k or ↑/↓ move · g/G top/bottom · enter/l detail · s scheduler · c create · d delete · r refresh · q quit")
 }
 
 func footerHintDetail() string {
