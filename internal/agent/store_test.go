@@ -72,6 +72,88 @@ func TestStore_LatestRun_UnknownAgentReturnsNotFound(t *testing.T) {
 	require.True(t, errors.Is(err, ErrNotFound))
 }
 
+// ─── LogsSince (TUI log-tail follow-on, W3-2) ──────────────────────────
+
+// TestStore_LogsSince_ReturnsOnlyNewerLines covers the incremental-poll
+// path: a sinceLogID > 0 must skip everything at or below that id and
+// return only rows with strictly greater ids. Sort order is id ASC.
+func TestStore_LogsSince_ReturnsOnlyNewerLines(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	spec, err := ParseSpec([]byte(minimalSpecYAML))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, minimalSpecYAML)
+	require.NoError(t, err)
+	runID, err := store.StartRun(ctx, a.ID)
+	require.NoError(t, err)
+	for _, msg := range []string{"first", "second", "third", "fourth"} {
+		require.NoError(t, store.AppendLog(ctx, runID, "info", msg))
+	}
+
+	all, err := store.LogsSince(ctx, runID, 0)
+	require.NoError(t, err)
+	require.Len(t, all, 4, "sinceLogID=0 must fetch every line")
+	cutoff := all[1].ID // skip first two
+
+	got, err := store.LogsSince(ctx, runID, cutoff)
+	require.NoError(t, err)
+	require.Len(t, got, 2, "sinceLogID must be strictly less-than")
+	require.Equal(t, "third", got[0].Message)
+	require.Equal(t, "fourth", got[1].Message)
+	require.Greater(t, got[0].ID, cutoff)
+}
+
+// TestStore_LogsSince_NoLogsReturnsEmpty — a run that hasn't produced any
+// logs yet (or has been fully consumed) returns an empty slice + nil err.
+// The TUI relies on this to render "(no log lines yet — run hasn't
+// produced any)" without a separate error path.
+func TestStore_LogsSince_NoLogsReturnsEmpty(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	spec, err := ParseSpec([]byte(minimalSpecYAML))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, minimalSpecYAML)
+	require.NoError(t, err)
+	runID, err := store.StartRun(ctx, a.ID)
+	require.NoError(t, err)
+
+	got, err := store.LogsSince(ctx, runID, 0)
+	require.NoError(t, err)
+	require.Empty(t, got)
+}
+
+// TestStore_LogsSince_ScopedByRunID — log lines belonging to a *different*
+// run must never leak into the result, even if their ids happen to fall
+// above sinceLogID. Forgotten WHERE clauses on the run_id filter would
+// surface here.
+func TestStore_LogsSince_ScopedByRunID(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	spec, err := ParseSpec([]byte(minimalSpecYAML))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, minimalSpecYAML)
+	require.NoError(t, err)
+	runA, err := store.StartRun(ctx, a.ID)
+	require.NoError(t, err)
+	require.NoError(t, store.AppendLog(ctx, runA, "info", "run A first"))
+
+	runB, err := store.StartRun(ctx, a.ID)
+	require.NoError(t, err)
+	require.NoError(t, store.AppendLog(ctx, runB, "info", "run B first"))
+	require.NoError(t, store.AppendLog(ctx, runB, "info", "run B second"))
+
+	got, err := store.LogsSince(ctx, runA, 0)
+	require.NoError(t, err)
+	require.Len(t, got, 1, "must not include lines from other runs")
+	require.Equal(t, "run A first", got[0].Message)
+}
+
 // ─── retention (F5 follow-on) ──────────────────────────────────────────
 
 // TestStore_CountRunsBefore_OnlyCountsFinishedAndOldEnough verifies the

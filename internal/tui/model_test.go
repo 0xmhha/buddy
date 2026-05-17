@@ -30,6 +30,16 @@ type fakeLister struct {
 
 	deleted   []string // ids that Delete was called with, in order
 	deleteErr error    // canned error from Delete (nil = success)
+
+	logsBySince map[int64][]agent.AgentLog // sinceID → canned response
+	logsDefault []agent.AgentLog           // fallback when no sinceID match
+	logsErr     error                      // forces error from LogsSince
+	logsCalls   []logsCall                 // recorded (runID, sinceID) pairs
+}
+
+type logsCall struct {
+	RunID   int64
+	SinceID int64
 }
 
 func (f *fakeLister) List(_ context.Context) ([]agent.Agent, error) {
@@ -59,6 +69,19 @@ func (f *fakeLister) LatestRun(_ context.Context, agentID string) (agent.AgentRu
 func (f *fakeLister) Delete(_ context.Context, agentID string) error {
 	f.deleted = append(f.deleted, agentID)
 	return f.deleteErr
+}
+
+// LogsSince returns logsBySince[sinceID] if present, otherwise logsDefault.
+// logsErr forces an error path. Captures (runID, sinceID) for assertion.
+func (f *fakeLister) LogsSince(_ context.Context, runID int64, sinceID int64) ([]agent.AgentLog, error) {
+	f.logsCalls = append(f.logsCalls, logsCall{RunID: runID, SinceID: sinceID})
+	if f.logsErr != nil {
+		return nil, f.logsErr
+	}
+	if lines, ok := f.logsBySince[sinceID]; ok {
+		return lines, nil
+	}
+	return f.logsDefault, nil
 }
 
 // keyMsg builds a tea.KeyMsg for the given rune/key — bubbletea exposes
@@ -856,4 +879,214 @@ func TestView_DeleteErrorShowsInListAfterFailure(t *testing.T) {
 	out := m.View()
 	require.Contains(t, out, "error")
 	require.Contains(t, out, "disk full")
+}
+
+// ─── Live log tail (W3-2 follow-on #4 — P1-1) ──────────────────────────
+
+// TestUpdate_TInDetailEntersLogTailAndFiresInitialLoad — `t` in detail
+// mode switches to ModeLogTail, locks in the detail run's ID, and
+// schedules the initial chunk fetch (sinceID=0).
+func TestUpdate_TInDetailEntersLogTailAndFiresInitialLoad(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDetail, DetailLoaded: true,
+		Selected: "alpha", Detail: agent.AgentRun{ID: 42, AgentID: "alpha"}}
+	next, cmd := m.Update(keyMsg("t"))
+	mm := next.(Model)
+	require.Equal(t, ModeLogTail, mm.Mode)
+	require.Equal(t, int64(42), mm.LogTailRunID)
+	require.Equal(t, int64(0), mm.LogTailLastID,
+		"LogTailLastID resets to 0 on entry so the first poll fetches everything")
+	require.False(t, mm.LogTailLoaded)
+	require.Empty(t, mm.LogTailLines, "previous tail state must clear on entry")
+	require.NotNil(t, cmd, "t in detail must schedule an initial log chunk fetch")
+}
+
+// TestUpdate_TInDetailNoRunIsNoOp — `t` in detail when there is no run
+// (DetailErr=ErrNotFound, Detail zero) must not switch modes.
+func TestUpdate_TInDetailNoRunIsNoOp(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDetail, DetailLoaded: true,
+		Selected: "alpha", DetailErr: agent.ErrNotFound}
+	next, cmd := m.Update(keyMsg("t"))
+	require.Equal(t, ModeDetail, next.(Model).Mode)
+	require.Nil(t, cmd)
+}
+
+// TestUpdate_LogTailChunkAppendsAndAdvancesLastID — incoming
+// LogTailChunkMsg appends to LogTailLines and advances LogTailLastID
+// to the highest received ID. Marks LogTailLoaded=true.
+func TestUpdate_LogTailChunkAppendsAndAdvancesLastID(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeLogTail, LogTailRunID: 42}
+	chunk := []agent.AgentLog{
+		{ID: 1, RunID: 42, Level: "info", Message: "first"},
+		{ID: 2, RunID: 42, Level: "info", Message: "second"},
+	}
+	next, _ := m.Update(LogTailChunkMsg{Lines: chunk})
+	mm := next.(Model)
+	require.True(t, mm.LogTailLoaded)
+	require.Len(t, mm.LogTailLines, 2)
+	require.Equal(t, int64(2), mm.LogTailLastID)
+
+	// Second chunk appends, advances watermark.
+	more := []agent.AgentLog{
+		{ID: 3, RunID: 42, Level: "info", Message: "third"},
+	}
+	next, _ = mm.Update(LogTailChunkMsg{Lines: more})
+	mm = next.(Model)
+	require.Len(t, mm.LogTailLines, 3)
+	require.Equal(t, int64(3), mm.LogTailLastID)
+}
+
+// TestUpdate_LogTailChunkEmptyIsHarmless — an empty chunk must not move
+// LastID or reset Loaded. Common case: poll fired but no new lines yet.
+func TestUpdate_LogTailChunkEmptyIsHarmless(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeLogTail, LogTailRunID: 42,
+		LogTailLastID: 7, LogTailLoaded: true,
+		LogTailLines: []agent.AgentLog{{ID: 7, Message: "prior"}}}
+	next, _ := m.Update(LogTailChunkMsg{Lines: nil})
+	mm := next.(Model)
+	require.True(t, mm.LogTailLoaded)
+	require.Equal(t, int64(7), mm.LogTailLastID)
+	require.Len(t, mm.LogTailLines, 1)
+}
+
+// TestUpdate_LogTailErrFoldsIntoState — the err msg records the error
+// and flips LogTailLoaded=true so View knows the fetch resolved.
+func TestUpdate_LogTailErrFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("db locked")
+	m := Model{Mode: ModeLogTail, LogTailRunID: 42}
+	next, _ := m.Update(LogTailErrMsg{Err: bang})
+	mm := next.(Model)
+	require.True(t, mm.LogTailLoaded)
+	require.ErrorIs(t, mm.LogTailErr, bang)
+}
+
+// TestUpdate_LogTailTickFiresLoadCmd — LogTailTickMsg in tail mode
+// dispatches a load cmd with the current LogTailLastID as sinceID.
+func TestUpdate_LogTailTickFiresLoadCmd(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{logsDefault: nil}
+	m := Model{Store: store, Mode: ModeLogTail, LogTailRunID: 42,
+		LogTailLastID: 5, LogTailLoaded: true}
+	_, cmd := m.Update(LogTailTickMsg{})
+	require.NotNil(t, cmd)
+	// Execute the cmd; it must call LogsSince(42, 5).
+	msg := cmd()
+	_, ok := msg.(LogTailChunkMsg)
+	require.True(t, ok, "expected LogTailChunkMsg, got %T", msg)
+	require.Len(t, store.logsCalls, 1)
+	require.Equal(t, int64(42), store.logsCalls[0].RunID)
+	require.Equal(t, int64(5), store.logsCalls[0].SinceID,
+		"tick must use the high-water mark as sinceID")
+}
+
+// TestUpdate_LogTailTickInOtherModeIsInert — a tick that arrives after
+// the user pressed esc must NOT dispatch a load cmd (self-cancelling).
+func TestUpdate_LogTailTickInOtherModeIsInert(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeDetail, LogTailRunID: 42,
+		LogTailLastID: 5}
+	_, cmd := m.Update(LogTailTickMsg{})
+	require.Nil(t, cmd, "stale tick after mode change must not poll")
+	require.Empty(t, store.logsCalls)
+}
+
+// TestUpdate_RInLogTailRefetches — `r` in tail mode fires an immediate
+// load cmd using the current LastID.
+func TestUpdate_RInLogTailRefetches(t *testing.T) {
+	t.Parallel()
+	store := &fakeLister{}
+	m := Model{Store: store, Mode: ModeLogTail, LogTailRunID: 42,
+		LogTailLastID: 9, LogTailLoaded: true}
+	_, cmd := m.Update(keyMsg("r"))
+	require.NotNil(t, cmd)
+	msg := cmd()
+	_, ok := msg.(LogTailChunkMsg)
+	require.True(t, ok)
+	require.Equal(t, int64(9), store.logsCalls[0].SinceID)
+}
+
+// TestUpdate_EscReturnsFromLogTailToDetail — esc returns to the detail
+// pane (not the list) so the user keeps the same agent context.
+func TestUpdate_EscReturnsFromLogTailToDetail(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeLogTail, LogTailRunID: 42,
+		Selected: "alpha", DetailLoaded: true}
+	next, _ := m.Update(keyMsg("esc"))
+	require.Equal(t, ModeDetail, next.(Model).Mode)
+}
+
+// TestUpdate_HReturnsFromLogTailToDetail — vi-style 'h' alias.
+func TestUpdate_HReturnsFromLogTailToDetail(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeLogTail, LogTailRunID: 42}
+	next, _ := m.Update(keyMsg("h"))
+	require.Equal(t, ModeDetail, next.(Model).Mode)
+}
+
+// TestUpdate_QuitWorksInLogTailMode — q quits from tail.
+func TestUpdate_QuitWorksInLogTailMode(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Mode: ModeLogTail}
+	_, cmd := m.Update(keyMsg("q"))
+	require.NotNil(t, cmd)
+	_, ok := cmd().(tea.QuitMsg)
+	require.True(t, ok)
+}
+
+// TestView_LogTailRendersLines — pane shows run id + each line's message,
+// plus the back/refresh footer hint.
+func TestView_LogTailRendersLines(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:          ModeLogTail,
+		LogTailRunID:  42,
+		LogTailLoaded: true,
+		LogTailLines: []agent.AgentLog{
+			{ID: 1, Level: "info", Message: "agent alpha starting"},
+			{ID: 2, Level: "warn", Message: "step 1 retry 1"},
+			{ID: 3, Level: "info", Message: "step 1 complete"},
+		},
+		Selected: "alpha",
+	}
+	out := m.View()
+	require.Contains(t, out, "42", "run id must be visible in header")
+	require.Contains(t, out, "alpha")
+	require.Contains(t, out, "agent alpha starting")
+	require.Contains(t, out, "step 1 complete")
+	require.Contains(t, out, "esc", "back hint visible")
+}
+
+// TestView_LogTailEmptyCopy — Loaded with 0 lines shows a friendly hint.
+func TestView_LogTailEmptyCopy(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeLogTail, LogTailRunID: 42, LogTailLoaded: true,
+		Selected: "alpha"}
+	out := m.View()
+	require.Contains(t, out, "no log lines",
+		"empty-state copy must explain the absence rather than render blank")
+}
+
+// TestView_LogTailLoadingPlaceholder — pre-fetch placeholder.
+func TestView_LogTailLoadingPlaceholder(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeLogTail, LogTailRunID: 42, Selected: "alpha"}
+	out := m.View()
+	require.Contains(t, out, "loading")
+}
+
+// TestView_LogTailErrorState — whole-pane error renders the err string.
+func TestView_LogTailErrorState(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeLogTail, LogTailRunID: 42, LogTailLoaded: true,
+		Selected: "alpha", LogTailErr: errors.New("db locked")}
+	out := m.View()
+	require.Contains(t, out, "error")
+	require.Contains(t, out, "db locked")
 }

@@ -194,6 +194,39 @@ func (s *Store) AppendLog(ctx context.Context, runID int64, level, message strin
 	return nil
 }
 
+// LogsSince returns AgentLog rows for runID whose id is strictly greater
+// than sinceLogID, oldest first. Used by the TUI log-tail pane to do
+// incremental polling without re-fetching the whole log on every tick.
+// sinceLogID=0 fetches everything (since IDs are always positive).
+//
+// Sorting by `id` rather than `ts` is deliberate: id is the monotonic
+// SQLite rowid alias, while ts is wall-clock and can be non-monotonic
+// across rapid line bursts on systems with low-precision clocks.
+func (s *Store) LogsSince(ctx context.Context, runID int64, sinceLogID int64) ([]AgentLog, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, run_id, ts, level, message
+		FROM agent_logs
+		WHERE run_id = ? AND id > ?
+		ORDER BY id ASC`,
+		runID, sinceLogID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("agent: logs since: %w", err)
+	}
+	defer rows.Close()
+	var out []AgentLog
+	for rows.Next() {
+		var l AgentLog
+		var ts int64
+		if err := rows.Scan(&l.ID, &l.RunID, &ts, &l.Level, &l.Message); err != nil {
+			return nil, err
+		}
+		l.Ts = time.UnixMilli(ts).UTC()
+		out = append(out, l)
+	}
+	return out, rows.Err()
+}
+
 // Logs returns up to `limit` log lines for a run, oldest first. Set limit=0
 // to fetch all.
 func (s *Store) Logs(ctx context.Context, runID int64, limit int) ([]AgentLog, error) {

@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — W3-2 TUI live log tail (follow-on of v0.7.0)
+
+The fourth W3-2 follow-on item: pressing `t` in the detail pane opens a live log-tail view of the run shown above. The pane polls `agent_logs` every ~1s for new lines (incremental — only rows with `id` strictly greater than the high-water mark are fetched), accumulates them oldest-first, and renders `HH:MM:SS  <level>  <message>` per row. Pair with the v0.6.4 streaming-log infrastructure: as the runtime appends per-line, the TUI sees each line within a tick.
+
+What ships:
+
+- New `Store.LogsSince(ctx, runID, sinceLogID) ([]AgentLog, error)` in `internal/agent/store.go`. SQL: `WHERE run_id = ? AND id > ? ORDER BY id ASC`. Sort by `id` (monotonic SQLite rowid alias) rather than `ts` so rapid line bursts on systems with low-precision clocks still arrive in order.
+- `AgentLister` interface widened to include `LogsSince` (the existing `*agent.Store` already implements it).
+- New `Mode` value `ModeLogTail` + state fields on `tui.Model`: `LogTailRunID` (the run we're tailing — captured on entry), `LogTailLastID` (high-water mark passed as `sinceID` on the next poll), `LogTailLines []agent.AgentLog`, `LogTailErr`, `LogTailLoaded`.
+- New reducer messages: `LogTailChunkMsg{Lines}`, `LogTailErrMsg{Err}`, `LogTailTickMsg{}`. `loadLogChunkCmd` runs the fetch off the reducer; `tickLogTailCmd` wraps `tea.Tick(logTailPollInterval, …)`. The poll interval is a package-level `var` so future tests can monkey-patch it without exposing a Model field.
+- Self-cancelling polling: every `LogTailChunkMsg` / `LogTailErrMsg` chains the next `LogTailTickMsg`. When the user navigates away (`esc` / `h` → ModeDetail, or quit), the next tick checks `m.Mode != ModeLogTail` and drops the load cmd — no goroutine leak, no explicit timer teardown.
+- Key bindings (additive — list/detail/scheduler bindings unchanged):
+  - `t` (detail mode) — open the log-tail pane for the run currently shown. No-op when `Detail.ID == 0` (e.g., `ErrNotFound` "no runs yet" state).
+  - `esc` / `h` (tail mode) — return to the detail pane (not the list) so the user keeps the same agent context.
+  - `r` (tail mode) — immediate manual refresh (does not reset `LastID`; just fires the load with the current watermark).
+  - `q` / `Ctrl-C` — quit (every mode).
+- Friend-tone copy: `loading log lines…` until the first chunk lands; `(no log lines yet — the run may not have produced any output)` for the empty-state path; `error: <message>` followed by `(polling continues — last successful chunk preserved above)` for the error path (polling does NOT freeze on transient DB errors — the existing accumulated lines stay visible).
+- Render layout: bold header `buddy log tail — agent <id> — run #<N>`, then per-line `<HH:MM:SS> <level>  <message>`. Footer: `esc/h back · r refresh now · q quit · (auto-refresh ~1s)`.
+
+Test coverage (`internal/tui/model_test.go` — 14 new race-clean tests, 65 total in the package; `internal/agent/store_test.go` — 3 new race-clean tests for `LogsSince`):
+
+- Store: `LogsSince(_, _, 0)` returns everything in id ASC; sinceID is strictly less-than; empty result is `nil err + nil slice`; results are scoped by run_id (no cross-run leakage even when other-run ids fall above sinceID).
+- Update reducer: `t` in detail switches to tail + locks `LogTailRunID = Detail.ID` + fires initial load (sinceID=0); `t` in detail when `Detail.ID == 0` is a no-op; `LogTailChunkMsg` appends and advances `LastID` to the last received ID; empty chunk is harmless (no `LastID` reset, no `Lines` mutation); `LogTailErrMsg` records err + flips `Loaded`; `LogTailTickMsg` dispatches a load cmd with the current `LastID` as sinceID; tick after navigation away is a no-op (self-cancellation); `r` fires immediate load; `esc` / `h` return to detail mode preserving context; `q` quits.
+- View smoke: header includes run id + agent id; each line's message rendered; `Loaded=true` + 0 lines shows `no log lines` hint; pre-load shows `loading`; error state shows `error: <msg>`.
+
+What stays open from W3-2 follow-on (after this):
+
+- **Create form** (interactive spec builder) — HIGH cost, deserves a dedicated cycle.
+- **In-app edit** (Spec YAML editor; needs new `Store.UpdateSpec` API).
+- **Scheduler pane: live "currently running" indicator** (requires coupling the TUI to a running `Scheduler` instance).
+- **Log tail: scrollback + auto-stop on run-end** (right now the pane shows all accumulated lines and polls forever; scrollback nav and "(run ended — polling stopped)" UX are follow-ons).
+
+`docs/cli-buddy-spec.md` §9 W3-2 row updated with the 2026-05-17 live-log-tail follow-on entry.
+
 ## [0.7.0] — 2026-05-17
 
 Bundle release of the four W3-2 follow-on items shipped since v0.6.6, plus the F5 log-retention command and the W3-6 reference webtoon agent example. Strictly additive — no breaking changes to specs, CLI flags, MCP tools, or stored DB rows.

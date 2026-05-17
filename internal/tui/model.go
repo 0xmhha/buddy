@@ -44,6 +44,7 @@ type AgentLister interface {
 	List(ctx context.Context) ([]agent.Agent, error)
 	LatestRun(ctx context.Context, agentID string) (agent.AgentRun, error)
 	Delete(ctx context.Context, agentID string) error
+	LogsSince(ctx context.Context, runID int64, sinceLogID int64) ([]agent.AgentLog, error)
 }
 
 // Mode is the top-level view state: list (default), detail, or the
@@ -55,7 +56,14 @@ const (
 	ModeDetail
 	ModeScheduler
 	ModeDeleteConfirm
+	ModeLogTail
 )
+
+// logTailPollInterval is the cadence at which the log-tail pane polls
+// Store.LogsSince for new lines. Keep it modest — 1s gives sub-second
+// "feels live" perception without hammering the DB. Exposed as a var
+// so future tests can monkey-patch it without exposing a Model field.
+var logTailPollInterval = time.Second
 
 // SchedulerPreviewEntry is one row in the scheduler-status pane. It is
 // computed by walking the agent list and asking agent.PreviewSchedule to
@@ -98,6 +106,18 @@ type Model struct {
 	// captured when `d` is pressed so a list refresh that lands while the
 	// dialog is open does not retarget the deletion to a different row.
 	PendingDeleteID string
+
+	// Log-tail state — only meaningful when Mode==ModeLogTail.
+	//
+	// LogTailRunID is the agent_runs.id row we're tailing (captured on
+	// entry from the detail pane). LogTailLastID is the high-water mark
+	// of agent_logs.id we've already accumulated; the next poll passes
+	// it as sinceID so the DB returns only new lines.
+	LogTailRunID  int64
+	LogTailLastID int64
+	LogTailLines  []agent.AgentLog
+	LogTailErr    error
+	LogTailLoaded bool
 }
 
 // SelectedID returns the agent ID currently focused for detail rendering.
@@ -130,6 +150,9 @@ type (
 		ID  string
 		Err error
 	}
+	LogTailChunkMsg struct{ Lines []agent.AgentLog }
+	LogTailErrMsg   struct{ Err error }
+	LogTailTickMsg  struct{}
 )
 
 // NewModel constructs an empty Model around an AgentLister. The Init
@@ -168,6 +191,28 @@ func loadDetailCmd(store AgentLister, agentID string) tea.Cmd {
 		}
 		return AgentDetailLoadedMsg{Run: run}
 	}
+}
+
+// loadLogChunkCmd fetches new log lines for runID with id strictly
+// greater than sinceID and emits LogTailChunkMsg (or LogTailErrMsg).
+// Sorted oldest-first by id (matches Store.LogsSince contract).
+func loadLogChunkCmd(store AgentLister, runID, sinceID int64) tea.Cmd {
+	return func() tea.Msg {
+		lines, err := store.LogsSince(context.Background(), runID, sinceID)
+		if err != nil {
+			return LogTailErrMsg{Err: err}
+		}
+		return LogTailChunkMsg{Lines: lines}
+	}
+}
+
+// tickLogTailCmd schedules the next LogTailTickMsg via tea.Tick. The
+// reducer self-cancels stale ticks (mode-checked) so we never have to
+// teardown the timer.
+func tickLogTailCmd() tea.Cmd {
+	return tea.Tick(logTailPollInterval, func(time.Time) tea.Msg {
+		return LogTailTickMsg{}
+	})
 }
 
 // deleteAgentCmd dispatches Store.Delete on a background goroutine and
@@ -278,6 +323,35 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Err = fmt.Errorf("delete agent %q: %w", msg.ID, msg.Err)
 		return m, nil
 
+	case LogTailChunkMsg:
+		m.LogTailLoaded = true
+		m.LogTailErr = nil
+		if len(msg.Lines) > 0 {
+			m.LogTailLines = append(m.LogTailLines, msg.Lines...)
+			// Lines are oldest-first; the last one is the new high-water.
+			m.LogTailLastID = msg.Lines[len(msg.Lines)-1].ID
+		}
+		// Chain the next tick so polling continues. handleKey on `esc`/`h`
+		// just changes Mode; the next tick will see the mode change and
+		// self-cancel without dispatching.
+		return m, tickLogTailCmd()
+
+	case LogTailErrMsg:
+		m.LogTailErr = msg.Err
+		m.LogTailLoaded = true
+		// Keep polling on error too — transient DB locks shouldn't freeze
+		// the pane. The error stays visible until the next successful
+		// chunk clears it.
+		return m, tickLogTailCmd()
+
+	case LogTailTickMsg:
+		// Self-cancel if the user has navigated away. Without this guard
+		// every esc/h would leak a goroutine until quit.
+		if m.Mode != ModeLogTail {
+			return m, nil
+		}
+		return m, loadLogChunkCmd(m.Store, m.LogTailRunID, m.LogTailLastID)
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -306,9 +380,34 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 			m.DetailLoaded = false
 			return m, loadDetailCmd(m.Store, m.Selected)
+		case "t":
+			// Tail logs of the currently-shown run. No-op if no run
+			// (DetailErr=ErrNotFound or Detail zero).
+			if m.Detail.ID == 0 {
+				return m, nil
+			}
+			m.Mode = ModeLogTail
+			m.LogTailRunID = m.Detail.ID
+			m.LogTailLastID = 0
+			m.LogTailLines = nil
+			m.LogTailErr = nil
+			m.LogTailLoaded = false
+			return m, loadLogChunkCmd(m.Store, m.LogTailRunID, 0)
 		}
 		// In detail mode every other key (j/k/g/G/etc.) is intentionally
 		// inert — the detail pane is read-only.
+		return m, nil
+	}
+
+	if m.Mode == ModeLogTail {
+		switch key {
+		case "esc", "h":
+			m.Mode = ModeDetail
+			return m, nil
+		case "r":
+			return m, loadLogChunkCmd(m.Store, m.LogTailRunID, m.LogTailLastID)
+		}
+		// Every other key is inert — the pane is a passive viewer.
 		return m, nil
 	}
 
@@ -414,6 +513,8 @@ func (m Model) View() string {
 		return m.renderScheduler()
 	case ModeDeleteConfirm:
 		return m.renderDeleteConfirm()
+	case ModeLogTail:
+		return m.renderLogTail()
 	default:
 		return m.renderList()
 	}
@@ -577,6 +678,45 @@ func (m Model) renderScheduler() string {
 	return b.String()
 }
 
+func (m Model) renderLogTail() string {
+	var b strings.Builder
+
+	b.WriteString(headerStyle.Render(fmt.Sprintf(
+		"buddy log tail — agent %s — run #%d", m.Selected, m.LogTailRunID)))
+	b.WriteString("\n\n")
+
+	if !m.LogTailLoaded {
+		b.WriteString(dimStyle.Render("  loading log lines…"))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintLogTail())
+		return b.String()
+	}
+
+	if m.LogTailErr != nil {
+		b.WriteString(errorStyle.Render("  error: " + m.LogTailErr.Error()))
+		b.WriteString("\n  ")
+		b.WriteString(dimStyle.Render("(polling continues — last successful chunk preserved above)"))
+		b.WriteString("\n\n")
+	}
+
+	if len(m.LogTailLines) == 0 {
+		b.WriteString(dimStyle.Render("  (no log lines yet — the run may not have produced any output)"))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintLogTail())
+		return b.String()
+	}
+
+	for _, l := range m.LogTailLines {
+		b.WriteString(fmt.Sprintf("  %s  %-5s  %s\n",
+			l.Ts.UTC().Format("15:04:05"),
+			l.Level,
+			l.Message))
+	}
+	b.WriteString("\n")
+	b.WriteString(footerHintLogTail())
+	return b.String()
+}
+
 // renderDeleteConfirm draws the modal-style confirmation prompt. The list
 // rows are NOT shown — the user's full attention is on the destructive
 // choice. ID is rendered explicitly so a redraw / refresh from another
@@ -624,7 +764,11 @@ func footerHintList() string {
 }
 
 func footerHintDetail() string {
-	return footerStyle.Render("esc/h back · r refresh · q quit")
+	return footerStyle.Render("esc/h back · r refresh · t tail logs · q quit")
+}
+
+func footerHintLogTail() string {
+	return footerStyle.Render("esc/h back · r refresh now · q quit · (auto-refresh ~1s)")
 }
 
 func footerHintScheduler() string {
