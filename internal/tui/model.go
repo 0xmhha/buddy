@@ -24,6 +24,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/0xmhha/buddy/internal/agent"
+	"github.com/0xmhha/buddy/internal/queries"
 )
 
 // AgentLister is the Store surface the TUI needs. Narrowing the
@@ -61,7 +62,19 @@ const (
 	ModeScheduler
 	ModeDeleteConfirm
 	ModeLogTail
+	ModeHookStats
 )
+
+// HookStatsFetcher is the read-only surface the TUI's hook-stats pane
+// calls when the user presses `H` in list mode. Production wiring (see
+// cmd/buddy/tui_cmd.go) closes over a DB path and delegates to
+// internal/queries.Run; tests can inject a stub that returns canned
+// rows without touching SQLite.
+//
+// nil is a legitimate value: the TUI treats a nil fetcher as "hook
+// stats unavailable in this session" and shows a friend-tone copy
+// instead of crashing on the H keypress.
+type HookStatsFetcher func(window string) (queries.Result, error)
 
 // logTailPollInterval is the cadence at which the log-tail pane polls
 // Store.LogsSince for new lines. Keep it modest — 1s gives sub-second
@@ -128,6 +141,15 @@ type Model struct {
 	// pane renders it as a banner with a retry hint. Cleared on the next
 	// `e` keypress (about to retry) or on a successful save.
 	EditErr error
+
+	// Hook-stats pane state — only meaningful when Mode==ModeHookStats.
+	// HookStatsFetcher is the injected read function (nil = pane shows
+	// "unavailable" copy on the H keypress and stays in list mode).
+	HookStatsFetcher HookStatsFetcher
+	HookStatsWindow  string // "5m" | "1h" | "24h" (default "1h")
+	HookStatsResult  queries.Result
+	HookStatsErr     error
+	HookStatsLoaded  bool
 }
 
 // SelectedID returns the agent ID currently focused for detail rendering.
@@ -179,6 +201,11 @@ type (
 	}
 	AgentCreatedMsg     struct{ ID string }
 	AgentCreateErrMsg   struct{ Err error }
+	HookStatsLoadedMsg  struct {
+		Window string
+		Result queries.Result
+	}
+	HookStatsErrMsg struct{ Err error }
 )
 
 // NewModel constructs an empty Model around an AgentLister. The Init
@@ -271,6 +298,23 @@ func beginEditCmd(agentID, currentSpec string) tea.Cmd {
 		}
 		return EditorExitedMsg{AgentID: agentID, Content: content}
 	})
+}
+
+// loadHookStatsCmd fetches the hook-reliability snapshot for the given
+// window and emits HookStatsLoadedMsg or HookStatsErrMsg. Defensive on
+// nil fetcher (treated as "no data"). Window is forwarded verbatim so
+// downstream queries.Run validation handles bad values.
+func loadHookStatsCmd(fetcher HookStatsFetcher, window string) tea.Cmd {
+	if fetcher == nil {
+		return nil
+	}
+	return func() tea.Msg {
+		res, err := fetcher(window)
+		if err != nil {
+			return HookStatsErrMsg{Err: err}
+		}
+		return HookStatsLoadedMsg{Window: window, Result: res}
+	}
 }
 
 // CreateStarterYAML is the initial buffer the user gets when they press
@@ -594,6 +638,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Err = fmt.Errorf("create: %w", msg.Err)
 		return m, nil
 
+	case HookStatsLoadedMsg:
+		m.HookStatsResult = msg.Result
+		m.HookStatsWindow = msg.Window
+		m.HookStatsLoaded = true
+		m.HookStatsErr = nil
+		return m, nil
+
+	case HookStatsErrMsg:
+		m.HookStatsErr = msg.Err
+		m.HookStatsLoaded = true
+		return m, nil
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -682,6 +738,20 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	if m.Mode == ModeHookStats {
+		switch key {
+		case "esc", "h":
+			m.Mode = ModeList
+			return m, nil
+		case "r":
+			m.HookStatsLoaded = false
+			return m, loadHookStatsCmd(m.HookStatsFetcher, m.HookStatsWindow)
+		}
+		// Other keys (j/k/g/G/etc.) are intentionally inert — the pane
+		// is a read-only snapshot.
+		return m, nil
+	}
+
 	if m.Mode == ModeDeleteConfirm {
 		switch key {
 		case "y", "Y":
@@ -763,6 +833,23 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// No cursor dependency — works on an empty list too.
 		m.Err = nil // clear any prior list-pane error before going to editor
 		return m, beginCreateCmd()
+
+	case "H":
+		// Hook reliability stats pane (A-3.2 W3-5 follow-on — surfaces
+		// the v0.1.0 daemon/aggregator output inside the cli buddy
+		// TUI). Capital H so lowercase `h` stays free for back-nav in
+		// other modes. No-op when no fetcher is wired (e.g., a TUI
+		// invocation without DB-stats access).
+		if m.HookStatsFetcher == nil {
+			return m, nil
+		}
+		m.Mode = ModeHookStats
+		if m.HookStatsWindow == "" {
+			m.HookStatsWindow = "1h" // align with `buddy stats` default
+		}
+		m.HookStatsLoaded = false
+		m.HookStatsErr = nil
+		return m, loadHookStatsCmd(m.HookStatsFetcher, m.HookStatsWindow)
 	}
 	return m, nil
 }
@@ -780,6 +867,8 @@ func (m Model) View() string {
 		return m.renderDeleteConfirm()
 	case ModeLogTail:
 		return m.renderLogTail()
+	case ModeHookStats:
+		return m.renderHookStats()
 	default:
 		return m.renderList()
 	}
@@ -990,6 +1079,56 @@ func (m Model) renderLogTail() string {
 	return b.String()
 }
 
+func (m Model) renderHookStats() string {
+	var b strings.Builder
+
+	window := m.HookStatsWindow
+	if window == "" {
+		window = "1h"
+	}
+	b.WriteString(headerStyle.Render("buddy hook stats — window " + window))
+	b.WriteString("\n\n")
+
+	if !m.HookStatsLoaded {
+		b.WriteString(dimStyle.Render("  loading hook stats…"))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintHookStats())
+		return b.String()
+	}
+
+	if m.HookStatsErr != nil {
+		b.WriteString(errorStyle.Render("  error: " + m.HookStatsErr.Error()))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintHookStats())
+		return b.String()
+	}
+
+	if len(m.HookStatsResult.Rows) == 0 {
+		b.WriteString(dimStyle.Render("  (no hook events in this window — daemon may be idle or DB empty)"))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintHookStats())
+		return b.String()
+	}
+
+	// Column header — same column ordering as `buddy stats` CLI so users
+	// who switch between the two surfaces see the same shape.
+	b.WriteString(fmt.Sprintf("  %-24s %-12s %8s %8s %8s %8s\n",
+		"hook", "tool", "count", "fail", "p50ms", "p95ms"))
+	b.WriteString(dimStyle.Render(fmt.Sprintf("  %s\n",
+		strings.Repeat("─", 72))))
+	for _, row := range m.HookStatsResult.Rows {
+		tool := row.ToolName
+		if tool == "" {
+			tool = "-"
+		}
+		b.WriteString(fmt.Sprintf("  %-24s %-12s %8d %8d %8d %8d\n",
+			row.HookName, tool, row.Count, row.Failures, row.P50Ms, row.P95Ms))
+	}
+	b.WriteString("\n")
+	b.WriteString(footerHintHookStats())
+	return b.String()
+}
+
 // renderDeleteConfirm draws the modal-style confirmation prompt. The list
 // rows are NOT shown — the user's full attention is on the destructive
 // choice. ID is rendered explicitly so a redraw / refresh from another
@@ -1033,7 +1172,11 @@ func renderAgentRow(a agent.Agent, selected bool) string {
 }
 
 func footerHintList() string {
-	return footerStyle.Render("j/k or ↑/↓ move · g/G top/bottom · enter/l detail · s scheduler · c create · d delete · r refresh · q quit")
+	return footerStyle.Render("j/k or ↑/↓ move · g/G top/bottom · enter/l detail · s scheduler · c create · d delete · H hook stats · r refresh · q quit")
+}
+
+func footerHintHookStats() string {
+	return footerStyle.Render("esc/h back · r refresh · q quit")
 }
 
 func footerHintDetail() string {

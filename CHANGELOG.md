@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — TUI hook-stats pane (A-3.2 W3-5 follow-on, cli buddy ↔ hook monitor integration)
+
+The W3-5 cycle-handoff §6.1 "hook reliability monitor → cli buddy sub-feature" item lands as a new TUI mode: pressing `H` in list view opens an inline pane that calls `internal/queries.Run` and renders the same count / failures / p50 / p95 per-hook snapshot the `buddy stats` CLI already produces. The capital `H` keeps lowercase `h` free for back-navigation in other modes.
+
+This is the structural integration the cycle-handoff was pointing at — the v0.1.0 daemon/aggregator was already shipping (`buddy daemon/stats/events` CLI surface), but it lived "next to" the W3-3 agent management work rather than feeling like part of the same product. Surfacing it inside `buddy tui` makes the unified control-plane story real: the user opens one binary, sees agents in the list, hits `s` for the scheduler preview, `H` for the hook reliability monitor — all in the same AltScreen session.
+
+Notably this commit does NOT touch the existing `buddy daemon` / `buddy stats` / `buddy events` CLI surface. Those keep working verbatim for users who scripted around them; the integration is *additive*. No code from `internal/daemon` or `internal/aggregator` was moved or restructured — the integration happens at the consumer (TUI) layer, not the producer (daemon) layer.
+
+What ships:
+
+- New `tui.HookStatsFetcher` function type: `func(window string) (queries.Result, error)`. Optional injection on `tui.Model.HookStatsFetcher`. nil → pressing `H` is a no-op (the TUI stays in list mode); production wiring (`cmd/buddy/tui_cmd.go`) closes over the `--db` flag and delegates to `queries.Run`.
+- New `Mode` value `ModeHookStats` + state fields: `HookStatsWindow string` (default `"1h"`), `HookStatsResult queries.Result`, `HookStatsErr`, `HookStatsLoaded`.
+- New reducer messages: `HookStatsLoadedMsg{Window, Result}`, `HookStatsErrMsg{Err}`. `loadHookStatsCmd(fetcher, window)` runs the fetch off the reducer.
+- Key bindings (additive — every existing binding unchanged):
+  - `H` (list mode) — open the hook-stats pane. Defaults `HookStatsWindow` to `"1h"` (matches the `buddy stats` CLI default). No-op when `HookStatsFetcher` is nil.
+  - `esc` / `h` (hook-stats mode) — return to list.
+  - `r` (hook-stats mode) — refetch with the locked-in window.
+  - `q` / `Ctrl-C` — quit (every mode).
+- Render layout: bold header `buddy hook stats — window <W>`, then a `hook · tool · count · fail · p50ms · p95ms` table (same column ordering as the `buddy stats` CLI, so users who switch between the two surfaces see the same shape). Per-row tool name is `-` when blank (mirrors the CLI's "hook-level aggregate" rendering for hooks like `Stop` that have no tool axis).
+- Friend-tone empty / loading / error copy: `loading hook stats…` until the fetch resolves; `(no hook events in this window — daemon may be idle or DB empty)` for the empty case; `error: <message>` for fetch failure.
+
+Test coverage (`internal/tui/model_test.go` — 10 new race-clean tests):
+
+- Update reducer: `H` with a wired fetcher enters ModeHookStats + defaults window to "1h" + dispatches fetch cmd; `H` without a fetcher is a no-op; `HookStatsLoadedMsg` folds rows/window/Loaded; `HookStatsErrMsg` records err + flips Loaded; `esc` / `h` return to list; `q` quits; `r` refires with the locked-in window.
+- View smoke: pane renders header + rows (HookName / ToolName / Count / P95Ms / esc-back-hint); empty-state shows `no hook events` copy; loading placeholder visible; error string visible.
+
+`docs/cli-buddy-spec.md` §9 W3-5 row updated with the 2026-05-18 hook-stats-pane sub-item. W3-5 main.go split (v0.6.3) was already Done; with this commit the *integration* sub-item is also Done. W3-5 row is now fully closed.
+
 ## [0.7.1] — 2026-05-18
 
 Patch release bundling the four post-v0.7.0 commits. Three close out the W3-2 follow-on backlog; one closes the deferred W3-4 chain-control sub-items. Strictly additive — every existing spec keeps its v0.7.0 semantics verbatim.

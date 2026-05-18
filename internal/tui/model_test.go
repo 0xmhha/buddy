@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/0xmhha/buddy/internal/agent"
+	"github.com/0xmhha/buddy/internal/queries"
 )
 
 // fakeLister is the test-side AgentLister: returns canned agents or a
@@ -1466,4 +1467,166 @@ func TestCreateStarterYAML_ParsesAsValidSpec(t *testing.T) {
 	require.NoError(t, err, "starter template must parse as a valid AgentSpec")
 	require.Equal(t, "new-agent", spec.ID)
 	require.NotEmpty(t, spec.Chain, "starter template must contain at least one chain step")
+}
+
+// ─── Hook stats pane (A-3.2 W3-5 follow-on) ────────────────────────────
+
+// fakeStatsFetcher returns canned rows + records the window arg.
+func fakeStatsFetcher(rows []queries.Row, err error, captured *[]string) HookStatsFetcher {
+	return func(window string) (queries.Result, error) {
+		*captured = append(*captured, window)
+		if err != nil {
+			return queries.Result{}, err
+		}
+		return queries.Result{WindowLabel: window, Rows: rows}, nil
+	}
+}
+
+// TestUpdate_HInListWithFetcherEntersHookStats — H with a wired fetcher
+// switches to ModeHookStats, defaults the window to "1h", and
+// dispatches the fetch cmd.
+func TestUpdate_HInListWithFetcherEntersHookStats(t *testing.T) {
+	t.Parallel()
+	var captured []string
+	m := Model{Store: &fakeLister{}, Loaded: true,
+		HookStatsFetcher: fakeStatsFetcher(nil, nil, &captured)}
+	next, cmd := m.Update(keyMsg("H"))
+	mm := next.(Model)
+	require.Equal(t, ModeHookStats, mm.Mode)
+	require.Equal(t, "1h", mm.HookStatsWindow, "default window is 1h")
+	require.False(t, mm.HookStatsLoaded)
+	require.NotNil(t, cmd, "H must schedule a stats fetch when fetcher is wired")
+	// Execute the cmd; assert HookStatsLoadedMsg comes out.
+	msg := cmd()
+	loaded, ok := msg.(HookStatsLoadedMsg)
+	require.True(t, ok, "expected HookStatsLoadedMsg, got %T", msg)
+	require.Equal(t, "1h", loaded.Window)
+	require.Equal(t, []string{"1h"}, captured, "fetcher must be called once with the locked-in window")
+}
+
+// TestUpdate_HInListWithoutFetcherIsNoOp — without a fetcher, H stays
+// in list mode and dispatches nothing.
+func TestUpdate_HInListWithoutFetcherIsNoOp(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Loaded: true}
+	next, cmd := m.Update(keyMsg("H"))
+	require.Equal(t, ModeList, next.(Model).Mode, "no fetcher → no mode switch")
+	require.Nil(t, cmd)
+}
+
+// TestUpdate_HookStatsLoadedFoldsIntoState — the loaded msg populates
+// rows/window and flips Loaded=true.
+func TestUpdate_HookStatsLoadedFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeHookStats}
+	rows := []queries.Row{{HookName: "pre-commit", ToolName: "Bash", Count: 10, Failures: 1, P50Ms: 50, P95Ms: 200}}
+	next, _ := m.Update(HookStatsLoadedMsg{Window: "1h",
+		Result: queries.Result{WindowLabel: "1시간", Rows: rows}})
+	mm := next.(Model)
+	require.True(t, mm.HookStatsLoaded)
+	require.Equal(t, "1h", mm.HookStatsWindow)
+	require.Len(t, mm.HookStatsResult.Rows, 1)
+	require.Nil(t, mm.HookStatsErr, "successful load clears any prior err")
+}
+
+// TestUpdate_HookStatsErrFoldsIntoState — err msg records the error
+// and flips Loaded=true.
+func TestUpdate_HookStatsErrFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("db locked")
+	m := Model{Mode: ModeHookStats}
+	next, _ := m.Update(HookStatsErrMsg{Err: bang})
+	mm := next.(Model)
+	require.True(t, mm.HookStatsLoaded)
+	require.ErrorIs(t, mm.HookStatsErr, bang)
+}
+
+// TestUpdate_EscFromHookStatsReturnsToList — esc/h return to list.
+func TestUpdate_EscFromHookStatsReturnsToList(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeHookStats}
+	next, _ := m.Update(keyMsg("esc"))
+	require.Equal(t, ModeList, next.(Model).Mode)
+
+	m2 := Model{Mode: ModeHookStats}
+	next2, _ := m2.Update(keyMsg("h"))
+	require.Equal(t, ModeList, next2.(Model).Mode)
+}
+
+// TestUpdate_QuitWorksInHookStatsMode — q quits.
+func TestUpdate_QuitWorksInHookStatsMode(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeHookStats}
+	_, cmd := m.Update(keyMsg("q"))
+	require.NotNil(t, cmd)
+	_, ok := cmd().(tea.QuitMsg)
+	require.True(t, ok)
+}
+
+// TestUpdate_RInHookStatsRefetches — r in the pane refires the fetch
+// cmd with the locked-in window.
+func TestUpdate_RInHookStatsRefetches(t *testing.T) {
+	t.Parallel()
+	var captured []string
+	m := Model{Mode: ModeHookStats, HookStatsWindow: "5m",
+		HookStatsLoaded: true,
+		HookStatsFetcher: fakeStatsFetcher(nil, nil, &captured)}
+	next, cmd := m.Update(keyMsg("r"))
+	mm := next.(Model)
+	require.NotNil(t, cmd)
+	require.False(t, mm.HookStatsLoaded)
+	msg := cmd()
+	require.IsType(t, HookStatsLoadedMsg{}, msg)
+	require.Equal(t, []string{"5m"}, captured, "refresh must preserve the current window")
+}
+
+// TestView_HookStatsRendersRows — pane shows window label + each row's
+// hook name + counts + p95.
+func TestView_HookStatsRendersRows(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:            ModeHookStats,
+		HookStatsLoaded: true,
+		HookStatsWindow: "1h",
+		HookStatsResult: queries.Result{
+			WindowLabel: "1시간",
+			Rows: []queries.Row{
+				{HookName: "PreToolUse", ToolName: "Bash", Count: 42, Failures: 2, P50Ms: 80, P95Ms: 350},
+				{HookName: "Stop", ToolName: "", Count: 7, Failures: 0, P50Ms: 5, P95Ms: 12},
+			},
+		},
+	}
+	out := m.View()
+	require.Contains(t, out, "1h", "window label visible")
+	require.Contains(t, out, "PreToolUse")
+	require.Contains(t, out, "Bash")
+	require.Contains(t, out, "Stop")
+	require.Contains(t, out, "350", "p95 visible")
+	require.Contains(t, out, "esc", "back hint visible")
+}
+
+// TestView_HookStatsEmptyCopy — Loaded with no rows shows friendly hint.
+func TestView_HookStatsEmptyCopy(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeHookStats, HookStatsLoaded: true, HookStatsWindow: "1h"}
+	out := m.View()
+	require.Contains(t, out, "no hook events")
+}
+
+// TestView_HookStatsLoadingPlaceholder — pre-fetch placeholder.
+func TestView_HookStatsLoadingPlaceholder(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeHookStats, HookStatsWindow: "1h"}
+	out := m.View()
+	require.Contains(t, out, "loading")
+}
+
+// TestView_HookStatsErrorState — error string surfaces.
+func TestView_HookStatsErrorState(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeHookStats, HookStatsLoaded: true, HookStatsWindow: "1h",
+		HookStatsErr: errors.New("db locked")}
+	out := m.View()
+	require.Contains(t, out, "error")
+	require.Contains(t, out, "db locked")
 }
