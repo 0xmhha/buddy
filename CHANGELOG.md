@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-05-18
+
+Patch release bundling the four post-v0.7.0 commits. Three close out the W3-2 follow-on backlog; one closes the deferred W3-4 chain-control sub-items. Strictly additive — every existing spec keeps its v0.7.0 semantics verbatim.
+
+What's in this release (newest commit first):
+
+- `59ba94b` — **W3-4 chain control** (per-step `continue_on_fail` + chain-level `auto_cascade`). New spec fields, runtime queue-based loop, `StepResult.CascadeDepth`. Cascade is skip-on-failure; default depth cap is 5. Closes the W3-4 deferred items from v0.6.x.
+- `29fb89e` — **W3-2 create form** (the final named W3-2 follow-on). `c` in list mode opens `$EDITOR` on a starter YAML; `ParseSpec` + `Store.Create` persists. All 6 named W3-2 follow-on items are now shipped.
+- `4ae1e0f` — **W3-2 in-app spec edit**. `e` in detail mode shells out to `$EDITOR` on the agent's spec_yaml; `Store.UpdateSpec` persists (status / created_at / last_run_at preserved). Renames rejected to avoid orphaning runs/logs.
+- `b1b9b7c` — **W3-2 live log tail**. `t` in detail mode opens an inline pane that polls `Store.LogsSince(runID, sinceLogID)` every ~1s via `tea.Tick`. Self-cancels on mode change (no goroutine leak).
+
+Counts and gates:
+
+- 5 version sources (Makefile, plugin.json, marketplace.json, server.go, main.go) all on `0.7.1` (`make verify-versions` passes).
+- `go build / go vet / go test -race -count=1 -timeout=180s ./...` — 23 packages green.
+- `internal/tui` package at 85 race-clean tests (34 new since v0.7.0 across create / edit / log tail).
+- `internal/agent` package added `Store.LogsSince` + `Store.UpdateSpec` + 10 new runtime tests (continue_on_fail 4 + auto_cascade 6).
+- `cli-buddy-spec.md` §9 W3-2 and W3-4 both read **Done** with this release. The remaining cascade items are W3-5 partial (hook reliability monitor cli buddy integration deferred) and one branch-aware-selection sub-item of W3-4 (deferred pending dogfood signal).
+
+What stays open after v0.7.1:
+
+- **W3-5 hook reliability monitor → cli buddy sub-feature integration** (the remaining track-identity cleanup from cycle-handoff §6.1).
+- **Branch-aware `auto_cascade` selection** (currently picks `Skills[0]`; conditional `Branches` only logged).
+- **Scheduler pane live "currently running" indicator** (W3-2 follow-on-of-follow-on; requires coupling the TUI to a running `Scheduler` instance).
+- **Log tail scrollback + auto-stop on run-end** (W3-2 follow-on-of-follow-on; current pane polls indefinitely and renders everything accumulated).
+- **Plugin v1.0.0 entry conditions B-2 (production dogfood) / B-3 (PROCEDURE B6 unification) / B-4 (router smart-skip session state)** remain user-paced or trigger-bound.
+
 ### Added — W3-4 chain control: per-step `continue_on_fail` + chain-level `auto_cascade`
 
 Two W3-4 cascade items shipped together. They were paired because both touch the runtime's chain-loop semantics, and shipping them in one commit keeps the spec field additions visible side-by-side.
