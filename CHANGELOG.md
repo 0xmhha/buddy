@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] — 2026-05-18
+
+Patch release of the single A-3.2 commit accumulated since v0.7.1. Strictly additive — no breaking changes, no spec field additions, no CLI flag changes. The existing `buddy daemon` / `buddy stats` / `buddy events` CLI surface stays bit-for-bit identical; integration happens at the TUI consumer layer only.
+
+What's in this release:
+
+- `b065152` — **TUI hook-stats pane** (A-3.2 W3-5 follow-on, cli buddy ↔ hook reliability monitor integration). Pressing `H` in list view opens an inline pane that calls `internal/queries.Run` and renders the same count / failures / p50 / p95 per-hook snapshot the `buddy stats` CLI already produces. Default window `"1h"` (matches the CLI). `esc` / `h` returns; `r` refetches.
+
+Counts and gates:
+
+- 5 version sources (Makefile, plugin.json, marketplace.json, server.go, main.go) all on `0.7.2` (`make verify-versions` passes).
+- `go build / go vet / go test -race -count=1 -timeout=180s ./...` — 23 packages green.
+- `internal/tui` package at 95 race-clean tests (10 new since v0.7.1 covering the hook-stats pane reducer and view paths).
+
+W3-5 row of `cli-buddy-spec.md §9` closed with this release: main.go split was already Done in v0.6.3; the hook-monitor → cli-buddy integration is now Done. W3-5 is fully closed.
+
+What stays open after v0.7.2 (unchanged from v0.7.1):
+
+- **Branch-aware `auto_cascade` selection** (currently picks `Skills[0]`; conditional `Branches` only logged).
+- **Scheduler pane live "currently running" indicator** (W3-2 follow-on-of-follow-on; requires coupling the TUI to a running `Scheduler` instance).
+- **Log tail scrollback + auto-stop on run-end** (W3-2 follow-on-of-follow-on; current pane polls indefinitely and renders everything accumulated).
+- **Plugin v1.0.0 entry conditions B-2 (production dogfood) / B-3 (PROCEDURE B6 unification) / B-4 (router smart-skip session state)** remain user-paced or trigger-bound.
+
 ### Added — TUI hook-stats pane (A-3.2 W3-5 follow-on, cli buddy ↔ hook monitor integration)
 
 The W3-5 cycle-handoff §6.1 "hook reliability monitor → cli buddy sub-feature" item lands as a new TUI mode: pressing `H` in list view opens an inline pane that calls `internal/queries.Run` and renders the same count / failures / p50 / p95 per-hook snapshot the `buddy stats` CLI already produces. The capital `H` keeps lowercase `h` free for back-navigation in other modes.
