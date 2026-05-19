@@ -18,6 +18,9 @@
 | [ADR-006](./2026-05-19-procedure-form-allowlist-policy.md) | 2026-05-19 | B6 PROCEDURE form: bulk-allowlist intentional deviations + --strict for new skills | Accepted | b6-lint, procedure-form, allowlist, ci-gate, plugin-v1.0-entry |
 | [ADR-007](./2026-05-19-router-no-cross-invocation-state.md) | 2026-05-19 | Router does not maintain cross-invocation conversational state (supersedes B7) | Accepted | router, session-state, b7-supersede, plugin-v1.0-entry, scope-discipline |
 | [ADR-008](./2026-05-19-feature-management-mcp-scope.md) | 2026-05-19 | `feature-management-mcp` scope: minimum-viable CRUD lock-in + naming split from external SaaS reference | Accepted | feature-registry, mcp-tools, naming, scope-lock-in, cli-buddy |
+| [ADR-009](./2026-05-19-cli-buddy-vision-expansion.md) | 2026-05-19 | cli buddy vision expansion: AI-usage coaching (F2.A~E) beyond automation agents | Accepted | cli-buddy, vision, session-monitor, usage-analysis, advisory, drift, notification, identity |
+| [ADR-010](./2026-05-19-v1.0-whole-product-scope.md) | 2026-05-19 | v1.0.0 = whole-product completion (B-1~B-4 + C-1~C-5), not plugin-only | Accepted | v1.0-scope, semver, plugin-vs-cli, entry-conditions, supersedes-adr-004 |
+| [ADR-011](./2026-05-19-release-policy-milestone-driven.md) | 2026-05-19 | Release policy: milestone-driven version bumps, not commit-driven | Accepted | release-policy, semver, cadence, milestone, anti-noise |
 
 ---
 
@@ -129,6 +132,11 @@ charter §6.2 의 cli buddy 진화 시 예상 ADR 후보:
 | ~~ADR-{N} router smart-skip session state (B7)~~ | **Closed by ADR-007 (2026-05-19)** — supersede, not router responsibility |
 | ADR-{N} skill MCP exposure | cli buddy 의 §4.1 option (b)/(d) 재검토 시 |
 | ADR-{N} cli buddy agent sandbox security (Q-6) | W3-3 agent runtime 의 *임의 명령 실행* 위험 surface 시 |
+| **ADR-{N} F2.A Session Monitor design** (Wave 7 W7-1, v1.0 C-1) | Claude Code session-lifecycle hook 안정 — ADR-009 의 첫 후속 |
+| **ADR-{N} F2.B Usage Analysis schema** (Wave 7 W7-2, v1.0 C-2) | F2.A 가 ~30일 데이터 누적 |
+| **ADR-{N} F2.C Advisory generation** (Wave 7 W7-3, v1.0 C-3) | F2.B analytic primitive 안정 — rule-based vs LLM-driven 선택 |
+| **ADR-{N} F2.D Drift Detection design** (Wave 7 W7-4, v1.0 C-4) | F2.A turn-level 데이터 + LLM 비교 path |
+| **ADR-{N} F2.E Notification transport** (Wave 7 W7-5, v1.0 C-5) | F2.C advisory 가 out-of-band 가치 |
 
 ---
 

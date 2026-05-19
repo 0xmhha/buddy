@@ -32,7 +32,11 @@
 
 `plugin buddy 의 skill / MCP / agent / hook` 4 자산을 *자동화 agent 안에서 활용* → 사용자 *manual trigger 없이* 작업 진행.
 
-### 1.3 Scope (4 책임)
+### 1.3 Scope (9 책임 — ADR-009 2026-05-19 확장)
+
+> **확장 컨텍스트**: ADR-005 lock-in 시점 (2026-05-11) 의 4 책임은 *자동화 agent 관리* 단독. ADR-009 (2026-05-19) 가 *AI-usage coaching* 5 영역을 추가하여 cli buddy 의 정체성을 "automation agent + AI 사용 코치" 로 확장.
+
+#### A. 자동화 agent 관리 (v0.1.0 ~ v0.7.5 ship 완료)
 
 | 책임 | 정의 |
 |------|------|
@@ -40,6 +44,18 @@
 | **agent 실행** | 등록된 agent 를 백그라운드 / 스케줄 / on-demand 실행. plugin buddy 내재화 layer 통과 |
 | **agent 종료** | 실행 중 agent 정지 / 폐기 / 자원 회수 |
 | **agent 설정 변경** | 스케줄 / 입력 / plugin buddy 호출 패턴 / 출력 destination 등 |
+
+#### B. AI-usage coaching (ADR-009, 미구현 — 5 영역)
+
+| 책임 | 정의 | 현 fragment | impl trigger |
+|------|------|-------------|--------------|
+| **F2.A Session Monitor** | Claude Code 세션(들)의 lifecycle / token / message / 시간 추적 | `internal/sessions/` + migration v3 (passive registry) | Claude Code session-lifecycle hook 안정 |
+| **F2.B Usage Analysis** | 활동 ledger → 사용 패턴 / 마찰 지점 / 시간 분포 분석 (로컬, privacy-preserving) | `internal/analytics/` 7 MCP tools (v0.3.0, 현재 generic 분석) | F2.A 가 ~30일 데이터 누적 |
+| **F2.C Advisory** | 분석 → actionable 한국어 prose 권고 ("이 hook 12% 실패, 설정 X 권장") | none | F2.B 의 analytic primitive 안정 |
+| **F2.D Drift Detection** | 단일 conversation 안 *원래 목적* vs *현재 turn* 의 semantic drift 감지 | none | F2.A turn-level 데이터 + LLM-driven 비교 path 안정 |
+| **F2.E Notification** | F2.C / F2.D 의 메시지를 TUI banner / desktop / shell prompt / webhook 으로 전달 | `output.type: webhook` (machine-to-machine, 다른 개념) | F2.C 가 out-of-band 전달 가치 있는 advisory 생성 |
+
+→ B 영역의 자세한 design 은 영역별 후속 ADR (F2.A ~ F2.E) 에서. 본 spec 은 책임 *명시* 까지.
 
 ### 1.4 Non-goals
 
@@ -330,6 +346,18 @@ cli buddy spec 작성 자체가 *roadmap.md §4/§5/§6 outline 의 actual rewri
 | W3-4 plugin buddy embedding | Claude Code subprocess + PROCEDURE parse | **Done 2026-05-17** — parser ship in v0.5.0 + conditional branches ship in v0.6.0 + retry/fail semantics shipped 2026-05-17 (`chain[].continue_on_fail` per-step flag, default false preserves v0.6.x fail-fast) + auto-cascade shipped 2026-05-17 (`auto_cascade: {max_depth:N}` chain-level config; runtime queue-based loop appends `NextPhase.Skills[0]` after every successful step, capped at `DefaultCascadeMaxDepth=5`; skip-on-failure; `StepResult.CascadeDepth` tracks original-vs-cascaded). Branch-aware selection (vs Skills[0]) is the remaining sub-item, deferred pending dogfood signal. | W3-1 (Subprocess executor 의 spawn 부분 W3-3 안에서 ship) |
 | W3-5 v0.1.0 재배치 | main.go 분할 + sub-feature 재배치 | **Done 2026-05-18** — main.go 685→147 lines split shipped v0.6.3 (6 sibling files in `cmd/buddy/`); hook reliability monitor cli buddy 통합 shipped 2026-05-18 as `buddy tui` `H` key → ModeHookStats pane (`internal/queries.Run` wrapped via `tui.HookStatsFetcher` injection, renders count / failures / p50 / p95 per hook, same column order as `buddy stats` CLI). 기존 `buddy daemon/stats/events` CLI surface 그대로 — integration 은 consumer (TUI) layer 에서만 추가 (additive). | W3-2 / W3-3 / W3-4 |
 | W3-6 reference agent | 웹툰 agent example | HIGH (Done 2026-05-12 — `examples/webtoon-agent/spec.yaml` + README; ParseSpec regression test gates the example. Exercises Tier 1.4 backoff / 1.5 streaming / 1.6 scheduler refresh / 1.8 webhook + W3-3 chain) | W3-2 ~ W3-5 |
+
+### W4 ~ W8 — AI-usage coaching (ADR-009, 미구현)
+
+| Phase | 영역 | 비용 추정 | 의존 |
+|-------|------|---------|------|
+| **W4 F2.A Session Monitor** | Claude Code session lifecycle 추적 (start / token / message / time / transcript path). `internal/sessions/` 의 passive registry 를 active observer 로 확장 + daemon role 정의 | HIGH | Claude Code session-lifecycle hook 안정 |
+| **W5 F2.B Usage Analysis** | 7 analytics MCP tools 를 AI-usage 분석으로 repurpose 또는 신규 tool 추가 (token spend / message-length / time-to-first-tool-call / hook-failure rate per skill 등) | MED | W4 가 ~30일 데이터 누적 |
+| **W6 F2.C Advisory** | W5 의 analytic primitive → actionable 한국어 prose 권고 생성 (rule-based 또는 LLM-driven) | MED-HIGH | W5 analytic primitive 안정 |
+| **W7 F2.D Drift Detection** | 단일 conversation 안 *원래 목적* vs *현재 turn* semantic similarity 평가 + drift alert 생성 | HIGH | W4 turn-level 데이터 + LLM-driven 비교 path |
+| **W8 F2.E Notification** | W6 / W7 메시지의 TUI banner / desktop (`osascript` / `notify-send`) / shell prompt / webhook 전달 | MED | W6 advisory 가 out-of-band 전달 가치 |
+
+→ W4 ~ W8 은 ADR-009 vision 의 *5 영역 = 5 phase*. 각 phase 의 design + impl 은 영역별 후속 ADR (e.g., ADR-{N} F2.A Session Monitor design) 에서 lock-in.
 
 ### W3-3 partial Done — 2026-05-11 ship summary
 

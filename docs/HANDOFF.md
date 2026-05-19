@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-19 (**v0.7.2** + ADR-006/007 — v0.7.0 bundle + v0.7.1 (W3-2 finish + W3-4 chain control: continue_on_fail + auto_cascade) + v0.7.2 (TUI hook-stats pane, A-3.2 W3-5 follow-on). ADR-006 closes B-3 (B6 PROCEDURE lint --strict via bulk-allowlist) + ADR-007 closes B-4 (router smart-skip session state superseded — not router responsibility). **cli-buddy-spec §9 W3-1~W3-6 모두 Done.** plugin v1.0.0 entry conditions: 3/4 closed, only B-2 (production dogfood) remains. **세션 인계 진입점: 본 문서 §1 + `CHANGELOG.md [0.7.x]`** (cycle-handoff 2026-05-11 은 oldest baseline).)
+**Last updated:** 2026-05-19 (**v0.7.5** + ADR-006~011 — cycle 종료 + identity refactor) — v0.7.0~v0.7.2 ship + v0.7.3~v0.7.5 doc patches + ADR-006 (B6 lint --strict) + ADR-007 (router scope, B7 supersede) + ADR-008 (feature-management-mcp scope) + ADR-009 (**cli buddy vision expansion — 5 영역 F2.A~E 추가**) + ADR-010 (**whole-product v1.0.0 = B-1~B-4 + C-1~C-5, 9 조건**) + ADR-011 (**release policy — milestone-driven**). **cli-buddy-spec §1.3 9 책임 / §9 W3-1~W3-6 Done + W4~W8 (Wave 7) 0%.** v1.0.0 entry 9 조건 중 3/9 closed (B-1/B-3/B-4) — *진척률 ~40% 재산정*. **세션 인계 진입점: 본 문서 §1 + `BACKLOG.md` + `CHANGELOG.md [0.7.x]`**.)
 
 ## 트랙 상태
 
@@ -83,20 +83,24 @@
 | Plugin orchestrator — 9-phase × 148 skill | ✅ 100% (Skill Completion Cycle) |
 | Plugin commands — 99 | ✅ 100% (N-1 closure ADR-001 + B6 --strict ADR-006) |
 | MCP tools — 12 (analytics 7 + feature 5) | ✅ 100% (ADR-008 lock-in) |
-| cli buddy W3-1~W3-6 cascade | ✅ 100% (TUI 7 modes + agent runtime + scheduler + cascade chain + 자산 재배치 + reference agent) |
+| cli buddy W3-1~W3-6 (automation agent 관리) | ✅ 100% (TUI 7 modes + agent runtime + scheduler + cascade chain + 자산 재배치 + reference agent) |
 | Hook reliability monitor — M1~M6 + v0.1.0 release | ✅ 100% (4 binaries published 2026-04-26) |
-| **Plugin v1.0.0 entry conditions (B-1/B-2/B-3/B-4)** | **75%** (3/4 closed, B-2 production dogfood 잔여) |
+| **cli buddy W4~W8 (AI-usage coaching, ADR-009)** | **0%** (F2.A~E 5 영역 모두 미구현 — Session Monitor / Usage Analysis / Advisory / Drift Detection / Notification) |
+| **Plugin v1.0.0 entry conditions B-1~B-4** | 75% (3/4 closed, B-2 production dogfood 잔여) |
+| **Whole-product v1.0.0 entry (ADR-010, B-1~B-4 + C-1~C-5 = 9 조건)** | **33%** (3/9 closed — B-1/B-3/B-4, B-2 잔여 + C-1~C-5 모두 0%) |
 | Dogfood **cycle-2 production** (B-2 trigger) | ⚠ ~5% (pre-flight Done, 3 paths user-paced) |
 | i18n sweep (M5 deferred) | 25% (W2-3 en/ko parity ✅, 3 잔여) |
 | Release polish (M6 deferred) | 25% (ci.yml ✅, SHA pin / notarize / VERSION SSoT 잔여) |
 | TUI / runtime UX follow-on | 0% (dogfood signal 대기) |
-| **종합 진행률** | **약 90%** (Core 100%, polish 20%, v1.0.0 75%) |
+| **종합 진행률 (whole-product 기준)** | **약 40%** (자동화 agent 부분 100%, AI-usage coaching 0%, 정책 + polish 부분 진척) |
 
 **테스트:** 23 packages race-clean (`go test -race -count=1 ./...`), `make test-skill-form --strict` 148/62 allowlist/86 pass/0 deviate.
-**Sync 상태:** main 이 `f666a5f` (cycle-2 note initial) — origin push 완료.
-**Latest release:** [v0.7.5](https://github.com/0xmhha/buddy/releases/tag/v0.7.5) (2026-05-19)
+**Sync 상태:** main 이 `f666a5f` (cycle-2 note initial) — origin push 완료. **본 refactor cycle (ADR-009/010/011 + spec 갱신 + BACKLOG/HANDOFF sync) 은 unpushed.**
+**Latest release:** [v0.7.5](https://github.com/0xmhha/buddy/releases/tag/v0.7.5) (2026-05-19) — ADR-011 적용 전 마지막 release. **다음 release 는 milestone-driven** (e.g., W7-1 Session Monitor ship 또는 B-2 dogfood close 시).
 
-**다음 액션** — [`BACKLOG.md`](./BACKLOG.md) Wave 1 = B-2 production dogfood cycle-2 완주. 실행 매뉴얼: [`docs/notes/2026-05-19-dogfood-result-cycle-2.md`](./notes/2026-05-19-dogfood-result-cycle-2.md).
+**다음 액션** — [`BACKLOG.md`](./BACKLOG.md) 두 wave 병행:
+- **Wave 1 (B-2)**: 사용자 페이스, [`docs/notes/2026-05-19-dogfood-result-cycle-2.md`](./notes/2026-05-19-dogfood-result-cycle-2.md) §B
+- **Wave 7 (C-1~C-5, AI 단독)**: W7-1 Session Monitor 부터 area-specific ADR 작성 → impl. Wave 1 과 직교 병행.
 
 ---
 
