@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.4] — 2026-05-19
+
+Doc-and-decisions patch release. Single commit since v0.7.3: ADR-008 plus its HANDOFF cleanup. No code-path changes, no spec field additions, no behavioral differences from v0.7.3.
+
+What's in this release:
+
+- `591fb2c` — **ADR-008 — `feature-management-mcp` scope lock-in + naming split from external SaaS reference**. Closes the D-3 / cycle-handoff §4.5 deferred row that had lingered since the v0.3.0 minimum-viable ship.
+
+  Two artefacts share a "feature-management" name and have caused recurring handoff confusion:
+
+  - **cli buddy feature registry** (in-repo, shipped v0.3.0): 5 MCP tools (`feature_list` / `feature_get` / `feature_upsert` / `feature_delete` / `feature_search`) + `features` table (migration v2) + `buddy feature` CLI subcommand.
+  - **`feature-management-saas-mcp`** (external reference design, NOT in-repo): referenced by `plugin/skills/design-billing-system`, `design-embedding-search`, `design-artifact-storage`, `design-mcp-server`. A hypothetical SaaS whose modules the design-* skills help users implement in their OWN SaaS, not in buddy itself.
+
+  ADR-008 decisions:
+
+  - **Part α (lock-in)**: the shipped 5 CRUD MCP tools + `features` table + `buddy feature` CLI ARE the cli buddy feature-management spec. No further design at the v1.0 horizon. Expansion (semantic search / dependency graph / versioning / etc.) requires a separate ADR triggered by concrete dogfood signal.
+  - **Part δ (naming split)**: "cli buddy feature registry" for the in-repo CRUD; "feature-management-saas-mcp" (with `-saas-` suffix preserved) for the external reference design. The bare "feature-management-mcp" name is ambiguous and should not be used in new docs.
+
+  Strictly additive — no code change, no skill body change, no MCP tool rename. The decision is structural / governance only.
+
+Plugin v1.0.0 entry condition status (unchanged from v0.7.3):
+
+| # | Condition | Status |
+|---|-----------|--------|
+| B-1 | cli buddy W3 cascade | ✅ Done (v0.7.0~v0.7.2 bundle) |
+| B-2 | plugin+cli production dogfood | ❌ user-paced, AI-unaccelerable |
+| B-3 | PROCEDURE B6 + `--strict` lint | ✅ Done (ADR-006) |
+| B-4 | router smart-skip session state | ✅ Done (ADR-007 supersede) |
+
+→ Still 3/4 closed. v1.0.0 is gated on B-2 alone.
+
+Counts and gates:
+
+- 5 version sources all on `0.7.4` (`make verify-versions` passes).
+- `go build / go vet / go test -race -count=1 -timeout=180s ./...` — 23 packages green (unchanged from v0.7.3 — no code touched).
+- `make test-skill-form` — 148 total / 62 allowlist / 86 pass / 0 deviate; `--strict` exit 0.
+- ADR Index updated: ADR-008 row added.
+
 ## [0.7.3] — 2026-05-19
 
 Doc-and-decisions patch release. Three commits since v0.7.2, all administrative — no code-path changes, no spec field additions, no behavioral differences in `buddy tui` / `buddy agent` / `buddy daemon` from v0.7.2. Users with no contributor / CI surface concerns can skip this version.
