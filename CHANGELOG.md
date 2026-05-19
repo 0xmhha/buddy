@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] — 2026-05-19
+
+Doc-and-decisions patch release. Three commits since v0.7.2, all administrative — no code-path changes, no spec field additions, no behavioral differences in `buddy tui` / `buddy agent` / `buddy daemon` from v0.7.2. Users with no contributor / CI surface concerns can skip this version.
+
+What's in this release (newest commit first):
+
+- `f5bed19` — **HANDOFF.md sync to v0.7.2 + ADR-006/007**. cli-buddy-spec §9 W3-1~W3-6 all marked Done; `buddy tui` 7-mode catalog; plugin v1.0.0 entry table (3/4 closed) added.
+- `aaba3f7` — **ADR-007 — router does not maintain cross-invocation conversational state (supersedes B7)**. Plugin v1.0.0 entry condition B-4 closed by supersede. `validate-idea` PROCEDURE line 161 clarified to "이전 답이 *이 대화 안에서* 이미 나중 질문 커버했으면 skip" so the in-conversation-only scope is explicit.
+- `9ef8e0f` — **ADR-006 — B6 PROCEDURE form bulk-allowlist + --strict CI gate**. Plugin v1.0.0 entry condition B-3 closed. `scripts/lint-skill-procedure.sh` ALLOWLIST grows from 19 to 62 entries with a comment trail naming Pattern 1 (39 methodology/persona/external-asset skills) and Pattern 2 (4 rich domain-design skills). `.github/workflows/ci.yml` adds a `PROCEDURE.md form gate (--strict)` step. `make test-skill-form` now reports `148 total / 62 allowlist / 86 pass / 0 deviate`.
+
+Plugin v1.0.0 entry condition status after v0.7.3:
+
+| # | Condition | Status |
+|---|-----------|--------|
+| B-1 | cli buddy W3 cascade | ✅ Done (v0.7.0~v0.7.2 bundle, cli-buddy-spec §9 W3-1~W3-6 all Done) |
+| B-2 | plugin+cli production dogfood | ❌ user-paced, AI-unaccelerable |
+| B-3 | PROCEDURE B6 + `--strict` lint | ✅ Done (ADR-006) |
+| B-4 | router smart-skip session state | ✅ Done (ADR-007 supersede) |
+
+→ 3/4 closed. v1.0.0 is gated on B-2 (production dogfood) only.
+
+Counts and gates:
+
+- 5 version sources all on `0.7.3` (`make verify-versions` passes).
+- `go build / go vet / go test -race -count=1 -timeout=180s ./...` — 23 packages green (unchanged from v0.7.2 — no code touched).
+- `make test-skill-form` — 148 total / 62 allowlist / 86 pass / 0 deviate; `--strict` exit 0.
+- ADR Index updated: ADR-006 + ADR-007 rows added; future-ADR-candidate B6 + B7 rows marked closed.
+
 ## [0.7.2] — 2026-05-18
 
 Patch release of the single A-3.2 commit accumulated since v0.7.1. Strictly additive — no breaking changes, no spec field additions, no CLI flag changes. The existing `buddy daemon` / `buddy stats` / `buddy events` CLI surface stays bit-for-bit identical; integration happens at the TUI consumer layer only.
