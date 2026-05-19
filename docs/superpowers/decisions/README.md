@@ -23,6 +23,7 @@
 | [ADR-011](./2026-05-19-release-policy-milestone-driven.md) | 2026-05-19 | Release policy: milestone-driven version bumps, not commit-driven | Accepted | release-policy, semver, cadence, milestone, anti-noise |
 | [ADR-012](./2026-05-19-f2a-session-monitor-design.md) | 2026-05-19 | F2.A Session Monitor design (W7-1, v1.0 entry C-1): Hybrid hook+fsLister observation, migration v5 (ended_at + goal_text + metadata), CLI list/show/purge/register, daemon background poll | Accepted | session-monitor, f2a, w7-1, c-1, hybrid-observation, schema-v5 |
 | [ADR-013](./2026-05-19-f2b-usage-analysis-design.md) | 2026-05-19 | F2.B Usage Analysis design (W7-2, v1.0 entry C-2): sessions-only data source, live SQL aggregation (no derived table / migration), 3-way surface (CLI `buddy usage` + 5 MCP `usage_query_*` + TUI Usage pane), 7 metric | Accepted | usage-analysis, f2b, w7-2, c-2, live-aggregation, mcp-tools, tui-pane |
+| [ADR-014](./2026-05-19-f2c-advisory-foundation.md) | 2026-05-19 | F2.C Advisory foundation (W7-3a, v1.0 entry C-3 phase 1/3): Python agent + local BM25 + local embeddings + SQLite vector store + MCP `knowledge_query` + CLI `buddy knowledge`. 3-phase split (foundation v0.10 / advisor v0.11 closes C-3 / skill-gen v0.12). | Accepted | advisory-foundation, f2c, w7-3, c-3, knowledge-retrieval, python-agent, bm25, embeddings, phase-split |
 
 ---
 
@@ -136,7 +137,8 @@ charter §6.2 의 cli buddy 진화 시 예상 ADR 후보:
 | ADR-{N} cli buddy agent sandbox security (Q-6) | W3-3 agent runtime 의 *임의 명령 실행* 위험 surface 시 |
 | ~~ADR-{N} F2.A Session Monitor design~~ | **Closed by ADR-012 (2026-05-19)** — Hybrid hook+fsLister + schema v5 + CLI list/show/purge + daemon poll |
 | ~~ADR-{N} F2.B Usage Analysis schema~~ | **Closed by ADR-013 (2026-05-19)** — sessions-only live aggregation + CLI/MCP/TUI 3-way surface + 7 metric |
-| **ADR-{N} F2.C Advisory generation** (Wave 7 W7-3, v1.0 C-3) | F2.B analytic primitive 안정 — rule-based vs LLM-driven 선택 |
+| **ADR-{N} F2.C Advisor (phase 2)** (Wave 7 W7-3b, v1.0 C-3) | ADR-014 foundation 안정 — retrieval → friend-tone advisory generator + CLI/TUI/MCP surface |
+| **ADR-{N} F2.C Skill autogen (phase 3)** (Wave 7 W7-3c) | advisor (phase 2) 안정 — 반복 패턴 → skill spec auto-propose |
 | **ADR-{N} F2.D Drift Detection design** (Wave 7 W7-4, v1.0 C-4) | F2.A turn-level 데이터 + LLM 비교 path |
 | **ADR-{N} F2.E Notification transport** (Wave 7 W7-5, v1.0 C-5) | F2.C advisory 가 out-of-band 가치 |
 
