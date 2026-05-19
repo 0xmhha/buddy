@@ -1,0 +1,104 @@
+package mcp
+
+import (
+	"context"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/stretchr/testify/require"
+
+	"github.com/0xmhha/buddy/internal/advisor"
+	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/schema"
+	"github.com/0xmhha/buddy/internal/sessions"
+	"github.com/0xmhha/buddy/internal/usage"
+)
+
+func TestAdvisorTool_Registered(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	server := NewBuddyServer(Options{})
+	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "0.0.0"}, nil)
+	st, ct := mcp.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, st, nil)
+	require.NoError(t, err)
+	defer serverSession.Close()
+	clientSession, err := client.Connect(ctx, ct, nil)
+	require.NoError(t, err)
+	defer clientSession.Close()
+	got, err := clientSession.ListTools(ctx, nil)
+	require.NoError(t, err)
+	have := map[string]bool{}
+	for _, tool := range got.Tools {
+		have[tool.Name] = true
+	}
+	require.True(t, have["usage_advise"], "usage_advise missing")
+}
+
+func TestAdvisorTool_NotWiredFallback(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	server := NewBuddyServer(Options{})
+	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "0.0.0"}, nil)
+	st, ct := mcp.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, st, nil)
+	require.NoError(t, err)
+	defer serverSession.Close()
+	clientSession, err := client.Connect(ctx, ct, nil)
+	require.NoError(t, err)
+	defer clientSession.Close()
+	res, err := clientSession.CallTool(ctx, &mcp.CallToolParams{
+		Name: "usage_advise", Arguments: map[string]any{},
+	})
+	require.NoError(t, err)
+	tc, ok := res.Content[0].(*mcp.TextContent)
+	require.True(t, ok)
+	require.Contains(t, tc.Text, "advisor.Evaluator 가 연결 안 돼 있어")
+}
+
+func TestAdvisorTool_RunReturnsFiredAdvisories(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "advise-mcp.db")
+	conn, err := db.Open(db.Options{Path: path})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = conn.Close() })
+
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	ss := sessions.NewStore(conn)
+	require.NoError(t, ss.Upsert(ctx, sessions.Session{
+		ID: "big", PID: 1, TranscriptPath: "/tmp/big.jsonl",
+		StartedAt: now.Add(-1 * time.Hour), LastActive: now,
+		Usage:    schema.TokenUsage{InputTokens: 1_000_000},
+		Metadata: "{}",
+	}))
+	as := advisor.NewStore(conn)
+	runner := &advisor.Evaluator{
+		Thresholds: advisor.DefaultThresholds(),
+		Usage:      usage.NewService(conn),
+		Sessions:   ss,
+		Advisories: as,
+		Now:        func() time.Time { return now },
+	}
+
+	server := NewBuddyServer(Options{
+		Advisor: AdvisorOptions{Runner: runner, Store: as},
+	})
+	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "0.0.0"}, nil)
+	st, ct := mcp.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, st, nil)
+	require.NoError(t, err)
+	defer serverSession.Close()
+	clientSession, err := client.Connect(ctx, ct, nil)
+	require.NoError(t, err)
+	defer clientSession.Close()
+	res, err := clientSession.CallTool(ctx, &mcp.CallToolParams{
+		Name: "usage_advise", Arguments: map[string]any{},
+	})
+	require.NoError(t, err)
+	tc, ok := res.Content[0].(*mcp.TextContent)
+	require.True(t, ok)
+	require.Contains(t, tc.Text, advisor.KindTokenDailyCap)
+}

@@ -17,17 +17,18 @@ import (
 func NewBuddyServer(opts Options) *mcp.Server {
 	s := mcp.NewServer(&mcp.Implementation{
 		Name:    "buddy",
-		Version: "0.10.0",
+		Version: "0.11.0",
 	}, &mcp.ServerOptions{
 		Instructions: "buddy — Claude Code hook harness control plane + analytics + AI-usage coaching surface. " +
 			"Use these tools to inspect hook health, query hook statistics, manage the " +
 			"local feature registry, read product analytics (analytics_query_* — backed by " +
 			"BUDDY_ANALYTICS_BACKEND), query AI-usage metrics over the local sessions " +
-			"table (usage_query_* — populated by F2.A Session Monitor / ADR-012), and " +
+			"table (usage_query_* — populated by F2.A Session Monitor / ADR-012), " +
 			"retrieve past session content via local BM25 + vector hybrid search " +
-			"(knowledge_query — populated by `buddy knowledge ingest` / ADR-014). " +
-			"usage_query_* and knowledge_query degrade gracefully when their respective " +
-			"stores or embedders are unconfigured.",
+			"(knowledge_query — populated by `buddy knowledge ingest` / ADR-014), and " +
+			"generate friend-tone Korean advisories from metric + retrieval " +
+			"(usage_advise / ADR-015). All locally-derived tools degrade " +
+			"gracefully when their respective stores or embedders are unconfigured.",
 	})
 
 	addDoctorTool(s, opts)
@@ -36,6 +37,7 @@ func NewBuddyServer(opts Options) *mcp.Server {
 	addAnalyticsTools(s, opts)
 	addUsageTools(s, opts)
 	addKnowledgeTools(s, opts)
+	addAdvisorTool(s, opts)
 
 	return s
 }
@@ -62,4 +64,9 @@ type Options struct {
 	// the missing vector channel). Both can be nil during early CLI use
 	// before any ingest run.
 	Knowledge KnowledgeOptions
+
+	// Advisor wires the `usage_advise` tool (W7-3b / ADR-015). Runner
+	// nil → tool reports "not wired" verbatim. Store needed only when
+	// callers pass history=true.
+	Advisor AdvisorOptions
 }

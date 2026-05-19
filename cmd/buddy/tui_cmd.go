@@ -7,8 +7,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/buddy/internal/advisor"
 	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/knowledge"
 	"github.com/0xmhha/buddy/internal/queries"
+	"github.com/0xmhha/buddy/internal/sessions"
 	"github.com/0xmhha/buddy/internal/tui"
 	"github.com/0xmhha/buddy/internal/usage"
 )
@@ -83,6 +86,27 @@ func newTuiCmd() *cobra.Command {
 				}
 				defer conn.Close()
 				return usage.NewService(conn).QueryOverview(context.Background(), usage.TimeWindow{}, 5)
+			}
+
+			// Advisor fetcher (W7-3b / ADR-015). Same fresh-conn pattern.
+			// Run() (not Persist) so the TUI never silently writes —
+			// users explicitly opt in via `buddy advise --persist` or
+			// the daemon's advisorMonitor.
+			model.AdvisorFetcher = func() ([]advisor.Advisory, error) {
+				conn, err := db.Open(db.Options{Path: dbFlag})
+				if err != nil {
+					return nil, fmt.Errorf("open db: %w", err)
+				}
+				defer conn.Close()
+				runner := &advisor.Evaluator{
+					Thresholds: advisor.DefaultThresholds(),
+					Usage:      usage.NewService(conn),
+					Sessions:   sessions.NewStore(conn),
+					Knowledge:  knowledge.NewStore(conn),
+					Embedder:   knowledge.NewPythonEmbedder(),
+					Advisories: advisor.NewStore(conn),
+				}
+				return runner.Run(context.Background())
 			}
 
 			program := tea.NewProgram(

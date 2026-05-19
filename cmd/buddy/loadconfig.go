@@ -18,6 +18,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/0xmhha/buddy/internal/advisor"
 	"github.com/0xmhha/buddy/internal/config"
 	"github.com/0xmhha/buddy/internal/daemon"
 	"github.com/0xmhha/buddy/internal/diagnose"
@@ -112,6 +113,21 @@ func resolveDaemonRunConfig(dbFlag, pidFile string, pollFlag time.Duration, batc
 			Disabled:       eff.SessionMonitorDisabled,
 			PollInterval:   eff.SessionMonitorPollInterval,
 			EndedThreshold: eff.SessionMonitorEndedThreshold,
+		},
+		// W7-3b (ADR-015) advisor monitor wiring. Same config-driven
+		// pattern. Thresholds.PollInterval governs cadence (default 1h).
+		Advisor: daemon.AdvisorMonitorConfig{
+			Disabled: eff.AdvisorDisabled,
+			Thresholds: advisor.Thresholds{
+				Disabled:            eff.AdvisorDisabled,
+				TokenSpikeRatio:     eff.AdvisorTokenSpikeRatio,
+				LongSessionHours:    eff.AdvisorLongSessionHours,
+				LowCachePct:         eff.AdvisorLowCachePct,
+				SessionVolumePerDay: eff.AdvisorSessionVolumePerDay,
+				TokenDailyThreshold: eff.AdvisorTokenDailyThreshold,
+				DedupWindow:         eff.AdvisorDedupWindow,
+				PollInterval:        eff.AdvisorPollInterval,
+			},
 		},
 	}
 }

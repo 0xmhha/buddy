@@ -75,12 +75,14 @@ func (s *Service) QuerySessionStats(ctx context.Context, w TimeWindow) (SessionS
 	out := SessionStats{Window: w}
 
 	// Counts + goal-text ratio in one row — cheaper than three queries.
+	// COALESCE wraps every SUM so an empty result set returns 0 rather
+	// than NULL (which Go's Scan can't decode into int64).
 	countQ, args := s.windowQuery(`
 		SELECT
 			COUNT(*),
-			SUM(CASE WHEN ended_at IS NULL     THEN 1 ELSE 0 END),
-			SUM(CASE WHEN ended_at IS NOT NULL THEN 1 ELSE 0 END),
-			SUM(CASE WHEN goal_text != ''      THEN 1 ELSE 0 END)
+			COALESCE(SUM(CASE WHEN ended_at IS NULL     THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN ended_at IS NOT NULL THEN 1 ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN goal_text != ''      THEN 1 ELSE 0 END), 0)
 		FROM sessions`, w)
 	var goalCount int64
 	err := s.db.QueryRowContext(ctx, countQ, args...).Scan(

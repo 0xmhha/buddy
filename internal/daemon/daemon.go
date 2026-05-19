@@ -12,6 +12,7 @@ package daemon
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -22,9 +23,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/0xmhha/buddy/internal/advisor"
 	"github.com/0xmhha/buddy/internal/aggregator"
 	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/knowledge"
 	"github.com/0xmhha/buddy/internal/sessions"
+	"github.com/0xmhha/buddy/internal/usage"
 )
 
 // Config governs how the daemon polls.
@@ -42,6 +46,12 @@ type Config struct {
 	// EndedThreshold marks a session as ended once last_active is older
 	// than the threshold (default 1h).
 	SessionMonitor SessionMonitorConfig
+
+	// Advisor governs the W7-3b advisorMonitor goroutine (ADR-015).
+	// Disabled=true skips entirely; otherwise the goroutine runs at
+	// PollInterval (default 1h) and inserts fired advisories into the
+	// advisories table (with dedup window applied per-kind).
+	Advisor AdvisorMonitorConfig
 }
 
 // SessionMonitorConfig — ADR-012 daemon role config.
@@ -50,6 +60,13 @@ type SessionMonitorConfig struct {
 	PollInterval    time.Duration
 	EndedThreshold  time.Duration
 	ProjectsRoot    string // override for tests; empty → $HOME/.claude/projects
+}
+
+// AdvisorMonitorConfig — ADR-015 daemon role config. Mirrors the same
+// shape as SessionMonitorConfig for consistency.
+type AdvisorMonitorConfig struct {
+	Disabled   bool
+	Thresholds advisor.Thresholds
 }
 
 // Defaults applies sensible defaults to zero-valued fields.
@@ -121,6 +138,16 @@ func Run(ctx context.Context, cfg Config) error {
 			cfg.SessionMonitor.PollInterval, cfg.SessionMonitor.EndedThreshold)
 	}
 
+	// W7-3b advisorMonitor goroutine (ADR-015). Polls at
+	// Thresholds.PollInterval (default 1h) and persists fresh
+	// advisories. Disabled=true skips entirely.
+	if !cfg.Advisor.Disabled {
+		go runAdvisorMonitor(ctx, conn, cfg.Advisor, cfg.LogTo)
+		t := cfg.Advisor.Thresholds.WithDefaults()
+		fmt.Fprintf(cfg.LogTo, "buddy: advisor monitor up (poll=%s dedup=%s)\n",
+			t.PollInterval, t.DedupWindow)
+	}
+
 	ticker := time.NewTicker(cfg.PollInterval)
 	defer ticker.Stop()
 
@@ -186,6 +213,48 @@ func runSessionMonitor(ctx context.Context, store *sessions.Store, cfg SessionMo
 	// Initial tick + ticker.
 	tick()
 	ticker := time.NewTicker(cfg.PollInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			tick()
+		}
+	}
+}
+
+// runAdvisorMonitor is the W7-3b goroutine. Polls the rule evaluator
+// at Thresholds.PollInterval, persisting fired advisories (dedup
+// applied via the advisor.Evaluator path). All errors are logged but
+// non-fatal — a transient retrieval failure shouldn't kill the daemon.
+func runAdvisorMonitor(ctx context.Context, conn *sql.DB, cfg AdvisorMonitorConfig, logTo io.Writer) {
+	t := cfg.Thresholds.WithDefaults()
+	runner := &advisor.Evaluator{
+		Thresholds: t,
+		Usage:      usage.NewService(conn),
+		Sessions:   sessions.NewStore(conn),
+		Knowledge:  knowledge.NewStore(conn),
+		Embedder:   knowledge.NewPythonEmbedder(),
+		Advisories: advisor.NewStore(conn),
+	}
+
+	tick := func() {
+		advs, err := runner.Persist(ctx)
+		if err != nil {
+			fmt.Fprintf(logTo, "buddy: advisor monitor tick error: %v\n", err)
+			return
+		}
+		if len(advs) > 0 {
+			fmt.Fprintf(logTo, "buddy: advisor monitor wrote %d advisor(y/ies)\n", len(advs))
+		}
+	}
+
+	// Initial tick + ticker. Sleeping the full interval before the
+	// first tick would feel laggy — users want immediate signal when
+	// they start the daemon.
+	tick()
+	ticker := time.NewTicker(t.PollInterval)
 	defer ticker.Stop()
 	for {
 		select {

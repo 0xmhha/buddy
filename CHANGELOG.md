@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-05-19 — W7-3b F2.C Advisor (closes whole-product v1.0 entry C-3)
+
+**Milestone**: F2.C Phase 2 of 3 (per ADR-014's split, locked in by ADR-015). The advisory generator sits on top of W7-3a's retrieval primitive + W7-2's usage metric and ships across 4 surfaces — CLI `buddy advise`, TUI Usage pane advisory section, MCP `usage_advise`, and a daemon `advisorMonitor` goroutine. **Closes whole-product v1.0.0 entry condition C-3**. Phase 3 (skill autogen) remains as W7-3c / v0.12.0 post-v1.0.
+
+What ships (code):
+
+- **`internal/db/migrations.go` v7** — new `advisories` table (`id / kind / severity / message / evidence_json / created_at / muted`). Indices on `created_at` + `(kind, muted)` for dedup-window lookups.
+- **`internal/advisor/`** — new package (~700 LoC, 25 race-clean tests):
+  - `types.go` — `Advisory`, `Severity (info|warn|high)`, `EvidenceItem`, `Thresholds + WithDefaults()`.
+  - `store.go` — Insert / Get / List(ListOptions) / LastInWindow / Mute / MuteKind / DeleteOlderThan / Count.
+  - `rules.go` — 5 v0.11.0 rule funcs producing Korean friend-tone prose:
+    - `token-spike-day` — 오늘 토큰 / 7일 평균 ≥ ratio
+    - `long-session` — 활성 세션 duration ≥ threshold
+    - `low-cache-ratio` — 24h cache hit ratio % < threshold
+    - `session-volume-day` — 24h 세션 수 > threshold
+    - `token-daily-cap` — 24h 총 토큰 > threshold
+  - `evaluator.go` — `Evaluator{Thresholds, Usage, Sessions, Knowledge, Embedder, Advisories}.Run/Persist`. Builds one Snapshot per Run (single fetch round-trip); rules iterate it; retrieval evidence enrichment pulls top-3 chunks per fired advisory (BM25 fallback when no embedder). Dedup window applied against the live advisories table.
+- **`internal/config/config.go`** — 8 new keys: `advisorDisabled` + `advisorTokenSpikeRatio` + `advisorLongSessionHours` + `advisorLowCachePct` + `advisorSessionVolumePerDay` + `advisorTokenDailyThreshold` + `advisorDedupWindow` + `advisorPollInterval`, each validated (permissive bounds — taste knobs, not safety floors).
+- **`cmd/buddy/advise_cmd.go`** — `buddy advise` subcommand:
+  - `(root)` — run rules, render advisories. `--persist` writes to advisories table. `--mute <id>` / `--mute-kind <kind>` flips the muted flag.
+  - `--all-history [--since DUR]` — read persisted rows instead of running rules.
+- **`internal/mcp/advise_tool.go`** — `usage_advise` MCP tool. Args: `persist`, `history`, `since`. Returns structured `Advisory[]` payload for LLM consumption + future W7-5 Notification.
+- **`internal/tui/model.go`** — Usage pane (ModeUsage) gains an `조언` section under existing metric blocks. `AdvisorFetcher` closure wired in `cmd/buddy/tui_cmd.go` with the same fresh-conn-per-call pattern as UsageFetcher / HookStatsFetcher. `tea.Batch` dispatches both loaders on U / r keypresses.
+- **`internal/daemon/daemon.go`** — `runAdvisorMonitor` goroutine alongside `runSessionMonitor`. Polls every `AdvisorPollInterval` (default 1h), calls `Evaluator.Persist`, logs row count. Per-kind dedup window prevents noisy re-fires. `AdvisorDisabled=true` skips entirely.
+- **`cmd/buddy-mcp/main.go`** — auto-wires `Options.Advisor` from `~/.buddy/config.json` so the MCP server exposes a fully-stocked usage_advise out of the box.
+
+What ships (governance):
+
+- **ADR-015** — F2.C Advisor design lock-in. Q1: metric-as-trigger + retrieval-as-evidence combinator. Q2: 5 rule thresholds in buddy config. Q3: full 4-surface ship. Q4: structured `Advisory[]` + persistence + dedup window.
+
+Plugin v1.0.0 entry condition status (per ADR-010, whole-product 9 conditions):
+
+| # | Condition | Status |
+|---|-----------|--------|
+| B-1 | cli buddy W3 cascade | ✅ Done |
+| B-2 | production dogfood | ❌ user-paced |
+| B-3 | PROCEDURE B6 + `--strict` | ✅ Done |
+| B-4 | router smart-skip | ✅ Done |
+| C-1 | F2.A Session Monitor | ✅ Done (v0.8.0) |
+| C-2 | F2.B Usage Analysis | ✅ Done (v0.9.0) |
+| **C-3** | **F2.C Advisory** | **✅ Done (this release; Phase 1 v0.10.0 + Phase 2 here)** |
+| C-4 | F2.D Drift Detection | ❌ W7-4 next |
+| C-5 | F2.E Notification | ❌ W7-5 |
+
+→ **6/9 closed (67%)**. Whole-product progress moves from ~62% to ~75% — only B-2 (user-paced dogfood) + C-4 + C-5 + Phase 3 (W7-3c, post-v1.0) remain.
+
+Counts and gates:
+
+- 5 version sources all on `0.11.0` (`make verify-versions` passes).
+- `go test -race -count=1 ./...` — 26 packages green (up from 25 — new `internal/advisor` adds 25 tests).
+- `internal/mcp` grows by 3 new `usage_advise` tests; `internal/tui` grows by 5 advisor-section tests.
+- `make test-skill-form --strict` — 148 / 62 / 86 / 0 (unchanged).
+
+Default-on caveats:
+
+- `advisorDisabled` defaults to false → fresh installs auto-generate advisories on `buddy daemon start`. Set `advisorDisabled: true` in config.json to opt out.
+- Retrieval evidence requires `buddy knowledge ingest` to have run; without it, advisories still fire but Evidence array contains metric items only.
+
+Next milestone target: **W7-5 F2.E Notification** (closes C-5) — the natural follow-on since advisories now exist and need delivery to OS-level surfaces (desktop notification / shell prompt / webhook). After that **W7-4 F2.D Drift Detection** (closes C-4, highest design risk — LLM-driven semantic comparison). Phase 3 (W7-3c skill autogen) is post-v1.0.
+
 ## [0.10.0] — 2026-05-19 — W7-3a F2.C Advisory **foundation** (knowledge retrieval; C-3 still open)
 
 **Milestone**: F2.C Phase 1 of 3 (per ADR-014). Ships the *knowledge retrieval* primitives that the Phase 2 advisor (v0.11.0) will consume — chunking, BM25, vector cosine, hybrid RRF, Python embedder, MCP `knowledge_query`, CLI `buddy knowledge`. **C-3 is intentionally not closed yet**; the advisory generator itself lands in v0.11.0.

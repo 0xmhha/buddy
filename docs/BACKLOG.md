@@ -11,11 +11,11 @@
 
 ---
 
-## §1. 한 줄 — 전체 진행률 약 **66%** (ADR-010 whole-product v1.0.0 기준)
+## §1. 한 줄 — 전체 진행률 약 **75%** (ADR-010 whole-product v1.0.0 기준)
 
-**Plugin-side** deliverable (orchestrator 148 skill + 99 cmd + 12 MCP tools + analytics 7-tool adapter) 은 모두 ship 완료, plugin v1.0.0 entry 4 조건 중 3/4 closed. **cli buddy-side** 도 W3-1~W3-6 (자동화 agent 관리) 100% Done. W7-1 F2.A Session Monitor (v0.8.0) + W7-2 F2.B Usage Analysis (v0.9.0) + W7-3a F2.C foundation (v0.10.0, ADR-014 3-phase split) ship 완료.
+**Plugin-side** + **cli buddy automation** 모두 100% Done. Wave 7 진행: W7-1 F2.A (v0.8.0) + W7-2 F2.B (v0.9.0) + W7-3a F2.C foundation (v0.10.0) + **W7-3b F2.C advisor (v0.11.0, closes C-3)** ship 완료.
 
-ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **5/9 closed** (B-1/B-3/B-4 + C-1/C-2). C-3 은 v0.10.0 에 Phase 1/3 ship; v0.11.0 (Phase 2 advisor) 에서 closed. **약 56% closed + C-3 foundation 진척 = 약 66%**.
+ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **6/9 closed** (B-1/B-3/B-4 + C-1/C-2/C-3) = **약 67% closed**. 남은: B-2 dogfood (user-paced), C-4 Drift / C-5 Notification. 가중치 합산 **약 75%**.
 
 핵심 남은 것: (a) **B-2 production dogfood** (Wave 1, user-paced), (b) **C-1~C-5 cli buddy vision impl** (Wave 7, AI 단독 진행 가능), (c) polish (Wave 2/3), (d) trigger-bound (Wave 5).
 
@@ -47,7 +47,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **5/9 closed** 
 |------|-----------|--------|------|
 | **F2.A Session Monitor** (W4) | C-1 | ✅ 100% | v0.8.0 ship — Hybrid hook+fsLister + schema v5 + CLI list/show/purge + daemon poll (ADR-012) |
 | **F2.B Usage Analysis** (W5) | C-2 | ✅ 100% | v0.9.0 ship — `internal/usage/` 7 metric + CLI `buddy usage` + 5 MCP `usage_query_*` + TUI Usage pane (ADR-013) |
-| **F2.C Advisory** (W6) | C-3 | ~33% | v0.10.0 Phase 1 ship (knowledge retrieval foundation — ADR-014). v0.11.0 Phase 2 advisor 가 C-3 close 예정. |
+| **F2.C Advisory** (W6) | C-3 | ✅ 100% | v0.10.0 Phase 1 (foundation, ADR-014) + v0.11.0 Phase 2 (advisor, ADR-015) ship. 5 rules + CLI/TUI/MCP/daemon 4-surface. Phase 3 skill-gen 은 post-v1.0. |
 | **F2.D Drift Detection** (W7) | C-4 | 0% | 미구현 — LLM-driven semantic similarity 필요 |
 | **F2.E Notification** (W8) | C-5 | 0% | 미구현 — TUI banner / OS notification / shell prompt / webhook 중 선택 |
 
@@ -68,8 +68,8 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **5/9 closed** 
 | 조건 set | Closed | 비율 |
 |---------|--------|------|
 | B-1~B-4 (plugin v1.0 entry) | 3/4 | 75% |
-| C-1~C-5 (cli buddy vision) | 2/5 | 40% |
-| **Whole-product v1.0.0 (9 조건)** | **5/9** | **56%** |
+| C-1~C-5 (cli buddy vision) | 3/5 | 60% |
+| **Whole-product v1.0.0 (9 조건)** | **6/9** | **67%** |
 
 **가중치 합산** (Wave 1 dogfood + polish + Wave 7 vision 작업 가중치):
 - Core deliverable (A+B): 100%
@@ -175,9 +175,9 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **5/9 closed** 
 |----|-----------|------|------|---------|
 | ~~W7-1~~ | C-1 | ~~F2.A Session Monitor~~ | — | **✅ v0.8.0 ship (2026-05-19)** — ADR-012 |
 | ~~W7-2~~ | C-2 | ~~F2.B Usage Analysis~~ | — | **✅ v0.9.0 ship (2026-05-19)** — ADR-013 |
-| **W7-3a** | (C-3 prep) | ~~**F2.C foundation** — knowledge retrieval (chunking + BM25 + embedding + vector + MCP `knowledge_query` + CLI `buddy knowledge`)~~ | — | **✅ v0.10.0 ship (2026-05-19)** — ADR-014 Phase 1/3 |
-| **W7-3b** | C-3 | **F2.C advisor (Phase 2)** — retrieval + rule + (optional local LLM via Python agent) → friend-tone Korean advisory. CLI `buddy advise` / TUI Usage pane advisory section / MCP `usage_advise`. **Closes C-3.** | MED | ADR-{N} F2.C advisor design (trigger: W7-3a 안정 dogfood) |
-| **W7-3c** | (post-v1.0) | **F2.C skill autogen (Phase 3)** — 반복 패턴 detect → skill spec auto-propose | MED-HIGH | ADR-{N} F2.C skill-gen design (trigger: W7-3b 안정) |
+| ~~W7-3a~~ | (C-3 prep) | ~~F2.C foundation~~ | — | **✅ v0.10.0 ship (2026-05-19)** — ADR-014 Phase 1/3 |
+| ~~W7-3b~~ | C-3 | ~~F2.C advisor (Phase 2)~~ | — | **✅ v0.11.0 ship (2026-05-19)** — ADR-015 Phase 2/3. **C-3 closed.** |
+| **W7-3c** | (post-v1.0) | **F2.C skill autogen (Phase 3)** — 반복 패턴 detect → skill spec auto-propose | MED-HIGH | ADR-{N} F2.C skill-gen design (trigger: W7-3b 안정 dogfood) |
 | **W7-4** | C-4 | **F2.D Drift Detection** — 단일 conversation 안 *원래 목적* vs *현재 turn* semantic drift 감지 + drift alert | HIGH | ADR-{N} F2.D design (trigger: W7-1 turn-level 데이터 + LLM-driven 비교 path) |
 | **W7-5** | C-5 | **F2.E Notification** — W7-3 / W7-4 메시지의 TUI banner / desktop (`osascript`/`notify-send`) / shell prompt / webhook 전달 | MED | ADR-{N} F2.E transport design (trigger: W7-3 advisory 가 out-of-band 가치 있음) |
 

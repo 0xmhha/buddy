@@ -23,6 +23,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/0xmhha/buddy/internal/advisor"
 	"github.com/0xmhha/buddy/internal/agent"
 	"github.com/0xmhha/buddy/internal/queries"
 	"github.com/0xmhha/buddy/internal/usage"
@@ -85,6 +86,12 @@ type HookStatsFetcher func(window string) (queries.Result, error)
 // nil = pane shows "unavailable" copy and stays in list mode (mirrors
 // HookStatsFetcher's nil-tolerant policy).
 type UsageFetcher func() (usage.Overview, error)
+
+// AdvisorFetcher returns advisories to render under the Usage pane's
+// metric blocks (W7-3b / ADR-015). Same nil-tolerant policy as
+// UsageFetcher — nil renders an empty advisory section silently rather
+// than erroring.
+type AdvisorFetcher func() ([]advisor.Advisory, error)
 
 // logTailPollInterval is the cadence at which the log-tail pane polls
 // Store.LogsSince for new lines. Keep it modest — 1s gives sub-second
@@ -169,6 +176,14 @@ type Model struct {
 	UsageResult  usage.Overview
 	UsageErr     error
 	UsageLoaded  bool
+
+	// Advisor section state (W7-3b / ADR-015) — co-rendered inside the
+	// Usage pane. Independent loaded flag so the metric blocks render
+	// even when advisories are still in-flight.
+	AdvisorFetcher    AdvisorFetcher
+	AdvisorResult     []advisor.Advisory
+	AdvisorErr        error
+	AdvisorLoaded     bool
 }
 
 // SelectedID returns the agent ID currently focused for detail rendering.
@@ -227,6 +242,8 @@ type (
 	HookStatsErrMsg struct{ Err error }
 	UsageLoadedMsg  struct{ Result usage.Overview }
 	UsageErrMsg     struct{ Err error }
+	AdvisorLoadedMsg struct{ Result []advisor.Advisory }
+	AdvisorErrMsg    struct{ Err error }
 )
 
 // NewModel constructs an empty Model around an AgentLister. The Init
@@ -350,6 +367,23 @@ func loadUsageCmd(fetcher UsageFetcher) tea.Cmd {
 			return UsageErrMsg{Err: err}
 		}
 		return UsageLoadedMsg{Result: res}
+	}
+}
+
+// loadAdvisorCmd is the W7-3b advisor companion. Dispatched alongside
+// loadUsageCmd whenever the user enters / refreshes the Usage pane.
+// Failure is non-fatal — the pane keeps rendering metric blocks while
+// the advisor section shows the error.
+func loadAdvisorCmd(fetcher AdvisorFetcher) tea.Cmd {
+	if fetcher == nil {
+		return nil
+	}
+	return func() tea.Msg {
+		res, err := fetcher()
+		if err != nil {
+			return AdvisorErrMsg{Err: err}
+		}
+		return AdvisorLoadedMsg{Result: res}
 	}
 }
 
@@ -697,6 +731,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.UsageLoaded = true
 		return m, nil
 
+	case AdvisorLoadedMsg:
+		m.AdvisorResult = msg.Result
+		m.AdvisorLoaded = true
+		m.AdvisorErr = nil
+		return m, nil
+
+	case AdvisorErrMsg:
+		m.AdvisorErr = msg.Err
+		m.AdvisorLoaded = true
+		return m, nil
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -806,7 +851,11 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "r":
 			m.UsageLoaded = false
-			return m, loadUsageCmd(m.UsageFetcher)
+			m.AdvisorLoaded = false
+			return m, tea.Batch(
+				loadUsageCmd(m.UsageFetcher),
+				loadAdvisorCmd(m.AdvisorFetcher),
+			)
 		}
 		return m, nil
 	}
@@ -919,7 +968,12 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.Mode = ModeUsage
 		m.UsageLoaded = false
 		m.UsageErr = nil
-		return m, loadUsageCmd(m.UsageFetcher)
+		m.AdvisorLoaded = false
+		m.AdvisorErr = nil
+		return m, tea.Batch(
+			loadUsageCmd(m.UsageFetcher),
+			loadAdvisorCmd(m.AdvisorFetcher),
+		)
 	}
 	return m, nil
 }
@@ -1304,6 +1358,29 @@ func (m Model) renderUsage() string {
 			b.WriteString(fmt.Sprintf("    %-10s %12d  %s\n", short, ts.TotalTokens, goal))
 		}
 		b.WriteString("\n")
+	}
+
+	// Advisor section (W7-3b / ADR-015) — co-rendered when fetcher
+	// is wired. Skipping entirely when no fetcher keeps the pane
+	// clean for installs that haven't enabled the advisor.
+	if m.AdvisorFetcher != nil {
+		b.WriteString("  조언\n")
+		switch {
+		case !m.AdvisorLoaded:
+			b.WriteString(dimStyle.Render("    loading advisories…"))
+			b.WriteString("\n\n")
+		case m.AdvisorErr != nil:
+			b.WriteString(errorStyle.Render("    error: " + m.AdvisorErr.Error()))
+			b.WriteString("\n\n")
+		case len(m.AdvisorResult) == 0:
+			b.WriteString(dimStyle.Render("    (지금은 알릴 조언이 없어)"))
+			b.WriteString("\n\n")
+		default:
+			for _, a := range m.AdvisorResult {
+				b.WriteString(fmt.Sprintf("    [%s · %s] %s\n", a.Kind, a.Severity, a.Message))
+			}
+			b.WriteString("\n")
+		}
 	}
 
 	b.WriteString(footerHintUsage())

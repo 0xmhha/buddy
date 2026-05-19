@@ -53,6 +53,17 @@ type Config struct {
 	SessionMonitorDisabled       *bool     `json:"sessionMonitorDisabled,omitempty"`
 	SessionMonitorPollInterval   *Duration `json:"sessionMonitorPollInterval,omitempty"`
 	SessionMonitorEndedThreshold *Duration `json:"sessionMonitorEndedThreshold,omitempty"`
+
+	// Advisor* are W7-3b (ADR-015) — daemon-side advisory generator.
+	// 5 rule thresholds + dedup window + poll interval + master toggle.
+	AdvisorDisabled              *bool     `json:"advisorDisabled,omitempty"`
+	AdvisorTokenSpikeRatio       *float64  `json:"advisorTokenSpikeRatio,omitempty"`
+	AdvisorLongSessionHours      *int      `json:"advisorLongSessionHours,omitempty"`
+	AdvisorLowCachePct           *int      `json:"advisorLowCachePct,omitempty"`
+	AdvisorSessionVolumePerDay   *int      `json:"advisorSessionVolumePerDay,omitempty"`
+	AdvisorTokenDailyThreshold   *int64    `json:"advisorTokenDailyThreshold,omitempty"`
+	AdvisorDedupWindow           *Duration `json:"advisorDedupWindow,omitempty"`
+	AdvisorPollInterval          *Duration `json:"advisorPollInterval,omitempty"`
 }
 
 // Effective is the resolved configuration with all fields populated.
@@ -70,6 +81,15 @@ type Effective struct {
 	SessionMonitorDisabled       bool
 	SessionMonitorPollInterval   time.Duration
 	SessionMonitorEndedThreshold time.Duration
+
+	AdvisorDisabled            bool
+	AdvisorTokenSpikeRatio     float64
+	AdvisorLongSessionHours    int
+	AdvisorLowCachePct         int
+	AdvisorSessionVolumePerDay int
+	AdvisorTokenDailyThreshold int64
+	AdvisorDedupWindow         time.Duration
+	AdvisorPollInterval        time.Duration
 }
 
 // Defaults returns the spec-locked defaults from v0.1-spec §6.2 + §6.3 plus
@@ -89,6 +109,15 @@ func Defaults() Effective {
 		SessionMonitorDisabled:       false,
 		SessionMonitorPollInterval:   30 * time.Second,
 		SessionMonitorEndedThreshold: 1 * time.Hour,
+
+		AdvisorDisabled:            false,
+		AdvisorTokenSpikeRatio:     1.5,
+		AdvisorLongSessionHours:    4,
+		AdvisorLowCachePct:         30,
+		AdvisorSessionVolumePerDay: 20,
+		AdvisorTokenDailyThreshold: 500_000,
+		AdvisorDedupWindow:         24 * time.Hour,
+		AdvisorPollInterval:        1 * time.Hour,
 	}
 }
 
@@ -127,6 +156,30 @@ func (c Config) Effective() Effective {
 	}
 	if c.SessionMonitorEndedThreshold != nil {
 		eff.SessionMonitorEndedThreshold = c.SessionMonitorEndedThreshold.Duration
+	}
+	if c.AdvisorDisabled != nil {
+		eff.AdvisorDisabled = *c.AdvisorDisabled
+	}
+	if c.AdvisorTokenSpikeRatio != nil {
+		eff.AdvisorTokenSpikeRatio = *c.AdvisorTokenSpikeRatio
+	}
+	if c.AdvisorLongSessionHours != nil {
+		eff.AdvisorLongSessionHours = *c.AdvisorLongSessionHours
+	}
+	if c.AdvisorLowCachePct != nil {
+		eff.AdvisorLowCachePct = *c.AdvisorLowCachePct
+	}
+	if c.AdvisorSessionVolumePerDay != nil {
+		eff.AdvisorSessionVolumePerDay = *c.AdvisorSessionVolumePerDay
+	}
+	if c.AdvisorTokenDailyThreshold != nil {
+		eff.AdvisorTokenDailyThreshold = *c.AdvisorTokenDailyThreshold
+	}
+	if c.AdvisorDedupWindow != nil {
+		eff.AdvisorDedupWindow = c.AdvisorDedupWindow.Duration
+	}
+	if c.AdvisorPollInterval != nil {
+		eff.AdvisorPollInterval = c.AdvisorPollInterval.Duration
 	}
 	return eff
 }
@@ -202,6 +255,30 @@ func (c Config) Validate() error {
 	}
 	if eff.PersonaLocale != "ko" && eff.PersonaLocale != "en" {
 		add("personaLocale", fmt.Sprintf("must be \"ko\" or \"en\" (got %q)", eff.PersonaLocale))
+	}
+
+	// Advisor thresholds (W7-3b / ADR-015). Permissive bounds — these
+	// are user-tunable taste knobs, not safety floors.
+	if eff.AdvisorTokenSpikeRatio < 1.0 {
+		add("advisorTokenSpikeRatio", fmt.Sprintf("must be >= 1.0 (got %g)", eff.AdvisorTokenSpikeRatio))
+	}
+	if eff.AdvisorLongSessionHours < 1 || eff.AdvisorLongSessionHours > 168 {
+		add("advisorLongSessionHours", fmt.Sprintf("must be 1..168 (got %d)", eff.AdvisorLongSessionHours))
+	}
+	if eff.AdvisorLowCachePct < 0 || eff.AdvisorLowCachePct > 100 {
+		add("advisorLowCachePct", fmt.Sprintf("must be 0..100 (got %d)", eff.AdvisorLowCachePct))
+	}
+	if eff.AdvisorSessionVolumePerDay < 1 {
+		add("advisorSessionVolumePerDay", fmt.Sprintf("must be >= 1 (got %d)", eff.AdvisorSessionVolumePerDay))
+	}
+	if eff.AdvisorTokenDailyThreshold < 1 {
+		add("advisorTokenDailyThreshold", fmt.Sprintf("must be >= 1 (got %d)", eff.AdvisorTokenDailyThreshold))
+	}
+	if eff.AdvisorDedupWindow < time.Minute || eff.AdvisorDedupWindow > 30*24*time.Hour {
+		add("advisorDedupWindow", fmt.Sprintf("must be 1m..30d (got %s)", eff.AdvisorDedupWindow))
+	}
+	if eff.AdvisorPollInterval < time.Minute || eff.AdvisorPollInterval > 24*time.Hour {
+		add("advisorPollInterval", fmt.Sprintf("must be 1m..24h (got %s)", eff.AdvisorPollInterval))
 	}
 
 	switch len(errs) {

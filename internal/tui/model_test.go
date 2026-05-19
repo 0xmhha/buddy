@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/require"
 
+	"github.com/0xmhha/buddy/internal/advisor"
 	"github.com/0xmhha/buddy/internal/agent"
 	"github.com/0xmhha/buddy/internal/queries"
 	"github.com/0xmhha/buddy/internal/usage"
@@ -1732,4 +1733,91 @@ func TestView_UsageUnavailableWithoutFetcher(t *testing.T) {
 	m := Model{Mode: ModeUsage}
 	out := m.View()
 	require.Contains(t, out, "UsageFetcher 미설정")
+}
+
+// ─── Advisor section (W7-3b / ADR-015) ────────────────────────────────
+
+func fakeAdvisorFetcher(advs []advisor.Advisory, err error, calls *int) AdvisorFetcher {
+	return func() ([]advisor.Advisory, error) {
+		*calls++
+		return advs, err
+	}
+}
+
+// TestUpdate_AdvisorLoadedFoldsIntoState — loaded msg populates results.
+func TestUpdate_AdvisorLoadedFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeUsage}
+	adv := []advisor.Advisory{{Kind: advisor.KindTokenSpikeDay, Severity: advisor.SeverityWarn, Message: "spike"}}
+	next, _ := m.Update(AdvisorLoadedMsg{Result: adv})
+	mm := next.(Model)
+	require.True(t, mm.AdvisorLoaded)
+	require.Len(t, mm.AdvisorResult, 1)
+	require.Nil(t, mm.AdvisorErr)
+}
+
+// TestUpdate_AdvisorErrFoldsIntoState — err msg records and flips Loaded.
+func TestUpdate_AdvisorErrFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("advisor down")
+	m := Model{Mode: ModeUsage}
+	next, _ := m.Update(AdvisorErrMsg{Err: bang})
+	mm := next.(Model)
+	require.True(t, mm.AdvisorLoaded)
+	require.ErrorIs(t, mm.AdvisorErr, bang)
+}
+
+// TestUpdate_UInListAlsoDispatchesAdvisorWhenFetcherSet — pressing U
+// fires both usage + advisor loaders when both fetchers are wired.
+func TestUpdate_UInListAlsoDispatchesAdvisorWhenFetcherSet(t *testing.T) {
+	t.Parallel()
+	usageCalls, advisorCalls := 0, 0
+	m := Model{Store: &fakeLister{}, Loaded: true,
+		UsageFetcher:   fakeUsageFetcher(usage.Overview{}, nil, &usageCalls),
+		AdvisorFetcher: fakeAdvisorFetcher(nil, nil, &advisorCalls),
+	}
+	next, cmd := m.Update(keyMsg("U"))
+	require.Equal(t, ModeUsage, next.(Model).Mode)
+	require.NotNil(t, cmd)
+	// tea.Batch returns a Cmd that, when executed, fans out the children
+	// as BatchMsg containing more Cmds. We can just execute it and
+	// observe the resulting msg.
+	msg := cmd()
+	_, ok := msg.(tea.BatchMsg)
+	require.True(t, ok, "U must produce a Batch cmd combining loaders")
+}
+
+// TestView_UsageRendersAdvisorSection — advisor advisories appear in
+// the Usage pane render when fetcher is wired + result loaded.
+func TestView_UsageRendersAdvisorSection(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:        ModeUsage,
+		UsageLoaded: true,
+		UsageFetcher: func() (usage.Overview, error) { return usage.Overview{}, nil },
+		AdvisorFetcher: func() ([]advisor.Advisory, error) { return nil, nil },
+		AdvisorLoaded: true,
+		AdvisorResult: []advisor.Advisory{
+			{Kind: advisor.KindTokenSpikeDay, Severity: advisor.SeverityWarn, Message: "오늘 토큰 2x"},
+		},
+	}
+	out := m.View()
+	require.Contains(t, out, "조언")
+	require.Contains(t, out, "token-spike-day")
+	require.Contains(t, out, "오늘 토큰 2x")
+}
+
+// TestView_UsageAdvisorSectionEmpty — no advisories yet renders soft note.
+func TestView_UsageAdvisorSectionEmpty(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:        ModeUsage,
+		UsageLoaded: true,
+		UsageFetcher: func() (usage.Overview, error) { return usage.Overview{}, nil },
+		AdvisorFetcher: func() ([]advisor.Advisory, error) { return nil, nil },
+		AdvisorLoaded:  true,
+	}
+	out := m.View()
+	require.Contains(t, out, "조언")
+	require.Contains(t, out, "지금은 알릴 조언이 없어")
 }

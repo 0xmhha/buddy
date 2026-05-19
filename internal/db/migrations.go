@@ -185,6 +185,38 @@ var migrations = []migration{
 			CREATE INDEX idx_chunks_created ON chunks(created_at);
 		`,
 	},
+	{
+		// v7 — F2.C Advisor (W7-3b) — ADR-015. The advisories table
+		// holds advisor output records for dedup + history + future mute
+		// UX. Columns:
+		//   - kind          : rule identifier (e.g., "token-spike-day").
+		//                     Indexed for dedup-window lookups.
+		//   - severity      : "info" | "warn" | "high" (free text — Go
+		//                     side enforces the enum via persona.Severity).
+		//   - message       : friend-tone Korean prose rendered via
+		//                     persona.M at advisory generation time.
+		//   - evidence_json : JSON-encoded []EvidenceItem (metric values
+		//                     + chunk references that backed the
+		//                     advisory). Held as text rather than a
+		//                     side table because evidence is only ever
+		//                     read whole alongside its advisory.
+		//   - created_at    : epoch ms.
+		//   - muted         : 0/1. Future mute UX flips this.
+		version: 7,
+		sql: `
+			CREATE TABLE advisories (
+				id            INTEGER PRIMARY KEY AUTOINCREMENT,
+				kind          TEXT    NOT NULL,
+				severity      TEXT    NOT NULL,
+				message       TEXT    NOT NULL,
+				evidence_json TEXT    NOT NULL DEFAULT '[]',
+				created_at    INTEGER NOT NULL,
+				muted         INTEGER NOT NULL DEFAULT 0
+			);
+			CREATE INDEX idx_advisories_created    ON advisories(created_at);
+			CREATE INDEX idx_advisories_kind_muted ON advisories(kind, muted);
+		`,
+	},
 }
 
 // RunMigrations applies every migration whose version is greater than the

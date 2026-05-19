@@ -21,10 +21,13 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	_ "modernc.org/sqlite"
 
+	"github.com/0xmhha/buddy/internal/advisor"
 	"github.com/0xmhha/buddy/internal/analytics"
+	"github.com/0xmhha/buddy/internal/config"
 	"github.com/0xmhha/buddy/internal/db"
 	"github.com/0xmhha/buddy/internal/knowledge"
 	buddymcp "github.com/0xmhha/buddy/internal/mcp"
+	"github.com/0xmhha/buddy/internal/sessions"
 	"github.com/0xmhha/buddy/internal/usage"
 )
 
@@ -61,6 +64,16 @@ func main() {
 		log.Printf("buddy-mcp: knowledge tools disabled: %v", err)
 	} else {
 		opts.Knowledge = kopt
+	}
+
+	// Wire the F2.C Phase 2 advisor (W7-3b / ADR-015). Builds an
+	// Evaluator over the same buddy.db connection sources. Falls back
+	// silently when DB open fails — usage_advise will report "not
+	// wired" rather than crashing the MCP server boot.
+	if aopt, err := configureAdvisor(opts.DBPath); err != nil {
+		log.Printf("buddy-mcp: advisor tool disabled: %v", err)
+	} else {
+		opts.Advisor = aopt
 	}
 
 	s := buddymcp.NewBuddyServer(opts)
@@ -124,4 +137,39 @@ func configureKnowledge(dbPath string) (buddymcp.KnowledgeOptions, error) {
 		Store:    knowledge.NewStore(conn),
 		Embedder: knowledge.NewPythonEmbedder(),
 	}, nil
+}
+
+// configureAdvisor opens buddy.db, loads the user config, and wires a
+// fully-stocked Evaluator. Same defensive shape as configureKnowledge.
+func configureAdvisor(dbPath string) (buddymcp.AdvisorOptions, error) {
+	conn, err := db.Open(db.Options{Path: dbPath})
+	if err != nil {
+		return buddymcp.AdvisorOptions{}, err
+	}
+	t := advisor.DefaultThresholds()
+	if cfgPath, err := config.DefaultPath(); err == nil {
+		if cfg, err := config.Load(cfgPath); err == nil {
+			eff := cfg.Effective()
+			t = advisor.Thresholds{
+				Disabled:            eff.AdvisorDisabled,
+				TokenSpikeRatio:     eff.AdvisorTokenSpikeRatio,
+				LongSessionHours:    eff.AdvisorLongSessionHours,
+				LowCachePct:         eff.AdvisorLowCachePct,
+				SessionVolumePerDay: eff.AdvisorSessionVolumePerDay,
+				TokenDailyThreshold: eff.AdvisorTokenDailyThreshold,
+				DedupWindow:         eff.AdvisorDedupWindow,
+				PollInterval:        eff.AdvisorPollInterval,
+			}.WithDefaults()
+		}
+	}
+	store := advisor.NewStore(conn)
+	runner := &advisor.Evaluator{
+		Thresholds: t,
+		Usage:      usage.NewService(conn),
+		Sessions:   sessions.NewStore(conn),
+		Knowledge:  knowledge.NewStore(conn),
+		Embedder:   knowledge.NewPythonEmbedder(),
+		Advisories: store,
+	}
+	return buddymcp.AdvisorOptions{Runner: runner, Store: store}, nil
 }
