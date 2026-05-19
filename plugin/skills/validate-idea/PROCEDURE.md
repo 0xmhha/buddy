@@ -158,7 +158,7 @@ Founder가 전체 세션 편안함 느끼면 실패. 최소 두 번 push받은 �
 
 **내부 프로젝트 adaptation:** Q4를 "스폰서 greenlight 받는 가장 작은 데모?"로, Q6를 "이게 reorg 살아남아?"로 reframe.
 
-**Smart-skip:** 이전 답이 이미 나중 질문 커버했으면 skip.
+**Smart-skip:** 이전 답이 *이 대화 안에서* 이미 나중 질문 커버했으면 skip. (cross-invocation 상태는 router 가 보존하지 않음 — ADR-007.)
 
 **각 질문 후 중단.** 다음 질문 전 응답 대기. 절대 batch 금지.
 

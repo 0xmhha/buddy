@@ -16,6 +16,7 @@
 | [ADR-004](./2026-05-11-plugin-version-reset.md) | 2026-05-11 | Plugin track version reset to v0.x.x (was v1.1.1) | Accepted | versioning, release, semver, plugin-track, charter-alignment |
 | [ADR-005](./2026-05-11-cli-buddy-spec-lock-in.md) | 2026-05-11 | cli buddy spec scope lock-in (Draft → Accepted) | Accepted | cli-buddy, agent-runtime, embedding, charter-alignment, spec-lock-in |
 | [ADR-006](./2026-05-19-procedure-form-allowlist-policy.md) | 2026-05-19 | B6 PROCEDURE form: bulk-allowlist intentional deviations + --strict for new skills | Accepted | b6-lint, procedure-form, allowlist, ci-gate, plugin-v1.0-entry |
+| [ADR-007](./2026-05-19-router-no-cross-invocation-state.md) | 2026-05-19 | Router does not maintain cross-invocation conversational state (supersedes B7) | Accepted | router, session-state, b7-supersede, plugin-v1.0-entry, scope-discipline |
 
 ---
 
@@ -124,7 +125,7 @@ charter §6.2 의 cli buddy 진화 시 예상 ADR 후보:
 | ADR-{N} task vs agent naming (P3 from ADR-002) | roadmap rewrite 시 |
 | ADR-{N} AGENTS.md naming collision (P3 from ADR-002) | v1.0 plugin model 결정 시 |
 | ~~ADR-{N} PROCEDURE skeleton enforcement (B6 follow-up)~~ | **Closed by ADR-006 (2026-05-19)** — bulk allowlist + `--strict` CI gate |
-| ADR-{N} router smart-skip session state (B7) | feature-management-mcp 또는 별 design 진입 시 |
+| ~~ADR-{N} router smart-skip session state (B7)~~ | **Closed by ADR-007 (2026-05-19)** — supersede, not router responsibility |
 | ADR-{N} skill MCP exposure | cli buddy 의 §4.1 option (b)/(d) 재검토 시 |
 | ADR-{N} cli buddy agent sandbox security (Q-6) | W3-3 agent runtime 의 *임의 명령 실행* 위험 surface 시 |
 
