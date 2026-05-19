@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.5] — 2026-05-19
+
+Doc-only patch release. Single commit since v0.7.4 adding the v0.7.x dogfood guide. No code-path changes.
+
+What's in this release:
+
+- `5a8df01` — **`docs/dogfood-guide.md`** (new, ~324 lines). Single entry point for plugin v1.0.0 entry condition B-2 (the only remaining unclosed condition). Covers three dogfood surfaces (plugin / cli buddy agent / hook monitor) with concrete scenarios, severity-driven SLA (blocker → next cycle / high → next release / medium → next minor / low → deferred), triage flowchart that routes findings to bug-fix / UX-fix / ADR / docs / deferred, and a release-cadence × dogfood mapping. Quick-start macros at the bottom let a fresh dogfood-er start in <5 min.
+
+  Existing `DOGFOOD.md` (root) marked as legacy entry — v0.1 hook-only scope; pointer added to the new guide. `docs/HANDOFF.md` gains a "Dogfood guide" pointer line so the next session handoff finds the canonical workflow in 5 min.
+
+Plugin v1.0.0 entry condition status (unchanged from v0.7.4):
+
+- B-1 cli buddy W3 cascade — ✅ Done (v0.7.0~v0.7.2)
+- B-2 production dogfood — ❌ user-paced (now with a written guide; dogfood-er starts at `docs/dogfood-guide.md`)
+- B-3 PROCEDURE B6 + `--strict` — ✅ Done (ADR-006)
+- B-4 router smart-skip — ✅ Done (ADR-007 supersede)
+
+→ Still 3/4 closed. B-2 is now *guided* — the next dogfood cycle (cycle-2) follows the §3 finding format and §4 improvement workflow.
+
+Counts and gates:
+
+- 5 version sources all on `0.7.5` (`make verify-versions` passes).
+- `go build / go vet / go test -race -count=1 -timeout=180s ./...` — 23 packages green (unchanged from v0.7.4 — no code touched).
+- `make test-skill-form` — 148 total / 62 allowlist / 86 pass / 0 deviate; `--strict` exit 0.
+
 ## [0.7.4] — 2026-05-19
 
 Doc-and-decisions patch release. Single commit since v0.7.3: ADR-008 plus its HANDOFF cleanup. No code-path changes, no spec field additions, no behavioral differences from v0.7.3.
