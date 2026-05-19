@@ -1,4 +1,13 @@
-# DOGFOOD — buddy v0.1 첫 사용 가이드
+# DOGFOOD — buddy v0.1 첫 사용 가이드 (legacy — hook reliability monitor 한정)
+
+> **NOTE (2026-05-19)** — 본 문서는 v0.1.0 시절의 *hook reliability monitor 단독*
+> 가이드. v0.7.x 의 통합 3 surface (plugin / cli buddy / hook monitor) dogfood +
+> improvement workflow 는 **[`docs/dogfood-guide.md`](./docs/dogfood-guide.md)**
+> 가 단일 entry point. Plugin v1.0.0 entry condition B-2 의 실행 절차도 같은 문서.
+>
+> 본 문서는 hook reliability monitor 부분에 한해 historical reference 로 유효.
+
+---
 
 > 이 문서대로 따라하면 10분 안에 buddy를 본인 머신에 켜고, 며칠 동안 평소처럼
 > Claude Code를 쓰면서 hook 신뢰성·통계 데이터를 모을 수 있어. 며칠 후 회고는

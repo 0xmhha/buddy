@@ -56,6 +56,8 @@
 
 **5단계 비전:** 1) Plugin install ✅ → 2) TUI 상위 레이어(`ai-m` 류) → 3) 설정/세션 관리 툴(`claude-code-organizer` 류) → 4) Dashboard + 칸반 → 5) 4단계에 1~3단계가 모두 녹아듦.
 
+**Dogfood guide (v0.7.x — Plugin v1.0.0 entry condition B-2 실행 절차):** [`docs/dogfood-guide.md`](./dogfood-guide.md) — 3 surface (plugin / cli buddy / hook monitor) 통합 실행 + finding 수집 format + improvement workflow + ADR escalation. v0.1 hook-only legacy 는 [`DOGFOOD.md`](../DOGFOOD.md) (deprecated entry, hook 부분만 유효).
+
 ---
 
 ---
