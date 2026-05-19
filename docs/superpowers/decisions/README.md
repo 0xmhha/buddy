@@ -17,6 +17,7 @@
 | [ADR-005](./2026-05-11-cli-buddy-spec-lock-in.md) | 2026-05-11 | cli buddy spec scope lock-in (Draft → Accepted) | Accepted | cli-buddy, agent-runtime, embedding, charter-alignment, spec-lock-in |
 | [ADR-006](./2026-05-19-procedure-form-allowlist-policy.md) | 2026-05-19 | B6 PROCEDURE form: bulk-allowlist intentional deviations + --strict for new skills | Accepted | b6-lint, procedure-form, allowlist, ci-gate, plugin-v1.0-entry |
 | [ADR-007](./2026-05-19-router-no-cross-invocation-state.md) | 2026-05-19 | Router does not maintain cross-invocation conversational state (supersedes B7) | Accepted | router, session-state, b7-supersede, plugin-v1.0-entry, scope-discipline |
+| [ADR-008](./2026-05-19-feature-management-mcp-scope.md) | 2026-05-19 | `feature-management-mcp` scope: minimum-viable CRUD lock-in + naming split from external SaaS reference | Accepted | feature-registry, mcp-tools, naming, scope-lock-in, cli-buddy |
 
 ---
 

@@ -51,7 +51,7 @@
 | **Plugin v1.0.0 entry status** | B-1 W3 cascade ✅ Done / B-2 production dogfood ❌ user-paced / B-3 B6 --strict ✅ ADR-006 / B-4 router smart-skip ✅ ADR-007 supersede | — | — |
 | Korea cluster 3 (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | ⏳ deferred (D-F F1) | trigger: target market = Korea | — |
 | analytics-mcp | ⏳ deferred (D-C C2) | trigger: §8 일부 구현 후 — *현재 trigger 가능* | — |
-| feature-management-mcp | ⏳ cli buddy 트랙 분리 (D-C C2) | trigger: cli buddy W3-3 agent runtime 진입 시 — *현재 trigger 가능 (W3-3 Done since v0.4.0)* | — |
+| ~~feature-management-mcp~~ | ✅ **Closed by ADR-008 (2026-05-19)** — cli buddy feature registry (5 MCP tools + features table) locked in at v0.3.0 shape; naming split from external `feature-management-saas-mcp` reference design. | — | — |
 | Cycle 2 live dispatch | ⏳ deferred | trigger: 별 세션 / 새 cycle | — |
 
 **5단계 비전:** 1) Plugin install ✅ → 2) TUI 상위 레이어(`ai-m` 류) → 3) 설정/세션 관리 툴(`claude-code-organizer` 류) → 4) Dashboard + 칸반 → 5) 4단계에 1~3단계가 모두 녹아듦.
