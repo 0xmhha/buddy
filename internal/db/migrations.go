@@ -157,6 +157,34 @@ var migrations = []migration{
 			CREATE INDEX idx_sessions_ended_at ON sessions(ended_at);
 		`,
 	},
+	{
+		// v6 — F2.C Advisory foundation (W7-3a) — ADR-014. The chunks
+		// table holds knowledge data extracted from sessions transcripts:
+		//   - session_id     : FK back to sessions(id) — cascade delete.
+		//   - content        : raw chunk text (user+assistant pair, max
+		//                      ~500 tokens). Used as BM25 source.
+		//   - token_count    : naive whitespace-split estimate; lets
+		//                      retrieval rank by chunk size.
+		//   - embedding      : NULL until the Python embedder fills it.
+		//                      JSON-encoded float32 array as a BLOB so
+		//                      pure-Go SQLite (modernc.org/sqlite) can
+		//                      store it without CGo vector extensions.
+		//   - created_at     : epoch ms.
+		version: 6,
+		sql: `
+			CREATE TABLE chunks (
+				id          INTEGER PRIMARY KEY AUTOINCREMENT,
+				session_id  TEXT    NOT NULL,
+				content     TEXT    NOT NULL,
+				token_count INTEGER NOT NULL,
+				embedding   BLOB,
+				created_at  INTEGER NOT NULL,
+				FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+			);
+			CREATE INDEX idx_chunks_session ON chunks(session_id);
+			CREATE INDEX idx_chunks_created ON chunks(created_at);
+		`,
+	},
 }
 
 // RunMigrations applies every migration whose version is greater than the

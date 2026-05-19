@@ -9,20 +9,25 @@ import (
 	"github.com/0xmhha/buddy/internal/usage"
 )
 
+// Re-export the knowledge-side option struct so callers don't import
+// the mcp package + internal/knowledge twice for the same surface.
+
 // NewBuddyServer creates an MCP server with all buddy tools registered.
 // Callers connect it to a transport (e.g. mcp.StdioTransport{}) via Run.
 func NewBuddyServer(opts Options) *mcp.Server {
 	s := mcp.NewServer(&mcp.Implementation{
 		Name:    "buddy",
-		Version: "0.9.0",
+		Version: "0.10.0",
 	}, &mcp.ServerOptions{
 		Instructions: "buddy — Claude Code hook harness control plane + analytics + AI-usage coaching surface. " +
 			"Use these tools to inspect hook health, query hook statistics, manage the " +
 			"local feature registry, read product analytics (analytics_query_* — backed by " +
-			"BUDDY_ANALYTICS_BACKEND), and query AI-usage metrics over the local sessions " +
-			"table (usage_query_* — populated by F2.A Session Monitor / ADR-012). " +
-			"usage_query_* tools require Options.Usage to be wired (server callers do this " +
-			"automatically when sessions table exists).",
+			"BUDDY_ANALYTICS_BACKEND), query AI-usage metrics over the local sessions " +
+			"table (usage_query_* — populated by F2.A Session Monitor / ADR-012), and " +
+			"retrieve past session content via local BM25 + vector hybrid search " +
+			"(knowledge_query — populated by `buddy knowledge ingest` / ADR-014). " +
+			"usage_query_* and knowledge_query degrade gracefully when their respective " +
+			"stores or embedders are unconfigured.",
 	})
 
 	addDoctorTool(s, opts)
@@ -30,6 +35,7 @@ func NewBuddyServer(opts Options) *mcp.Server {
 	addFeatureTools(s, opts)
 	addAnalyticsTools(s, opts)
 	addUsageTools(s, opts)
+	addKnowledgeTools(s, opts)
 
 	return s
 }
@@ -49,4 +55,11 @@ type Options struct {
 	// instead of querying. The CLI wires this from the same buddy.db it
 	// already opens for the agent / feature stores.
 	Usage *usage.Service
+
+	// Knowledge wires the `knowledge_query` tool (W7-3a / ADR-014).
+	// Store nil → tool registers but reports "store not wired". Embedder
+	// nil → tool still serves BM25-only retrieval (channel tag reflects
+	// the missing vector channel). Both can be nil during early CLI use
+	// before any ingest run.
+	Knowledge KnowledgeOptions
 }

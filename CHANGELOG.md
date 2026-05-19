@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-05-19 — W7-3a F2.C Advisory **foundation** (knowledge retrieval; C-3 still open)
+
+**Milestone**: F2.C Phase 1 of 3 (per ADR-014). Ships the *knowledge retrieval* primitives that the Phase 2 advisor (v0.11.0) will consume — chunking, BM25, vector cosine, hybrid RRF, Python embedder, MCP `knowledge_query`, CLI `buddy knowledge`. **C-3 is intentionally not closed yet**; the advisory generator itself lands in v0.11.0.
+
+What ships (code):
+
+- **`internal/db/migrations.go` v6** — new `chunks` table (`id / session_id / content / token_count / embedding (BLOB) / created_at`). FK cascades from sessions(id). Backward-compat: existing v5 DBs auto-migrate.
+- **`internal/knowledge/`** — new package (~1200 LoC, 38 race-clean tests):
+  - `types.go` — `Chunk` + `ScoredChunk` (channel-tagged retrieval row).
+  - `store.go` — CRUD over `chunks`. Binary-encoded float32 embedding BLOB (3 KB vs JSON's 9 KB for 384-dim vectors).
+  - `chunker.go` — JSONL transcript → chunks (user/assistant text only, role-prefixed, ~500-token cap).
+  - `bm25.go` — pure-Go BM25 retriever (k1=1.5, b=0.75). Built once per query; iterates the full corpus (~10k chunks fits in ms).
+  - `vector.go` — cosine similarity + `VectorSearch` over embedding BLOBs.
+  - `hybrid.go` — Reciprocal Rank Fusion combiner (k=60). Channel tag (`bm25` / `vector` / `hybrid`) records which retriever surfaced each hit.
+  - `embedder.go` — `Embedder` interface + `PythonEmbedder` (sub-process invoker) + `MockEmbedder` (tests). `ErrEmbedderUnavailable` collapses Python / venv / sentence-transformers absence into a single sentinel; callers (CLI / MCP) fall back to BM25-only and surface a friend-tone hint.
+- **`scripts/embed.py`** (new) — sentence-transformers wrapper. JSON Lines stdin / stdout. Default model `all-MiniLM-L6-v2` (384-dim, ~80MB on disk); override via `BUDDY_EMBED_MODEL`. Streams results so the Go side sees incremental progress.
+- **`cmd/buddy/knowledge_cmd.go`** — `buddy knowledge ingest|query|stats`:
+  - `ingest [--session <id>|--all] [--rebuild] [--skip-embed] [--python ...] [--embed-script ...]` — chunks every (or one) session's transcript; runs embedding pass per chunk unless skipped.
+  - `query <text> [--k N] [--channel hybrid|bm25|vector]` — retrieves top-K chunks. Hybrid is default; falls back to BM25-only on embedder error.
+  - `stats` — chunk count + embedding coverage %.
+- **`internal/mcp/knowledge_tool.go`** — `knowledge_query` MCP tool (1 new tool — total now 13 + 7 analytics + 5 usage + ... see server.go). Read-only over chunks. Best-effort embedder use; degrades to BM25-only on missing venv.
+- **`cmd/buddy-mcp/main.go`** — auto-wires `Options.Knowledge` against the same buddy.db that's used for usage / agent / feature stores.
+
+What ships (governance):
+
+- **ADR-014** — F2.C foundation design lock-in. 3-phase split (foundation v0.10 / advisor v0.11 closes C-3 / skill-gen v0.12). User feedback rejected rule-based fixed-threshold approach ("사람마다 사용 방식 다름") and asked for local knowledge retrieval over Python agent + BM25 + embeddings; v0.10.0 is exactly the foundation that enables retrieval-based advisor in v0.11.
+
+Plugin v1.0.0 entry condition status (per ADR-010, whole-product 9 conditions):
+
+| # | Condition | Status |
+|---|-----------|--------|
+| B-1 | cli buddy W3 cascade | ✅ Done |
+| B-2 | production dogfood | ❌ user-paced |
+| B-3 | PROCEDURE B6 + `--strict` | ✅ Done |
+| B-4 | router smart-skip | ✅ Done |
+| C-1 | F2.A Session Monitor | ✅ Done (v0.8.0) |
+| C-2 | F2.B Usage Analysis | ✅ Done (v0.9.0) |
+| **C-3** | **F2.C Advisory** | **🟡 Phase 1/3 ship (foundation); v0.11.0 closes** |
+| C-4 | F2.D Drift Detection | ❌ W7-4 |
+| C-5 | F2.E Notification | ❌ W7-5 |
+
+→ 5/9 closed (unchanged from v0.9.0 — C-3 still open). Whole-product progress conceptually moves from "C-3 not even started" → "C-3 retrieval primitive ready" but the entry condition flag flips at v0.11.0.
+
+Counts and gates:
+
+- 5 version sources all on `0.10.0` (`make verify-versions` passes).
+- `go test -race -count=1 ./...` — 25 packages green (up from 24 — new `internal/knowledge` adds 38 tests).
+- `internal/mcp` grows by 4 new `knowledge_query` tests (registration + not-wired + empty-corpus + BM25-only hit).
+
+User-action required after upgrade (Python embedder is optional but recommended):
+
+```bash
+python3 -m venv ~/.buddy/venv
+~/.buddy/venv/bin/pip install sentence-transformers
+export PATH=~/.buddy/venv/bin:$PATH   # or invoke buddy knowledge ... --python ~/.buddy/venv/bin/python3
+buddy knowledge ingest --all
+```
+
+Without the venv, `buddy knowledge ingest` and `knowledge_query` degrade to BM25-only retrieval (still useful — keyword recall over the corpus works).
+
+Next milestone target: **W7-3b F2.C Advisor** (v0.11.0, closes C-3). Consumes `knowledge_query` + W7-2's `usage_query_*` to generate friend-tone Korean advisories. Phase 3 (v0.12.0) follows with skill autogeneration.
+
 ## [0.9.0] — 2026-05-19 — W7-2 F2.B Usage Analysis (closes whole-product v1.0 entry C-2)
 
 **Milestone**: cli buddy F2.B Usage Analysis ships. Closes whole-product v1.0.0 entry condition C-2 (per ADR-010). Second milestone-driven release under ADR-011 — consumes the sessions table laid down by W7-1, exposes 7 metric primitives across CLI + 5 MCP tools + TUI Usage pane.

@@ -23,6 +23,7 @@ import (
 
 	"github.com/0xmhha/buddy/internal/analytics"
 	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/knowledge"
 	buddymcp "github.com/0xmhha/buddy/internal/mcp"
 	"github.com/0xmhha/buddy/internal/usage"
 )
@@ -49,6 +50,17 @@ func main() {
 		log.Printf("buddy-mcp: usage tools disabled: %v", err)
 	} else {
 		opts.Usage = svc
+	}
+
+	// Wire the F2.C Phase 1 knowledge store + embedder (W7-3a /
+	// ADR-014). Store opens against the same buddy.db; embedder is
+	// always set so the MCP path tries vector first, falling back to
+	// BM25 only when the Python venv is missing — handled inside
+	// knowledge.PythonEmbedder.Embed via ErrEmbedderUnavailable.
+	if kopt, err := configureKnowledge(opts.DBPath); err != nil {
+		log.Printf("buddy-mcp: knowledge tools disabled: %v", err)
+	} else {
+		opts.Knowledge = kopt
 	}
 
 	s := buddymcp.NewBuddyServer(opts)
@@ -97,4 +109,19 @@ func configureUsage(dbPath string) (*usage.Service, error) {
 		return nil, err
 	}
 	return usage.NewService(conn), nil
+}
+
+// configureKnowledge opens buddy.db and returns the W7-3a Knowledge
+// options bundle. Always wires the Python embedder — its Embed method
+// returns ErrEmbedderUnavailable if the script / venv isn't ready, and
+// the knowledge_query handler degrades to BM25-only on that error.
+func configureKnowledge(dbPath string) (buddymcp.KnowledgeOptions, error) {
+	conn, err := db.Open(db.Options{Path: dbPath})
+	if err != nil {
+		return buddymcp.KnowledgeOptions{}, err
+	}
+	return buddymcp.KnowledgeOptions{
+		Store:    knowledge.NewStore(conn),
+		Embedder: knowledge.NewPythonEmbedder(),
+	}, nil
 }
