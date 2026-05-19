@@ -32,7 +32,26 @@ for arg in "$@"; do
   esac
 done
 
-# Allowlist: 9 orchestrators + 7 special skills + .template
+# Allowlist resolved as part of B-3 (2026-05-19) per ADR-006 — the 43
+# deviations that surfaced from the original Form A/B/C scan turned out
+# to be intentional historical choices, not authoring drift:
+#
+#   - Pattern 1 (methodology / persona / external-asset skills) lack the
+#     `## 1. 목적` shape entirely. Forcing them into the 8-section template
+#     would erase the very structure that makes them useful (Eng Manager
+#     persona blocks, conduct-postmortem prose template, Codex mode-switch
+#     state machine, etc.).
+#
+#   - Pattern 2 (rich domain-design skills like design-billing-system)
+#     DO open with §1./§2./§3. but use 9-module / N-module bodies after
+#     §4. Same reasoning: the body shape *is* the domain.
+#
+# Adding them by name (rather than relaxing the regex with extra Form D/E
+# variants) keeps the lint *enforceable* via --strict for every NEW skill
+# while preserving the intentional set verbatim.
+#
+# Adding a new entry to ALLOWLIST should require an ADR note explaining
+# why the skill cannot conform — otherwise just align it with Form A.
 ALLOWLIST=(
   router
   .template
@@ -48,7 +67,6 @@ ALLOWLIST=(
   manage-lifecycle
   # Special skills (forcing-question / context / dispatch / status)
   status
-  router
   validate-idea
   validate-advanced-edge-idea
   autoplan
@@ -57,6 +75,51 @@ ALLOWLIST=(
   dispatch-parallel-agents
   detect-install-type
   guide-setup-wizard
+  # B-3 (2026-05-19, ADR-006) — methodology / persona skills (Pattern 1)
+  analyze-ab-experiment
+  analyze-user-funnel
+  apply-builder-ethos
+  audit-live-devex
+  audit-security
+  benchmark-llm-models
+  classify-qa-tiers
+  classify-review-risks
+  compose-feature-from-use-cases
+  compose-safety-mode
+  conduct-postmortem
+  consult-codex
+  consult-design-system
+  critique-plan
+  define-feature-spec
+  design-ab-experiment
+  explore-design-variants
+  freeze-edit-scope
+  generate-improvement-tasks
+  guard-destructive-commands
+  handle-incident
+  identify-actors
+  iterate-fix-verify
+  map-actor-use-cases
+  map-feature-dependencies
+  map-use-case-to-system-boundary
+  measure-code-health
+  monitor-regressions
+  persist-learning-jsonl
+  review-architecture
+  review-design
+  review-devex
+  review-engineering
+  review-scope
+  run-browser-qa
+  score-feature-priority
+  summarize-retro
+  sync-release-docs
+  write-changelog
+  # B-3 (2026-05-19, ADR-006) — rich domain-design skills (Pattern 2)
+  design-billing-system
+  design-claude-hooks
+  review-ai-safety-liability
+  review-terms-policy-readiness
 )
 
 is_allowed() {

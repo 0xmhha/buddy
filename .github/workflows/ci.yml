@@ -57,3 +57,12 @@ jobs:
         # -timeout=120s mirrors the release-side suite. Tests that exceed
         # this in CI are an indicator of regression, not a reason to bump.
         run: go test -race -count=1 -timeout=120s ./...
+
+      - name: PROCEDURE.md form gate (--strict)
+        # B-3 follow-on (2026-05-19, ADR-006): the 43 historical
+        # deviations are now allowlisted in scripts/lint-skill-procedure.sh
+        # with a comment trail. This step enforces the form on every NEW
+        # skill — adding to ALLOWLIST should require an ADR note and a
+        # reviewer. Static run command, no github.event.* interpolation,
+        # so the workflow-injection guidance does not apply here.
+        run: bash scripts/lint-skill-procedure.sh --strict
