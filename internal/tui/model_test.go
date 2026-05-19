@@ -12,6 +12,7 @@ import (
 
 	"github.com/0xmhha/buddy/internal/agent"
 	"github.com/0xmhha/buddy/internal/queries"
+	"github.com/0xmhha/buddy/internal/usage"
 )
 
 // fakeLister is the test-side AgentLister: returns canned agents or a
@@ -1629,4 +1630,106 @@ func TestView_HookStatsErrorState(t *testing.T) {
 	out := m.View()
 	require.Contains(t, out, "error")
 	require.Contains(t, out, "db locked")
+}
+
+// ─── Usage pane (W7-2 / ADR-013) ───────────────────────────────────────
+
+func fakeUsageFetcher(ov usage.Overview, err error, calls *int) UsageFetcher {
+	return func() (usage.Overview, error) {
+		*calls++
+		if err != nil {
+			return usage.Overview{}, err
+		}
+		return ov, nil
+	}
+}
+
+// TestUpdate_UInListWithFetcherEntersUsage — U switches to ModeUsage
+// and dispatches the fetch cmd when a fetcher is wired.
+func TestUpdate_UInListWithFetcherEntersUsage(t *testing.T) {
+	t.Parallel()
+	calls := 0
+	ov := usage.Overview{Spend: usage.TokenSpend{InputTokens: 100}}
+	m := Model{Store: &fakeLister{}, Loaded: true,
+		UsageFetcher: fakeUsageFetcher(ov, nil, &calls)}
+	next, cmd := m.Update(keyMsg("U"))
+	mm := next.(Model)
+	require.Equal(t, ModeUsage, mm.Mode)
+	require.False(t, mm.UsageLoaded)
+	require.NotNil(t, cmd, "U must schedule a usage fetch when fetcher is wired")
+	msg := cmd()
+	loaded, ok := msg.(UsageLoadedMsg)
+	require.True(t, ok, "expected UsageLoadedMsg, got %T", msg)
+	require.Equal(t, int64(100), loaded.Result.Spend.InputTokens)
+	require.Equal(t, 1, calls)
+}
+
+// TestUpdate_UInListWithoutFetcherIsNoOp — no fetcher → no switch.
+func TestUpdate_UInListWithoutFetcherIsNoOp(t *testing.T) {
+	t.Parallel()
+	m := Model{Store: &fakeLister{}, Loaded: true}
+	next, cmd := m.Update(keyMsg("U"))
+	require.Equal(t, ModeList, next.(Model).Mode)
+	require.Nil(t, cmd)
+}
+
+// TestUpdate_UsageLoadedFoldsIntoState — loaded msg populates state.
+func TestUpdate_UsageLoadedFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeUsage}
+	ov := usage.Overview{Spend: usage.TokenSpend{OutputTokens: 42}}
+	next, _ := m.Update(UsageLoadedMsg{Result: ov})
+	mm := next.(Model)
+	require.True(t, mm.UsageLoaded)
+	require.Equal(t, int64(42), mm.UsageResult.Spend.OutputTokens)
+	require.Nil(t, mm.UsageErr)
+}
+
+// TestUpdate_UsageErrFoldsIntoState — err msg records and flips Loaded.
+func TestUpdate_UsageErrFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("sessions table missing")
+	m := Model{Mode: ModeUsage}
+	next, _ := m.Update(UsageErrMsg{Err: bang})
+	mm := next.(Model)
+	require.True(t, mm.UsageLoaded)
+	require.ErrorIs(t, mm.UsageErr, bang)
+}
+
+// TestUpdate_EscFromUsageReturnsToList — esc/h navigate back.
+func TestUpdate_EscFromUsageReturnsToList(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeUsage}
+	next, _ := m.Update(keyMsg("esc"))
+	require.Equal(t, ModeList, next.(Model).Mode)
+
+	m2 := Model{Mode: ModeUsage}
+	next2, _ := m2.Update(keyMsg("h"))
+	require.Equal(t, ModeList, next2.(Model).Mode)
+}
+
+// TestView_UsageRendersOverview — happy path render shows token + stats.
+func TestView_UsageRendersOverview(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:        ModeUsage,
+		UsageLoaded: true,
+		UsageFetcher: func() (usage.Overview, error) { return usage.Overview{}, nil },
+		UsageResult: usage.Overview{
+			Spend: usage.TokenSpend{InputTokens: 123, OutputTokens: 456, CacheReadTokens: 789},
+			Stats: usage.SessionStats{TotalSessions: 7, ActiveSessions: 2, EndedSessions: 5},
+		},
+	}
+	out := m.View()
+	require.Contains(t, out, "토큰 사용량")
+	require.Contains(t, out, "세션 통계")
+	require.Contains(t, out, "esc")
+}
+
+// TestView_UsageUnavailableWithoutFetcher — no fetcher renders friendly note.
+func TestView_UsageUnavailableWithoutFetcher(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeUsage}
+	out := m.View()
+	require.Contains(t, out, "UsageFetcher 미설정")
 }

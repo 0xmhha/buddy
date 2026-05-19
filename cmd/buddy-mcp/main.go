@@ -22,7 +22,9 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/0xmhha/buddy/internal/analytics"
+	"github.com/0xmhha/buddy/internal/db"
 	buddymcp "github.com/0xmhha/buddy/internal/mcp"
+	"github.com/0xmhha/buddy/internal/usage"
 )
 
 func main() {
@@ -36,6 +38,17 @@ func main() {
 		log.Fatalf("buddy-mcp: analytics: %v", err)
 	} else {
 		opts.Analytics = adapter
+	}
+
+	// Wire the F2.B Usage service against the same buddy.db. The MCP
+	// server is read-only here — usage_query_* tools live or die with
+	// the sessions table existing in this DB. If Open fails (no DB
+	// yet) the tools register and return the friend-tone "not wired"
+	// hint instead of failing process startup.
+	if svc, err := configureUsage(opts.DBPath); err != nil {
+		log.Printf("buddy-mcp: usage tools disabled: %v", err)
+	} else {
+		opts.Usage = svc
 	}
 
 	s := buddymcp.NewBuddyServer(opts)
@@ -73,4 +86,15 @@ func configureAnalytics() (analytics.Adapter, error) {
 		return nil, err
 	}
 	return analytics.NewSQLAdapter(db), nil
+}
+
+// configureUsage opens buddy.db (sessions table substrate) and returns
+// a usage.Service. Per ADR-013 the service is stateless and read-only,
+// so opening the same DB the rest of the CLI uses is safe.
+func configureUsage(dbPath string) (*usage.Service, error) {
+	conn, err := db.Open(db.Options{Path: dbPath})
+	if err != nil {
+		return nil, err
+	}
+	return usage.NewService(conn), nil
 }

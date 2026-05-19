@@ -347,17 +347,17 @@ cli buddy spec 작성 자체가 *roadmap.md §4/§5/§6 outline 의 actual rewri
 | W3-5 v0.1.0 재배치 | main.go 분할 + sub-feature 재배치 | **Done 2026-05-18** — main.go 685→147 lines split shipped v0.6.3 (6 sibling files in `cmd/buddy/`); hook reliability monitor cli buddy 통합 shipped 2026-05-18 as `buddy tui` `H` key → ModeHookStats pane (`internal/queries.Run` wrapped via `tui.HookStatsFetcher` injection, renders count / failures / p50 / p95 per hook, same column order as `buddy stats` CLI). 기존 `buddy daemon/stats/events` CLI surface 그대로 — integration 은 consumer (TUI) layer 에서만 추가 (additive). | W3-2 / W3-3 / W3-4 |
 | W3-6 reference agent | 웹툰 agent example | HIGH (Done 2026-05-12 — `examples/webtoon-agent/spec.yaml` + README; ParseSpec regression test gates the example. Exercises Tier 1.4 backoff / 1.5 streaming / 1.6 scheduler refresh / 1.8 webhook + W3-3 chain) | W3-2 ~ W3-5 |
 
-### W4 ~ W8 — AI-usage coaching (ADR-009, 미구현)
+### W4 ~ W8 — AI-usage coaching (ADR-009)
 
 | Phase | 영역 | 비용 추정 | 의존 |
 |-------|------|---------|------|
-| **W4 F2.A Session Monitor** | Claude Code session lifecycle 추적 (start / token / message / time / transcript path). `internal/sessions/` 의 passive registry 를 active observer 로 확장 + daemon role 정의 | HIGH | Claude Code session-lifecycle hook 안정 |
-| **W5 F2.B Usage Analysis** | 7 analytics MCP tools 를 AI-usage 분석으로 repurpose 또는 신규 tool 추가 (token spend / message-length / time-to-first-tool-call / hook-failure rate per skill 등) | MED | W4 가 ~30일 데이터 누적 |
-| **W6 F2.C Advisory** | W5 의 analytic primitive → actionable 한국어 prose 권고 생성 (rule-based 또는 LLM-driven) | MED-HIGH | W5 analytic primitive 안정 |
+| **W4 F2.A Session Monitor** | ✅ v0.8.0 ship (2026-05-19) — ADR-012 Hybrid hook+fsLister + schema v5 + CLI list/show/purge + daemon poll | — | Done |
+| **W5 F2.B Usage Analysis** | ✅ v0.9.0 ship (2026-05-19) — ADR-013 sessions-only live aggregation + 7 metric + CLI `buddy usage` + 5 MCP `usage_query_*` + TUI Usage pane | — | Done |
+| **W6 F2.C Advisory** | W5 의 analytic primitive → actionable 한국어 prose 권고 생성 (rule-based 또는 LLM-driven) | MED-HIGH | W5 analytic primitive 안정 (Done) |
 | **W7 F2.D Drift Detection** | 단일 conversation 안 *원래 목적* vs *현재 turn* semantic similarity 평가 + drift alert 생성 | HIGH | W4 turn-level 데이터 + LLM-driven 비교 path |
 | **W8 F2.E Notification** | W6 / W7 메시지의 TUI banner / desktop (`osascript` / `notify-send`) / shell prompt / webhook 전달 | MED | W6 advisory 가 out-of-band 전달 가치 |
 
-→ W4 ~ W8 은 ADR-009 vision 의 *5 영역 = 5 phase*. 각 phase 의 design + impl 은 영역별 후속 ADR (e.g., ADR-{N} F2.A Session Monitor design) 에서 lock-in.
+→ W4 ~ W8 은 ADR-009 vision 의 *5 영역 = 5 phase*. W4/W5 ship 완료, W6~W8 잔여.
 
 ### W3-3 partial Done — 2026-05-11 ship summary
 

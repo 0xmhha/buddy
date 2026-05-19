@@ -6,6 +6,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/0xmhha/buddy/internal/analytics"
+	"github.com/0xmhha/buddy/internal/usage"
 )
 
 // NewBuddyServer creates an MCP server with all buddy tools registered.
@@ -13,20 +14,22 @@ import (
 func NewBuddyServer(opts Options) *mcp.Server {
 	s := mcp.NewServer(&mcp.Implementation{
 		Name:    "buddy",
-		Version: "0.8.0",
+		Version: "0.9.0",
 	}, &mcp.ServerOptions{
-		Instructions: "buddy — Claude Code hook harness control plane + analytics surface. " +
+		Instructions: "buddy — Claude Code hook harness control plane + analytics + AI-usage coaching surface. " +
 			"Use these tools to inspect hook health, query hook statistics, manage the " +
-			"local feature registry, and (analytics_query_*) read funnel / cohort / A-B / " +
-			"cost / SLO / feedback data from production backends. Analytics tools require " +
-			"BUDDY_ANALYTICS_BACKEND to be set; v0.2.0 ships stubs and reports the missing " +
-			"adapter in friend-tone text rather than a transport error.",
+			"local feature registry, read product analytics (analytics_query_* — backed by " +
+			"BUDDY_ANALYTICS_BACKEND), and query AI-usage metrics over the local sessions " +
+			"table (usage_query_* — populated by F2.A Session Monitor / ADR-012). " +
+			"usage_query_* tools require Options.Usage to be wired (server callers do this " +
+			"automatically when sessions table exists).",
 	})
 
 	addDoctorTool(s, opts)
 	addStatsTool(s, opts)
 	addFeatureTools(s, opts)
 	addAnalyticsTools(s, opts)
+	addUsageTools(s, opts)
 
 	return s
 }
@@ -40,4 +43,10 @@ type Options struct {
 	// the tools register but each handler returns a friend-tone "backend not
 	// configured" text body instead of querying real data.
 	Analytics analytics.Adapter
+
+	// Usage is the service backing the usage_query_* tools (W7-2 / ADR-013).
+	// When nil, those tools register but report "sessions store not wired"
+	// instead of querying. The CLI wires this from the same buddy.db it
+	// already opens for the agent / feature stores.
+	Usage *usage.Service
 }

@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-05-19 — W7-2 F2.B Usage Analysis (closes whole-product v1.0 entry C-2)
+
+**Milestone**: cli buddy F2.B Usage Analysis ships. Closes whole-product v1.0.0 entry condition C-2 (per ADR-010). Second milestone-driven release under ADR-011 — consumes the sessions table laid down by W7-1, exposes 7 metric primitives across CLI + 5 MCP tools + TUI Usage pane.
+
+What ships (code):
+
+- **`internal/usage/`** — new package implementing F2.B per ADR-013:
+  - `types.go` — `TimeWindow` / `TokenSpend` / `SessionStats` / `TimeDistribution` / `TopSession` / `Overview` (7 metric: token spend, session count, duration percentiles, time-of-day, cache hit ratio, top sessions, active/ended ratio).
+  - `service.go` — `Service` with `QueryTokenSpend` / `QuerySessionStats` / `QueryTimeDistribution` / `QueryTopSessions` / `QueryOverview`. Live SQL aggregation over the sessions table — no derived table, no migration v6 (per ADR-013 Q2). ~30d / ~1500 rows aggregate in ms.
+  - Test coverage: 10 race-clean tests across `service_test.go` (token spend all-time + window filter, cache hit math, session count + goal ratio, duration percentiles, time distribution local hour buckets, top sessions ordering, overview composition, TimeWindow helpers).
+- **`cmd/buddy/usage_cmd.go`** — new `buddy usage` subcommand tree per ADR-013 Q3:
+  - `buddy usage today` — token spend + session counts for the last 24h.
+  - `buddy usage trend [--days N]` — same shape over a wider window (default 7d).
+  - `buddy usage top [--limit N] [--since DUR]` — top-N sessions by total tokens.
+  - `buddy usage overview [--since DUR] [--top N]` — all 7 metric in one snapshot.
+  - `buddy usage distribution [--since DUR]` — hour-of-day histogram with bar chart (local time).
+- **`internal/mcp/usage_tool.go`** — 5 new `usage_query_*` MCP tools per ADR-013 Q3, wired in `server.go`:
+  - `usage_query_token_spend`, `usage_query_session_stats`, `usage_query_time_distribution`, `usage_query_top_sessions`, `usage_query_overview`. Each takes optional `range.{since,until}` ISO timestamps; falls back to friend-tone "store not wired" when `Options.Usage` is nil.
+  - `cmd/buddy-mcp/main.go` opens buddy.db and wires `Options.Usage` so the MCP server exposes the tools by default.
+  - Test coverage: 3 race-clean tests (5-tool registration, not-wired fallback text, happy-path TokenSpend with seeded sessions).
+- **`internal/tui/model.go`** — `ModeUsage` (8th mode alongside List / Detail / Scheduler / DeleteConfirm / LogTail / HookStats + Edit/Create shell-outs). `U` from list view opens the pane; `esc`/`h` returns; `r` refetches. Renders 4 sections: token spend + session stats + peak hours (top 5) + top sessions.
+  - `cmd/buddy/tui_cmd.go` wires `UsageFetcher` over a fresh-connection-per-call closure (consistent with the existing `HookStatsFetcher` pattern).
+  - Test coverage: 7 new tests covering the U key, fold-into-state for both Loaded / Err messages, esc/h back nav, render with overview, unavailable-without-fetcher copy.
+
+What ships (governance):
+
+- **ADR-013** — F2.B Usage Analysis design lock-in. Four design questions decided as sessions-only data source + live aggregation + CLI+MCP+TUI 3-way surface + full MVP scope (7 metric).
+
+Plugin v1.0.0 entry condition status (per ADR-010, whole-product 9 conditions):
+
+| # | Condition | Status |
+|---|-----------|--------|
+| B-1 | cli buddy W3 cascade | ✅ Done |
+| B-2 | production dogfood | ❌ user-paced |
+| B-3 | PROCEDURE B6 + `--strict` | ✅ Done |
+| B-4 | router smart-skip | ✅ Done |
+| C-1 | F2.A Session Monitor | ✅ Done (v0.8.0) |
+| **C-2** | **F2.B Usage Analysis** | **✅ Done (this release)** |
+| C-3 | F2.C Advisory | ❌ W7-3 next |
+| C-4 | F2.D Drift Detection | ❌ W7-4 |
+| C-5 | F2.E Notification | ❌ W7-5 |
+
+→ 5/9 closed (56%). Whole-product progress moves from ~44% to ~56%. v1.0.0 still gated on B-2 + C-3~C-5.
+
+Counts and gates:
+
+- 5 version sources all on `0.9.0` (`make verify-versions` passes).
+- `go test -race -count=1 ./...` — 24 packages green (up from 23 — new `internal/usage` adds 10 tests).
+- `internal/tui` test count grows by 7 new Usage-pane tests; `internal/mcp` grows by 3.
+
+Next milestone target: **W7-3 F2.C Advisory** (closes C-3). The `usage_query_*` MCP tools become the LLM-consumable input source for advisory generation. Per ADR-009 the advisory output is short Korean prose, friend-tone, *not* a wall of metrics.
+
 ## [0.8.0] — 2026-05-19 — W7-1 F2.A Session Monitor (closes whole-product v1.0 entry C-1)
 
 **Milestone**: cli buddy F2.A Session Monitor ships. Closes whole-product v1.0.0 entry condition C-1 (per ADR-010). First minor bump under the milestone-driven release policy (ADR-011) — previous v0.7.3 / v0.7.4 / v0.7.5 were ADR-only patches that should have ridden along; this is the first release fired by a *nameable* code-bearing milestone.

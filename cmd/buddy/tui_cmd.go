@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/buddy/internal/db"
 	"github.com/0xmhha/buddy/internal/queries"
 	"github.com/0xmhha/buddy/internal/tui"
+	"github.com/0xmhha/buddy/internal/usage"
 )
 
 // newTuiCmd wires `buddy tui` — the W3-2 terminal UI. v0.6.6 shipped the
@@ -68,6 +71,18 @@ func newTuiCmd() *cobra.Command {
 					DBPath: dbFlag,
 					Window: window,
 				})
+			}
+
+			// Usage fetcher (W7-2 / ADR-013). Opens its own connection
+			// per call; closes immediately so a stale TUI doesn't leak.
+			// Best-effort: failures yield UsageErrMsg via the loader.
+			model.UsageFetcher = func() (usage.Overview, error) {
+				conn, err := db.Open(db.Options{Path: dbFlag})
+				if err != nil {
+					return usage.Overview{}, fmt.Errorf("open db: %w", err)
+				}
+				defer conn.Close()
+				return usage.NewService(conn).QueryOverview(context.Background(), usage.TimeWindow{}, 5)
 			}
 
 			program := tea.NewProgram(

@@ -25,6 +25,7 @@ import (
 
 	"github.com/0xmhha/buddy/internal/agent"
 	"github.com/0xmhha/buddy/internal/queries"
+	"github.com/0xmhha/buddy/internal/usage"
 )
 
 // AgentLister is the Store surface the TUI needs. Narrowing the
@@ -63,6 +64,7 @@ const (
 	ModeDeleteConfirm
 	ModeLogTail
 	ModeHookStats
+	ModeUsage
 )
 
 // HookStatsFetcher is the read-only surface the TUI's hook-stats pane
@@ -75,6 +77,14 @@ const (
 // stats unavailable in this session" and shows a friend-tone copy
 // instead of crashing on the H keypress.
 type HookStatsFetcher func(window string) (queries.Result, error)
+
+// UsageFetcher is the read-only surface for the TUI's Usage pane (W7-2 /
+// ADR-013 F2.B). Production wiring closes over a *usage.Service; tests
+// can inject a stub that returns canned Overview without touching SQLite.
+//
+// nil = pane shows "unavailable" copy and stays in list mode (mirrors
+// HookStatsFetcher's nil-tolerant policy).
+type UsageFetcher func() (usage.Overview, error)
 
 // logTailPollInterval is the cadence at which the log-tail pane polls
 // Store.LogsSince for new lines. Keep it modest — 1s gives sub-second
@@ -150,6 +160,15 @@ type Model struct {
 	HookStatsResult  queries.Result
 	HookStatsErr     error
 	HookStatsLoaded  bool
+
+	// Usage-pane state — only meaningful when Mode==ModeUsage.
+	// UsageFetcher is the injected read closure that wraps a
+	// usage.Service. nil = pane shows "unavailable" copy and the U
+	// keypress is a no-op (W7-2 / ADR-013).
+	UsageFetcher UsageFetcher
+	UsageResult  usage.Overview
+	UsageErr     error
+	UsageLoaded  bool
 }
 
 // SelectedID returns the agent ID currently focused for detail rendering.
@@ -206,6 +225,8 @@ type (
 		Result queries.Result
 	}
 	HookStatsErrMsg struct{ Err error }
+	UsageLoadedMsg  struct{ Result usage.Overview }
+	UsageErrMsg     struct{ Err error }
 )
 
 // NewModel constructs an empty Model around an AgentLister. The Init
@@ -314,6 +335,21 @@ func loadHookStatsCmd(fetcher HookStatsFetcher, window string) tea.Cmd {
 			return HookStatsErrMsg{Err: err}
 		}
 		return HookStatsLoadedMsg{Window: window, Result: res}
+	}
+}
+
+// loadUsageCmd fetches the F2.B Overview snapshot for the Usage pane.
+// Mirrors loadHookStatsCmd's nil-tolerant + error-channelled pattern.
+func loadUsageCmd(fetcher UsageFetcher) tea.Cmd {
+	if fetcher == nil {
+		return nil
+	}
+	return func() tea.Msg {
+		res, err := fetcher()
+		if err != nil {
+			return UsageErrMsg{Err: err}
+		}
+		return UsageLoadedMsg{Result: res}
 	}
 }
 
@@ -650,6 +686,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.HookStatsLoaded = true
 		return m, nil
 
+	case UsageLoadedMsg:
+		m.UsageResult = msg.Result
+		m.UsageLoaded = true
+		m.UsageErr = nil
+		return m, nil
+
+	case UsageErrMsg:
+		m.UsageErr = msg.Err
+		m.UsageLoaded = true
+		return m, nil
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -752,6 +799,18 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	if m.Mode == ModeUsage {
+		switch key {
+		case "esc", "h":
+			m.Mode = ModeList
+			return m, nil
+		case "r":
+			m.UsageLoaded = false
+			return m, loadUsageCmd(m.UsageFetcher)
+		}
+		return m, nil
+	}
+
 	if m.Mode == ModeDeleteConfirm {
 		switch key {
 		case "y", "Y":
@@ -850,6 +909,17 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.HookStatsLoaded = false
 		m.HookStatsErr = nil
 		return m, loadHookStatsCmd(m.HookStatsFetcher, m.HookStatsWindow)
+
+	case "U":
+		// F2.B Usage pane (W7-2 / ADR-013). Capital U so lowercase u
+		// stays free for future use. No-op when fetcher unset.
+		if m.UsageFetcher == nil {
+			return m, nil
+		}
+		m.Mode = ModeUsage
+		m.UsageLoaded = false
+		m.UsageErr = nil
+		return m, loadUsageCmd(m.UsageFetcher)
 	}
 	return m, nil
 }
@@ -869,6 +939,8 @@ func (m Model) View() string {
 		return m.renderLogTail()
 	case ModeHookStats:
 		return m.renderHookStats()
+	case ModeUsage:
+		return m.renderUsage()
 	default:
 		return m.renderList()
 	}
@@ -1129,6 +1201,115 @@ func (m Model) renderHookStats() string {
 	return b.String()
 }
 
+func (m Model) renderUsage() string {
+	var b strings.Builder
+
+	b.WriteString(headerStyle.Render("buddy usage — F2.B AI-usage analytics"))
+	b.WriteString("\n\n")
+
+	if m.UsageFetcher == nil {
+		b.WriteString(dimStyle.Render("  Usage 데이터를 가져올 수 없어 (UsageFetcher 미설정)."))
+		b.WriteString("\n  ")
+		b.WriteString(dimStyle.Render("buddy.db 에 sessions 테이블이 있는지 확인해줘."))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintUsage())
+		return b.String()
+	}
+
+	if !m.UsageLoaded {
+		b.WriteString(dimStyle.Render("  loading usage overview…"))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintUsage())
+		return b.String()
+	}
+
+	if m.UsageErr != nil {
+		b.WriteString(errorStyle.Render("  error: " + m.UsageErr.Error()))
+		b.WriteString("\n\n")
+		b.WriteString(footerHintUsage())
+		return b.String()
+	}
+
+	ov := m.UsageResult
+
+	label := "all time"
+	if !ov.Window.IsAllTime() {
+		label = "since " + ov.Window.Since.Local().Format("2006-01-02 15:04")
+	}
+	b.WriteString(dimStyle.Render(fmt.Sprintf("  window: %s\n\n", label)))
+
+	// Token spend
+	b.WriteString("  토큰 사용량\n")
+	b.WriteString(fmt.Sprintf("    total:        %d\n", ov.Spend.TotalTokens()))
+	b.WriteString(fmt.Sprintf("    input:        %d   output: %d\n",
+		ov.Spend.InputTokens, ov.Spend.OutputTokens))
+	b.WriteString(fmt.Sprintf("    cache_read:   %d   cache_create: %d\n",
+		ov.Spend.CacheReadTokens, ov.Spend.CacheCreateTokens))
+	b.WriteString(fmt.Sprintf("    cache hit:    %.1f%%\n\n",
+		ov.Spend.CacheHitRatio()*100))
+
+	// Session stats
+	b.WriteString("  세션 통계\n")
+	b.WriteString(fmt.Sprintf("    total: %d   active: %d   ended: %d\n",
+		ov.Stats.TotalSessions, ov.Stats.ActiveSessions, ov.Stats.EndedSessions))
+	if ov.Stats.EndedSessions > 0 {
+		b.WriteString(fmt.Sprintf("    duration: p50=%s  p90=%s  max=%s\n",
+			ov.Stats.DurationP50, ov.Stats.DurationP90, ov.Stats.DurationMax))
+	}
+	b.WriteString(fmt.Sprintf("    goal 기록률: %.0f%%\n\n", ov.Stats.GoalTextRatio*100))
+
+	// Time distribution (compact — top 5 peak hours only in TUI)
+	if ov.TimeDistribution.Total > 0 {
+		b.WriteString("  피크 시간대 (local)\n")
+		type hourCount struct {
+			Hour  int
+			Count int64
+		}
+		peaks := make([]hourCount, 0, 24)
+		for h := 0; h < 24; h++ {
+			if ov.TimeDistribution.HourCounts[h] > 0 {
+				peaks = append(peaks, hourCount{Hour: h, Count: ov.TimeDistribution.HourCounts[h]})
+			}
+		}
+		// Simple in-place sort: small N (≤24) — bubble sort fine.
+		for i := 0; i < len(peaks); i++ {
+			for j := i + 1; j < len(peaks); j++ {
+				if peaks[j].Count > peaks[i].Count {
+					peaks[i], peaks[j] = peaks[j], peaks[i]
+				}
+			}
+		}
+		max := 5
+		if len(peaks) < max {
+			max = len(peaks)
+		}
+		for i := 0; i < max; i++ {
+			b.WriteString(fmt.Sprintf("    %02d시: %d 세션\n", peaks[i].Hour, peaks[i].Count))
+		}
+		b.WriteString("\n")
+	}
+
+	// Top sessions
+	if len(ov.Top) > 0 {
+		b.WriteString("  상위 세션 (토큰 기준)\n")
+		for _, ts := range ov.Top {
+			short := ts.ID
+			if len(short) > 8 {
+				short = short[:8]
+			}
+			goal := ts.GoalText
+			if len(goal) > 50 {
+				goal = goal[:50] + "…"
+			}
+			b.WriteString(fmt.Sprintf("    %-10s %12d  %s\n", short, ts.TotalTokens, goal))
+		}
+		b.WriteString("\n")
+	}
+
+	b.WriteString(footerHintUsage())
+	return b.String()
+}
+
 // renderDeleteConfirm draws the modal-style confirmation prompt. The list
 // rows are NOT shown — the user's full attention is on the destructive
 // choice. ID is rendered explicitly so a redraw / refresh from another
@@ -1172,10 +1353,14 @@ func renderAgentRow(a agent.Agent, selected bool) string {
 }
 
 func footerHintList() string {
-	return footerStyle.Render("j/k or ↑/↓ move · g/G top/bottom · enter/l detail · s scheduler · c create · d delete · H hook stats · r refresh · q quit")
+	return footerStyle.Render("j/k or ↑/↓ move · g/G top/bottom · enter/l detail · s scheduler · c create · d delete · H hook stats · U usage · r refresh · q quit")
 }
 
 func footerHintHookStats() string {
+	return footerStyle.Render("esc/h back · r refresh · q quit")
+}
+
+func footerHintUsage() string {
 	return footerStyle.Render("esc/h back · r refresh · q quit")
 }
 
