@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-05-19 — W7-1 F2.A Session Monitor (closes whole-product v1.0 entry C-1)
+
+**Milestone**: cli buddy F2.A Session Monitor ships. Closes whole-product v1.0.0 entry condition C-1 (per ADR-010). First minor bump under the milestone-driven release policy (ADR-011) — previous v0.7.3 / v0.7.4 / v0.7.5 were ADR-only patches that should have ridden along; this is the first release fired by a *nameable* code-bearing milestone.
+
+What ships (code):
+
+- **`internal/db/migrations.go` v5** — additive ALTER TABLE on the `sessions` table (created in v3): `ended_at INTEGER NULL`, `goal_text TEXT NOT NULL DEFAULT ''`, `metadata TEXT NOT NULL DEFAULT '{}'`. Backward-compat: existing v4 DBs auto-migrate on next launch; no data loss.
+- **`internal/sessions/`** — full Session Monitor implementation per ADR-012:
+  - `Session` struct extended with `EndedAt *time.Time` / `GoalText string` / `Metadata string`.
+  - `Store` with `Upsert` / `Get` / `List(ListOptions)` / `SetEndedAt` / `Delete` / `PurgeBefore` / `CountBefore`. Upsert preserves `started_at` on conflict + makes `goal_text` sticky once non-empty.
+  - `FSLister` (`fs_lister.go`) scans `~/.claude/projects/*/*.jsonl`, tails each transcript from `last_offset`, extracts goal from first non-meta user message (configurable `MaxGoalLen`, default 500), accumulates token counters (input / output / cache_read / cache_create) from assistant messages' `usage` block.
+  - Test coverage: 16 race-clean tests across `store_test.go` (CRUD round-trip / StartedAt preservation / GoalText stickiness / IncludeEnded filter / Since filter / Purge active-preservation / Count agreement) + `fs_lister_test.go` (happy path / meta skip / offset resume / truncate / MaxGoalLen / array content / multi-project) + the original 2.
+- **`cmd/buddy/session_cmd.go`** — new `buddy session` subcommand tree per ADR-012 Q3:
+  - `buddy session list [--all] [--since DUR] [--refresh]` — active sessions by default, ended via `--all`, time filter via `--since`, on-demand fsLister scan via `--refresh`.
+  - `buddy session show <id>` — full detail (PID / transcript path / started / last active / ended / tokens / offset / goal / metadata).
+  - `buddy session purge --before <DUR|date|RFC3339> [--apply]` — retention, dry-run by default, active sessions never purged.
+  - `buddy session register --id <id> --transcript-path <p> [--pid N]` (hidden) — SessionStart hook entry point for future `buddy install` enhancement (W7-1.1).
+- **`internal/daemon/daemon.go`** — gains the `sessionMonitor` goroutine alongside the existing outbox aggregator. Runs at `SessionMonitor.PollInterval` (default 30s), calls `FSLister.List()` then sweeps for stale-vs-active transitions (sets `ended_at` when `last_active` crosses `EndedThreshold`, default 1h; clears on resume — no row split). Errors are logged, never fatal. Disabled via `SessionMonitor.Disabled=true`.
+- **`internal/config/config.go`** — three new keys: `sessionMonitorDisabled` (bool, default false), `sessionMonitorPollInterval` (Duration, default 30s), `sessionMonitorEndedThreshold` (Duration, default 1h). Settable via `buddy config set session-monitor.* <value>` once the config file supports `set` (current CLI is `buddy config show` / file-edit; `set` arrives with W2 i18n cycle).
+
+What ships (governance):
+
+- **ADR-012** — F2.A Session Monitor design lock-in. Four design questions (observation / schema / CLI / daemon role) decided as Hybrid + additive migration + list/show/purge/register + background poll + on-demand.
+
+Plugin v1.0.0 entry condition status (per ADR-010, whole-product 9 conditions):
+
+| # | Condition | Status |
+|---|-----------|--------|
+| B-1 | cli buddy W3 cascade | ✅ Done |
+| B-2 | production dogfood | ❌ user-paced |
+| B-3 | PROCEDURE B6 + `--strict` | ✅ Done |
+| B-4 | router smart-skip | ✅ Done |
+| **C-1** | **F2.A Session Monitor** | **✅ Done (this release)** |
+| C-2 | F2.B Usage Analysis | ❌ W7-2 next |
+| C-3 | F2.C Advisory | ❌ W7-3 |
+| C-4 | F2.D Drift Detection | ❌ W7-4 |
+| C-5 | F2.E Notification | ❌ W7-5 |
+
+→ 4/9 closed (44%). Whole-product progress moves from ~33% to ~44%. v1.0.0 still gated on B-2 + C-2~C-5.
+
+Counts and gates:
+
+- 5 version sources all on `0.8.0` (`make verify-versions` passes).
+- `go build / vet / test -race -count=1 -timeout=180s ./...` — 23 packages green (up from 22 — `internal/sessions` grows from 2 tests to 18).
+- `make test-skill-form --strict` — 148 / 62 allowlist / 86 pass / 0 deviate (unchanged).
+- migration v5 applies cleanly; `schema_version` rows = 5.
+
+Deferred from W7-1 (W7-1.x follow-on):
+
+- `buddy install` hook auto-registration via SessionStart → `buddy session register` (currently the hook entry exists but `buddy install` does not yet add it; manual hook setup or fsLister fallback works).
+- TUI `ModeSessions` pane (Wave 4 follow-on; current `buddy tui` does not yet have an `S` key for sessions).
+
+Next milestone target: **W7-2 F2.B Usage Analysis** (closes C-2). Triggered after F2.A has accumulated ~30 days of real session data per ADR-012 §Q2 wait, OR sooner if the developer wants to design the analytic primitives ahead of data.
+
 ## [0.7.5] — 2026-05-19
 
 Doc-only patch release. Single commit since v0.7.4 adding the v0.7.x dogfood guide. No code-path changes.

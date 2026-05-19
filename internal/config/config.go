@@ -47,6 +47,12 @@ type Config struct {
 	PollInterval    *Duration `json:"pollInterval,omitempty"`
 	BatchSize       *int      `json:"batchSize,omitempty"`
 	PersonaLocale   *string   `json:"personaLocale,omitempty"` // "ko" | "en"
+
+	// SessionMonitor* are W7-1 (ADR-012) — daemon-side observation of
+	// Claude Code sessions. Disabled=true skips the goroutine entirely.
+	SessionMonitorDisabled       *bool     `json:"sessionMonitorDisabled,omitempty"`
+	SessionMonitorPollInterval   *Duration `json:"sessionMonitorPollInterval,omitempty"`
+	SessionMonitorEndedThreshold *Duration `json:"sessionMonitorEndedThreshold,omitempty"`
 }
 
 // Effective is the resolved configuration with all fields populated.
@@ -60,11 +66,15 @@ type Effective struct {
 	PollInterval    time.Duration
 	BatchSize       int
 	PersonaLocale   string
+
+	SessionMonitorDisabled       bool
+	SessionMonitorPollInterval   time.Duration
+	SessionMonitorEndedThreshold time.Duration
 }
 
 // Defaults returns the spec-locked defaults from v0.1-spec §6.2 + §6.3 plus
 // the daemon's own defaults (PollInterval, BatchSize) which were never
-// user-tunable until M5.
+// user-tunable until M5. Session Monitor defaults are ADR-012.
 func Defaults() Effective {
 	return Effective{
 		HookTimeoutMs:   30_000,
@@ -75,6 +85,10 @@ func Defaults() Effective {
 		PollInterval:    time.Second,
 		BatchSize:       500,
 		PersonaLocale:   "ko",
+
+		SessionMonitorDisabled:       false,
+		SessionMonitorPollInterval:   30 * time.Second,
+		SessionMonitorEndedThreshold: 1 * time.Hour,
 	}
 }
 
@@ -104,6 +118,15 @@ func (c Config) Effective() Effective {
 	}
 	if c.PersonaLocale != nil {
 		eff.PersonaLocale = *c.PersonaLocale
+	}
+	if c.SessionMonitorDisabled != nil {
+		eff.SessionMonitorDisabled = *c.SessionMonitorDisabled
+	}
+	if c.SessionMonitorPollInterval != nil {
+		eff.SessionMonitorPollInterval = c.SessionMonitorPollInterval.Duration
+	}
+	if c.SessionMonitorEndedThreshold != nil {
+		eff.SessionMonitorEndedThreshold = c.SessionMonitorEndedThreshold.Duration
 	}
 	return eff
 }

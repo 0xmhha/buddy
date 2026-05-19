@@ -105,5 +105,13 @@ func resolveDaemonRunConfig(dbFlag, pidFile string, pollFlag time.Duration, batc
 		PIDFile:      pidFile,
 		PollInterval: poll,
 		BatchSize:    batch,
+		// W7-1 (ADR-012) session monitor wiring from config. No CLI flag
+		// override yet — config-driven only. Disabled=true skips the
+		// goroutine entirely; defaults wire to 30s / 1h via config.Defaults.
+		SessionMonitor: daemon.SessionMonitorConfig{
+			Disabled:       eff.SessionMonitorDisabled,
+			PollInterval:   eff.SessionMonitorPollInterval,
+			EndedThreshold: eff.SessionMonitorEndedThreshold,
+		},
 	}
 }

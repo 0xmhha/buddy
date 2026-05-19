@@ -24,6 +24,7 @@ import (
 
 	"github.com/0xmhha/buddy/internal/aggregator"
 	"github.com/0xmhha/buddy/internal/db"
+	"github.com/0xmhha/buddy/internal/sessions"
 )
 
 // Config governs how the daemon polls.
@@ -33,6 +34,22 @@ type Config struct {
 	BatchSize    int
 	PIDFile      string    // default: <dirname(DBPath)>/daemon.pid
 	LogTo        io.Writer // structured info/errors. default os.Stderr.
+
+	// SessionMonitor governs the W7-1 sessionMonitor goroutine (ADR-012).
+	// Disabled=true skips the goroutine entirely (matches the v0.1 daemon
+	// behavior for users who don't want session observation). When
+	// enabled, PollInterval governs cadence (default 30s) and
+	// EndedThreshold marks a session as ended once last_active is older
+	// than the threshold (default 1h).
+	SessionMonitor SessionMonitorConfig
+}
+
+// SessionMonitorConfig — ADR-012 daemon role config.
+type SessionMonitorConfig struct {
+	Disabled        bool
+	PollInterval    time.Duration
+	EndedThreshold  time.Duration
+	ProjectsRoot    string // override for tests; empty → $HOME/.claude/projects
 }
 
 // Defaults applies sensible defaults to zero-valued fields.
@@ -48,6 +65,12 @@ func (c *Config) Defaults() {
 	}
 	if c.PIDFile == "" && c.DBPath != "" {
 		c.PIDFile = filepath.Join(filepath.Dir(c.DBPath), "daemon.pid")
+	}
+	if c.SessionMonitor.PollInterval == 0 {
+		c.SessionMonitor.PollInterval = 30 * time.Second
+	}
+	if c.SessionMonitor.EndedThreshold == 0 {
+		c.SessionMonitor.EndedThreshold = 1 * time.Hour
 	}
 }
 
@@ -88,6 +111,16 @@ func Run(ctx context.Context, cfg Config) error {
 		fmt.Fprintf(cfg.LogTo, "buddy: tick processed %d rows\n", n)
 	}
 
+	// W7-1 sessionMonitor goroutine (ADR-012). Runs alongside the outbox
+	// aggregator. Disabled=true skips entirely; otherwise tick at
+	// SessionMonitor.PollInterval (default 30s).
+	if !cfg.SessionMonitor.Disabled {
+		store := sessions.NewStore(conn)
+		go runSessionMonitor(ctx, store, cfg.SessionMonitor, cfg.LogTo)
+		fmt.Fprintf(cfg.LogTo, "buddy: session monitor up (poll=%s ended_threshold=%s)\n",
+			cfg.SessionMonitor.PollInterval, cfg.SessionMonitor.EndedThreshold)
+	}
+
 	ticker := time.NewTicker(cfg.PollInterval)
 	defer ticker.Stop()
 
@@ -102,6 +135,64 @@ func Run(ctx context.Context, cfg Config) error {
 			} else if n > 0 {
 				fmt.Fprintf(cfg.LogTo, "buddy: tick processed %d rows\n", n)
 			}
+		}
+	}
+}
+
+// runSessionMonitor is the W7-1 goroutine. It periodically fs-scans
+// ~/.claude/projects/ via fsLister, then sweeps existing sessions for
+// stale-vs-active state transitions (ended_at marker on / off).
+//
+// Errors are logged but never fatal — a corrupt transcript shouldn't
+// kill the daemon. ctx cancellation exits cleanly.
+func runSessionMonitor(ctx context.Context, store *sessions.Store, cfg SessionMonitorConfig, logTo io.Writer) {
+	lister := sessions.NewFSLister(store)
+	if cfg.ProjectsRoot != "" {
+		lister.ProjectsRoot = cfg.ProjectsRoot
+	}
+
+	tick := func() {
+		// Phase 1: fs scan + upsert.
+		if _, err := lister.List(ctx); err != nil {
+			fmt.Fprintf(logTo, "buddy: session monitor scan error: %v\n", err)
+		}
+		// Phase 2: sweep for stale-vs-active transitions.
+		all, err := store.List(ctx, sessions.ListOptions{IncludeEnded: true})
+		if err != nil {
+			fmt.Fprintf(logTo, "buddy: session monitor sweep error: %v\n", err)
+			return
+		}
+		now := time.Now().UTC()
+		staleCutoff := now.Add(-cfg.EndedThreshold)
+		for _, s := range all {
+			isStale := s.LastActive.Before(staleCutoff)
+			alreadyMarkedEnded := s.EndedAt != nil
+			switch {
+			case isStale && !alreadyMarkedEnded:
+				// Newly stale → mark ended.
+				t := now
+				if err := store.SetEndedAt(ctx, s.ID, &t); err != nil {
+					fmt.Fprintf(logTo, "buddy: session monitor: set ended_at %s: %v\n", s.ID, err)
+				}
+			case !isStale && alreadyMarkedEnded:
+				// Resumed → clear ended marker.
+				if err := store.SetEndedAt(ctx, s.ID, nil); err != nil {
+					fmt.Fprintf(logTo, "buddy: session monitor: clear ended_at %s: %v\n", s.ID, err)
+				}
+			}
+		}
+	}
+
+	// Initial tick + ticker.
+	tick()
+	ticker := time.NewTicker(cfg.PollInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			tick()
 		}
 	}
 }

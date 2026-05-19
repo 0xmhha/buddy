@@ -77,7 +77,7 @@ func TestOpen_RecordsLatestSchemaVersion(t *testing.T) {
 
 	var v int
 	require.NoError(t, conn.QueryRow("SELECT MAX(version) FROM schema_version").Scan(&v))
-	assert.Equal(t, 4, v)
+	assert.Equal(t, 5, v)
 }
 
 func TestOpen_IsIdempotentAcrossReopens(t *testing.T) {
@@ -93,7 +93,7 @@ func TestOpen_IsIdempotentAcrossReopens(t *testing.T) {
 
 	var count int
 	require.NoError(t, conn2.QueryRow("SELECT COUNT(*) FROM schema_version").Scan(&count))
-	assert.Equal(t, 4, count) // one row per applied migration
+	assert.Equal(t, 5, count) // one row per applied migration
 }
 
 func TestOpen_UsesWALMode(t *testing.T) {

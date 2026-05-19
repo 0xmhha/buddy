@@ -139,6 +139,24 @@ var migrations = []migration{
 			CREATE INDEX idx_agent_logs_run_ts ON agent_logs(run_id, ts);
 		`,
 	},
+	{
+		// v5 — F2.A Session Monitor (W7-1) — ADR-012 lock-in. Additive
+		// columns on the v3 sessions table:
+		//   - ended_at  : NULL while session may be active. Daemon sets it
+		//                 when last_active is older than EndedThreshold
+		//                 (default 1h). Cleared on resume — no row split.
+		//   - goal_text : first user message extracted by fsLister. F2.D
+		//                 (W7-4) Drift Detection compares against this.
+		//   - metadata  : JSON escape hatch for future per-session fields.
+		// All three are backward-compat: existing rows get NULL / "" / "{}".
+		version: 5,
+		sql: `
+			ALTER TABLE sessions ADD COLUMN ended_at  INTEGER;
+			ALTER TABLE sessions ADD COLUMN goal_text TEXT    NOT NULL DEFAULT '';
+			ALTER TABLE sessions ADD COLUMN metadata  TEXT    NOT NULL DEFAULT '{}';
+			CREATE INDEX idx_sessions_ended_at ON sessions(ended_at);
+		`,
+	},
 }
 
 // RunMigrations applies every migration whose version is greater than the

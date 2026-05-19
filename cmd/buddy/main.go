@@ -28,7 +28,7 @@ import (
 //
 // Roadmap §3 M6 T3.
 var (
-	version   = "0.7.5"
+	version   = "0.8.0"
 	gitSHA    = "dev"
 	buildDate = "unknown"
 )
@@ -139,6 +139,7 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newMcpCmd())
 	root.AddCommand(newAgentCmd())
 	root.AddCommand(newTuiCmd())
+	root.AddCommand(newSessionCmd())
 	// Strip cobra's default "<name> version " prefix: versionString() already
 	// starts with "buddy ", and the spec format would otherwise render as
 	// "buddy version buddy 0.1.0 (...)". The trailing newline matches cobra's

@@ -15,7 +15,7 @@ import (
 
 // Session represents an active Claude Code session as observed by buddy.
 // Fields map 1:1 to the v0.2 sessions table (internal/db/migrations.go
-// version 3):
+// version 3, extended by v5 — ADR-012):
 //
 //   - ID              — canonical session id surfaced by Claude Code.
 //   - PID             — process id when observable, zero when not.
@@ -27,6 +27,20 @@ import (
 //   - LastOffset      — byte offset the transcript reader resumes from
 //                       on the next tick. Persisting it in the row makes
 //                       the reader idempotent across daemon restarts.
+//   - EndedAt         — nil while session may still be active. Daemon
+//                       sets it when LastActive crosses EndedThreshold
+//                       (default 1h). Cleared on resume — no row split.
+//                       Added by migration v5 (ADR-012).
+//   - GoalText        — first user message extracted by fsLister on
+//                       the first tail pass. F2.D Drift Detection
+//                       (W7-4) compares current activity against this.
+//                       "" when no user message yet or extraction
+//                       skipped (e.g., first message is /clear).
+//                       Added by migration v5 (ADR-012).
+//   - Metadata        — JSON object for future per-session fields
+//                       without further migrations (project_root,
+//                       claude_version, custom tags). "{}" default.
+//                       Added by migration v5 (ADR-012).
 type Session struct {
 	ID             string
 	PID            int
@@ -35,6 +49,9 @@ type Session struct {
 	LastActive     time.Time
 	Usage          schema.TokenUsage
 	LastOffset     int64
+	EndedAt        *time.Time
+	GoalText       string
+	Metadata       string
 }
 
 // Lister enumerates the active Claude Code sessions visible to buddy.
