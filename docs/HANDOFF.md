@@ -76,23 +76,27 @@
 
 ## 1. 현재 위치 (one-glance)
 
-| 항목 | 상태 |
-|------|------|
-| M1 schema/SQLite/outbox | ✅ |
-| M2 hook-wrap CLI | ✅ |
-| M3 daemon + aggregator + cliwrapcfg | ✅ |
-| M4 install/uninstall/doctor/stats/events | ✅ |
-| **M5** config CLI + 4 friction fix + purge + 페르소나 catalog | ✅ (PR #1) |
-| **M6** release prep (cross-compile + tag-triggered workflow + CHANGELOG) | ✅ (PR #2) |
-| **v0.1.0 release** | ✅ tag publish 시 GitHub Actions 자동 실행 — 4 binaries + SHA256SUMS published 2026-04-26 |
-| DOGFOOD.md + feedback template | ✅ |
-| 사용자의 실제 dogfood 사용 | ⏳ 대기 (release binary 로 본격 시작 가능) |
-| Dogfood feedback 회수 | ⏳ 대기 (v0.2 / v0.3 우선순위 입력) |
-| v0.2 / v0.3 / v1.0 | 📋 outline only |
+> **잔여 작업 + 진행률 + 코드 gap 의 단일 SSoT 는 [`BACKLOG.md`](./BACKLOG.md).** 본 §1 은 *세션 인계 시 한눈 요약* 만.
 
-**테스트:** 15개 패키지, ~150+ tests pass (`-race -count=2` clean).
-**Sync 상태:** main 이 `bd97352` (M5 squash) → `514f667` (docs sync) → `03a4fa9` (M6 squash) 까지 origin과 일치.
-**Latest release:** [v0.1.0](https://github.com/0xmhha/buddy/releases/tag/v0.1.0) (2026-04-26)
+| 영역 | 상태 |
+|------|------|
+| Plugin orchestrator — 9-phase × 148 skill | ✅ 100% (Skill Completion Cycle) |
+| Plugin commands — 99 | ✅ 100% (N-1 closure ADR-001 + B6 --strict ADR-006) |
+| MCP tools — 12 (analytics 7 + feature 5) | ✅ 100% (ADR-008 lock-in) |
+| cli buddy W3-1~W3-6 cascade | ✅ 100% (TUI 7 modes + agent runtime + scheduler + cascade chain + 자산 재배치 + reference agent) |
+| Hook reliability monitor — M1~M6 + v0.1.0 release | ✅ 100% (4 binaries published 2026-04-26) |
+| **Plugin v1.0.0 entry conditions (B-1/B-2/B-3/B-4)** | **75%** (3/4 closed, B-2 production dogfood 잔여) |
+| Dogfood **cycle-2 production** (B-2 trigger) | ⚠ ~5% (pre-flight Done, 3 paths user-paced) |
+| i18n sweep (M5 deferred) | 25% (W2-3 en/ko parity ✅, 3 잔여) |
+| Release polish (M6 deferred) | 25% (ci.yml ✅, SHA pin / notarize / VERSION SSoT 잔여) |
+| TUI / runtime UX follow-on | 0% (dogfood signal 대기) |
+| **종합 진행률** | **약 90%** (Core 100%, polish 20%, v1.0.0 75%) |
+
+**테스트:** 23 packages race-clean (`go test -race -count=1 ./...`), `make test-skill-form --strict` 148/62 allowlist/86 pass/0 deviate.
+**Sync 상태:** main 이 `f666a5f` (cycle-2 note initial) — origin push 완료.
+**Latest release:** [v0.7.5](https://github.com/0xmhha/buddy/releases/tag/v0.7.5) (2026-05-19)
+
+**다음 액션** — [`BACKLOG.md`](./BACKLOG.md) Wave 1 = B-2 production dogfood cycle-2 완주. 실행 매뉴얼: [`docs/notes/2026-05-19-dogfood-result-cycle-2.md`](./notes/2026-05-19-dogfood-result-cycle-2.md).
 
 ---
 
