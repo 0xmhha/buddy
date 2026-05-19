@@ -173,7 +173,7 @@
 
 | ID | v1.0 cond | 작업 | 비용 | 선행 ADR |
 |----|-----------|------|------|---------|
-| **W7-1** | C-1 | **F2.A Session Monitor** — `internal/sessions/` 의 passive registry 를 active observer 로 확장 + daemon 의 session 관찰 role 정의 + `buddy session ...` CLI + TUI pane | HIGH | ADR-{N} F2.A Session Monitor design (trigger: Claude Code session-lifecycle hook 안정) |
+| **W7-1** | C-1 | **F2.A Session Monitor** — `internal/sessions/` 의 passive registry 를 active observer 로 확장 + daemon 의 session 관찰 role 정의 + `buddy session ...` CLI + TUI pane | HIGH | **ADR-012 Accepted (2026-05-19)** — Hybrid hook+fsLister + schema v5 + CLI list/show/purge/register + daemon poll. impl 진입 중. |
 | **W7-2** | C-2 | **F2.B Usage Analysis** — 7 analytics MCP tools 를 AI-usage 분석으로 repurpose 또는 신규 tool 추가 (token spend / message-length / time-to-first-tool-call / hook-failure rate per skill) | MED | ADR-{N} F2.B schema design (trigger: W7-1 ~30일 데이터) |
 | **W7-3** | C-3 | **F2.C Advisory** — W7-2 의 analytic primitive → actionable 한국어 prose 권고 (rule-based 또는 LLM-driven 선택) | MED-HIGH | ADR-{N} F2.C generation design (trigger: W7-2 안정) |
 | **W7-4** | C-4 | **F2.D Drift Detection** — 단일 conversation 안 *원래 목적* vs *현재 turn* semantic drift 감지 + drift alert | HIGH | ADR-{N} F2.D design (trigger: W7-1 turn-level 데이터 + LLM-driven 비교 path) |
