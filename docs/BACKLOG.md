@@ -57,7 +57,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 |------|--------|------|
 | Dogfood validation — cycle-1 (B1-B5 fix) | ✅ 100% | 2026-05-10 완료 |
 | Dogfood validation — cycle-2 production (B-2 trigger) | ~5% | pre-flight Done, 3 paths user-paced — Wave 1 |
-| i18n sweep (M5 deferred — 4 sub-task) | 25% | W2-3 ✅ (en/ko 57/57 parity), 3 잔여 — Wave 2 |
+| i18n sweep (M5 deferred — 4 sub-task) | 75% | W2-1 / W2-2 / W2-3 ✅, W2-4 잔여 — Wave 2 |
 | Release polish (M6 deferred — 4 sub-task) | 25% | ci.yml ✅ (v0.6.2), 3 잔여 — Wave 3 |
 | TUI / runtime UX follow-on (5 sub-task) | 0% | dogfood signal 대기 — Wave 4 |
 | Trigger-bound (Korea / USA-EU / PG-MySQL / notarize / cycle-2 live) | N/A | 외부 신호 대기 — Wave 5 |
@@ -118,9 +118,9 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 
 | ID | 작업 | 위치 | 비고 |
 |----|------|------|------|
-| W2-1 | `config.ValidationError.Reason` persona catalog wiring + `translateConfigError` bullet 렌더링 | `internal/persona/` (`KeyConfigReason*` 8 keys 이미 declared, *코드 line 108 명시* "Not yet wired") | < 1 day |
-| W2-2 | `queries.ErrInvalidLimit` / `ErrInvalidWindow` 카탈로그 이전 — 현재 한국어 sentinel (`"--window 은 5m, 1h, 24h 중 하나야."`) | `internal/queries/stats.go` + `events.go` | < 1 day |
-| W2-3 | ~~English locale 카탈로그 채우기~~ | ✅ Done (`internal/persona/en.go` 57 keys, ko 와 parity) | — |
+| ~~W2-1~~ | ~~`config.ValidationError.Reason` persona catalog wiring~~ | ✅ Done — ValidationError grew Code/Args, cmd-layer `configReasonKey` map binds 8 reasons to `KeyConfigReason*`; advisor/notify reasons remain English fallback for follow-up. | — |
+| ~~W2-2~~ | ~~`queries.ErrInvalidLimit` / `ErrInvalidWindow` 카탈로그 이전~~ | ✅ Done — sentinels emit locale-free English; cmd-layer renders via `KeyQueriesInvalidLimit/Window`. | — |
+| ~~W2-3~~ | ~~English locale 카탈로그 채우기~~ | ✅ Done (`internal/persona/en.go` ko-parity; +2 new keys from W2-2). | — |
 | W2-4 | Subcommand `--config` 인지 locale 해석 — 현재 root `PersistentPreRunE` 가 `config.DefaultPath()` 만 읽음 (`cmd/buddy/main.go:118` 주석 명시) | `cmd/buddy/main.go` | < 1 day |
 
 ### Wave 3 — Release polish (M6 deferred)
