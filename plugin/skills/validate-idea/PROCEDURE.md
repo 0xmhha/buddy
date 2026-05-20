@@ -253,8 +253,18 @@ Founder가 전체 세션 편안함 느끼면 실패. 최소 두 번 push받은 �
 - "마케팅 팀."
 - "시니어 엔지니어." (더 나음, 하지만 회사 크기와 어떤 task push.)
 
-**좋은 답:**
-- "Sarah, 50명 logistics 회사 ops 매니저. 올해 고객 churn 10% 줄이면 승진, 보스는 tooling 불평에 인내심 없는 founder. 매일 아침 9시까지 10 탭 열려 있음."
+**좋은 답 (단편 형태 — 완성 sentence 가 아닌 *조각들*):**
+- 이름 한 줄: "Sarah" (또는 가명 OK; *follow-up 가능한 인간*)
+- 직함 + 회사 크기 한 줄: "50명 logistics 회사 ops 매니저"
+- 경력 stake 한 줄: "올해 고객 churn 10% 줄이면 승진"
+- 보스 + 보스가 신경 쓰는 것 한 줄: "보스는 tooling 불평에 인내심 없는 founder"
+- 마지막 대화 + 무슨 말 한 줄: "지난 화요일 회의 후 '매일 9시까지 10 탭 열고 시작' 말함"
+
+각 줄이 *독립적*. founder 가 본인 anchor 인간에 해당하는 *3-5 줄* 만 제공 (모두 못 채우면 부족 항목 명시). 단일 완성 sentence 의 copy-edit mimicry 를 방지하기 위한 fragmentation 형식.
+
+**Persona split 처리** (hybrid role case):
+- Anchor 가 *복수 role* 을 동시 수행 시 (e.g., lead designer + frontend code, founder-CEO + sales) → *single-product-for-hybrid-persona* 가 valid alternative wedge framing. Q3 의 single named human 강제는 *이름* 의 force 이며 *role* 의 force 가 아님 — 같은 1 명이 N 개 role 을 가질 수 있음.
+- Hybrid 의 경우 follow-up probe 추가: "이 사람의 role split 이 *fundamental* 인지 (small startup 의 구조적 특성) *circumstantial* (보스 부재 / 임시 책임 분담) 인지? 같은 segment 의 다른 사람도 같은 hybrid 인가?"
 
 ---
 
@@ -361,6 +371,16 @@ Founder가 전체 세션 편안함 느끼면 실패. 최소 두 번 push받은 �
 > 1. [statement] — agree/disagree?
 > 2. [statement] — agree/disagree?
 > 3. [statement] — agree/disagree?
+
+**Active obligations carry-forward 의무**:
+
+전제에 *qualifier* (e.g., "self-reported only", "unverified", "pending behavioral observation", "needs upgrade") 가 포함된 경우, 사용자가 *agree* 해도 그 *qualifier* 는 *해결되지 않음*. 이런 전제는 **반드시 design doc 의 다음 섹션 중 1+ 곳에 carry-forward**:
+
+- **Open Questions** — 해결 plan 이 *명시* 안 됐을 때
+- **The Assignment** — qualifier 해결이 *founder 의 단일 다음 액션* 으로 명시 가능할 때
+- **Dependencies** — qualifier 가 *외부 trigger* (다른 사람, 시간, 자원) 에 묶일 때
+
+예: "P2: 20h/week wasted — self-reported only (behavioral observation upgrade 필요)" 에 agree → design doc 의 *The Assignment* 에 "이번 주 1-week trial 측정값 수집" 명시 의무. carry-forward 누락 시 design doc 작성 자체가 *premise 의 silent acceptance* 로 perverted.
 
 ### 2. 2-3 대안 생성
 
