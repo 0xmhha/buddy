@@ -1,0 +1,23 @@
+version: 2
+
+# Dependabot watches the actions referenced in .github/workflows/ and opens
+# a PR when a newer release ships. Pairing this with SHA-pinned `uses:`
+# entries trades "mutable major tag drift" for "auditable bump PRs": each
+# upgrade becomes a reviewable changelog moment instead of a silent retag.
+#
+# Scope guard: only github-actions is enabled. Go module updates live with
+# go.mod and `go get -u`; adding gomod here would compete with that
+# workflow without adding signal.
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: scope
+    labels:
+      - dependencies
+      - github-actions
