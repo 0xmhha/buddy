@@ -31,6 +31,20 @@ baseline-as-of 마커는 cycle open 시점인 `d5f2755`. 본 세션에서 Wave 2
 
 **Pre-flight 결과**: 7/8 자동 항목 ✅ (1 deviation 은 cycle 외부 in-progress work). TUI smoke 만 사용자 진행. §B 진입 가능 상태.
 
+### §A.1 — §B.4 add-on surface smoke (2026-05-20, commit `66575f8`)
+
+§A 후속으로 §B.4 의 5 W7 surface 를 *daemon 없이* 1 회씩 호출 — *empty-state → ingest → real-data* 사이클 검증:
+
+| Surface | 명령 | 결과 |
+|---------|------|------|
+| B.4.a session | `buddy session list --refresh` | ✅ 19+ sessions ingested via fsLister (daemon-less one-shot) |
+| B.4.b usage today/trend/top | `buddy usage today` 등 | ✅ 3.7B tokens 24h / 64 sessions 7d / top-N leaderboard 정상 |
+| B.4.c knowledge | `buddy knowledge ingest --all` → `stats` → `query` | ✅ 16,162 chunks; BM25 검색 정상; embedder 부재 시 friend-tone fallback (sentence-transformers 미설치) |
+| B.4.d advise | `buddy advise` | ✅ **실 advisor rule 2 개 fire**: `token-spike-day · high` + `session-volume-day · info` |
+| B.4.e notify | `buddy notify test --channel {desktop,tui-banner}` | ✅ dispatch 메시지 정상; ⚠ `notify status` 와 audit log 분리 (→ BA-3) |
+
+**§B.4 통과**: 5/5 surface dependency DAG 완주. *real cycle-3 baseline signal* 확보 (advisor 첫 production 발화).
+
 ---
 
 ## §B. Short cycle (1 day) — 사용자 직접 진행
@@ -133,11 +147,13 @@ buddy usage top --limit 10
 #### B.4.c `buddy knowledge` (sessions 의존 — ingest 필요, ADR-014)
 
 ```bash
-buddy knowledge ingest             # 모든 session transcript chunk
-buddy knowledge ingest --embed     # 임베딩까지 (python script 필요)
+buddy knowledge ingest --all       # 모든 session transcript chunk (BM25)
+buddy knowledge ingest --session <id>  # 단일 세션만
+# --all 또는 --session 필수. 둘 다 없으면 friend-tone error.
+buddy knowledge ingest --all --embed-script ./scripts/embed.py  # 임베딩까지 (python + sentence-transformers 필요)
 buddy knowledge stats              # chunk 수 / embedding coverage / last ingest
-buddy knowledge query "내 질문"    # BM25 (default)
-buddy knowledge query "내 질문" --mode hybrid  # BM25 + vector
+buddy knowledge query "내 질문"    # BM25 (default; embedder 미설치 시 자동 fallback)
+buddy knowledge query "내 질문" --mode hybrid  # BM25 + vector (embedder 필요)
 ```
 
 **무엇을 보나**:
@@ -207,15 +223,55 @@ buddy notify status --limit 20      # notification_log v8 조회
 
 ---
 
-### B?-? — (template — 실 finding 으로 교체)
+### BA-2 — cycle-3 doc 의 `buddy knowledge ingest` 예시가 required flag 누락
 
-**Surface**: plugin | cli-buddy | hook-monitor | session | usage | knowledge | advise | notify | cross-surface
-**Severity**: blocker | high | medium | low
-**Repro**: (3-5 줄)
+**Surface**: cli-buddy (documentation)
+**Severity**: low (UX confusion; CLI 자체는 friend-tone 으로 안내)
+**Repro**:
+```bash
+./bin/buddy knowledge ingest
+# CLI 응답: buddy: --session <id> 또는 --all 필요해
+```
 **Expected vs Actual**:
-- expected: ...
-- actual: ...
-**Recommendation**: bug-fix | UX-fix | new-feature | ADR | documentation | not-fixable
+- expected: cycle-3 doc §B.4.c 의 첫 예시가 `buddy knowledge ingest --all` 로 시작해야 사용자가 1 회 호출로 결과 확인
+- actual: doc 의 첫 예시가 인자 없이 `buddy knowledge ingest` — 사용자가 그대로 실행하면 fail
+
+**Root cause**: cycle-3 doc 작성 시 W7-3a (ADR-014) 의 ingest 동작을 *flag-less default* 로 추정. 실제 CLI 는 *데이터 범위 명시 강제* (안전 default). doc 이 CLI 동작 잘못 묘사.
+
+**Recommendation**: documentation. cycle-3 doc §B.4.c 의 첫 줄을 `buddy knowledge ingest --all` 로 갱신. 동일 doc 의 다른 surface 도 *실 인자 검증* 한 번 더 sweep.
+
+**Closed**: 이번 cycle-3 doc 갱신 commit 에 포함.
+
+---
+
+### BA-3 — `notify test` 가 dispatch 후 notify_log 에 기록 안 됨
+
+**Surface**: notify
+**Severity**: low (audit trail 누락; user 가 "test 보냈는데 status 에 안 보이네" confusion)
+**Repro**:
+```bash
+./bin/buddy notify test --channel desktop
+#  buddy: desktop 채널로 테스트 알림 보냈어.
+./bin/buddy notify status --limit 5
+#  buddy: 기록된 알림이 없어. daemon 가동 + advisor 생성 후 확인해줘.
+```
+**Expected vs Actual**:
+- expected: 두 가지 중 하나. (a) synthetic test 도 notify_log v8 에 기록 + status 가 *test* tag 와 함께 표시, 또는 (b) `notify test` 응답 메시지가 "audit log 에는 안 기록함" 명시
+- actual: dispatch 는 성공한 응답, status 는 empty 표시 — *연결 끊긴 두 surface*
+
+**Root cause**: ADR-016 (W7-5 notification) 의 *audit trail vs synthetic-test* 분리 정책이 *코드는 분리, doc 은 미명시*. 사용자 입장에서 "보냈다더니 status 가 비어있네" 의 disconnect.
+
+**Recommendation**: UX-fix 또는 documentation. 가장 가벼운 수정 = `notify test` 응답 끝에 "(audit log 에는 기록 안 함; daemon auto-dispatch 만 status 에 보임)" 한 줄 부연. 더 강한 수정 = synthetic dispatch 도 *kind=test* 로 notification_log 기록 후 `status --kind real` flag 추가.
+
+**Open** — Wave 4 candidates 에 등록 권장 (post-B-2 finding triage).
+
+---
+
+## §C.1 — Within-cycle observations (finding 은 아니나 기록 가치)
+
+- **Real advisor signals fired** during §B.4.d smoke: `token-spike-day · high` (오늘 토큰 평소 2.3x) + `session-volume-day · info` (24h 21 sessions). 이건 *advisor 가 실 user 의 패턴에서 신호 추출* 의 첫 production 증거. cycle-3 doc 작성 직후 발화로, advisor rule (ADR-015) tuning 의 baseline 으로 활용 가능.
+- **Knowledge ingest 규모**: `--all` 1 회로 64 sessions → 16,162 chunks. 평균 252 chunks/session. embedding 없이 BM25 만으로도 retrieval 작동.
+- **Session monitor `--refresh` 모드**가 daemon-less one-shot scan 으로 잘 작동 — cycle-3 §A *user-paced 1-day cycle* 가능성을 확보 (daemon 띄우지 않고도 §B.4 add-on 검증 가능).
 
 ---
 
