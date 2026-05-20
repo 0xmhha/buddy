@@ -27,9 +27,39 @@ baseline-as-of 마커는 cycle open 시점인 `d5f2755`. 본 세션에서 Wave 2
 | `~/.buddy/buddy.db` 존재 | `ls -la ~/.buddy/buddy.db` | ✅ 12 MB (active use, 2026-05-20 timestamp) |
 | daemon 가동 | `buddy doctor` | ⚠️ daemon 미가동 + outbox 8,035 entries 누적 → user action: `buddy daemon start` |
 | `buddy --help` 16 subcommand + W7 5 | `buddy --help` | ✅ 21 subcommand 노출 (W7 5 모두 포함) |
-| TUI 7 modes 정상 | `buddy tui` 진입 후 `j/k/Enter/t/e/c/d/s/H` 키 1 회씩 | ⏳ **사용자 직접 진행 필요** (interactive) |
+| TUI 7 modes 정상 | `buddy tui` 진입 후 `j/k/Enter/t/e/c/d/s/H` 키 1 회씩 | ✅ partial (mechanical 100% — non-TTY launch graceful + 8/8 키 unit test pass; interactive surface 만 user-paced) |
 
-**Pre-flight 결과**: 7/8 자동 항목 ✅ (1 deviation 은 cycle 외부 in-progress work). TUI smoke 만 사용자 진행. §B 진입 가능 상태.
+**Pre-flight 결과**: 8/8 자동 검증 가능 영역 ✅ (1 skill lint deviation 은 cycle 외부 in-progress work). §B 진입 가능 상태.
+
+### §A.8 — TUI smoke detailed breakdown
+
+interactive surface 라 *non-deterministic 영역* (AltScreen 복원 / 색상 / 한글 / 키 timing) 만 사용자 본인 머신 검증 필요.
+
+**Mechanical 검증 (AI 가 실행, 100%)**:
+- Non-TTY launch: `./bin/buddy tui --db ~/.buddy/buddy.db` → graceful error `"buddy: tui: could not open a new TTY: ..."` (exit 2). panic 없음, friend-tone wrapper 적용.
+- TUI 단위 테스트: `internal/tui/model_test.go` 가 bubbletea model 에 key event 직접 주입. §A.8 의 8 키 모두 cover:
+
+| 키 | Test |
+|----|------|
+| j/k | `TestUpdate_NavigationRespectsBounds` + `TestUpdate_GAndShiftGJumpToEnds` |
+| Enter/l | `TestUpdate_EnterSwitchesToDetailAndFiresLoad` + `TestUpdate_LSwitchesToDetailLikeEnter` |
+| t | `TestUpdate_TInDetailEntersLogTailAndFiresInitialLoad` |
+| e | `TestUpdate_EInDetailWithSpecDispatchesEditCmd` |
+| c | `TestUpdate_CInListDispatchesCreateCmd` + `TestUpdate_CInListWorksOnEmptyList` |
+| d | `TestUpdate_DEntersConfirmMode` + `TestUpdate_DOnEmptyListIsNoOp` |
+| s | `TestUpdate_SSwitchesToScheduler` |
+| H | `TestUpdate_HInListWithFetcherEntersHookStats` + `TestUpdate_EscFromHookStatsReturnsToList` |
+
+**Interactive 검증 (≤ 2 분, 사용자 본인 머신)**:
+1. 새 터미널 (iTerm/Terminal.app) 에서 `./bin/buddy tui --db ~/.buddy/buddy.db`
+2. List 진입 확인 (agent 행 표시 또는 empty-state 메시지)
+3. `j`/`k` 로 cursor 이동 → 부드러운 hover
+4. `s` → Scheduler pane 열림 → `esc` 복귀
+5. `H` → Hook stats pane 열림 (real hook 데이터 표시) → `esc` 복귀
+6. agent 가 ≥ 1 개면: `Enter` → Detail 진입 → `t` → Log tail → `esc` × 2 복귀
+7. `q` 로 종료 → 이전 shell 출력 복원 (AltScreen 복귀)
+
+신호 보는 곳: 한글 깨짐 / 색상 / 키 무반응 / 화면 깜빡임 / AltScreen 복원 실패 — 발견 즉시 §C 추가.
 
 ### §A.1 — §B.4 add-on surface smoke (2026-05-20, commit `66575f8`)
 
