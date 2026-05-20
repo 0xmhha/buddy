@@ -1,8 +1,10 @@
-# Buddy Dogfood Cycle 2 — 2026-05-19 ~ (진행 중)
+# Buddy Dogfood Cycle 2 — 2026-05-19 ~ 2026-05-20 (closed, superseded by cycle-3)
 
 > **Guide**: [`docs/dogfood-guide.md`](../dogfood-guide.md) 따름. cycle-1 ([`./2026-05-10-dogfood-result-cycle-1.md`](./2026-05-10-dogfood-result-cycle-1.md)) 의 후속.
 >
 > **Baseline**: v0.7.5 (released 2026-05-19). plugin v1.0.0 entry conditions 중 B-2 (production dogfood) 가 *유일 unclosed*. 본 cycle 의 목적 = B-2 *진척 + 가능하면 충족*.
+>
+> **Status (2026-05-20)**: Cycle closed superseded by [cycle-3](./2026-05-20-dogfood-result-cycle-3.md). Baseline was outdated within 1 day — six milestone-driven releases (v0.8.0 ~ v0.13.0) shipped 8/9 v1.0.0 entry conditions while cycle-2 was pending user-paced execution. The §B path scenarios remained accurate but were missing the 5 new W7 surfaces (sessions / usage / knowledge / advise / notify). Cycle-3 picks up with the updated baseline + extended surface list.
 
 ---
 
@@ -107,18 +109,20 @@ cycle 진행 중 "지금은 안 한다" 결정된 것은 여기 기록 + trigger
 
 ---
 
-## §E. Cycle close (cycle 종료 시 채움)
+## §E. Cycle close
 
 | 항목 | 값 |
 |------|---|
 | Cycle 시작 | 2026-05-19 |
-| Cycle 종료 | (TBD) |
-| Surface 별 사용 시간 | plugin __ h / cli-buddy __ h / hook-monitor __ days |
-| Findings 분류 | blocker __ / high __ / medium __ / low __ |
-| Cycle 안에 fix 된 것 | __ |
-| Deferred | __ |
-| ADR escalated | __ |
-| 다음 cycle trigger | (e.g., "v0.8.0 출시 후 1주") |
+| Cycle 종료 | 2026-05-20 (superseded by cycle-3) |
+| Surface 별 사용 시간 | plugin 0h / cli-buddy 0h / hook-monitor 0 days — *user-paced execution did not start before baseline staled* |
+| Findings 분류 | blocker 0 / high 0 / medium 0 / low 0 — §C empty |
+| Cycle 안에 fix 된 것 | 0 (no findings) |
+| Deferred | All §B 3 paths → carried over to cycle-3 with expanded surface list (now 8) |
+| ADR escalated | 0 (cycle had no execution; ADR-012 ~ ADR-017 shipped in parallel via milestone-driven releases v0.8.0~v0.13.0) |
+| 다음 cycle trigger | Immediate — cycle-3 opens 2026-05-20 with v0.13.0 baseline. |
+
+**Lesson**: dogfood cycles need to either (a) start within hours of opening, or (b) carry a "baseline-as-of" marker that the next cycle promotes. cycle-3 inherits this convention.
 
 ---
 
