@@ -14,22 +14,22 @@
 
 ---
 
-## §A. Pre-flight (cycle 시작 시 실행)
+## §A. Pre-flight (2026-05-20 측정, commit `66575f8`)
 
-cycle 시작 시 아래 표를 채움. baseline-as-of 마커가 stale 되기 전 (= 새 release ship 전) §A 확정.
+baseline-as-of 마커는 cycle open 시점인 `d5f2755`. 본 세션에서 Wave 2 / Wave 3 polish + 본 §A sweep 중 발견된 finding 의 fix 가 cycle 내부에서 흡수되어 측정 commit 은 `66575f8`. cycle 진행 중 fix 가 들어가면 §A 는 *측정 시점의 commit* 을 명시한다는 lesson refinement.
 
 | 체크 | 명령 | 결과 |
 |------|------|------|
-| binary 버전 | `buddy --version` | (TBD — `buddy 0.13.0` 기대) |
-| 5 SSoT version agree | `make verify-versions` | (TBD) |
-| 23 packages race-clean | `go test -race -count=1 ./...` | (TBD) |
-| 148 skill PROCEDURE lint | `make test-skill-form --strict` | (TBD) |
-| `~/.buddy/buddy.db` 존재 | `ls -la ~/.buddy/buddy.db` | (TBD) |
-| daemon 가동 | `buddy doctor` | (TBD) |
-| `buddy --help` 16 subcommand + W7 5 (`session/usage/knowledge/advise/notify`) 노출 | `buddy --help` | (TBD) |
-| TUI 7 modes 정상 | `buddy tui` 진입 후 `j/k/Enter/t/e/c/d/s/H` 키 1 회씩 | (TBD) |
+| binary 버전 | `buddy --version` | ✅ `buddy 0.13.0 (sha=6c233bf, built=2026-05-20T07:35:05Z)` |
+| 5 SSoT version agree | `make verify-versions` | ✅ all 5 sources agree on 0.13.0 |
+| 26 packages race-clean | `go test -race -count=1 ./...` | ✅ all 26 ok (cycle-3 doc 의 "23 packages" 는 cycle-2 stale 수치; v0.13.0 시점 26) |
+| 148 skill PROCEDURE lint | `make test-skill-form --strict` | ⚠️ 62 allowlist / 86 pass / **1 deviate** — but the 1 deviation (`write-a-skill`) is *uncommitted in-progress* work, not a shipped skill. 148 base skills all green. |
+| `~/.buddy/buddy.db` 존재 | `ls -la ~/.buddy/buddy.db` | ✅ 12 MB (active use, 2026-05-20 timestamp) |
+| daemon 가동 | `buddy doctor` | ⚠️ daemon 미가동 + outbox 8,035 entries 누적 → user action: `buddy daemon start` |
+| `buddy --help` 16 subcommand + W7 5 | `buddy --help` | ✅ 21 subcommand 노출 (W7 5 모두 포함) |
+| TUI 7 modes 정상 | `buddy tui` 진입 후 `j/k/Enter/t/e/c/d/s/H` 키 1 회씩 | ⏳ **사용자 직접 진행 필요** (interactive) |
 
-각 항목 ✅ / ⚠️ / ❌ 로 표기. quick smoke (guide §2.1) 5 분 안에 통과해야 §B 진입.
+**Pre-flight 결과**: 7/8 자동 항목 ✅ (1 deviation 은 cycle 외부 in-progress work). TUI smoke 만 사용자 진행. §B 진입 가능 상태.
 
 ---
 
@@ -183,7 +183,29 @@ buddy notify status --limit 20      # notification_log v8 조회
 
 ## §C. Findings (발견 즉시 추가)
 
-> 각 finding 은 guide §3.2 의 4-field format. ID 는 `B<surface>-<n>` (e.g., `B1-1` plugin 첫 finding / `B4a-1` session 첫 finding).
+> 각 finding 은 guide §3.2 의 4-field format. ID 는 `B<surface>-<n>` (e.g., `B1-1` plugin 첫 finding / `B4a-1` session 첫 finding). §A pre-flight 중 발견된 finding 은 `BA-<n>`.
+
+### BA-1 — events --limit 의 i18n wiring partial regression
+
+**Surface**: cli-buddy
+**Severity**: medium (사용자가 만나는 first-impression error 가 영어)
+**Repro**:
+```bash
+./bin/buddy events --limit -1
+# expected:  buddy: --limit 은 1 이상이어야 해.
+# observed:  buddy: --limit must be >= 1
+```
+**Expected vs Actual**:
+- expected: KeyQueriesInvalidLimit 의 ko 템플릿 그대로 출력 (cycle-3 의 baseline 이 Wave 2 W2-2 commit 8f901a5 를 포함)
+- actual: raw English fallback (`queries.ErrInvalidLimit.Error()`) 노출
+
+**Root cause**: W2-2 commit (`8f901a5`) 의 `Edit` with `replace_all: true` 가 events_cmd.go 의 2 ErrInvalidLimit 매칭 중 1 개만 잡음. Follow branch (depth 5 tab) 만 변경되고 RunEvents branch (depth 4 tab) 누락. *왜 silent*: structural test 부재. 단일 site 누락은 단위 테스트가 잡지 못함.
+
+**Recommendation**: bug-fix (즉시 처리). cycle-3 진행 중 commit `66575f8` 으로 fix + cmd/buddy/main_test.go 에 `TestEvents_InvalidLimit_RendersViaPersona` 추가하여 plain + follow 양쪽 site 의 persona 렌더링을 lock-in. 동일 패턴 (i18n bulk wiring → 다중 site 검증 부재) 의 일반화된 가드는 *Wave 4 cycle-3 finding* 으로 분리 검토 (예: `grep -rn 'buddy: " + err.Error()' cmd/buddy/` CI step).
+
+**Closed**: ✅ commit `66575f8` (within-cycle fix, 동일 세션).
+
+---
 
 ### B?-? — (template — 실 finding 으로 교체)
 
