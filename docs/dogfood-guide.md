@@ -1,4 +1,4 @@
-# Buddy Dogfood Guide — v0.7.x
+# Buddy Dogfood Guide — v0.13.0
 
 > **이 문서의 목적**: dogfood 실행자(현재는 본인, 향후는 contributor 도)가 *어떻게 dogfood 를 돌리고*, *결과를 어떻게 기록하고*, *기록을 어떻게 코드 fix 또는 ADR 로 연결하는지* 의 단일 가이드.
 >
@@ -13,11 +13,11 @@
 ### 0.1 binary / plugin 설치
 
 ```bash
-# binary 최신 release (v0.7.4 이상)
+# binary 최신 release (v0.13.0 이상)
 gh release download -p 'buddy_*_darwin_arm64' -D /tmp -R 0xmhha/buddy
 mv /tmp/buddy_*_darwin_arm64 /usr/local/bin/buddy
 chmod +x /usr/local/bin/buddy
-buddy --version    # buddy 0.7.4+ 확인
+buddy --version    # buddy 0.13.0+ 확인
 
 # plugin (Claude Code 안)
 /plugin install buddy
