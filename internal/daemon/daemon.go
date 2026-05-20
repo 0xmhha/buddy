@@ -27,6 +27,7 @@ import (
 	"github.com/0xmhha/buddy/internal/aggregator"
 	"github.com/0xmhha/buddy/internal/db"
 	"github.com/0xmhha/buddy/internal/knowledge"
+	"github.com/0xmhha/buddy/internal/notify"
 	"github.com/0xmhha/buddy/internal/sessions"
 	"github.com/0xmhha/buddy/internal/usage"
 )
@@ -67,6 +68,30 @@ type SessionMonitorConfig struct {
 type AdvisorMonitorConfig struct {
 	Disabled   bool
 	Thresholds advisor.Thresholds
+
+	// NotifyChannels are W7-5 / ADR-016 channel specs the daemon turns
+	// into a *notify.Dispatcher at Run() time (it needs the live
+	// *sql.DB the daemon already owns). Empty slice = no out-of-band
+	// delivery; advisories still persist and can be read via CLI /
+	// TUI / MCP.
+	NotifyChannels []NotifyChannelSpec
+}
+
+// NotifyChannelSpec is a transport-agnostic descriptor the daemon
+// uses to construct concrete notify.Channel instances. The cmd
+// (loadconfig) builds these from config; the daemon converts them
+// because Dispatcher needs a *sql.DB and we don't want loadconfig to
+// open its own connection.
+type NotifyChannelSpec struct {
+	Kind        string // notify.ChannelDesktop / Webhook / TUIBanner / Shell
+	SeverityMin string
+	DedupWindow time.Duration
+
+	// Webhook-only fields.
+	URL     string
+	Method  string
+	Headers map[string]string
+	Timeout time.Duration
 }
 
 // Defaults applies sensible defaults to zero-valued fields.
@@ -239,6 +264,13 @@ func runAdvisorMonitor(ctx context.Context, conn *sql.DB, cfg AdvisorMonitorConf
 		Advisories: advisor.NewStore(conn),
 	}
 
+	// Build the notify dispatcher from cfg.NotifyChannels using the
+	// daemon's *sql.DB (loadconfig stays connection-free).
+	notifyDisp := buildNotifyDispatcher(conn, cfg.NotifyChannels)
+	if notifyDisp != nil && len(cfg.NotifyChannels) > 0 {
+		fmt.Fprintf(logTo, "buddy: notify dispatcher up (%d channels)\n", len(cfg.NotifyChannels))
+	}
+
 	tick := func() {
 		advs, err := runner.Persist(ctx)
 		if err != nil {
@@ -247,6 +279,17 @@ func runAdvisorMonitor(ctx context.Context, conn *sql.DB, cfg AdvisorMonitorConf
 		}
 		if len(advs) > 0 {
 			fmt.Fprintf(logTo, "buddy: advisor monitor wrote %d advisor(y/ies)\n", len(advs))
+		}
+		// W7-5 / ADR-016 — dispatch through notify channels right
+		// after persist. Returning a count map per channel so the
+		// daemon log records "what got delivered where".
+		if notifyDisp != nil && len(advs) > 0 {
+			sent := notifyDisp.Dispatch(ctx, advs)
+			for ch, n := range sent {
+				if n > 0 {
+					fmt.Fprintf(logTo, "buddy: notify dispatched %d via %s\n", n, ch)
+				}
+			}
 		}
 	}
 
@@ -264,6 +307,36 @@ func runAdvisorMonitor(ctx context.Context, conn *sql.DB, cfg AdvisorMonitorConf
 			tick()
 		}
 	}
+}
+
+// buildNotifyDispatcher turns config-side NotifyChannelSpec entries
+// into a wired *notify.Dispatcher. Returns nil when no channels are
+// configured so the advisor tick path stays cheap.
+func buildNotifyDispatcher(conn *sql.DB, specs []NotifyChannelSpec) *notify.Dispatcher {
+	if len(specs) == 0 {
+		return nil
+	}
+	disp := notify.NewDispatcher(notify.NewStore(conn))
+	for _, sp := range specs {
+		cc := notify.ChannelConfig{
+			Enabled:     true,
+			SeverityMin: notify.Severity(sp.SeverityMin),
+			DedupWindow: sp.DedupWindow,
+		}
+		switch sp.Kind {
+		case notify.ChannelDesktop:
+			disp.AddChannel(notify.NewDesktopChannel(), cc)
+		case notify.ChannelTUIBanner:
+			disp.AddChannel(notify.NewTUIBannerChannel(), cc)
+		case notify.ChannelShell:
+			disp.AddChannel(notify.NewShellPromptChannel(), cc)
+		case notify.ChannelWebhook:
+			disp.AddChannel(notify.NewWebhookChannel(notify.WebhookConfig{
+				URL: sp.URL, Method: sp.Method, Headers: sp.Headers, Timeout: sp.Timeout,
+			}), cc)
+		}
+	}
+	return disp
 }
 
 // Status describes a running daemon.

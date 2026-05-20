@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-05-20 — W7-5 F2.E Notification (closes whole-product v1.0 entry C-5)
+
+**Milestone**: cli buddy F2.E Notification ships. Closes whole-product v1.0.0 entry condition **C-5** (per ADR-010). Per ADR-016: 4-channel delivery (desktop / webhook / TUI banner / shell prompt) + daemon auto-dispatch via the advisor monitor + config-driven destinations + per-channel severity floor + per-channel dedup window.
+
+What ships (code):
+
+- **`internal/db/migrations.go` v8** — new `notification_log` table (`id / advisory_id / channel / kind / severity / sent_at / outcome / detail`). FK cascade from advisories.
+- **`internal/notify/`** — new package (~700 LoC, 27 race-clean tests):
+  - `types.go` — `Notification`, `Severity`, `Channel` interface, `ChannelConfig`, `WebhookConfig`, `LogRow`, severity ranking.
+  - `store.go` — Insert / List / LastSent (powers dedup lookup) / DeleteOlderThan / Count.
+  - `channels.go`:
+    - `DesktopChannel` — macOS `osascript` / Linux `notify-send`. `exec.LookPath` detection; `ErrUnsupported` on Windows. Injectable `Runner` for tests.
+    - `WebhookChannel` — POST/PUT/PATCH + custom headers + timeout. Lifted from agent/postWebhook with a smaller JSON payload.
+    - `ShellPromptChannel` + `TUIBannerChannel` — no-op `Send` (dispatch is logged so dedup applies; actual surface read happens via `buddy notify --prompt` and TUI banner).
+  - `dispatcher.go` — `Dispatcher.Dispatch(advs)` walks every registered channel, applies severity-floor + dedup-window gates, writes a `notification_log` row per outcome (sent / skipped-severity / skipped-dedup / error). Returns per-channel send counts.
+- **`internal/config/config.go`** — 8 new keys + structured `notifyWebhooks` slice: `notifyDesktopEnabled` / `notifyDesktopSeverityMin` / `notifyDesktopDedup` / `notifyTuiBannerEnabled` / `notifyTuiBannerSeverityMin` / `notifyShellPromptEnabled` / `notifyShellPromptSeverityMin` / `notifyWebhooks[{url, method, headers, severityMin, dedupWindow, timeout}]`. Validation per key + per webhook entry.
+- **`cmd/buddy/notify_cmd.go`** — `buddy notify` subcommand tree:
+  - `buddy notify test --channel <name>` — fire synthetic notification.
+  - `buddy notify status [--since DUR] [--channel X] [--limit N]` — recent log rows.
+  - `buddy notify --prompt` — single-line PS1 hook (silent when nothing fresh).
+- **`internal/mcp/notify_tool.go`** — 2 new tools: `notify_status` (read-only log query) + `notify_test` (synthetic dispatch). Server registers, `cmd/buddy-mcp/main.go` auto-wires both.
+- **`internal/tui/model.go`** — ModeList gains a top-of-screen 알림 banner showing up to 3 most-recent `outcome=sent` rows from the last 24h. Surfaces daemon dispatch without forcing the user into Usage pane. `Init()` now batches agent load + notify fetch; `r` refreshes both.
+- **`internal/daemon/daemon.go`** — `runAdvisorMonitor` builds the dispatcher from `cfg.NotifyChannels` (new `NotifyChannelSpec` transport-agnostic descriptor that loadconfig fills from config). After each `Persist`, the dispatcher fans the new advisories out across every configured channel.
+- **`cmd/buddy/loadconfig.go`** — `buildNotifyChannelSpecs(eff)` projects config into daemon specs; daemon constructs concrete `notify.Channel` implementations with its live `*sql.DB`.
+
+What ships (governance):
+
+- **ADR-016** — F2.E Notification design lock-in. Q1 4-channel ship. Q2 daemon auto-dispatch only. Q3 buddy config destinations. Q4 per-channel severity floor + dedup window.
+
+Plugin v1.0.0 entry condition status (per ADR-010, whole-product 9 conditions):
+
+| # | Condition | Status |
+|---|-----------|--------|
+| B-1 | cli buddy W3 cascade | ✅ Done |
+| B-2 | production dogfood | ❌ user-paced |
+| B-3 | PROCEDURE B6 + `--strict` | ✅ Done |
+| B-4 | router smart-skip | ✅ Done |
+| C-1 | F2.A Session Monitor | ✅ Done (v0.8.0) |
+| C-2 | F2.B Usage Analysis | ✅ Done (v0.9.0) |
+| C-3 | F2.C Advisory | ✅ Done (v0.10.0 + v0.11.0) |
+| C-4 | F2.D Drift Detection | ❌ W7-4 next (final) |
+| **C-5** | **F2.E Notification** | **✅ Done (this release)** |
+
+→ **7/9 closed (78%)**. Whole-product progress moves from ~75% to ~83%. Only B-2 (user-paced dogfood) + C-4 (F2.D Drift Detection, highest design risk) remain.
+
+Counts and gates:
+
+- 5 version sources all on `0.12.0` (`make verify-versions` passes).
+- `go test -race -count=1 ./...` — 27 packages green (up from 26 — new `internal/notify` adds 27 tests).
+- `internal/tui` grows by 6 banner tests; `internal/db` migration v8 schema check passes.
+- `make test-skill-form --strict` — 148 / 62 / 86 / 0 (unchanged).
+
+Default-on posture:
+
+- `notifyDesktopEnabled` defaults to true (severityMin=warn, dedup=1h). Linux without notify-send / macOS without osascript: logged as outcome=error but daemon continues.
+- `notifyTuiBannerEnabled` defaults to true (severityMin=info).
+- `notifyShellPromptEnabled` defaults to false (opt-in — user adds the PS1 hook).
+- `notifyWebhooks` defaults to empty — no webhook dispatch until user adds entries.
+
+Next milestone target: **W7-4 F2.D Drift Detection** (closes C-4 — the final C-x condition). The highest-risk design item: LLM-driven semantic similarity between session goal_text and current activity. After v0.13.0 ships, the whole-product v1.0.0 entry blocks on only B-2 production dogfood.
+
 ## [0.11.0] — 2026-05-19 — W7-3b F2.C Advisor (closes whole-product v1.0 entry C-3)
 
 **Milestone**: F2.C Phase 2 of 3 (per ADR-014's split, locked in by ADR-015). The advisory generator sits on top of W7-3a's retrieval primitive + W7-2's usage metric and ships across 4 surfaces — CLI `buddy advise`, TUI Usage pane advisory section, MCP `usage_advise`, and a daemon `advisorMonitor` goroutine. **Closes whole-product v1.0.0 entry condition C-3**. Phase 3 (skill autogen) remains as W7-3c / v0.12.0 post-v1.0.

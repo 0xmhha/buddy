@@ -355,7 +355,7 @@ cli buddy spec 작성 자체가 *roadmap.md §4/§5/§6 outline 의 actual rewri
 | **W5 F2.B Usage Analysis** | ✅ v0.9.0 ship (2026-05-19) — ADR-013 sessions-only live aggregation + 7 metric + CLI `buddy usage` + 5 MCP `usage_query_*` + TUI Usage pane | — | Done |
 | **W6 F2.C Advisory** | 3-phase split per ADR-014/015. **Phase 1 v0.10.0 ✅** (knowledge retrieval foundation). **Phase 2 v0.11.0 ✅** (advisor — 5 rules + CLI `buddy advise` + TUI Usage advisory section + MCP `usage_advise` + daemon advisorMonitor goroutine + advisories table v7; closes C-3). Phase 3 v0.12.0 post-v1.0 (skill autogen). | — | Done (Phase 1+2) |
 | **W7 F2.D Drift Detection** | 단일 conversation 안 *원래 목적* vs *현재 turn* semantic similarity 평가 + drift alert 생성 | HIGH | W4 turn-level 데이터 + LLM-driven 비교 path |
-| **W8 F2.E Notification** | W6 / W7 메시지의 TUI banner / desktop (`osascript` / `notify-send`) / shell prompt / webhook 전달 | MED | W6 advisory 가 out-of-band 전달 가치 |
+| **W8 F2.E Notification** | ✅ v0.12.0 ship (2026-05-20) — ADR-016 4-channel (desktop osascript/notify-send + webhook + TUI banner + shell prompt) + daemon auto-dispatch + per-channel severity floor + dedup + notification_log v8 | — | Done |
 
 → W4 ~ W8 은 ADR-009 vision 의 *5 영역 = 5 phase*. W4/W5 ship 완료, W6~W8 잔여.
 

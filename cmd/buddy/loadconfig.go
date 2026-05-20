@@ -22,6 +22,7 @@ import (
 	"github.com/0xmhha/buddy/internal/config"
 	"github.com/0xmhha/buddy/internal/daemon"
 	"github.com/0xmhha/buddy/internal/diagnose"
+	"github.com/0xmhha/buddy/internal/notify"
 	"github.com/0xmhha/buddy/internal/persona"
 )
 
@@ -128,6 +129,45 @@ func resolveDaemonRunConfig(dbFlag, pidFile string, pollFlag time.Duration, batc
 				DedupWindow:         eff.AdvisorDedupWindow,
 				PollInterval:        eff.AdvisorPollInterval,
 			},
+			NotifyChannels: buildNotifyChannelSpecs(eff),
 		},
 	}
+}
+
+// buildNotifyChannelSpecs projects the Effective config into the
+// transport-agnostic daemon spec list. Empty slice = no channels
+// configured / all disabled → daemon skips notify dispatch.
+func buildNotifyChannelSpecs(eff config.Effective) []daemon.NotifyChannelSpec {
+	var out []daemon.NotifyChannelSpec
+	if eff.NotifyDesktopEnabled {
+		out = append(out, daemon.NotifyChannelSpec{
+			Kind:        notify.ChannelDesktop,
+			SeverityMin: eff.NotifyDesktopSeverityMin,
+			DedupWindow: eff.NotifyDesktopDedup,
+		})
+	}
+	if eff.NotifyTUIBannerEnabled {
+		out = append(out, daemon.NotifyChannelSpec{
+			Kind:        notify.ChannelTUIBanner,
+			SeverityMin: eff.NotifyTUIBannerSeverityMin,
+		})
+	}
+	if eff.NotifyShellPromptEnabled {
+		out = append(out, daemon.NotifyChannelSpec{
+			Kind:        notify.ChannelShell,
+			SeverityMin: eff.NotifyShellPromptSeverityMin,
+		})
+	}
+	for _, w := range eff.NotifyWebhooks {
+		out = append(out, daemon.NotifyChannelSpec{
+			Kind:        notify.ChannelWebhook,
+			SeverityMin: w.SeverityMin,
+			DedupWindow: w.DedupWindow,
+			URL:         w.URL,
+			Method:      w.Method,
+			Headers:     w.Headers,
+			Timeout:     w.Timeout,
+		})
+	}
+	return out
 }

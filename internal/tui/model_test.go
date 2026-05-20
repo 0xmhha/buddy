@@ -12,6 +12,7 @@ import (
 
 	"github.com/0xmhha/buddy/internal/advisor"
 	"github.com/0xmhha/buddy/internal/agent"
+	"github.com/0xmhha/buddy/internal/notify"
 	"github.com/0xmhha/buddy/internal/queries"
 	"github.com/0xmhha/buddy/internal/usage"
 )
@@ -1820,4 +1821,100 @@ func TestView_UsageAdvisorSectionEmpty(t *testing.T) {
 	out := m.View()
 	require.Contains(t, out, "조언")
 	require.Contains(t, out, "지금은 알릴 조언이 없어")
+}
+
+// ─── Notify banner (W7-5 / ADR-016) ───────────────────────────────────
+
+func fakeNotifyFetcher(rows []notify.LogRow, err error, calls *int) NotifyFetcher {
+	return func() ([]notify.LogRow, error) {
+		*calls++
+		return rows, err
+	}
+}
+
+// TestUpdate_NotifyLoadedFoldsIntoState — fold msg into Model.
+func TestUpdate_NotifyLoadedFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	rows := []notify.LogRow{{ID: 1, Channel: notify.ChannelDesktop, Kind: "k",
+		Severity: notify.SeverityWarn, SentAt: time.Now().UTC(), Outcome: notify.OutcomeSent}}
+	m := Model{}
+	next, _ := m.Update(NotifyLoadedMsg{Rows: rows})
+	mm := next.(Model)
+	require.True(t, mm.NotifyLoaded)
+	require.Len(t, mm.NotifyRows, 1)
+	require.Nil(t, mm.NotifyErr)
+}
+
+// TestUpdate_NotifyErrFoldsIntoState — err msg.
+func TestUpdate_NotifyErrFoldsIntoState(t *testing.T) {
+	t.Parallel()
+	bang := errors.New("notify down")
+	m := Model{}
+	next, _ := m.Update(NotifyErrMsg{Err: bang})
+	mm := next.(Model)
+	require.True(t, mm.NotifyLoaded)
+	require.ErrorIs(t, mm.NotifyErr, bang)
+}
+
+// TestView_ListRendersNotifyBannerWhenSent — sent rows surface in banner.
+func TestView_ListRendersNotifyBannerWhenSent(t *testing.T) {
+	t.Parallel()
+	now := time.Now().UTC()
+	m := Model{
+		Mode:           ModeList,
+		Loaded:         true,
+		NotifyFetcher:  func() ([]notify.LogRow, error) { return nil, nil },
+		NotifyLoaded:   true,
+		NotifyRows: []notify.LogRow{
+			{ID: 1, Channel: notify.ChannelDesktop, Kind: "token-spike-day",
+				Severity: notify.SeverityHigh, SentAt: now, Outcome: notify.OutcomeSent},
+		},
+	}
+	out := m.View()
+	require.Contains(t, out, "buddy 알림")
+	require.Contains(t, out, "token-spike-day")
+	require.Contains(t, out, "desktop")
+	require.Contains(t, out, "⚠")
+}
+
+// TestView_ListSuppressesBannerWhenOnlySkipped — banner hidden when all
+// rows are dedup/severity skips.
+func TestView_ListSuppressesBannerWhenOnlySkipped(t *testing.T) {
+	t.Parallel()
+	m := Model{
+		Mode:          ModeList,
+		Loaded:        true,
+		NotifyFetcher: func() ([]notify.LogRow, error) { return nil, nil },
+		NotifyLoaded:  true,
+		NotifyRows: []notify.LogRow{
+			{ID: 1, Channel: notify.ChannelDesktop, Kind: "k",
+				Severity: notify.SeverityInfo, Outcome: notify.OutcomeSkippedDedup},
+		},
+	}
+	out := m.View()
+	require.NotContains(t, out, "buddy 알림")
+}
+
+// TestView_ListNoBannerWhenFetcherNil — install with no notify fetcher.
+func TestView_ListNoBannerWhenFetcherNil(t *testing.T) {
+	t.Parallel()
+	m := Model{Mode: ModeList, Loaded: true}
+	out := m.View()
+	require.NotContains(t, out, "buddy 알림")
+}
+
+// TestInit_FiresAgentAndNotifyBatch — Init dispatches both loaders.
+func TestInit_FiresAgentAndNotifyBatch(t *testing.T) {
+	t.Parallel()
+	notifyCalls := 0
+	m := Model{
+		Store:         &fakeLister{},
+		NotifyFetcher: fakeNotifyFetcher(nil, nil, &notifyCalls),
+	}
+	cmd := m.Init()
+	require.NotNil(t, cmd)
+	// Execute the batch and check the result is a BatchMsg of cmds.
+	msg := cmd()
+	_, ok := msg.(tea.BatchMsg)
+	require.True(t, ok, "Init must dispatch a Batch combining agents + notify")
 }

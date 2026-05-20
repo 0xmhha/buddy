@@ -217,6 +217,31 @@ var migrations = []migration{
 			CREATE INDEX idx_advisories_kind_muted ON advisories(kind, muted);
 		`,
 	},
+	{
+		// v8 — F2.E Notification (W7-5) — ADR-016. The notification_log
+		// table records every dispatch attempt (sent + skipped). Used
+		// by the dispatcher for per-channel dedup, by `buddy notify
+		// status` for visibility, and by `notification_log_*` indices
+		// to keep the dedup-window query cheap.
+		//
+		// outcome values: "sent" | "skipped-severity" | "skipped-dedup" | "error"
+		version: 8,
+		sql: `
+			CREATE TABLE notification_log (
+				id           INTEGER PRIMARY KEY AUTOINCREMENT,
+				advisory_id  INTEGER NOT NULL,
+				channel      TEXT    NOT NULL,
+				kind         TEXT    NOT NULL,
+				severity     TEXT    NOT NULL,
+				sent_at      INTEGER NOT NULL,
+				outcome      TEXT    NOT NULL DEFAULT 'sent',
+				detail       TEXT    NOT NULL DEFAULT '',
+				FOREIGN KEY (advisory_id) REFERENCES advisories(id) ON DELETE CASCADE
+			);
+			CREATE INDEX idx_notification_log_channel_kind ON notification_log(channel, kind);
+			CREATE INDEX idx_notification_log_sent_at      ON notification_log(sent_at);
+		`,
+	},
 }
 
 // RunMigrations applies every migration whose version is greater than the

@@ -17,7 +17,7 @@ import (
 func NewBuddyServer(opts Options) *mcp.Server {
 	s := mcp.NewServer(&mcp.Implementation{
 		Name:    "buddy",
-		Version: "0.11.0",
+		Version: "0.12.0",
 	}, &mcp.ServerOptions{
 		Instructions: "buddy — Claude Code hook harness control plane + analytics + AI-usage coaching surface. " +
 			"Use these tools to inspect hook health, query hook statistics, manage the " +
@@ -38,6 +38,7 @@ func NewBuddyServer(opts Options) *mcp.Server {
 	addUsageTools(s, opts)
 	addKnowledgeTools(s, opts)
 	addAdvisorTool(s, opts)
+	addNotifyTool(s, opts)
 
 	return s
 }
@@ -69,4 +70,9 @@ type Options struct {
 	// nil → tool reports "not wired" verbatim. Store needed only when
 	// callers pass history=true.
 	Advisor AdvisorOptions
+
+	// Notify wires the `notify_status` + `notify_test` tools (W7-5 /
+	// ADR-016). Store powers read-side queries; Dispatcher carries
+	// the configured channels for synthetic test dispatch.
+	Notify NotifyOptions
 }

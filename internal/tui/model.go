@@ -25,6 +25,7 @@ import (
 
 	"github.com/0xmhha/buddy/internal/advisor"
 	"github.com/0xmhha/buddy/internal/agent"
+	"github.com/0xmhha/buddy/internal/notify"
 	"github.com/0xmhha/buddy/internal/queries"
 	"github.com/0xmhha/buddy/internal/usage"
 )
@@ -92,6 +93,12 @@ type UsageFetcher func() (usage.Overview, error)
 // UsageFetcher — nil renders an empty advisory section silently rather
 // than erroring.
 type AdvisorFetcher func() ([]advisor.Advisory, error)
+
+// NotifyFetcher returns recent notification_log rows for the ModeList
+// top banner (W7-5 / ADR-016). Daemon dispatched advisories show up
+// here even without TUI navigation. nil = banner suppressed (silent
+// install).
+type NotifyFetcher func() ([]notify.LogRow, error)
 
 // logTailPollInterval is the cadence at which the log-tail pane polls
 // Store.LogsSince for new lines. Keep it modest — 1s gives sub-second
@@ -184,6 +191,13 @@ type Model struct {
 	AdvisorResult     []advisor.Advisory
 	AdvisorErr        error
 	AdvisorLoaded     bool
+
+	// Notify banner state (W7-5 / ADR-016) — rendered at the top of
+	// ModeList view. NotifyFetcher nil keeps the banner suppressed.
+	NotifyFetcher NotifyFetcher
+	NotifyRows    []notify.LogRow
+	NotifyLoaded  bool
+	NotifyErr     error
 }
 
 // SelectedID returns the agent ID currently focused for detail rendering.
@@ -244,6 +258,8 @@ type (
 	UsageErrMsg     struct{ Err error }
 	AdvisorLoadedMsg struct{ Result []advisor.Advisory }
 	AdvisorErrMsg    struct{ Err error }
+	NotifyLoadedMsg  struct{ Rows []notify.LogRow }
+	NotifyErrMsg     struct{ Err error }
 )
 
 // NewModel constructs an empty Model around an AgentLister. The Init
@@ -253,9 +269,14 @@ func NewModel(store AgentLister) Model {
 	return Model{Store: store}
 }
 
-// Init is bubbletea's startup hook. It fires the initial agent load.
+// Init is bubbletea's startup hook. Fires the initial agent load and
+// (when wired) the notify banner load so ModeList shows context on
+// first paint.
 func (m Model) Init() tea.Cmd {
-	return loadAgentsCmd(m.Store)
+	return tea.Batch(
+		loadAgentsCmd(m.Store),
+		loadNotifyCmd(m.NotifyFetcher),
+	)
 }
 
 // loadAgentsCmd is the tea.Cmd that calls Store.List in the background
@@ -384,6 +405,22 @@ func loadAdvisorCmd(fetcher AdvisorFetcher) tea.Cmd {
 			return AdvisorErrMsg{Err: err}
 		}
 		return AdvisorLoadedMsg{Result: res}
+	}
+}
+
+// loadNotifyCmd is the W7-5 banner companion. Dispatched on Init and
+// on ModeList `r` so the banner reflects daemon-side dispatch state.
+// nil fetcher → no banner.
+func loadNotifyCmd(fetcher NotifyFetcher) tea.Cmd {
+	if fetcher == nil {
+		return nil
+	}
+	return func() tea.Msg {
+		rows, err := fetcher()
+		if err != nil {
+			return NotifyErrMsg{Err: err}
+		}
+		return NotifyLoadedMsg{Rows: rows}
 	}
 }
 
@@ -742,6 +779,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.AdvisorLoaded = true
 		return m, nil
 
+	case NotifyLoadedMsg:
+		m.NotifyRows = msg.Rows
+		m.NotifyLoaded = true
+		m.NotifyErr = nil
+		return m, nil
+
+	case NotifyErrMsg:
+		m.NotifyErr = msg.Err
+		m.NotifyLoaded = true
+		return m, nil
+
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
@@ -907,9 +955,14 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "r":
 		// Manual refresh — handy when the user has just `buddy agent
 		// create`d something from another shell and doesn't want to
-		// wait for the scheduler's next poll.
+		// wait for the scheduler's next poll. Refresh notify banner
+		// too so a fresh daemon dispatch shows up immediately.
 		m.Loaded = false
-		return m, loadAgentsCmd(m.Store)
+		m.NotifyLoaded = false
+		return m, tea.Batch(
+			loadAgentsCmd(m.Store),
+			loadNotifyCmd(m.NotifyFetcher),
+		)
 
 	case "enter", "l", "right":
 		if len(m.Agents) == 0 {
@@ -1002,6 +1055,42 @@ func (m Model) View() string {
 
 func (m Model) renderList() string {
 	var b strings.Builder
+
+	// Notify banner (W7-5 / ADR-016) — top-of-screen advisory teaser.
+	// Suppressed when no fetcher wired, no rows loaded, or rows are
+	// all dedup/severity skips. Shows up to 3 most recent "sent"
+	// outcomes so a fresh daemon dispatch surfaces immediately.
+	if m.NotifyFetcher != nil && m.NotifyLoaded && m.NotifyErr == nil {
+		shown := 0
+		for _, r := range m.NotifyRows {
+			if r.Outcome != notify.OutcomeSent {
+				continue
+			}
+			if shown == 0 {
+				b.WriteString(headerStyle.Render("buddy 알림"))
+				b.WriteString("\n")
+			}
+			glyph := "·"
+			switch r.Severity {
+			case notify.SeverityHigh:
+				glyph = "⚠"
+			case notify.SeverityWarn:
+				glyph = "!"
+			case notify.SeverityInfo:
+				glyph = "i"
+			}
+			b.WriteString(fmt.Sprintf("  %s [%s] %s — %s\n",
+				glyph, r.Channel, r.Kind,
+				r.SentAt.Local().Format("01-02 15:04")))
+			shown++
+			if shown >= 3 {
+				break
+			}
+		}
+		if shown > 0 {
+			b.WriteString("\n")
+		}
+	}
 
 	header := headerStyle.Render("buddy agent list")
 	b.WriteString(header)

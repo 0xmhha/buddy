@@ -32,7 +32,7 @@ func TestOpen_CreatesAllTables(t *testing.T) {
 		require.NoError(t, rows.Scan(&n))
 		got[n] = true
 	}
-	for _, want := range []string{"hook_outbox", "hook_events", "hook_stats", "features", "sessions", "agents", "agent_runs", "agent_logs", "chunks", "advisories", "schema_version"} {
+	for _, want := range []string{"hook_outbox", "hook_events", "hook_stats", "features", "sessions", "agents", "agent_runs", "agent_logs", "chunks", "advisories", "notification_log", "schema_version"} {
 		assert.True(t, got[want], "missing table %s", want)
 	}
 }
@@ -77,7 +77,7 @@ func TestOpen_RecordsLatestSchemaVersion(t *testing.T) {
 
 	var v int
 	require.NoError(t, conn.QueryRow("SELECT MAX(version) FROM schema_version").Scan(&v))
-	assert.Equal(t, 7, v)
+	assert.Equal(t, 8, v)
 }
 
 func TestOpen_IsIdempotentAcrossReopens(t *testing.T) {
@@ -93,7 +93,7 @@ func TestOpen_IsIdempotentAcrossReopens(t *testing.T) {
 
 	var count int
 	require.NoError(t, conn2.QueryRow("SELECT COUNT(*) FROM schema_version").Scan(&count))
-	assert.Equal(t, 7, count) // one row per applied migration
+	assert.Equal(t, 8, count) // one row per applied migration
 }
 
 func TestOpen_UsesWALMode(t *testing.T) {

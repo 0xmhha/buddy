@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -10,6 +11,7 @@ import (
 	"github.com/0xmhha/buddy/internal/advisor"
 	"github.com/0xmhha/buddy/internal/db"
 	"github.com/0xmhha/buddy/internal/knowledge"
+	"github.com/0xmhha/buddy/internal/notify"
 	"github.com/0xmhha/buddy/internal/queries"
 	"github.com/0xmhha/buddy/internal/sessions"
 	"github.com/0xmhha/buddy/internal/tui"
@@ -107,6 +109,23 @@ func newTuiCmd() *cobra.Command {
 					Advisories: advisor.NewStore(conn),
 				}
 				return runner.Run(context.Background())
+			}
+
+			// Notify banner fetcher (W7-5 / ADR-016). Pulls the 10
+			// newest notification_log rows from the last 24h. The
+			// renderer filters down to "sent" outcomes and caps the
+			// banner at 3 lines.
+			model.NotifyFetcher = func() ([]notify.LogRow, error) {
+				conn, err := db.Open(db.Options{Path: dbFlag})
+				if err != nil {
+					return nil, fmt.Errorf("open db: %w", err)
+				}
+				defer conn.Close()
+				store := notify.NewStore(conn)
+				return store.List(context.Background(), notify.ListOptions{
+					Since: time.Now().UTC().Add(-24 * time.Hour),
+					Limit: 10,
+				})
 			}
 
 			program := tea.NewProgram(

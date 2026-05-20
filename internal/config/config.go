@@ -64,6 +64,29 @@ type Config struct {
 	AdvisorTokenDailyThreshold   *int64    `json:"advisorTokenDailyThreshold,omitempty"`
 	AdvisorDedupWindow           *Duration `json:"advisorDedupWindow,omitempty"`
 	AdvisorPollInterval          *Duration `json:"advisorPollInterval,omitempty"`
+
+	// Notify* are W7-5 (ADR-016) — daemon-side notification dispatcher.
+	// Per-channel toggles + severity floor + dedup window.
+	NotifyDesktopEnabled       *bool     `json:"notifyDesktopEnabled,omitempty"`
+	NotifyDesktopSeverityMin   *string   `json:"notifyDesktopSeverityMin,omitempty"`
+	NotifyDesktopDedup         *Duration `json:"notifyDesktopDedup,omitempty"`
+	NotifyTUIBannerEnabled     *bool     `json:"notifyTuiBannerEnabled,omitempty"`
+	NotifyTUIBannerSeverityMin *string   `json:"notifyTuiBannerSeverityMin,omitempty"`
+	NotifyShellPromptEnabled   *bool     `json:"notifyShellPromptEnabled,omitempty"`
+	NotifyShellPromptSeverityMin *string `json:"notifyShellPromptSeverityMin,omitempty"`
+	NotifyWebhooks             []WebhookConfigJSON `json:"notifyWebhooks,omitempty"`
+}
+
+// WebhookConfigJSON is the on-disk shape of one webhook destination.
+// Empty Method defaults to POST; empty SeverityMin defaults to "info";
+// zero DedupWindow defaults to 1h; zero Timeout defaults to 30s.
+type WebhookConfigJSON struct {
+	URL         string            `json:"url"`
+	Method      string            `json:"method,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty"`
+	SeverityMin string            `json:"severityMin,omitempty"`
+	DedupWindow *Duration         `json:"dedupWindow,omitempty"`
+	Timeout     *Duration         `json:"timeout,omitempty"`
 }
 
 // Effective is the resolved configuration with all fields populated.
@@ -90,6 +113,27 @@ type Effective struct {
 	AdvisorTokenDailyThreshold int64
 	AdvisorDedupWindow         time.Duration
 	AdvisorPollInterval        time.Duration
+
+	NotifyDesktopEnabled         bool
+	NotifyDesktopSeverityMin     string
+	NotifyDesktopDedup           time.Duration
+	NotifyTUIBannerEnabled       bool
+	NotifyTUIBannerSeverityMin   string
+	NotifyShellPromptEnabled     bool
+	NotifyShellPromptSeverityMin string
+	NotifyWebhooks               []EffectiveWebhook
+}
+
+// EffectiveWebhook is the resolved (defaults-applied) shape consumed
+// by the notify dispatcher. Defaults: Method=POST, SeverityMin=info,
+// DedupWindow=1h, Timeout=30s.
+type EffectiveWebhook struct {
+	URL         string
+	Method      string
+	Headers     map[string]string
+	SeverityMin string
+	DedupWindow time.Duration
+	Timeout     time.Duration
 }
 
 // Defaults returns the spec-locked defaults from v0.1-spec §6.2 + §6.3 plus
@@ -118,6 +162,15 @@ func Defaults() Effective {
 		AdvisorTokenDailyThreshold: 500_000,
 		AdvisorDedupWindow:         24 * time.Hour,
 		AdvisorPollInterval:        1 * time.Hour,
+
+		NotifyDesktopEnabled:         true,
+		NotifyDesktopSeverityMin:     "warn",
+		NotifyDesktopDedup:           1 * time.Hour,
+		NotifyTUIBannerEnabled:       true,
+		NotifyTUIBannerSeverityMin:   "info",
+		NotifyShellPromptEnabled:     false,
+		NotifyShellPromptSeverityMin: "warn",
+		NotifyWebhooks:               nil,
 	}
 }
 
@@ -180,6 +233,56 @@ func (c Config) Effective() Effective {
 	}
 	if c.AdvisorPollInterval != nil {
 		eff.AdvisorPollInterval = c.AdvisorPollInterval.Duration
+	}
+	if c.NotifyDesktopEnabled != nil {
+		eff.NotifyDesktopEnabled = *c.NotifyDesktopEnabled
+	}
+	if c.NotifyDesktopSeverityMin != nil {
+		eff.NotifyDesktopSeverityMin = *c.NotifyDesktopSeverityMin
+	}
+	if c.NotifyDesktopDedup != nil {
+		eff.NotifyDesktopDedup = c.NotifyDesktopDedup.Duration
+	}
+	if c.NotifyTUIBannerEnabled != nil {
+		eff.NotifyTUIBannerEnabled = *c.NotifyTUIBannerEnabled
+	}
+	if c.NotifyTUIBannerSeverityMin != nil {
+		eff.NotifyTUIBannerSeverityMin = *c.NotifyTUIBannerSeverityMin
+	}
+	if c.NotifyShellPromptEnabled != nil {
+		eff.NotifyShellPromptEnabled = *c.NotifyShellPromptEnabled
+	}
+	if c.NotifyShellPromptSeverityMin != nil {
+		eff.NotifyShellPromptSeverityMin = *c.NotifyShellPromptSeverityMin
+	}
+	if len(c.NotifyWebhooks) > 0 {
+		out := make([]EffectiveWebhook, 0, len(c.NotifyWebhooks))
+		for _, w := range c.NotifyWebhooks {
+			ew := EffectiveWebhook{
+				URL:         w.URL,
+				Method:      w.Method,
+				Headers:     w.Headers,
+				SeverityMin: w.SeverityMin,
+			}
+			if ew.Method == "" {
+				ew.Method = "POST"
+			}
+			if ew.SeverityMin == "" {
+				ew.SeverityMin = "info"
+			}
+			if w.DedupWindow != nil {
+				ew.DedupWindow = w.DedupWindow.Duration
+			} else {
+				ew.DedupWindow = 1 * time.Hour
+			}
+			if w.Timeout != nil {
+				ew.Timeout = w.Timeout.Duration
+			} else {
+				ew.Timeout = 30 * time.Second
+			}
+			out = append(out, ew)
+		}
+		eff.NotifyWebhooks = out
 	}
 	return eff
 }
@@ -279,6 +382,39 @@ func (c Config) Validate() error {
 	}
 	if eff.AdvisorPollInterval < time.Minute || eff.AdvisorPollInterval > 24*time.Hour {
 		add("advisorPollInterval", fmt.Sprintf("must be 1m..24h (got %s)", eff.AdvisorPollInterval))
+	}
+
+	// Notify thresholds (W7-5 / ADR-016). Severity strings constrained
+	// to the advisor-side enum; webhook entries validated individually.
+	validSev := map[string]bool{"info": true, "warn": true, "high": true}
+	if !validSev[eff.NotifyDesktopSeverityMin] {
+		add("notifyDesktopSeverityMin", fmt.Sprintf("must be info|warn|high (got %q)", eff.NotifyDesktopSeverityMin))
+	}
+	if !validSev[eff.NotifyTUIBannerSeverityMin] {
+		add("notifyTuiBannerSeverityMin", fmt.Sprintf("must be info|warn|high (got %q)", eff.NotifyTUIBannerSeverityMin))
+	}
+	if !validSev[eff.NotifyShellPromptSeverityMin] {
+		add("notifyShellPromptSeverityMin", fmt.Sprintf("must be info|warn|high (got %q)", eff.NotifyShellPromptSeverityMin))
+	}
+	if eff.NotifyDesktopDedup < 0 {
+		add("notifyDesktopDedup", fmt.Sprintf("must be >= 0 (got %s)", eff.NotifyDesktopDedup))
+	}
+	for i, w := range eff.NotifyWebhooks {
+		if w.URL == "" {
+			add(fmt.Sprintf("notifyWebhooks[%d].url", i), "URL is required")
+		}
+		if w.Method != "POST" && w.Method != "PUT" && w.Method != "PATCH" {
+			add(fmt.Sprintf("notifyWebhooks[%d].method", i), fmt.Sprintf("must be POST|PUT|PATCH (got %q)", w.Method))
+		}
+		if !validSev[w.SeverityMin] {
+			add(fmt.Sprintf("notifyWebhooks[%d].severityMin", i), fmt.Sprintf("must be info|warn|high (got %q)", w.SeverityMin))
+		}
+		if w.DedupWindow < 0 {
+			add(fmt.Sprintf("notifyWebhooks[%d].dedupWindow", i), fmt.Sprintf("must be >= 0 (got %s)", w.DedupWindow))
+		}
+		if w.Timeout <= 0 || w.Timeout > 5*time.Minute {
+			add(fmt.Sprintf("notifyWebhooks[%d].timeout", i), fmt.Sprintf("must be 0..5m (got %s)", w.Timeout))
+		}
 	}
 
 	switch len(errs) {

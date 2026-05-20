@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Last updated:** 2026-05-19 (**v0.11.0** Wave 7 진행) — v0.8.0 W7-1 (ADR-012) + v0.9.0 W7-2 (ADR-013) + v0.10.0 W7-3a (ADR-014 Phase 1/3) + **v0.11.0 W7-3b F2.C advisor (ADR-015 Phase 2/3 — closes C-3)**. **cli-buddy-spec §9 W4/W5/W6 Done.** v1.0.0 entry 9 조건 중 **6/9 closed** (B-1/B-3/B-4 + C-1/C-2/C-3); 남은: B-2 + C-4/C-5 — *진척률 ~75%*. **세션 인계 진입점: 본 문서 §1 + `BACKLOG.md` + `CHANGELOG.md [0.11.0]`**.)
+**Last updated:** 2026-05-20 (**v0.12.0** Wave 7 진행) — v0.8.0 W7-1 + v0.9.0 W7-2 + v0.10.0 W7-3a + v0.11.0 W7-3b + **v0.12.0 W7-5 F2.E Notification (ADR-016 — closes C-5)**. **cli-buddy-spec §9 W4/W5/W6/W8 Done.** v1.0.0 entry 9 조건 중 **7/9 closed** (B-1/B-3/B-4 + C-1/C-2/C-3/C-5); 남은: B-2 + C-4 (Drift) — *진척률 ~83%*. **세션 인계 진입점: 본 문서 §1 + `BACKLOG.md` + `CHANGELOG.md [0.12.0]`**.)
 
 ## 트랙 상태
 
@@ -85,21 +85,21 @@
 | MCP tools — 12 (analytics 7 + feature 5) | ✅ 100% (ADR-008 lock-in) |
 | cli buddy W3-1~W3-6 (automation agent 관리) | ✅ 100% (TUI 7 modes + agent runtime + scheduler + cascade chain + 자산 재배치 + reference agent) |
 | Hook reliability monitor — M1~M6 + v0.1.0 release | ✅ 100% (4 binaries published 2026-04-26) |
-| **cli buddy W4~W8 (AI-usage coaching, ADR-009)** | **60%** (3/5 ship: F2.A v0.8.0 + F2.B v0.9.0 + F2.C v0.10/v0.11. 남은: F2.D Drift / F2.E Notification) |
+| **cli buddy W4~W8 (AI-usage coaching, ADR-009)** | **80%** (4/5 ship: F2.A v0.8.0 + F2.B v0.9.0 + F2.C v0.10/v0.11 + F2.E v0.12.0. 남은: F2.D Drift) |
 | **Plugin v1.0.0 entry conditions B-1~B-4** | 75% (3/4 closed, B-2 production dogfood 잔여) |
-| **Whole-product v1.0.0 entry (ADR-010, B-1~B-4 + C-1~C-5 = 9 조건)** | **67%** (6/9 closed — B-1/B-3/B-4 + C-1/C-2/C-3). 남은: B-2 + C-4/C-5. |
+| **Whole-product v1.0.0 entry (ADR-010, B-1~B-4 + C-1~C-5 = 9 조건)** | **78%** (7/9 closed — B-1/B-3/B-4 + C-1/C-2/C-3/C-5). 남은: B-2 + C-4 (마지막 C-x). |
 | Dogfood **cycle-2 production** (B-2 trigger) | ⚠ ~5% (pre-flight Done, 3 paths user-paced) |
 | i18n sweep (M5 deferred) | 25% (W2-3 en/ko parity ✅, 3 잔여) |
 | Release polish (M6 deferred) | 25% (ci.yml ✅, SHA pin / notarize / VERSION SSoT 잔여) |
 | TUI / runtime UX follow-on | 0% (dogfood signal 대기) |
-| **종합 진행률 (whole-product 기준)** | **약 75%** (자동화 agent 100%, AI-usage coaching 60%, 정책 + polish 부분 진척) |
+| **종합 진행률 (whole-product 기준)** | **약 83%** (자동화 agent 100%, AI-usage coaching 80%, 정책 + polish 부분 진척) |
 
-**테스트:** 26 packages race-clean (`go test -race -count=1 ./...`), `make test-skill-form --strict` 148/62 allowlist/86 pass/0 deviate.
-**Latest release:** v0.11.0 (2026-05-19) — W7-3b F2.C advisor ship (closes C-3). milestone-driven per ADR-011.
+**테스트:** 27 packages race-clean (`go test -race -count=1 ./...`), `make test-skill-form --strict` 148/62 allowlist/86 pass/0 deviate.
+**Latest release:** v0.12.0 (2026-05-20) — W7-5 F2.E Notification ship (closes C-5). milestone-driven per ADR-011.
 
 **다음 액션** — [`BACKLOG.md`](./BACKLOG.md) 두 wave 병행:
 - **Wave 1 (B-2)**: 사용자 페이스, [`docs/notes/2026-05-19-dogfood-result-cycle-2.md`](./notes/2026-05-19-dogfood-result-cycle-2.md) §B
-- **Wave 7 잔여 (AI 단독)**: W7-5 F2.E Notification (advisory delivery — desktop / shell prompt / webhook) → W7-4 F2.D Drift Detection (LLM-driven, 가장 큰 risk) → W7-3c F2.C skill-gen (post-v1.0).
+- **Wave 7 잔여 (AI 단독)**: **W7-4 F2.D Drift Detection (마지막 C-x — closes C-4)** → W7-3c F2.C skill-gen (post-v1.0).
 
 ---
 

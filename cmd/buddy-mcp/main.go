@@ -27,6 +27,7 @@ import (
 	"github.com/0xmhha/buddy/internal/db"
 	"github.com/0xmhha/buddy/internal/knowledge"
 	buddymcp "github.com/0xmhha/buddy/internal/mcp"
+	"github.com/0xmhha/buddy/internal/notify"
 	"github.com/0xmhha/buddy/internal/sessions"
 	"github.com/0xmhha/buddy/internal/usage"
 )
@@ -74,6 +75,14 @@ func main() {
 		log.Printf("buddy-mcp: advisor tool disabled: %v", err)
 	} else {
 		opts.Advisor = aopt
+	}
+
+	// Wire the W7-5 notify tools. Same defensive pattern: failure on
+	// DB open or config load disables only the notify path.
+	if nopt, err := configureNotify(opts.DBPath); err != nil {
+		log.Printf("buddy-mcp: notify tools disabled: %v", err)
+	} else {
+		opts.Notify = nopt
 	}
 
 	s := buddymcp.NewBuddyServer(opts)
@@ -172,4 +181,49 @@ func configureAdvisor(dbPath string) (buddymcp.AdvisorOptions, error) {
 		Advisories: store,
 	}
 	return buddymcp.AdvisorOptions{Runner: runner, Store: store}, nil
+}
+
+// configureNotify opens buddy.db + loads config + builds a Dispatcher
+// pre-populated with every enabled channel. Reuses the CLI's
+// wireNotifyChannels indirectly by replicating the field projection
+// inline (the cmd/buddy package isn't importable from cmd/buddy-mcp).
+func configureNotify(dbPath string) (buddymcp.NotifyOptions, error) {
+	conn, err := db.Open(db.Options{Path: dbPath})
+	if err != nil {
+		return buddymcp.NotifyOptions{}, err
+	}
+	store := notify.NewStore(conn)
+	disp := notify.NewDispatcher(store)
+
+	eff := config.Defaults()
+	if cfgPath, err := config.DefaultPath(); err == nil {
+		if cfg, err := config.Load(cfgPath); err == nil {
+			eff = cfg.Effective()
+		}
+	}
+	if eff.NotifyDesktopEnabled {
+		disp.AddChannel(notify.NewDesktopChannel(), notify.ChannelConfig{
+			Enabled: true, SeverityMin: notify.Severity(eff.NotifyDesktopSeverityMin),
+			DedupWindow: eff.NotifyDesktopDedup,
+		})
+	}
+	if eff.NotifyTUIBannerEnabled {
+		disp.AddChannel(notify.NewTUIBannerChannel(), notify.ChannelConfig{
+			Enabled: true, SeverityMin: notify.Severity(eff.NotifyTUIBannerSeverityMin),
+		})
+	}
+	if eff.NotifyShellPromptEnabled {
+		disp.AddChannel(notify.NewShellPromptChannel(), notify.ChannelConfig{
+			Enabled: true, SeverityMin: notify.Severity(eff.NotifyShellPromptSeverityMin),
+		})
+	}
+	for _, w := range eff.NotifyWebhooks {
+		disp.AddChannel(notify.NewWebhookChannel(notify.WebhookConfig{
+			URL: w.URL, Method: w.Method, Headers: w.Headers, Timeout: w.Timeout,
+		}), notify.ChannelConfig{
+			Enabled: true, SeverityMin: notify.Severity(w.SeverityMin),
+			DedupWindow: w.DedupWindow,
+		})
+	}
+	return buddymcp.NotifyOptions{Store: store, Dispatcher: disp}, nil
 }
