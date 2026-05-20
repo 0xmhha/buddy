@@ -50,16 +50,12 @@ interactive surface 라 *non-deterministic 영역* (AltScreen 복원 / 색상 / 
 | s | `TestUpdate_SSwitchesToScheduler` |
 | H | `TestUpdate_HInListWithFetcherEntersHookStats` + `TestUpdate_EscFromHookStatsReturnsToList` |
 
-**Interactive 검증 (≤ 2 분, 사용자 본인 머신)**:
-1. 새 터미널 (iTerm/Terminal.app) 에서 `./bin/buddy tui --db ~/.buddy/buddy.db`
-2. List 진입 확인 (agent 행 표시 또는 empty-state 메시지)
-3. `j`/`k` 로 cursor 이동 → 부드러운 hover
-4. `s` → Scheduler pane 열림 → `esc` 복귀
-5. `H` → Hook stats pane 열림 (real hook 데이터 표시) → `esc` 복귀
-6. agent 가 ≥ 1 개면: `Enter` → Detail 진입 → `t` → Log tail → `esc` × 2 복귀
-7. `q` 로 종료 → 이전 shell 출력 복원 (AltScreen 복귀)
-
-신호 보는 곳: 한글 깨짐 / 색상 / 키 무반응 / 화면 깜빡임 / AltScreen 복원 실패 — 발견 즉시 §C 추가.
+**Interactive 검증 결과 (2026-05-20, 사용자 본인 머신)**:
+- ✅ DB 미존재 → empty list 정상 (graceful empty-state)
+- ✅ 신규 agent 생성 후 키 인식 — `j/k/Enter/l/t/e/c/d/s/H/q` 모두 의도대로 반응
+- ✅ 한글 깨짐 X, 색상 / 키 timing 정상
+- ⚠ **터미널 가로/세로 변경 시 UI 깨짐** → §C BA-4 등록
+- 💡 사용량 화면 = text-only — 그래프로 trend 시각화 가능하면 가독성 ↑. 사용자가 "불필요한 작업량 많으면 스킵" 명시 → §D BA-5 enhancement 로 deferred
 
 ### §A.1 — §B.4 add-on surface smoke (2026-05-20, commit `66575f8`)
 
@@ -297,6 +293,34 @@ buddy notify status --limit 20      # notification_log v8 조회
 
 ---
 
+### BA-4 — TUI 가 터미널 resize 에 reflow 안 함
+
+**Surface**: tui (cli-buddy)
+**Severity**: medium (UX 큰 영향; panic 아님이라 blocker 는 아니나 *first-impression* 손상)
+**Repro**:
+```
+./bin/buddy tui --db ~/.buddy/buddy.db
+# 터미널 너비 80 → 120 으로 마우스 drag 변경
+# 또는 zoom in/out
+```
+**Expected vs Actual**:
+- expected: 새 width/height 에 맞춰 layout 재계산 + 텍스트 reflow. resize 종료 후 정상 렌더링.
+- actual: 화면 깨짐 — 텍스트 잘림 / 잔여 글자 / 패널 겹침. resize 후에도 회복 안 됨 (재진입 / `r` refresh 시에만 정상)
+
+**Root cause** (코드 분석 완료):
+- `internal/tui/model.go:614-617` 의 `WindowSizeMsg` 핸들러가 `m.Width = msg.Width; m.Height = msg.Height` 로 *저장만* 함.
+- 모든 view function 들 (List/Detail/LogTail/Scheduler/HookStats/Usage) 이 `m.Width` / `m.Height` 를 *전혀 사용하지 않음* → grep 결과 view 코드에서 reference 0회.
+- 결과: bubbletea 가 새 사이즈 통보해도 렌더링 폭은 *터미널 시작 시점의 implicit width* 기준.
+
+**Recommendation**: bug-fix (Wave 4 candidate, *4-6 h*).
+- 각 view function 에 `lipgloss.NewStyle().Width(m.Width).Render(...)` 적용 또는 column width 동적 산정
+- 우선순위 = List (가장 흔한 view) > Detail > Scheduler/HookStats > Usage > LogTail
+- B6 의 *width-bound test* 가 단위 테스트로 lock-in 가능 — `m.Width = 40` 으로 좁힌 후 View() 가 80-col layout 깨지 않는지 검증
+
+**Open** → Wave 4 신규 W4-6 으로 BACKLOG 등록 권장.
+
+---
+
 ## §C.1 — Within-cycle observations (finding 은 아니나 기록 가치)
 
 - **Real advisor signals fired** during §B.4.d smoke: `token-spike-day · high` (오늘 토큰 평소 2.3x) + `session-volume-day · info` (24h 21 sessions). 이건 *advisor 가 실 user 의 패턴에서 신호 추출* 의 첫 production 증거. cycle-3 doc 작성 직후 발화로, advisor rule (ADR-015) tuning 의 baseline 으로 활용 가능.
@@ -308,6 +332,23 @@ buddy notify status --limit 20      # notification_log v8 조회
 ## §D. Deferred / Out-of-scope
 
 cycle 진행 중 "지금은 안 한다" 결정된 것은 여기 기록 + trigger 명시.
+
+### BA-5 — Usage pane / `buddy usage` 출력에 trend 그래프 추가
+
+**Source**: 사용자 §A.8 interactive sweep 중 제안 — *"text 만 존재하는데, 그래프로 변동추이를 보여줄수 있으면 눈에 잘 들어올 것 같아"*. *"불필요한 작업량 많다면 스킵하는 것이 좋을 것"* 명시.
+
+**제안 범위**:
+- `buddy usage trend --days 7` 등 시계열 metric 에 *ASCII sparkline* / bar chart 렌더링
+- TUI 의 Usage pane 도 동일 시각화 적용
+
+**Cost-benefit**:
+- 비용: Go terminal chart lib (e.g., `asciigraph`) 도입 + 2-3 h. test 작성 포함하면 4 h.
+- 가치: text-only → trend at-a-glance perception 큰 개선. *real user friction* 점.
+- v1.0.0 blocker 아님, B-2 진척 영향 X.
+
+**Decision**: defer. Wave 4 (TUI / runtime UX follow-on) 신규 W4-7 로 BACKLOG 등록. v1.0.0 publish 후 또는 *resize bug (BA-4)* 와 묶어서 Wave 4 cycle 에서 진행.
+
+**Trigger**: B-2 cycle close 후 / Wave 4 dogfood signal pivot 시 우선순위 재평가.
 
 ---
 

@@ -59,7 +59,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | Dogfood validation — cycle-2 production (B-2 trigger) | ~5% | pre-flight Done, 3 paths user-paced — Wave 1 |
 | i18n sweep (M5 deferred — 4 sub-task) | ✅ 100% | W2-1 / W2-2 / W2-3 / W2-4 모두 closed — Wave 2 완료 |
 | Release polish (M6 deferred — 4 sub-task) | 75% (AI 단독 가능 부분 100%) | W3-1 / W3-2 / W3-3 ✅; W3-4 notarization 만 trigger-bound (Apple Dev ID) |
-| TUI / runtime UX follow-on (5 sub-task) | 0% | dogfood signal 대기 — Wave 4 |
+| TUI / runtime UX follow-on (7 sub-task) | 0% | cycle-3 §A.8 + §B.4 signal 도착 (BA-4 resize / BA-5 usage graph), W4-6/W4-7 추가 — Wave 4 |
 | Trigger-bound (Korea / USA-EU / PG-MySQL / notarize / cycle-2 live) | N/A | 외부 신호 대기 — Wave 5 |
 | Indefinite defer (Non-goal 또는 trigger 부재) | N/A | 잡지 말 것 — Wave 6 |
 
@@ -134,7 +134,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 
 ### Wave 4 — TUI / agent runtime follow-on (UX polish, dogfood signal 가능)
 
-각 항목 < 1~2 day. *cycle-2 dogfood 결과* 가 우선순위 결정.
+각 항목 < 1~2 day. *cycle-3 dogfood 결과* 가 우선순위 결정.
 
 | ID | 작업 | 위치 |
 |----|------|------|
@@ -143,6 +143,8 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | W4-3 | `buddy agent edit <id>` CLI subcommand — 현재 TUI `e` 만 존재, CLI 없음 | `cmd/buddy/agent_cmd.go` |
 | W4-4 | Scheduler pane live "currently running" indicator (W3-2 deferred follow-on-of-follow-on) | `internal/tui/model.go` |
 | W4-5 | Log-tail scrollback + auto-stop on run-end (W3-2 deferred follow-on-of-follow-on) | `internal/tui/model.go` |
+| **W4-6** | **TUI resize reflow** — `WindowSizeMsg` 가 m.Width/Height 저장만 하고 view function 들이 *전혀 사용 안 함* → resize 시 layout 깨짐. cycle-3 §C BA-4 출처. *4-6 h* | `internal/tui/model.go` + 각 view function |
+| **W4-7** | **Usage pane / `buddy usage` trend graph** — text-only 출력에 ASCII sparkline / bar chart 추가 (e.g., `asciigraph`). cycle-3 §D BA-5 (사용자 제안, defer 결정). *2-3 h* | `internal/tui/usage_view.go` + `cmd/buddy/usage_cmd.go` |
 
 ### Wave 5 — Trigger-bound (외부 신호 대기)
 
