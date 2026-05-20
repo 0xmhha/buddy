@@ -44,8 +44,9 @@ const followMaxConsecutiveErrors = 5
 // ErrInvalidLimit is the sentinel returned when EventsOptions.Limit is
 // negative. Limit == 0 still means "use the default" (defaultEventsLimit) —
 // consistent with the common UX expectation that 0 = unset on integer flags.
-// Carries a friend-tone Korean message that the CLI layer surfaces verbatim.
-var ErrInvalidLimit = errors.New("--limit 은 1 이상이어야 해.")
+// Error() text stays English (locale-free); the cmd layer renders the
+// localized message via persona.KeyQueriesInvalidLimit.
+var ErrInvalidLimit = errors.New("--limit must be >= 1")
 
 // EventsOptions configure RunEvents and Follow.
 type EventsOptions struct {

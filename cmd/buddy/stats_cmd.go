@@ -34,7 +34,7 @@ func newStatsCmd() *cobra.Command {
 			})
 			if err != nil {
 				if errors.Is(err, queries.ErrInvalidWindow) {
-					return newFriendError("buddy: " + err.Error())
+					return newFriendError(persona.M(persona.KeyQueriesInvalidWindow))
 				}
 				if errors.Is(err, db.ErrDBMissing) {
 					return dbMissingFriendError(dbFlag)

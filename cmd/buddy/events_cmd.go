@@ -41,7 +41,7 @@ func newEventsCmd() *cobra.Command {
 				defer stop()
 				if err := queries.Follow(ctx, opts, os.Stdout); err != nil {
 					if errors.Is(err, queries.ErrInvalidLimit) {
-						return newFriendError("buddy: " + err.Error())
+						return newFriendError(persona.M(persona.KeyQueriesInvalidLimit))
 					}
 					if errors.Is(err, db.ErrDBMissing) {
 						return dbMissingFriendError(dbFlag)

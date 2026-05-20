@@ -24,10 +24,10 @@ import (
 	"github.com/0xmhha/buddy/internal/format"
 )
 
-// ErrInvalidWindow is the sentinel returned when Options.Window is not one of
-// the accepted values. Carries a friend-tone Korean message that the CLI layer
-// surfaces verbatim — see cmd/buddy/main.go's friendError pattern.
-var ErrInvalidWindow = errors.New("--window 은 5m, 1h, 24h 중 하나야.")
+// ErrInvalidWindow is the sentinel returned when Options.Window is not one
+// of the accepted values. Error() text stays English (locale-free); the
+// cmd layer renders the localized message via persona.KeyQueriesInvalidWindow.
+var ErrInvalidWindow = errors.New("--window must be one of 5m, 1h, 24h")
 
 // Options configure a Run call.
 type Options struct {

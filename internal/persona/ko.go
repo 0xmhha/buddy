@@ -89,6 +89,10 @@ func koCatalog() map[Key]string {
 		// events
 		KeyEventsFollowFailed: "buddy: events follow 실패 (%v)",
 
+		// queries sentinels
+		KeyQueriesInvalidLimit:  "buddy: --limit 은 1 이상이어야 해.",
+		KeyQueriesInvalidWindow: "buddy: --window 은 5m, 1h, 24h 중 하나야.",
+
 		// feature CLI
 		KeyFeatureUpserted:  "buddy: feature 저장했어 (%s).",
 		KeyFeatureDeleted:   "buddy: feature 삭제했어 (%s).",

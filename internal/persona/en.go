@@ -93,6 +93,10 @@ func enCatalog() map[Key]string {
 		// events
 		KeyEventsFollowFailed: "buddy: events follow failed (%v)",
 
+		// queries sentinels
+		KeyQueriesInvalidLimit:  "buddy: --limit must be >= 1.",
+		KeyQueriesInvalidWindow: "buddy: --window must be one of 5m, 1h, 24h.",
+
 		// feature CLI
 		KeyFeatureUpserted:  "buddy: feature saved (%s).",
 		KeyFeatureDeleted:   "buddy: feature deleted (%s).",

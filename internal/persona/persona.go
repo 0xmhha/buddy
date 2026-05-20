@@ -24,12 +24,7 @@
 // risking an import cycle. In particular, internal/diagnose currently imports
 // it for doctor's render strings.
 //
-// Known gaps (v0.2 i18n sweep targets):
-//   - queries.ErrInvalidLimit / queries.ErrInvalidWindow carry Korean text in
-//     their Error() value; the CLI surfaces them via "buddy: " + err.Error().
-//     Migrate to KeyQueriesInvalidLimit / KeyQueriesInvalidWindow when the
-//     queries package error type grows a Code field (mirrors the v0.2 plan
-//     for config.ValidationError.Reason).
+// Known gaps:
 //   - Internal log surfaces (daemon boot, hookwrap stderr) intentionally stay
 //     scattered — they are debug surfaces, not friend-tone prompts.
 package persona
@@ -128,6 +123,11 @@ const (
 	// events follow markers
 	KeyEventsFollowFailed Key = "events.follow_failed" // %v
 
+	// queries sentinels — rendered via cmd/buddy at the CLI boundary so the
+	// internal/queries package stays locale-free.
+	KeyQueriesInvalidLimit  Key = "queries.invalid_limit"
+	KeyQueriesInvalidWindow Key = "queries.invalid_window"
+
 	// feature CLI
 	KeyFeatureUpserted  Key = "feature.upserted"   // %s = feature_id
 	KeyFeatureDeleted   Key = "feature.deleted"     // %s = feature_id
@@ -215,6 +215,10 @@ func AllKeys() []Key {
 
 		// events
 		KeyEventsFollowFailed,
+
+		// queries sentinels
+		KeyQueriesInvalidLimit,
+		KeyQueriesInvalidWindow,
 
 		// feature CLI
 		KeyFeatureUpserted,
