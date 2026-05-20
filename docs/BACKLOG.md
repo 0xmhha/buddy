@@ -57,7 +57,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 |------|--------|------|
 | Dogfood validation — cycle-1 (B1-B5 fix) | ✅ 100% | 2026-05-10 완료 |
 | Dogfood validation — cycle-2 production (B-2 trigger) | ~5% | pre-flight Done, 3 paths user-paced — Wave 1 |
-| i18n sweep (M5 deferred — 4 sub-task) | 75% | W2-1 / W2-2 / W2-3 ✅, W2-4 잔여 — Wave 2 |
+| i18n sweep (M5 deferred — 4 sub-task) | ✅ 100% | W2-1 / W2-2 / W2-3 / W2-4 모두 closed — Wave 2 완료 |
 | Release polish (M6 deferred — 4 sub-task) | 25% | ci.yml ✅ (v0.6.2), 3 잔여 — Wave 3 |
 | TUI / runtime UX follow-on (5 sub-task) | 0% | dogfood signal 대기 — Wave 4 |
 | Trigger-bound (Korea / USA-EU / PG-MySQL / notarize / cycle-2 live) | N/A | 외부 신호 대기 — Wave 5 |
@@ -121,7 +121,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | ~~W2-1~~ | ~~`config.ValidationError.Reason` persona catalog wiring~~ | ✅ Done — ValidationError grew Code/Args, cmd-layer `configReasonKey` map binds 8 reasons to `KeyConfigReason*`; advisor/notify reasons remain English fallback for follow-up. | — |
 | ~~W2-2~~ | ~~`queries.ErrInvalidLimit` / `ErrInvalidWindow` 카탈로그 이전~~ | ✅ Done — sentinels emit locale-free English; cmd-layer renders via `KeyQueriesInvalidLimit/Window`. | — |
 | ~~W2-3~~ | ~~English locale 카탈로그 채우기~~ | ✅ Done (`internal/persona/en.go` ko-parity; +2 new keys from W2-2). | — |
-| W2-4 | Subcommand `--config` 인지 locale 해석 — 현재 root `PersistentPreRunE` 가 `config.DefaultPath()` 만 읽음 (`cmd/buddy/main.go:118` 주석 명시) | `cmd/buddy/main.go` | < 1 day |
+| ~~W2-4~~ | ~~Subcommand `--config` 인지 locale 해석~~ | ✅ Done — root `PersistentPreRunE` 가 leaf 의 `--config` flag 를 lookup, 있으면 우선; 없으면 `DefaultPath()` fallback. Root-level tests sandboxed HOME 으로 양쪽 branch coverage. | — |
 
 ### Wave 3 — Release polish (M6 deferred)
 
@@ -191,13 +191,13 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 Wave 1 (B-2 dogfood, user-paced)  ║  Wave 7 (C-1~C-5, AI 단독, 병행 가능)
    │                                   │
    ▼                                   ▼
-Wave 2 (i18n)  ≥  Wave 3 (release polish)  >  Wave 4 (TUI UX)  >>  Wave 5 (trigger-bound)  >>>  Wave 6 (defer)
+~~Wave 2 (i18n)~~ ✅  ≥  Wave 3 (release polish)  >  Wave 4 (TUI UX)  >>  Wave 5 (trigger-bound)  >>>  Wave 6 (defer)
 ```
 
 **Tiebreaker** (autoplan scope phase = P1 완성도 + P2 감당 가능 우선):
 - **Wave 1 (B-2) 와 Wave 7 (C-1~C-5) 는 직교** — B-2 는 사용자 페이스, Wave 7 은 AI 단독. 병행 진행. v1.0.0 publish 는 두 wave 모두 완료 시.
 - Wave 7 안: W7-1 (Session Monitor 토대) → W7-2 (Analysis) → W7-3 (Advisory) → W7-5 (Notification, W7-3 의 자연 후속) → W7-4 (Drift, 가장 큰 risk) 권장
-- Wave 2 가 Wave 3 보다 약간 우선 — i18n 은 M5 deferred 의 *명시적 약속 회수*
+- ~~Wave 2 가 Wave 3 보다 약간 우선 — i18n 은 M5 deferred 의 *명시적 약속 회수*~~ ✅ Wave 2 완료. 다음 polish 우선순위는 Wave 3.
 - Wave 4 안에서: W4-1 (branch-aware) > W4-2 (self-check fail) > W4-3 (edit CLI) > W4-4 / W4-5 (TUI cosmetic) — cascade *runtime semantic* 영향 큰 쪽 우선
 - W3-4 (notarization) 는 Wave 3 vs Wave 5 양쪽 가능 — 본 문서는 **Wave 3 에 표기, Wave 5 cross-ref** (Apple Dev ID 가 외부 trigger 이므로 Wave 5 이동도 합리)
 
