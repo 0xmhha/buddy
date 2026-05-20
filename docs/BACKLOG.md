@@ -58,7 +58,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | Dogfood validation — cycle-1 (B1-B5 fix) | ✅ 100% | 2026-05-10 완료 |
 | Dogfood validation — cycle-2 production (B-2 trigger) | ~5% | pre-flight Done, 3 paths user-paced — Wave 1 |
 | i18n sweep (M5 deferred — 4 sub-task) | ✅ 100% | W2-1 / W2-2 / W2-3 / W2-4 모두 closed — Wave 2 완료 |
-| Release polish (M6 deferred — 4 sub-task) | 25% | ci.yml ✅ (v0.6.2), 3 잔여 — Wave 3 |
+| Release polish (M6 deferred — 4 sub-task) | 75% (AI 단독 가능 부분 100%) | W3-1 / W3-2 / W3-3 ✅; W3-4 notarization 만 trigger-bound (Apple Dev ID) |
 | TUI / runtime UX follow-on (5 sub-task) | 0% | dogfood signal 대기 — Wave 4 |
 | Trigger-bound (Korea / USA-EU / PG-MySQL / notarize / cycle-2 live) | N/A | 외부 신호 대기 — Wave 5 |
 | Indefinite defer (Non-goal 또는 trigger 부재) | N/A | 잡지 말 것 — Wave 6 |
@@ -127,10 +127,10 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 
 | ID | 작업 | 위치 | 비고 |
 |----|------|------|------|
-| W3-1 | `VERSION` 파일 / build-time embed — 현재 `0.7.5` 5 곳 분산 (main.go / Makefile / CHANGELOG / README / release.yml). `make verify-versions` 보호 중. release cadence 잦아짐 (1 day 안 v0.7.0~v0.7.4) | top-level + Makefile/release.yml inject | DRY 가치 측정 가능 시 |
-| W3-2 | Third-party Actions SHA pinning + Dependabot — 현재 `actions/checkout@v6`, `setup-go@v6`, `softprops/action-gh-release@v3` 모두 mutable major tag | `.github/workflows/*.yml` | 보안 강화, < 1 day |
+| ~~W3-1~~ | ~~`VERSION` 파일 / build-time embed~~ | ✅ Done — `VERSION` 파일이 SSoT, `RELEASE_VERSION := $(shell cat VERSION)`, `make set-version VERSION=x.y.z` sed 가 main.go + server.go + 2 JSON 일괄 동기화 (Option B, sed-based). | — |
+| ~~W3-2~~ | ~~Third-party Actions SHA pinning + Dependabot~~ | ✅ Done — 5/5 Action SHA-pinned (`actions/checkout` v6.0.2, `actions/setup-go` v6.4.0, `softprops/action-gh-release` v3.0.0); `.github/dependabot.yml` weekly github-actions ecosystem. | — |
 | ~~W3-3~~ | ~~별도 `ci.yml`~~ | ✅ Done (v0.6.2 — `.github/workflows/ci.yml`) | — |
-| W3-4 | macOS notarization — Apple Developer ID 필요, 현재 `xattr -d com.apple.quarantine` 안내 | release.yml + sign step | Wave 5 trigger-bound 로 분류 가능 |
+| W3-4 | macOS notarization — Apple Developer ID 필요, 현재 `xattr -d com.apple.quarantine` 안내 | release.yml + sign step | Wave 5 trigger-bound (Apple Dev ID) — AI 단독 진행 불가 |
 
 ### Wave 4 — TUI / agent runtime follow-on (UX polish, dogfood signal 가능)
 
@@ -191,7 +191,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 Wave 1 (B-2 dogfood, user-paced)  ║  Wave 7 (C-1~C-5, AI 단독, 병행 가능)
    │                                   │
    ▼                                   ▼
-~~Wave 2 (i18n)~~ ✅  ≥  Wave 3 (release polish)  >  Wave 4 (TUI UX)  >>  Wave 5 (trigger-bound)  >>>  Wave 6 (defer)
+~~Wave 2 (i18n)~~ ✅  ≥  ~~Wave 3 (release polish)~~ ✅ (AI 가능 부분 100%, W3-4 만 trigger-bound)  >  Wave 4 (TUI UX, dogfood signal 대기)  >>  Wave 5 (trigger-bound)  >>>  Wave 6 (defer)
 ```
 
 **Tiebreaker** (autoplan scope phase = P1 완성도 + P2 감당 가능 우선):
