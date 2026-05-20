@@ -2,7 +2,7 @@
 
 A reliability and observability control plane for [Claude Code](https://claude.ai/code) sessions.
 
-Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 99 slash commands and 148 skills covering the full product development lifecycle, dispatched through a single auto-loaded `router` skill.
+Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 100 slash commands and 149 skills covering the full product development lifecycle, dispatched through a single auto-loaded `router` skill.
 
 ```
               ┌──────────────────────────┐
@@ -30,7 +30,7 @@ cli buddy *embeds* plugin buddy; plugin buddy stands alone. The Features table b
 
 | Area | Track | What it does |
 |------|-------|-------------|
-| **Claude Code plugin** | plugin buddy | 9-phase lifecycle orchestrator, 99 `/buddy:*` commands, 148 skills behind one router |
+| **Claude Code plugin** | plugin buddy | 9-phase lifecycle orchestrator, 100 `/buddy:*` commands, 149 skills behind one router |
 | **Hook reliability** | cli buddy (v0.1.0) | Wraps Claude Code hooks; surfaces silent failures with structured logs |
 | **State schema** | cli buddy (v0.1.0) | Zod-validated JSON state prevents corruption and schema drift |
 | **Task retry** | cli buddy (v0.1.0) | WAL-backed outbox ensures failed tasks are replayed, not dropped |
@@ -149,7 +149,7 @@ Full CLI reference: [`docs/v0.1-spec.md §7`](./docs/v0.1-spec.md).
 
 ### Claude Code plugin — slash commands
 
-Once the plugin is installed, 99 slash commands are available in any Claude Code session, all dispatched through the single auto-loaded `router` skill.
+Once the plugin is installed, 100 slash commands are available in any Claude Code session, all dispatched through the single auto-loaded `router` skill.
 
 #### Phase orchestrators (9 — pipeline entry points)
 
@@ -186,6 +186,7 @@ Once the plugin is installed, 99 slash commands are available in any Claude Code
 | `/buddy:consult-codex`   | Second opinion via external LLM CLI |
 | `/buddy:save-context`    | Checkpoint git state + decisions + remaining tasks |
 | `/buddy:restore-context` | Restore most recent saved checkpoint |
+| `/buddy:write-a-skill`   | Author a new buddy skill (PROCEDURE.md + catalog + routing + ADR-003 attribution) with RED-GREEN-REFACTOR subagent pressure test |
 
 #### Router dispatch (composition)
 
@@ -234,14 +235,15 @@ Portions of the Claude Code plugin skills (`plugin/skills/`) are derived from, i
 
 | Project | Author / Copyright | Used by |
 |---------|-------------------|---------|
-| [mattpocock/skills](https://github.com/mattpocock/skills) | Matt Pocock | `define-product-spec` (define-product-context + write-prd absorption), `review-engineering` (review-code-architecture absorption) |
+| [mattpocock/skills](https://github.com/mattpocock/skills) | Matt Pocock | `define-product-spec` (define-product-context + write-prd absorption), `review-engineering` (review-code-architecture absorption), `write-a-skill` (description-format rules + when-to-split-files + review-checklist absorption) |
 | [gstack](https://github.com/garrytan/gstack) | Garry Tan | early plugin scaffolding inspiration |
 | marketingskills | Corey Haines, 2025 | `analyze-competition-and-substitutes`, `optimize-conversion-funnel` (5 CRO sub), `draft-marketing-copy`, `plan-marketing-channel`, `audit-seo-aso`, `automate-marketing-content` (3 sub), `analyze-feature-adoption`, `analyze-user-cohort`, `analyze-customer-feedback-corpus`, `conduct-customer-interview`, `map-customer-segments` |
 | designer-skills | MC Dean, 2026 | `apply-design-system`, `audit-ui-quality`, `prototype-from-spec`, `design-interaction-pattern`, `design-accessibility-baseline`, `conduct-customer-interview` (design-research) |
 | make-interfaces-feel-better | (MIT) | `audit-ui-quality` (micro-detail patterns) |
 | agent-evaluation | Kevin + Claude, 2026 (OMAS v2) | `audit-test-coverage-meaningful`, `analyze-actor-failure-rate` (input-vs-output trust scoring) |
 | humanizer | Siqi Chen, 2025 | `analyze-customer-feedback-corpus` (AI-text inverse pattern) |
-| [superpowers](https://github.com/obra/superpowers) | Jesse Vincent, 2025 | `docs/superpowers/` directory naming + composable-skill + router-instruction pattern. See [ADR-003](./docs/superpowers/decisions/2026-05-10-superpowers-attribution.md). |
+| [superpowers](https://github.com/obra/superpowers) | Jesse Vincent, 2025 | `docs/superpowers/` directory naming + composable-skill + router-instruction pattern. `write-a-skill` (RED-GREEN-REFACTOR TDD-for-skills loop + anti-rationalization principle from `writing-skills`). See [ADR-003](./docs/superpowers/decisions/2026-05-10-superpowers-attribution.md). |
+| Anthropic skill-creator | Anthropic, 2025 (proprietary terms) | `write-a-skill` — progressive disclosure principle + skill bundle anatomy concept (reference-only per ADR-003 §2.4; no verbatim code/text adopted) |
 | gpt-researcher | (referenced) | `conduct-customer-interview` (automation aid) |
 | Korean legal cluster | varies (MIT) | Korea cluster deferred (`consult-korea-legal-context` etc) — `ai-professional-replacement-legal-exploration_skill`, `korean-legal-guide_skill`, `patent-application-drafting_skill`, `KESE-KIT` |
 

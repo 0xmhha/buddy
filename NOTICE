@@ -105,7 +105,25 @@ Inspiration acknowledgment per ADR-003
   plugin/skills/router/SKILL.md and plugin/skills/<name>/PROCEDURE.md
   shares the same conceptual lineage as upstream's "set of composable
   skills and some initial instructions that make sure your agent uses
-  them" framing.
+  them" framing, and
+- plugin/skills/write-a-skill/PROCEDURE.md adopts the
+  RED-GREEN-REFACTOR TDD-for-skills loop and anti-rationalization
+  principle from upstream's `writing-skills` (adopt-with-edits per
+  ADR-003 §2.4 — structure/principle borrowed, body 100% independently
+  authored in buddy voice).
 
 No verbatim code or text was adopted. buddy's implementation is
 independently authored.
+
+---
+
+Anthropic skill-creator (reference-only per ADR-003 §2.4)
+Source: github.com/anthropics/skills/tree/main/skill-creator
+License: Anthropic proprietary terms — © 2025 Anthropic, PBC
+
+Referenced by plugin/skills/write-a-skill/PROCEDURE.md for the
+"progressive disclosure" design principle and the skill bundle anatomy
+concept (SKILL.md + scripts/ + references/ + assets/). No code, prompt
+text, or asset was adopted; the buddy implementation is independently
+authored and adapts the concept to buddy's PROCEDURE.md + router
+catalog architecture.

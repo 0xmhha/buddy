@@ -107,8 +107,8 @@
 
 ## 5. 노출된 커맨드 목록 (plugin.json commands)
 
-> 사용자가 `/buddy:<name>`으로 직접 호출할 수 있는 27개 커맨드.
-> 9개 단계 진입점 + 1개 다각도 리뷰 + 3개 공통 도구 + 13개 단계별 세부 작업 + 1개 상태 확인 = 27.
+> 사용자가 `/buddy:<name>`으로 직접 호출할 수 있는 28개 커맨드.
+> 9개 단계 진입점 + 1개 다각도 리뷰 + 4개 공통 도구 + 13개 단계별 세부 작업 + 1개 상태 확인 = 28.
 > 패턴 라이브러리와 보관 스킬은 manifest 에 노출하지 않는다.
 
 > **9-phase 라이프사이클 단계 약칭** (이하 표에서 사용):
@@ -144,7 +144,7 @@
 |--------|------|------|
 | `/buddy:autoplan` | 공통 (리뷰) | 산출물을 scope / design / engineering / DX 4개 관점으로 자동 리뷰 |
 
-### 5.4 공통 도구 (3)
+### 5.4 공통 도구 (4)
 
 > 단계 종속 없음. 어디서든 호출 가능.
 
@@ -153,6 +153,7 @@
 | `/buddy:consult-codex` | 공통 | 외부 LLM (codex 등) 으로 second opinion |
 | `/buddy:save-context` | 공통 | 체크포인트 저장 (브랜치 무관 이어받기) |
 | `/buddy:restore-context` | 공통 | 체크포인트 복원 |
+| `/buddy:write-a-skill` | 공통 / 메타 | 신규 buddy 스킬 작성 + catalog 등재 + 차용 4분류 정책 적용 + RED-GREEN-REFACTOR subagent pressure test (한 사이클) |
 
 ### 5.5 단계별 세부 작업 (13)
 
