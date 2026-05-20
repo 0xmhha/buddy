@@ -108,7 +108,7 @@ cycle-2 함정 (8 surface flat list 시도 시 baseline stale) 방지 위해 *ti
 - ✅ Escape hatch ((B) 정직 인정) 가 *real anchor 발굴* 의 catalyst 로 작동 — Q3 mimicry → 세민 surface
 - ✅ Two-mode (Startup / Builder) 분기, 6 forcing question 완주, 전제 체크 4 항목, 2-3 대안 (A/B/C) 생성, 추천 (A→B sequence) 도출, design doc template (Startup) 산출 — *모든 stage 완료*
 - ⚠ 3 PROCEDURE-side findings: **BA-6 (Q3 prompt mimicry)** / **BA-7 (hybrid persona)** / **BA-8 (전제 active obligations silent)** — Wave 4 candidates (W4-8/9/10)
-- 📄 Design doc 산출: [`./2026-05-20-validate-idea-ai-figma-context-bridge.md`](./2026-05-20-validate-idea-ai-figma-context-bridge.md). 사용자 IP — 추후 claude-design-skill repo 또는 별 idea repo 로 이동 권장
+- 📄 Design doc 산출 → **이동 완료** 2026-05-20: `/Users/wm-it-22-00661/Work/github/study/ai/claude-design-skill/docs/2026-05-20-validate-idea-ai-figma-context-bridge.md` (claude-design-skill repo 의 master branch). 본 idea 가 *해당 프로젝트의 확장 영역* 이라 IP 가 그 repo 에 귀속
 - ⏳ Stage 2-8 (validate-advanced-edge-idea → assess-business-viability → ... → autoplan) — 별 세션 권장 (token budget)
 - ⏳ The Assignment (세민 미팅 + 1-week trial) — 사용자 *이번 주* 실행 obligation
 
