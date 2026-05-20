@@ -26,6 +26,7 @@
 | [ADR-014](./2026-05-19-f2c-advisory-foundation.md) | 2026-05-19 | F2.C Advisory foundation (W7-3a, v1.0 entry C-3 phase 1/3): Python agent + local BM25 + local embeddings + SQLite vector store + MCP `knowledge_query` + CLI `buddy knowledge`. 3-phase split (foundation v0.10 / advisor v0.11 closes C-3 / skill-gen v0.12). | Accepted | advisory-foundation, f2c, w7-3, c-3, knowledge-retrieval, python-agent, bm25, embeddings, phase-split |
 | [ADR-015](./2026-05-19-f2c-advisor-phase2.md) | 2026-05-19 | F2.C Advisor design (W7-3b, v1.0 entry C-3 phase 2/3): metric-as-trigger + retrieval-as-evidence combinator; 5 rule kinds config-tunable via `buddy config`; 4-surface ship (CLI `buddy advise` + TUI Usage pane advisory section + MCP `usage_advise` + daemon `advisorMonitor`); advisories table (migration v7) with dedup window. **Closes C-3.** | Accepted | advisor, f2c, w7-3b, c-3, metric-trigger, retrieval-evidence, rules, advisories-table |
 | [ADR-016](./2026-05-19-f2e-notification.md) | 2026-05-19 | F2.E Notification design (W7-5, v1.0 entry C-5): 4-channel ship (desktop osascript/notify-send + webhook + TUI banner + shell prompt); daemon auto-dispatch via advisorMonitor; config-driven destinations; per-channel severity floor + dedup window; notification_log table (migration v8). **Closes C-5.** | Accepted | notification, f2e, w7-5, c-5, desktop, webhook, tui-banner, shell-prompt, dispatcher |
+| [ADR-017](./2026-05-20-f2d-drift-detection.md) | 2026-05-20 | F2.D Drift Detection design (W7-4, v1.0 entry C-4 — final C-x): embedding cosine over goal_text vs recent N chunks; new advisor rule `KindGoalDrift` reusing W7-3a embedder + W7-3b pipeline; 3 new config keys; no new table / migration / CLI / MCP / TUI surface — strict scope discipline. **Closes C-4.** | Accepted | drift-detection, f2d, w7-4, c-4, goal-drift, cosine-similarity, advisor-rule, final-c-x |
 
 ---
 
@@ -141,7 +142,7 @@ charter §6.2 의 cli buddy 진화 시 예상 ADR 후보:
 | ~~ADR-{N} F2.B Usage Analysis schema~~ | **Closed by ADR-013 (2026-05-19)** — sessions-only live aggregation + CLI/MCP/TUI 3-way surface + 7 metric |
 | ~~ADR-{N} F2.C Advisor (phase 2)~~ | **Closed by ADR-015 (2026-05-19)** — metric trigger + retrieval evidence + 5 config-tunable rules + 4-surface ship + advisories table |
 | **ADR-{N} F2.C Skill autogen (phase 3)** (Wave 7 W7-3c) | advisor (phase 2) 안정 — 반복 패턴 → skill spec auto-propose |
-| **ADR-{N} F2.D Drift Detection design** (Wave 7 W7-4, v1.0 C-4) | F2.A turn-level 데이터 + LLM 비교 path |
+| ~~ADR-{N} F2.D Drift Detection design~~ | **Closed by ADR-017 (2026-05-20)** — embedding cosine + KindGoalDrift advisor rule + no new surface |
 | ~~ADR-{N} F2.E Notification transport~~ | **Closed by ADR-016 (2026-05-19)** — 4-channel ship (desktop / webhook / TUI banner / shell) + daemon auto-dispatch + config-driven destinations + per-channel severity floor + dedup |
 
 ---
