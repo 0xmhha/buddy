@@ -1,4 +1,4 @@
-.PHONY: build test test-routing test-skill-form verify-go-version verify-versions fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
+.PHONY: build test test-routing test-skill-form verify-go-version verify-versions set-version fmt vet tidy clean release-binaries install-plugin uninstall-plugin print-%
 
 BIN     := bin/buddy
 BIN_MCP := bin/buddy-mcp
@@ -14,12 +14,17 @@ GIT_SHA := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 BUILD_DATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS := -X main.gitSHA=$(GIT_SHA) -X main.buildDate=$(BUILD_DATE)
 
-# RELEASE_VERSION is embedded into release artifact filenames. Keep this in
-# sync with cmd/buddy/main.go's `var version` (line ~38) — when bumping the
-# version for a release, update both. v0.2 may move to a single-source-of-truth
-# VERSION file or build-time embed if release cadence increases.
-# Roadmap §3 M6 T1.
-RELEASE_VERSION ?= 0.13.0
+# RELEASE_VERSION is derived from the top-level VERSION file — the single
+# source of truth for "what release is this". The four other places that
+# still carry a literal copy (cmd/buddy/main.go var version, internal/mcp/
+# server.go Version field, plugin/.claude-plugin/plugin.json, .claude-plugin/
+# marketplace.json) are kept in lockstep by `make set-version VERSION=x.y.z`
+# (one command edits all five) and guarded by `verify-versions` so a drift
+# fails the release workflow rather than shipping inconsistent binaries.
+RELEASE_VERSION := $(shell cat VERSION 2>/dev/null | head -1 | tr -d ' \n')
+ifeq ($(strip $(RELEASE_VERSION)),)
+RELEASE_VERSION := unknown
+endif
 DIST := dist
 RELEASE_BINS := \
 	$(DIST)/buddy_$(RELEASE_VERSION)_linux_amd64 \
@@ -88,11 +93,13 @@ verify-go-version:
 # verify-go-version covers go.mod↔workflow; this target covers the
 # Makefile↔plugin.json↔marketplace.json↔server.go↔main.go axis.
 #
-# All five values must equal RELEASE_VERSION exactly. Any mismatch is
-# almost certainly a half-finished release bump that would publish
-# inconsistent binaries (e.g. plugin.json says 0.6.1 but the cli binary
-# self-reports 0.6.0). Run as part of the release workflow before
-# cross-compile.
+# SSoT: the VERSION file. RELEASE_VERSION is derived from it (see the
+# `RELEASE_VERSION := $(shell cat VERSION ...)` assignment above), so
+# this target effectively checks every source against VERSION. The error
+# message refers to RELEASE_VERSION for backward compatibility with the
+# release workflow's log scrapers, but the fix is always "run
+# `make set-version VERSION=<intended>` to propagate VERSION's value
+# through all four source files in one step".
 verify-versions:
 	@want="$(RELEASE_VERSION)"; \
 	mk="$$want"; \
@@ -106,11 +113,36 @@ verify-versions:
 	  if [ "$$val" != "$$want" ]; then miss="$$miss $$name=$$val"; fi; \
 	done; \
 	if [ -n "$$miss" ]; then \
-	  echo "::error::version sources disagree with Makefile RELEASE_VERSION ($$want):$$miss"; \
-	  echo "fix: bump every disagreeing source to $$want, or update Makefile RELEASE_VERSION to match the intended release"; \
+	  echo "::error::version sources disagree with VERSION file ($$want):$$miss"; \
+	  echo "fix: run 'make set-version VERSION=<intended>' to propagate, or edit VERSION + re-run set-version if VERSION itself is wrong"; \
 	  exit 1; \
 	fi; \
 	echo "verify-versions: all 5 sources agree on $$want"
+
+# set-version rewrites the VERSION file and the four source files that carry
+# a literal version copy. RELEASE_VERSION is derived from VERSION, so the
+# Makefile self-updates on the next make invocation.
+#
+# Usage: make set-version VERSION=0.14.0
+# Pairs with verify-versions: the next make pass confirms agreement and the
+# resulting diff is the entire release-bump commit.
+#
+# Patterns mirror the awk extractors in verify-versions; if you add a sixth
+# source, add it there first so drift fails fast, then mirror the sed here.
+# Cross-platform note: `sed -i.bak` works on both BSD (macOS) and GNU sed;
+# the .bak is removed immediately so the diff stays clean.
+set-version:
+	@if [ -z "$(VERSION)" ]; then \
+	  echo "usage: make set-version VERSION=<x.y.z>"; \
+	  exit 2; \
+	fi
+	@echo "$(VERSION)" > VERSION
+	@sed -i.bak -E 's/(version[[:space:]]*=[[:space:]]*")[^"]*(")/\1$(VERSION)\2/' cmd/buddy/main.go && rm cmd/buddy/main.go.bak
+	@sed -i.bak -E 's/(Version:[[:space:]]*")[^"]*(")/\1$(VERSION)\2/' internal/mcp/server.go && rm internal/mcp/server.go.bak
+	@sed -i.bak -E 's/(^  "version":[[:space:]]*")[^"]*(")/\1$(VERSION)\2/' plugin/.claude-plugin/plugin.json && rm plugin/.claude-plugin/plugin.json.bak
+	@sed -i.bak -E 's/(^      "version":[[:space:]]*")[^"]*(")/\1$(VERSION)\2/' .claude-plugin/marketplace.json && rm .claude-plugin/marketplace.json.bak
+	@echo "set-version: VERSION=$(VERSION) propagated to VERSION + 4 source files"
+	@$(MAKE) -s verify-versions
 
 fmt:
 	gofmt -s -w .
