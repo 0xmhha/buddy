@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -60,4 +61,43 @@ func TestRoot_PersistentPreRunE_FallsBackToDefaultPath(t *testing.T) {
 
 	assert.Equal(t, persona.LocaleKO, persona.ActiveLocale(),
 		"no --config means fall back to default path; ko stays ko")
+}
+
+// TestEvents_InvalidLimit_RendersViaPersona locks the i18n contract for the
+// `--limit < 1` path of `buddy events`. The bug this guards against:
+// events_cmd.go has TWO sites that map queries.ErrInvalidLimit to a
+// friend-tone error — one inside the --follow branch and one in the plain
+// RunEvents branch. Forgetting either site silently regresses to the raw
+// English Error() string. Both must render via the persona catalog.
+func TestEvents_InvalidLimit_RendersViaPersona(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	require.NoError(t, persona.SetLocale(persona.LocaleKO))
+	t.Cleanup(func() { _ = persona.SetLocale(persona.LocaleKO) })
+
+	wantKo := persona.M(persona.KeyQueriesInvalidLimit)
+	rawEnglish := "--limit must be >= 1"
+
+	cases := []struct {
+		name string
+		args []string
+	}{
+		{name: "plain", args: []string{"events", "--limit", "-1"}},
+		{name: "follow", args: []string{"events", "--follow", "--limit", "-1"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := newRootCmd()
+			var stdout, stderr bytes.Buffer
+			root.SetOut(&stdout)
+			root.SetErr(&stderr)
+			root.SetArgs(tc.args)
+			err := root.Execute()
+			require.Error(t, err, "negative --limit must surface as an error")
+
+			var fe *friendError
+			require.True(t, errors.As(err, &fe), "want friendError, got %T: %v", err, err)
+			assert.Equal(t, wantKo, fe.msg, "must render via persona, not raw err.Error()")
+			assert.NotContains(t, fe.msg, rawEnglish, "raw English fallback must not leak when Code is wired")
+		})
+	}
 }
