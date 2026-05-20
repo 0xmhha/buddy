@@ -139,7 +139,7 @@ func (e *Evaluator) buildSnapshot(ctx context.Context, t Thresholds) (Snapshot, 
 		active = ss
 	}
 
-	return Snapshot{
+	snap := Snapshot{
 		Now:            now,
 		Window24h:      w24,
 		Spend24h:       spend24,
@@ -147,7 +147,105 @@ func (e *Evaluator) buildSnapshot(ctx context.Context, t Thresholds) (Snapshot, 
 		Window7d:       w7d,
 		Spend7d:        spend7,
 		ActiveSessions: active,
-	}, nil
+	}
+	// ADR-017 — populate per-session goal-drift scores when the
+	// substrate (Knowledge store + Embedder) is wired.
+	if !t.GoalDriftDisabled && e.Knowledge != nil && e.Embedder != nil {
+		snap.DriftItems = e.computeDriftItems(ctx, active, t.GoalDriftSampleChunks)
+	}
+	return snap, nil
+}
+
+// computeDriftItems builds per-active-session drift scores. Strict
+// graceful-fail: any embedder error on either side just drops that
+// session's drift entry (no advisory rather than a noisy "drift
+// unavailable" one).
+func (e *Evaluator) computeDriftItems(ctx context.Context, active []sessions.Session, sampleN int) []SessionDrift {
+	if sampleN <= 0 {
+		sampleN = 10
+	}
+	var out []SessionDrift
+	for _, s := range active {
+		if strings.TrimSpace(s.GoalText) == "" {
+			continue
+		}
+		chunks, err := e.Knowledge.ListBySession(ctx, s.ID)
+		if err != nil || len(chunks) < sampleN {
+			continue
+		}
+		// Take the last sampleN chunks (newest at the tail per
+		// store.ListBySession order). Average their embeddings.
+		recent := chunks[len(chunks)-sampleN:]
+		avg, worst := averageAndWorstEmbedding(recent)
+		if avg == nil {
+			continue // no embeddings on these chunks (ingest --skip-embed run)
+		}
+		// Embed goal_text via the wired embedder.
+		goalReq := []knowledge.EmbedRequest{{ID: 0, Text: s.GoalText}}
+		res, err := e.Embedder.Embed(ctx, goalReq)
+		if err != nil || len(res) == 0 || len(res[0].Embedding) == 0 {
+			continue
+		}
+		score := knowledge.CosineSimilarity(res[0].Embedding, avg)
+		drift := SessionDrift{
+			SessionID:    s.ID,
+			GoalText:     s.GoalText,
+			Score:        score,
+			SampleChunks: len(recent),
+			WorstChunk:   worst,
+		}
+		out = append(out, drift)
+	}
+	return out
+}
+
+// averageAndWorstEmbedding returns the per-dim mean of the chunks'
+// embeddings + the Content preview of the chunk whose embedding is
+// most distant from that mean (handy for Advisory Evidence). Chunks
+// without embeddings are skipped; returns (nil, "") when none have
+// embeddings.
+func averageAndWorstEmbedding(chunks []knowledge.Chunk) ([]float32, string) {
+	var dim int
+	var count int
+	for _, c := range chunks {
+		if len(c.Embedding) > 0 {
+			dim = len(c.Embedding)
+			count++
+		}
+	}
+	if count == 0 || dim == 0 {
+		return nil, ""
+	}
+	sum := make([]float64, dim)
+	for _, c := range chunks {
+		if len(c.Embedding) != dim {
+			continue
+		}
+		for i, v := range c.Embedding {
+			sum[i] += float64(v)
+		}
+	}
+	avg := make([]float32, dim)
+	for i := range sum {
+		avg[i] = float32(sum[i] / float64(count))
+	}
+	// Find the chunk with lowest cosine to the average.
+	var worstIdx = -1
+	var worstScore = 2.0 // cosine in [-1,1]; init above max so first valid sets it
+	for i, c := range chunks {
+		if len(c.Embedding) != dim {
+			continue
+		}
+		s := knowledge.CosineSimilarity(c.Embedding, avg)
+		if s < worstScore {
+			worstScore = s
+			worstIdx = i
+		}
+	}
+	if worstIdx < 0 {
+		return avg, ""
+	}
+	return avg, chunks[worstIdx].Content
 }
 
 // skipForDedup returns true when an advisory of `kind` was created

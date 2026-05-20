@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-05-20 — W7-4 F2.D Drift Detection (closes whole-product v1.0 entry C-4 — final C-x)
+
+**Milestone**: cli buddy F2.D Drift Detection ships. Closes whole-product v1.0.0 entry condition **C-4**. With this release **all five C-x conditions (cli buddy AI-usage coaching vision) are closed**. Only B-2 (production dogfood, user-paced) blocks v1.0.0.
+
+Strict-scope ship per ADR-017: drift lands as the advisor's 6th rule (`KindGoalDrift`) on top of the W7-3a embedder + W7-3b advisor pipeline. **Zero new tables, no migrations, no new CLI subcommands, no new MCP tools, no new TUI modes** — the existing advisor surfaces (CLI `buddy advise`, TUI Usage advisory section, MCP `usage_advise`, daemon advisorMonitor with notify dispatch) automatically carry drift advisories.
+
+What ships (code):
+
+- **`internal/advisor/types.go`** — 3 new `Thresholds` fields (`GoalDriftDisabled` / `GoalDriftThreshold` (default 0.4) / `GoalDriftSampleChunks` (default 10)) + `KindGoalDrift` constant + `AllKinds()` updated.
+- **`internal/advisor/rules.go`**:
+  - `SessionDrift` type (per-active-session score record).
+  - `Snapshot.DriftItems []SessionDrift` field, filled by the evaluator.
+  - `ruleGoalDrift` — picks the most-drifted active session (lowest score < threshold) and emits one advisory per Run. Severity `warn` by default; `high` when `score < threshold/2`. Korean prose: "세션 X 이 처음 목적에서 벗어나는 것 같아 ... 원래 목적: Y — 의도된 거야?".
+  - 6 race-clean unit tests (disabled / no-data / above-threshold / fires / severity-escalation / worst-session-pick).
+- **`internal/advisor/evaluator.go`** — `buildSnapshot` augmentation:
+  - When `Knowledge` + `Embedder` are wired AND `GoalDriftDisabled=false`, computes per-session drift via `computeDriftItems`.
+  - For each active session with non-empty `goal_text` and `>= GoalDriftSampleChunks` chunks: embed goal_text, average the last N chunks' embeddings, cosine similarity, record `SessionDrift{Score, WorstChunk}` (worst = chunk most distant from the average — used as the Advisory evidence).
+  - Strict graceful-fail: embedder errors / nil knowledge / few chunks → drift entry skipped silently.
+  - 3 new integration tests (fires / no-embedder-skipped / few-chunks-skipped).
+- **`internal/config/config.go`** — 3 new keys: `advisorGoalDriftDisabled` / `advisorGoalDriftThreshold` / `advisorGoalDriftSampleChunks`. Validation: threshold ∈ [0,1], sampleChunks ≥ 1.
+- **`cmd/buddy/loadconfig.go`**, **`cmd/buddy/advise_cmd.go`**, **`cmd/buddy-mcp/main.go`** — config → `advisor.Thresholds` projection updated to include the 3 new fields.
+
+What ships (governance):
+
+- **ADR-017** — F2.D Drift Detection design lock-in. Cosine over embeddings, recent-N chunks, advisor-rule integration. Strict scope (no new surface).
+
+Plugin v1.0.0 entry condition status (per ADR-010, whole-product 9 conditions):
+
+| # | Condition | Status |
+|---|-----------|--------|
+| B-1 | cli buddy W3 cascade | ✅ Done |
+| B-2 | production dogfood | ❌ user-paced |
+| B-3 | PROCEDURE B6 + `--strict` | ✅ Done |
+| B-4 | router smart-skip | ✅ Done |
+| C-1 | F2.A Session Monitor | ✅ Done (v0.8.0) |
+| C-2 | F2.B Usage Analysis | ✅ Done (v0.9.0) |
+| C-3 | F2.C Advisory | ✅ Done (v0.10.0 + v0.11.0) |
+| **C-4** | **F2.D Drift Detection** | **✅ Done (this release)** |
+| C-5 | F2.E Notification | ✅ Done (v0.12.0) |
+
+→ **8/9 closed (89%)**. Only **B-2** (production dogfood, user-paced) blocks v1.0.0. All AI-doable Wave 7 work is **complete**.
+
+Counts and gates:
+
+- 5 version sources all on `0.13.0` (`make verify-versions` passes).
+- `go test -race -count=1 ./...` — 27 packages green (unchanged package count; advisor adds 9 new tests).
+- `make test-skill-form --strict` — 148 / 62 / 86 / 0 (unchanged).
+
+Default-on posture:
+
+- `advisorGoalDriftDisabled` defaults to false → drift detection runs automatically once `buddy knowledge ingest` has populated chunks.
+- When embedder unavailable (no Python venv): drift silently skipped, other 5 advisor rules continue.
+
+Next milestone target: **v1.0.0** itself — gated on B-2 (production dogfood completion, user-paced; see `docs/dogfood-guide.md`). Phase 3 of F2.C (skill autogeneration, ADR-014 footnote) is post-v1.0 scope.
+
 ## [0.12.0] — 2026-05-20 — W7-5 F2.E Notification (closes whole-product v1.0 entry C-5)
 
 **Milestone**: cli buddy F2.E Notification ships. Closes whole-product v1.0.0 entry condition **C-5** (per ADR-010). Per ADR-016: 4-channel delivery (desktop / webhook / TUI banner / shell prompt) + daemon auto-dispatch via the advisor monitor + config-driven destinations + per-channel severity floor + per-channel dedup window.

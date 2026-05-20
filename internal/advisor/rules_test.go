@@ -142,3 +142,70 @@ func TestShortDur(t *testing.T) {
 	require.Equal(t, "2h", shortDur(2*time.Hour))
 	require.Equal(t, "2h30m", shortDur(2*time.Hour+30*time.Minute))
 }
+
+// ─── ruleGoalDrift (ADR-017) ──────────────────────────────────────────
+
+func TestRuleGoalDrift_DisabledNoFire(t *testing.T) {
+	t.Parallel()
+	thr := DefaultThresholds()
+	thr.GoalDriftDisabled = true
+	snap := Snapshot{Now: time.Now().UTC(), DriftItems: []SessionDrift{
+		{SessionID: "s1", GoalText: "g", Score: 0.05, SampleChunks: 10},
+	}}
+	require.Nil(t, ruleGoalDrift(thr, snap))
+}
+
+func TestRuleGoalDrift_NoDriftItemsNoFire(t *testing.T) {
+	t.Parallel()
+	require.Nil(t, ruleGoalDrift(DefaultThresholds(), Snapshot{Now: time.Now().UTC()}))
+}
+
+func TestRuleGoalDrift_AboveThresholdNoFire(t *testing.T) {
+	t.Parallel()
+	thr := DefaultThresholds() // threshold 0.4
+	snap := Snapshot{Now: time.Now().UTC(), DriftItems: []SessionDrift{
+		{SessionID: "s1", GoalText: "g", Score: 0.6, SampleChunks: 10},
+	}}
+	require.Nil(t, ruleGoalDrift(thr, snap))
+}
+
+func TestRuleGoalDrift_FiresWhenBelowThreshold(t *testing.T) {
+	t.Parallel()
+	thr := DefaultThresholds()
+	snap := Snapshot{Now: time.Now().UTC(), DriftItems: []SessionDrift{
+		{SessionID: "sess-abc123", GoalText: "design F2.D", Score: 0.25,
+			SampleChunks: 10, WorstChunk: "chunk talking about something else entirely"},
+	}}
+	a := ruleGoalDrift(thr, snap)
+	require.NotNil(t, a)
+	require.Equal(t, KindGoalDrift, a.Kind)
+	require.Equal(t, SeverityWarn, a.Severity)
+	require.Contains(t, a.Message, "sess-abc")
+	require.Contains(t, a.Message, "design F2.D")
+	// Evidence: metric + chunk.
+	require.GreaterOrEqual(t, len(a.Evidence), 2)
+}
+
+func TestRuleGoalDrift_HighSeverityWhenFarBelow(t *testing.T) {
+	t.Parallel()
+	thr := DefaultThresholds() // threshold 0.4 → half = 0.2
+	snap := Snapshot{Now: time.Now().UTC(), DriftItems: []SessionDrift{
+		{SessionID: "s1", GoalText: "g", Score: 0.1, SampleChunks: 10},
+	}}
+	a := ruleGoalDrift(thr, snap)
+	require.NotNil(t, a)
+	require.Equal(t, SeverityHigh, a.Severity, "score < threshold/2 → high")
+}
+
+func TestRuleGoalDrift_PicksLowestScoredSession(t *testing.T) {
+	t.Parallel()
+	thr := DefaultThresholds()
+	snap := Snapshot{Now: time.Now().UTC(), DriftItems: []SessionDrift{
+		{SessionID: "mild", GoalText: "g", Score: 0.35, SampleChunks: 10},
+		{SessionID: "severe", GoalText: "g", Score: 0.05, SampleChunks: 10},
+		{SessionID: "ok", GoalText: "g", Score: 0.9, SampleChunks: 10},
+	}}
+	a := ruleGoalDrift(thr, snap)
+	require.NotNil(t, a)
+	require.Contains(t, a.Message, "severe", "worst-drifted session is named")
+}

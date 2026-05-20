@@ -11,11 +11,11 @@
 
 ---
 
-## §1. 한 줄 — 전체 진행률 약 **83%** (ADR-010 whole-product v1.0.0 기준)
+## §1. 한 줄 — 전체 진행률 약 **94%** (ADR-010 whole-product v1.0.0 기준)
 
-**Plugin-side** + **cli buddy automation** 모두 100% Done. Wave 7 진행: W7-1 F2.A (v0.8.0) + W7-2 F2.B (v0.9.0) + W7-3a F2.C foundation (v0.10.0) + W7-3b F2.C advisor (v0.11.0) + **W7-5 F2.E Notification (v0.12.0, closes C-5)** ship 완료.
+**Plugin-side** + **cli buddy automation** + **AI-usage coaching 5/5 (Wave 7 모두 ship)** 완료. v0.8.0 W7-1 + v0.9.0 W7-2 + v0.10.0 W7-3a + v0.11.0 W7-3b + v0.12.0 W7-5 + **v0.13.0 W7-4 (closes C-4, final C-x)**.
 
-ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **7/9 closed** (B-1/B-3/B-4 + C-1/C-2/C-3/C-5) = **약 78% closed**. 남은: B-2 dogfood (user-paced) + C-4 Drift Detection (highest risk). 가중치 합산 **약 83%**.
+ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** = **약 89%**. **남은 단 1조건: B-2 production dogfood (user-paced)**. AI 가 할 수 있는 모든 Wave 7 작업 완료. 가중치 합산 **약 94%**.
 
 핵심 남은 것: (a) **B-2 production dogfood** (Wave 1, user-paced), (b) **C-1~C-5 cli buddy vision impl** (Wave 7, AI 단독 진행 가능), (c) polish (Wave 2/3), (d) trigger-bound (Wave 5).
 
@@ -48,7 +48,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **7/9 closed** 
 | **F2.A Session Monitor** (W4) | C-1 | ✅ 100% | v0.8.0 ship — Hybrid hook+fsLister + schema v5 + CLI list/show/purge + daemon poll (ADR-012) |
 | **F2.B Usage Analysis** (W5) | C-2 | ✅ 100% | v0.9.0 ship — `internal/usage/` 7 metric + CLI `buddy usage` + 5 MCP `usage_query_*` + TUI Usage pane (ADR-013) |
 | **F2.C Advisory** (W6) | C-3 | ✅ 100% | v0.10.0 Phase 1 (foundation, ADR-014) + v0.11.0 Phase 2 (advisor, ADR-015) ship. 5 rules + CLI/TUI/MCP/daemon 4-surface. Phase 3 skill-gen 은 post-v1.0. |
-| **F2.D Drift Detection** (W7) | C-4 | 0% | 미구현 — LLM-driven semantic similarity 필요 |
+| **F2.D Drift Detection** (W7) | C-4 | ✅ 100% | v0.13.0 ship — ADR-017 cosine over embedding + KindGoalDrift advisor rule (no new surface, 3 config keys) |
 | **F2.E Notification** (W8) | C-5 | ✅ 100% | v0.12.0 ship — ADR-016 4-channel (desktop / webhook / TUI banner / shell) + daemon auto-dispatch + per-channel severity floor + dedup + notification_log v8 |
 
 ### D. Polish + DX
@@ -68,8 +68,8 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **7/9 closed** 
 | 조건 set | Closed | 비율 |
 |---------|--------|------|
 | B-1~B-4 (plugin v1.0 entry) | 3/4 | 75% |
-| C-1~C-5 (cli buddy vision) | 4/5 | 80% |
-| **Whole-product v1.0.0 (9 조건)** | **7/9** | **78%** |
+| C-1~C-5 (cli buddy vision) | **5/5** | **100%** |
+| **Whole-product v1.0.0 (9 조건)** | **8/9** | **89%** |
 
 **가중치 합산** (Wave 1 dogfood + polish + Wave 7 vision 작업 가중치):
 - Core deliverable (A+B): 100%
@@ -178,7 +178,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **7/9 closed** 
 | ~~W7-3a~~ | (C-3 prep) | ~~F2.C foundation~~ | — | **✅ v0.10.0 ship (2026-05-19)** — ADR-014 Phase 1/3 |
 | ~~W7-3b~~ | C-3 | ~~F2.C advisor (Phase 2)~~ | — | **✅ v0.11.0 ship (2026-05-19)** — ADR-015 Phase 2/3. **C-3 closed.** |
 | **W7-3c** | (post-v1.0) | **F2.C skill autogen (Phase 3)** — 반복 패턴 detect → skill spec auto-propose | MED-HIGH | ADR-{N} F2.C skill-gen design (trigger: W7-3b 안정 dogfood) |
-| **W7-4** | C-4 | **F2.D Drift Detection** — 단일 conversation 안 *원래 목적* vs *현재 turn* semantic drift 감지 + drift alert | HIGH | ADR-{N} F2.D design (trigger: W7-1 turn-level 데이터 + LLM-driven 비교 path) — **마지막 C-x 조건** |
+| ~~W7-4~~ | C-4 | ~~F2.D Drift Detection~~ | — | **✅ v0.13.0 ship (2026-05-20)** — ADR-017. **모든 Wave 7 완료.** |
 | ~~W7-5~~ | C-5 | ~~F2.E Notification~~ | — | **✅ v0.12.0 ship (2026-05-20)** — ADR-016 |
 
 → Wave 7 의 자연 순서 = W7-1 → W7-2 → W7-3 → W7-4 → W7-5 (의존 graph 따라). 각 W7-X 시작 시 area-specific ADR 작성 + 사용자 confirm + impl cycle 진입.

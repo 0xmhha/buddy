@@ -26,18 +26,19 @@ const (
 	SeverityHigh Severity = "high"
 )
 
-// Rule kind identifiers — shipped in v0.11.0. The persona catalog
-// holds one KeyAdvisor* per kind for friend-tone Korean rendering.
+// Rule kind identifiers. v0.11.0 shipped five (token / session
+// shape); v0.13.0 (ADR-017) adds KindGoalDrift.
 const (
 	KindTokenSpikeDay    = "token-spike-day"
 	KindLongSession      = "long-session"
 	KindLowCacheRatio    = "low-cache-ratio"
 	KindSessionVolumeDay = "session-volume-day"
 	KindTokenDailyCap    = "token-daily-cap"
+	KindGoalDrift        = "goal-drift"
 )
 
-// AllKinds enumerates the v0.11.0 rule kinds in declaration order so
-// callers (CLI render, MCP listing) can iterate deterministically.
+// AllKinds enumerates the rule kinds in declaration order so callers
+// (CLI render, MCP listing) can iterate deterministically.
 func AllKinds() []string {
 	return []string{
 		KindTokenSpikeDay,
@@ -45,6 +46,7 @@ func AllKinds() []string {
 		KindLowCacheRatio,
 		KindSessionVolumeDay,
 		KindTokenDailyCap,
+		KindGoalDrift,
 	}
 }
 
@@ -103,6 +105,17 @@ type Thresholds struct {
 	// KindTokenDailyCap. Default 500_000.
 	TokenDailyThreshold int64
 
+	// GoalDriftDisabled bypasses ruleGoalDrift entirely (ADR-017).
+	GoalDriftDisabled bool
+
+	// GoalDriftThreshold: cosine similarity (0..1) below this between
+	// goal_text and recent activity fires KindGoalDrift. Default 0.4.
+	GoalDriftThreshold float64
+
+	// GoalDriftSampleChunks: chunks-from-end window the drift score
+	// averages over (ADR-017 Q2). Default 10.
+	GoalDriftSampleChunks int
+
 	// DedupWindow: same Kind doesn't re-fire inside this window.
 	// Default 24h.
 	DedupWindow time.Duration
@@ -111,17 +124,20 @@ type Thresholds struct {
 	PollInterval time.Duration
 }
 
-// DefaultThresholds returns spec-locked defaults (ADR-015 §Q2 table).
+// DefaultThresholds returns spec-locked defaults (ADR-015 §Q2 + ADR-017).
 func DefaultThresholds() Thresholds {
 	return Thresholds{
-		Disabled:            false,
-		TokenSpikeRatio:     1.5,
-		LongSessionHours:    4,
-		LowCachePct:         30,
-		SessionVolumePerDay: 20,
-		TokenDailyThreshold: 500_000,
-		DedupWindow:         24 * time.Hour,
-		PollInterval:        1 * time.Hour,
+		Disabled:              false,
+		TokenSpikeRatio:       1.5,
+		LongSessionHours:      4,
+		LowCachePct:           30,
+		SessionVolumePerDay:   20,
+		TokenDailyThreshold:   500_000,
+		GoalDriftDisabled:     false,
+		GoalDriftThreshold:    0.4,
+		GoalDriftSampleChunks: 10,
+		DedupWindow:           24 * time.Hour,
+		PollInterval:          1 * time.Hour,
 	}
 }
 
@@ -144,6 +160,12 @@ func (t Thresholds) WithDefaults() Thresholds {
 	}
 	if t.TokenDailyThreshold == 0 {
 		t.TokenDailyThreshold = d.TokenDailyThreshold
+	}
+	if t.GoalDriftThreshold == 0 {
+		t.GoalDriftThreshold = d.GoalDriftThreshold
+	}
+	if t.GoalDriftSampleChunks == 0 {
+		t.GoalDriftSampleChunks = d.GoalDriftSampleChunks
 	}
 	if t.DedupWindow == 0 {
 		t.DedupWindow = d.DedupWindow

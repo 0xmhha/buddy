@@ -22,6 +22,24 @@ type Snapshot struct {
 	Window7d       usage.TimeWindow
 	Spend7d        usage.TokenSpend
 	ActiveSessions []sessions.Session
+
+	// DriftItems are per-active-session drift scores, populated by
+	// the evaluator when Knowledge + Embedder are wired and the
+	// session has goal_text + ≥ SampleChunks chunks. Empty slice =
+	// drift detection skipped (no embedder, no chunks, or disabled).
+	DriftItems []SessionDrift
+}
+
+// SessionDrift is one row of goal-vs-activity comparison output
+// (ADR-017). Score is cosine similarity in [0,1] — higher means
+// "current activity still matches the original goal". WorstChunk
+// holds a short preview of the most-distant chunk for Evidence.
+type SessionDrift struct {
+	SessionID    string
+	GoalText     string
+	Score        float64
+	SampleChunks int
+	WorstChunk   string
 }
 
 // ruleFn produces an advisory or nil when the rule doesn't trigger.
@@ -29,8 +47,8 @@ type Snapshot struct {
 // retrieval evidence afterwards.
 type ruleFn func(t Thresholds, snap Snapshot) *Advisory
 
-// allRules returns every v0.11.0 rule in display order. Adding a rule
-// = append here + provide the impl + add a persona key.
+// allRules returns every rule in display order. Adding a rule = append
+// here + provide the impl + (when applicable) add a persona key.
 func allRules() []ruleFn {
 	return []ruleFn{
 		ruleTokenSpikeDay,
@@ -38,6 +56,7 @@ func allRules() []ruleFn {
 		ruleLowCacheRatio,
 		ruleSessionVolumeDay,
 		ruleTokenDailyCap,
+		ruleGoalDrift,
 	}
 }
 
@@ -216,6 +235,74 @@ func ruleTokenDailyCap(t Thresholds, snap Snapshot) *Advisory {
 		},
 		CreatedAt: snap.Now,
 	}
+}
+
+// ruleGoalDrift — fires when any active session's goal-vs-activity
+// cosine similarity drops below GoalDriftThreshold (ADR-017).
+// Picks the session with the LOWEST score (most drifted) as the
+// advisory's target; only one drift advisory per Run so the user
+// isn't flooded when multiple sessions drift simultaneously.
+//
+// Returns nil when:
+//   - GoalDriftDisabled is true
+//   - DriftItems is empty (evaluator skipped drift — no embedder or no chunks)
+//   - every DriftItem.Score >= threshold (no session has drifted)
+func ruleGoalDrift(t Thresholds, snap Snapshot) *Advisory {
+	if t.GoalDriftDisabled || len(snap.DriftItems) == 0 {
+		return nil
+	}
+	threshold := t.GoalDriftThreshold
+	var worst SessionDrift
+	worst.Score = 1.0 // start at "perfectly aligned" so the first drifted item wins
+	var found bool
+	for _, d := range snap.DriftItems {
+		if d.Score >= threshold {
+			continue
+		}
+		if !found || d.Score < worst.Score {
+			worst = d
+			found = true
+		}
+	}
+	if !found {
+		return nil
+	}
+	severity := SeverityWarn
+	if worst.Score < threshold/2 {
+		severity = SeverityHigh
+	}
+	shortID := worst.SessionID
+	if len(shortID) > 8 {
+		shortID = shortID[:8]
+	}
+	goal := worst.GoalText
+	if len(goal) > 60 {
+		goal = goal[:60] + "…"
+	}
+	a := &Advisory{
+		Kind:     KindGoalDrift,
+		Severity: severity,
+		Message: fmt.Sprintf(
+			"세션 %s 이 처음 목적에서 벗어나는 것 같아 (cosine %.2f, 기준 %.2f). 원래 목적: %s — 의도된 거야?",
+			shortID, worst.Score, threshold, goal,
+		),
+		Evidence: []EvidenceItem{
+			{Type: "metric", Detail: fmt.Sprintf("session=%s score=%.3f threshold=%.2f sample_chunks=%d",
+				worst.SessionID, worst.Score, threshold, worst.SampleChunks)},
+		},
+		CreatedAt: snap.Now,
+	}
+	if worst.WorstChunk != "" {
+		preview := worst.WorstChunk
+		if len(preview) > 120 {
+			preview = preview[:120] + "…"
+		}
+		a.Evidence = append(a.Evidence, EvidenceItem{
+			Type:   "chunk",
+			Detail: preview,
+		})
+	}
+	return a
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────

@@ -202,3 +202,101 @@ func TestEvaluator_EnrichWithRetrieval_AppendsChunks(t *testing.T) {
 	}
 	require.True(t, saw)
 }
+
+// TestEvaluator_GoalDrift_Fires — integration: seed an active session
+// with goal_text, ingest chunks whose contents differ semantically,
+// inject a MockEmbedder that returns orthogonal embeddings for goal vs
+// chunks. The drift score is then ~0 → rule fires.
+func TestEvaluator_GoalDrift_Fires(t *testing.T) {
+	t.Parallel()
+	r, ss, _ := newRunner(t)
+	ctx := context.Background()
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	r.Now = func() time.Time { return now }
+
+	// Session with explicit goal_text.
+	require.NoError(t, ss.Upsert(ctx, sessions.Session{
+		ID: "drift-victim", PID: 1, TranscriptPath: "/tmp/d.jsonl",
+		StartedAt: now.Add(-2 * time.Hour), LastActive: now,
+		GoalText: "build F2.D drift detection",
+		Metadata: "{}",
+	}))
+
+	// Wire knowledge store + MockEmbedder. Chunks pre-embedded
+	// orthogonal to the goal vector to force low cosine.
+	kstore := knowledge.NewStore(r.Advisories.db)
+	for i := 0; i < 10; i++ {
+		_, err := kstore.Insert(ctx, knowledge.Chunk{
+			SessionID:  "drift-victim",
+			Content:    "drifted chunk",
+			TokenCount: 2,
+			Embedding:  []float32{0, 1, 0}, // orthogonal to {1,0,0}
+		})
+		require.NoError(t, err)
+	}
+	r.Knowledge = kstore
+	r.Embedder = &knowledge.MockEmbedder{
+		Vectors: map[string][]float32{
+			"build F2.D drift detection": {1, 0, 0},
+		},
+	}
+
+	got, err := r.Run(ctx)
+	require.NoError(t, err)
+	var fired bool
+	for _, a := range got {
+		if a.Kind == KindGoalDrift {
+			fired = true
+		}
+	}
+	require.True(t, fired, "drift rule must fire when goal⊥chunks")
+}
+
+// TestEvaluator_GoalDrift_NoEmbedderSkipped — without an Embedder
+// wired, drift detection silently bypasses.
+func TestEvaluator_GoalDrift_NoEmbedderSkipped(t *testing.T) {
+	t.Parallel()
+	r, ss, _ := newRunner(t)
+	ctx := context.Background()
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	r.Now = func() time.Time { return now }
+	require.NoError(t, ss.Upsert(ctx, sessions.Session{
+		ID: "s", PID: 1, TranscriptPath: "/tmp/s.jsonl",
+		StartedAt: now, LastActive: now, GoalText: "goal here", Metadata: "{}",
+	}))
+	// r.Knowledge and r.Embedder both nil — drift skipped.
+	got, err := r.Run(ctx)
+	require.NoError(t, err)
+	for _, a := range got {
+		require.NotEqual(t, KindGoalDrift, a.Kind)
+	}
+}
+
+// TestEvaluator_GoalDrift_InsufficientChunksSkipped — drift requires
+// >= SampleChunks (default 10). Fewer chunks → no drift entry.
+func TestEvaluator_GoalDrift_InsufficientChunksSkipped(t *testing.T) {
+	t.Parallel()
+	r, ss, _ := newRunner(t)
+	ctx := context.Background()
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	r.Now = func() time.Time { return now }
+	require.NoError(t, ss.Upsert(ctx, sessions.Session{
+		ID: "few", PID: 1, TranscriptPath: "/tmp/few.jsonl",
+		StartedAt: now, LastActive: now, GoalText: "g", Metadata: "{}",
+	}))
+	kstore := knowledge.NewStore(r.Advisories.db)
+	// Only 3 chunks (< default 10).
+	for i := 0; i < 3; i++ {
+		_, _ = kstore.Insert(ctx, knowledge.Chunk{
+			SessionID: "few", Content: "c", TokenCount: 1,
+			Embedding: []float32{0, 1, 0},
+		})
+	}
+	r.Knowledge = kstore
+	r.Embedder = &knowledge.MockEmbedder{Vectors: map[string][]float32{"g": {1, 0, 0}}}
+	got, err := r.Run(ctx)
+	require.NoError(t, err)
+	for _, a := range got {
+		require.NotEqual(t, KindGoalDrift, a.Kind, "few chunks → no drift entry")
+	}
+}

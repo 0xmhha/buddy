@@ -64,6 +64,9 @@ type Config struct {
 	AdvisorTokenDailyThreshold   *int64    `json:"advisorTokenDailyThreshold,omitempty"`
 	AdvisorDedupWindow           *Duration `json:"advisorDedupWindow,omitempty"`
 	AdvisorPollInterval          *Duration `json:"advisorPollInterval,omitempty"`
+	AdvisorGoalDriftDisabled     *bool     `json:"advisorGoalDriftDisabled,omitempty"`
+	AdvisorGoalDriftThreshold    *float64  `json:"advisorGoalDriftThreshold,omitempty"`
+	AdvisorGoalDriftSampleChunks *int      `json:"advisorGoalDriftSampleChunks,omitempty"`
 
 	// Notify* are W7-5 (ADR-016) — daemon-side notification dispatcher.
 	// Per-channel toggles + severity floor + dedup window.
@@ -113,6 +116,9 @@ type Effective struct {
 	AdvisorTokenDailyThreshold int64
 	AdvisorDedupWindow         time.Duration
 	AdvisorPollInterval        time.Duration
+	AdvisorGoalDriftDisabled     bool
+	AdvisorGoalDriftThreshold    float64
+	AdvisorGoalDriftSampleChunks int
 
 	NotifyDesktopEnabled         bool
 	NotifyDesktopSeverityMin     string
@@ -162,6 +168,9 @@ func Defaults() Effective {
 		AdvisorTokenDailyThreshold: 500_000,
 		AdvisorDedupWindow:         24 * time.Hour,
 		AdvisorPollInterval:        1 * time.Hour,
+		AdvisorGoalDriftDisabled:     false,
+		AdvisorGoalDriftThreshold:    0.4,
+		AdvisorGoalDriftSampleChunks: 10,
 
 		NotifyDesktopEnabled:         true,
 		NotifyDesktopSeverityMin:     "warn",
@@ -233,6 +242,15 @@ func (c Config) Effective() Effective {
 	}
 	if c.AdvisorPollInterval != nil {
 		eff.AdvisorPollInterval = c.AdvisorPollInterval.Duration
+	}
+	if c.AdvisorGoalDriftDisabled != nil {
+		eff.AdvisorGoalDriftDisabled = *c.AdvisorGoalDriftDisabled
+	}
+	if c.AdvisorGoalDriftThreshold != nil {
+		eff.AdvisorGoalDriftThreshold = *c.AdvisorGoalDriftThreshold
+	}
+	if c.AdvisorGoalDriftSampleChunks != nil {
+		eff.AdvisorGoalDriftSampleChunks = *c.AdvisorGoalDriftSampleChunks
 	}
 	if c.NotifyDesktopEnabled != nil {
 		eff.NotifyDesktopEnabled = *c.NotifyDesktopEnabled
@@ -382,6 +400,12 @@ func (c Config) Validate() error {
 	}
 	if eff.AdvisorPollInterval < time.Minute || eff.AdvisorPollInterval > 24*time.Hour {
 		add("advisorPollInterval", fmt.Sprintf("must be 1m..24h (got %s)", eff.AdvisorPollInterval))
+	}
+	if eff.AdvisorGoalDriftThreshold < 0 || eff.AdvisorGoalDriftThreshold > 1 {
+		add("advisorGoalDriftThreshold", fmt.Sprintf("must be 0..1 (got %g)", eff.AdvisorGoalDriftThreshold))
+	}
+	if eff.AdvisorGoalDriftSampleChunks < 1 {
+		add("advisorGoalDriftSampleChunks", fmt.Sprintf("must be >= 1 (got %d)", eff.AdvisorGoalDriftSampleChunks))
 	}
 
 	// Notify thresholds (W7-5 / ADR-016). Severity strings constrained

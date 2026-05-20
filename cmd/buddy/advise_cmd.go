@@ -101,14 +101,17 @@ func buildEvaluator(dbFlag, configFlag, pythonBin, scriptPath string) (*advisor.
 	if cfg, err := loadConfigForAdvise(configFlag); err == nil {
 		eff := cfg.Effective()
 		t = advisor.Thresholds{
-			Disabled:            eff.AdvisorDisabled,
-			TokenSpikeRatio:     eff.AdvisorTokenSpikeRatio,
-			LongSessionHours:    eff.AdvisorLongSessionHours,
-			LowCachePct:         eff.AdvisorLowCachePct,
-			SessionVolumePerDay: eff.AdvisorSessionVolumePerDay,
-			TokenDailyThreshold: eff.AdvisorTokenDailyThreshold,
-			DedupWindow:         eff.AdvisorDedupWindow,
-			PollInterval:        eff.AdvisorPollInterval,
+			Disabled:              eff.AdvisorDisabled,
+			TokenSpikeRatio:       eff.AdvisorTokenSpikeRatio,
+			LongSessionHours:      eff.AdvisorLongSessionHours,
+			LowCachePct:           eff.AdvisorLowCachePct,
+			SessionVolumePerDay:   eff.AdvisorSessionVolumePerDay,
+			TokenDailyThreshold:   eff.AdvisorTokenDailyThreshold,
+			GoalDriftDisabled:     eff.AdvisorGoalDriftDisabled,
+			GoalDriftThreshold:    eff.AdvisorGoalDriftThreshold,
+			GoalDriftSampleChunks: eff.AdvisorGoalDriftSampleChunks,
+			DedupWindow:           eff.AdvisorDedupWindow,
+			PollInterval:          eff.AdvisorPollInterval,
 		}.WithDefaults()
 	}
 
