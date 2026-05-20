@@ -139,6 +139,30 @@ func TestConfigShow_MultiError_FormatsAsBullets(t *testing.T) {
 	assert.Contains(t, fe.msg, "  - personaLocale:")
 }
 
+// TestConfigShow_BulletReason_LocalizedViaPersona — the bullet's reason text
+// must come from the persona catalog (Korean by default), not the raw
+// English Reason that internal/config emits as a fallback. This locks the
+// i18n wiring that routes ValidationError.Code through configReasonKey.
+func TestConfigShow_BulletReason_LocalizedViaPersona(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.json")
+
+	// hookFailRatePct=200 hits ReasonFailRateOutOfRange → ko template
+	// "1부터 100까지여야 해 (지금 200)."
+	raw := []byte(`{"hookFailRatePct": 200}`)
+	require.NoError(t, os.WriteFile(cfgPath, raw, 0o644))
+
+	_, _, err := runConfig(t, cfgPath, "show")
+	require.Error(t, err)
+
+	var fe *friendError
+	require.True(t, errors.As(err, &fe), "want friendError, got %T: %v", err, err)
+	assert.Contains(t, fe.msg, "1부터 100까지여야 해 (지금 200).",
+		"bullet reason must render via persona, not the English fallback")
+	assert.NotContains(t, fe.msg, "must be 1..100 (got 200)",
+		"raw English Reason must not leak when Code is wired")
+}
+
 // --- get --------------------------------------------------------------------
 
 func TestConfigGet_ReturnsEffectiveValue(t *testing.T) {

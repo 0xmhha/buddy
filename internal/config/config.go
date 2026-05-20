@@ -308,9 +308,15 @@ func (c Config) Effective() Effective {
 // ValidationError describes a single invalid field. It is wrapped in MultiError
 // when more than one field is bad. Both types implement error so callers can use
 // errors.As to inspect.
+//
+// Code + Args are the locale-free structured identifier the cmd layer maps
+// to a persona.Key for friend-tone rendering. Reason stays as the English
+// fallback so Error() — and any non-localized field — remains usable.
 type ValidationError struct {
 	Field  string
 	Reason string
+	Code   string
+	Args   []any
 }
 
 // Error implements error.
@@ -339,6 +345,20 @@ func (m *MultiError) Error() string {
 	return sb.String()
 }
 
+// Stable Code values for ValidationError. The cmd layer maps these to a
+// persona.Key for friend-tone rendering; tests should reference these
+// constants rather than the literal strings.
+const (
+	ReasonHookTimeoutOutOfRange  = "hook_timeout_out_of_range"
+	ReasonHookSlowOutOfRange     = "hook_slow_out_of_range"
+	ReasonFailRateOutOfRange     = "fail_rate_out_of_range"
+	ReasonOutboxBacklogTooSmall  = "outbox_backlog_too_small"
+	ReasonNotifyChannelInvalid   = "notify_channel_invalid"
+	ReasonPollIntervalOutOfRange = "poll_interval_out_of_range"
+	ReasonBatchSizeOutOfRange    = "batch_size_out_of_range"
+	ReasonPersonaLocaleInvalid   = "persona_locale_invalid"
+)
+
 // Validate checks the EFFECTIVE values against per-field rules.
 // Returns nil, *ValidationError (single failure), or *MultiError (multiple).
 func (c Config) Validate() error {
@@ -347,35 +367,54 @@ func (c Config) Validate() error {
 	add := func(field, reason string) {
 		errs = append(errs, &ValidationError{Field: field, Reason: reason})
 	}
+	addCoded := func(field, code, reason string, args ...any) {
+		errs = append(errs, &ValidationError{Field: field, Reason: reason, Code: code, Args: args})
+	}
 
 	// hookTimeoutMs: 100ms (paranoid floor) .. 10min (paranoid ceiling).
 	// 30s is the spec default; 10min is "if you're hitting this, you have a
 	// bigger problem than buddy".
 	if eff.HookTimeoutMs < 100 || eff.HookTimeoutMs > 10*60*1000 {
-		add("hookTimeoutMs", fmt.Sprintf("must be 100..600000 (got %d)", eff.HookTimeoutMs))
+		addCoded("hookTimeoutMs", ReasonHookTimeoutOutOfRange,
+			fmt.Sprintf("must be 100..600000 (got %d)", eff.HookTimeoutMs),
+			eff.HookTimeoutMs)
 	}
 	// hookSlowMs must be smaller than hookTimeoutMs — slow comes before timeout.
 	if eff.HookSlowMs < 1 || eff.HookSlowMs > eff.HookTimeoutMs {
-		add("hookSlowMs", fmt.Sprintf("must be 1..hookTimeoutMs (got %d, timeout %d)", eff.HookSlowMs, eff.HookTimeoutMs))
+		addCoded("hookSlowMs", ReasonHookSlowOutOfRange,
+			fmt.Sprintf("must be 1..hookTimeoutMs (got %d, timeout %d)", eff.HookSlowMs, eff.HookTimeoutMs),
+			eff.HookSlowMs, eff.HookTimeoutMs)
 	}
 	if eff.HookFailRatePct < 1 || eff.HookFailRatePct > 100 {
-		add("hookFailRatePct", fmt.Sprintf("must be 1..100 (got %d)", eff.HookFailRatePct))
+		addCoded("hookFailRatePct", ReasonFailRateOutOfRange,
+			fmt.Sprintf("must be 1..100 (got %d)", eff.HookFailRatePct),
+			eff.HookFailRatePct)
 	}
 	if eff.OutboxBacklog < 1 {
-		add("outboxBacklog", fmt.Sprintf("must be >= 1 (got %d)", eff.OutboxBacklog))
+		addCoded("outboxBacklog", ReasonOutboxBacklogTooSmall,
+			fmt.Sprintf("must be >= 1 (got %d)", eff.OutboxBacklog),
+			eff.OutboxBacklog)
 	}
 	if eff.NotifyChannel != "stderr" {
 		// "desktop" lands in v0.2; stderr is the only valid value in v0.1.
-		add("notifyChannel", fmt.Sprintf("must be \"stderr\" (got %q)", eff.NotifyChannel))
+		addCoded("notifyChannel", ReasonNotifyChannelInvalid,
+			fmt.Sprintf("must be \"stderr\" (got %q)", eff.NotifyChannel),
+			eff.NotifyChannel)
 	}
 	if eff.PollInterval < 100*time.Millisecond || eff.PollInterval > 60*time.Second {
-		add("pollInterval", fmt.Sprintf("must be 100ms..60s (got %s)", eff.PollInterval))
+		addCoded("pollInterval", ReasonPollIntervalOutOfRange,
+			fmt.Sprintf("must be 100ms..60s (got %s)", eff.PollInterval),
+			eff.PollInterval)
 	}
 	if eff.BatchSize < 1 || eff.BatchSize > 100_000 {
-		add("batchSize", fmt.Sprintf("must be 1..100000 (got %d)", eff.BatchSize))
+		addCoded("batchSize", ReasonBatchSizeOutOfRange,
+			fmt.Sprintf("must be 1..100000 (got %d)", eff.BatchSize),
+			eff.BatchSize)
 	}
 	if eff.PersonaLocale != "ko" && eff.PersonaLocale != "en" {
-		add("personaLocale", fmt.Sprintf("must be \"ko\" or \"en\" (got %q)", eff.PersonaLocale))
+		addCoded("personaLocale", ReasonPersonaLocaleInvalid,
+			fmt.Sprintf("must be \"ko\" or \"en\" (got %q)", eff.PersonaLocale),
+			eff.PersonaLocale)
 	}
 
 	// Advisor thresholds (W7-3b / ADR-015). Permissive bounds — these

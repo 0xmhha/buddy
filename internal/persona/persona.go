@@ -104,10 +104,10 @@ const (
 	KeyConfigSetParseFailed    Key = "config.set.parse_failed"    // %s = field, %v = err
 	KeyConfigJSONFailed        Key = "config.json_failed"         // %v = err
 
-	// config Validate Reason translations — declared for v0.2 (T2 deferred
-	// Important #2). Not yet wired into translateConfigError; the catalog
-	// is in place so the v0.2 sweep can flip the switch without churning the
-	// persona files.
+	// config Validate Reason translations — wired through
+	// cmd/buddy/config_cmd.go's configReasonKey map. Each Key here pairs
+	// with a config.Reason* string constant; renaming or removing one
+	// must update both sides.
 	KeyConfigReasonHookTimeoutOutOfRange  Key = "config.reason.hook_timeout_out_of_range"  // %d
 	KeyConfigReasonHookSlowOutOfRange     Key = "config.reason.hook_slow_out_of_range"     // %d, %d
 	KeyConfigReasonFailRateOutOfRange     Key = "config.reason.fail_rate_out_of_range"     // %d

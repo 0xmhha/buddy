@@ -66,9 +66,8 @@ func koCatalog() map[Key]string {
 		KeyConfigSetParseFailed:    "buddy: %s 값을 못 읽었어 (%v).",
 		KeyConfigJSONFailed:        "buddy: JSON 직렬화 실패 (%v).",
 
-		// config Validate Reason translations — declared and tested for v0.2,
-		// not yet wired into translateConfigError. See the TODO in
-		// cmd/buddy/config_cmd.go pointing at these keys.
+		// config Validate Reason translations — rendered via the
+		// configReasonKey map in cmd/buddy/config_cmd.go (reasonText).
 		KeyConfigReasonHookTimeoutOutOfRange:  "100ms부터 600초까지 잡아야 해 (지금 %dms).",
 		KeyConfigReasonHookSlowOutOfRange:     "1ms부터 hookTimeoutMs 까지 (지금 %dms, timeout %dms).",
 		KeyConfigReasonFailRateOutOfRange:     "1부터 100까지여야 해 (지금 %d).",

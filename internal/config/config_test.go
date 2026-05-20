@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -173,6 +174,110 @@ func TestValidate_RejectsBadBatchSize(t *testing.T) {
 	var ve *config.ValidationError
 	require.ErrorAs(t, err, &ve)
 	assert.Equal(t, "batchSize", ve.Field)
+}
+
+// TestValidate_PopulatesCodeAndArgsForWiredReasons locks the structured
+// identifier mapping the cmd layer relies on for friend-tone rendering. A
+// renamed Reason* constant — or a missing addCoded() call — would silently
+// drop a field back to its raw English Reason; this test catches that.
+func TestValidate_PopulatesCodeAndArgsForWiredReasons(t *testing.T) {
+	cases := []struct {
+		name      string
+		cfg       config.Config
+		field     string
+		wantCode  string
+		wantFirst any
+	}{
+		{
+			name:      "hookTimeoutMs",
+			cfg:       config.Config{HookTimeoutMs: int64Ptr(50)},
+			field:     "hookTimeoutMs",
+			wantCode:  config.ReasonHookTimeoutOutOfRange,
+			wantFirst: int64(50),
+		},
+		{
+			name:      "hookSlowMs",
+			cfg:       config.Config{HookTimeoutMs: int64Ptr(5_000), HookSlowMs: int64Ptr(10_000)},
+			field:     "hookSlowMs",
+			wantCode:  config.ReasonHookSlowOutOfRange,
+			wantFirst: int64(10_000),
+		},
+		{
+			name:      "hookFailRatePct",
+			cfg:       config.Config{HookFailRatePct: intPtr(200)},
+			field:     "hookFailRatePct",
+			wantCode:  config.ReasonFailRateOutOfRange,
+			wantFirst: 200,
+		},
+		{
+			name:      "outboxBacklog",
+			cfg:       config.Config{OutboxBacklog: intPtr(0)},
+			field:     "outboxBacklog",
+			wantCode:  config.ReasonOutboxBacklogTooSmall,
+			wantFirst: 0,
+		},
+		{
+			name:      "notifyChannel",
+			cfg:       config.Config{NotifyChannel: strPtr("desktop")},
+			field:     "notifyChannel",
+			wantCode:  config.ReasonNotifyChannelInvalid,
+			wantFirst: "desktop",
+		},
+		{
+			name:      "pollInterval",
+			cfg:       config.Config{PollInterval: durPtr(50 * time.Millisecond)},
+			field:     "pollInterval",
+			wantCode:  config.ReasonPollIntervalOutOfRange,
+			wantFirst: 50 * time.Millisecond,
+		},
+		{
+			name:      "batchSize",
+			cfg:       config.Config{BatchSize: intPtr(0)},
+			field:     "batchSize",
+			wantCode:  config.ReasonBatchSizeOutOfRange,
+			wantFirst: 0,
+		},
+		{
+			name:      "personaLocale",
+			cfg:       config.Config{PersonaLocale: strPtr("fr")},
+			field:     "personaLocale",
+			wantCode:  config.ReasonPersonaLocaleInvalid,
+			wantFirst: "fr",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.cfg.Validate()
+			require.Error(t, err)
+			// Setting a single field can cascade (e.g. HookTimeoutMs=50
+			// also invalidates the default HookSlowMs=5000), so search
+			// the MultiError for the expected field rather than relying
+			// on errors.As picking the right ValidationError.
+			ve := findValidationError(t, err, tc.field)
+			assert.Equal(t, tc.wantCode, ve.Code, "Code identifies the persona Key the cmd layer maps to")
+			require.NotEmpty(t, ve.Args, "Args carry the values the persona template renders")
+			assert.Equal(t, tc.wantFirst, ve.Args[0], "first Arg matches the field's offending value")
+			assert.NotEmpty(t, ve.Reason, "Reason stays populated as the English fallback")
+		})
+	}
+}
+
+func findValidationError(t *testing.T, err error, field string) *config.ValidationError {
+	t.Helper()
+	var multi *config.MultiError
+	if errors.As(err, &multi) {
+		for _, e := range multi.Errors {
+			if e.Field == field {
+				return e
+			}
+		}
+	}
+	var ve *config.ValidationError
+	if errors.As(err, &ve) && ve.Field == field {
+		return ve
+	}
+	t.Fatalf("no ValidationError for field %q in %v", field, err)
+	return nil
 }
 
 // Load ------------------------------------------------------------------------

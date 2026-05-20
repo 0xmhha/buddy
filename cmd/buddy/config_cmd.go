@@ -69,16 +69,34 @@ func loadForCLI(path string) (config.Config, error) {
 	return c, nil
 }
 
+// configReasonKey maps a config.ValidationError.Code to its persona.Key.
+// Codes without a mapping fall through to the raw English Reason — this is
+// the intended behavior for advisor/notify validation reasons that have not
+// been wired through the persona catalog yet.
+var configReasonKey = map[string]persona.Key{
+	config.ReasonHookTimeoutOutOfRange:  persona.KeyConfigReasonHookTimeoutOutOfRange,
+	config.ReasonHookSlowOutOfRange:     persona.KeyConfigReasonHookSlowOutOfRange,
+	config.ReasonFailRateOutOfRange:     persona.KeyConfigReasonFailRateOutOfRange,
+	config.ReasonOutboxBacklogTooSmall:  persona.KeyConfigReasonOutboxBacklogTooSmall,
+	config.ReasonNotifyChannelInvalid:   persona.KeyConfigReasonNotifyChannelInvalid,
+	config.ReasonPollIntervalOutOfRange: persona.KeyConfigReasonPollIntervalOutOfRange,
+	config.ReasonBatchSizeOutOfRange:    persona.KeyConfigReasonBatchSizeOutOfRange,
+	config.ReasonPersonaLocaleInvalid:   persona.KeyConfigReasonPersonaLocaleInvalid,
+}
+
+// reasonText returns the friend-tone reason for a single ValidationError,
+// rendering via the persona catalog when Code is wired and falling back to
+// the raw English Reason otherwise.
+func reasonText(ve *config.ValidationError) string {
+	if k, ok := configReasonKey[ve.Code]; ok {
+		return persona.M(k, ve.Args...)
+	}
+	return ve.Reason
+}
+
 // translateConfigError wraps a config-package error in the friend-tone shell
 // the user expects. Validation errors get a per-field bullet list; everything
 // else gets a generic "설정 못 읽었어" wrapper.
-//
-// TODO(M5/v0.2): the bullet's Reason is still the English string emitted by
-// internal/config (e.g. `must be 1..100 (got 200)`). The persona catalog
-// already declares Korean replacements (KeyConfigReasonHookTimeoutOutOfRange
-// & friends); v0.2's i18n sweep will route ValidationError → persona Key by
-// adding a Code/Args field on ValidationError. Out of scope for T5 — see
-// docs/roadmap.md M5 T2 deferred Important #2.
 func translateConfigError(err error) error {
 	var ve *config.ValidationError
 	var multi *config.MultiError
@@ -88,14 +106,14 @@ func translateConfigError(err error) error {
 		sb.WriteString(persona.M(persona.KeyConfigInvalid))
 		sb.WriteString("\n")
 		for _, e := range multi.Errors {
-			sb.WriteString(persona.M(persona.KeyConfigInvalidField, e.Field, e.Reason))
+			sb.WriteString(persona.M(persona.KeyConfigInvalidField, e.Field, reasonText(e)))
 			sb.WriteString("\n")
 		}
 		return newFriendError(strings.TrimRight(sb.String(), "\n"))
 	case errors.As(err, &ve):
 		return newFriendError(
 			persona.M(persona.KeyConfigInvalid) + "\n" +
-				persona.M(persona.KeyConfigInvalidField, ve.Field, ve.Reason))
+				persona.M(persona.KeyConfigInvalidField, ve.Field, reasonText(ve)))
 	}
 	return newFriendError(persona.M(persona.KeyConfigReadFailed, err))
 }
