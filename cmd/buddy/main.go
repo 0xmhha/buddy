@@ -113,15 +113,20 @@ func newRootCmd() *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		// PersistentPreRunE: best-effort locale resolution. Errors here are
-		// non-fatal — buddy works in ko regardless. The per-subcommand --config
-		// flag isn't a persistent flag, so root's PersistentPreRunE can't see
-		// it; we read only config.DefaultPath() here. Subcommand-flag-aware
-		// locale is a v0.2 deferral.
+		// non-fatal — buddy works in ko regardless. Cobra parses flags before
+		// invoking PersistentPreRunE and passes the resolved leaf cmd, so
+		// Lookup walks both inherited and local flags — a leaf subcommand's
+		// own --config takes precedence over config.DefaultPath().
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if path, err := config.DefaultPath(); err == nil {
-				if c, err := config.Load(path); err == nil {
-					_ = persona.SetLocale(persona.Locale(c.Effective().PersonaLocale))
-				}
+			path, _ := config.DefaultPath()
+			if f := cmd.Flags().Lookup("config"); f != nil && f.Changed {
+				path = f.Value.String()
+			}
+			if path == "" {
+				return nil
+			}
+			if c, err := config.Load(path); err == nil {
+				_ = persona.SetLocale(persona.Locale(c.Effective().PersonaLocale))
 			}
 			return nil
 		},
