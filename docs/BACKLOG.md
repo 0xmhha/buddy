@@ -59,7 +59,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | Dogfood validation — cycle-2 production (B-2 trigger) | ~5% | pre-flight Done, 3 paths user-paced — Wave 1 |
 | i18n sweep (M5 deferred — 4 sub-task) | ✅ 100% | W2-1 / W2-2 / W2-3 / W2-4 모두 closed — Wave 2 완료 |
 | Release polish (M6 deferred — 4 sub-task) | 75% (AI 단독 가능 부분 100%) | W3-1 / W3-2 / W3-3 ✅; W3-4 notarization 만 trigger-bound (Apple Dev ID) |
-| TUI / runtime UX follow-on (7 sub-task) | 0% | cycle-3 §A.8 + §B.4 signal 도착 (BA-4 resize / BA-5 usage graph), W4-6/W4-7 추가 — Wave 4 |
+| TUI / runtime UX follow-on (10 sub-task) | 0% | cycle-3 §A.8 + §B.1 + §B.4 signal 도착 (BA-4 resize / BA-5 usage graph / BA-6 Q3 mimicry / BA-7 hybrid persona / BA-8 active obligations), W4-6~W4-10 추가 — Wave 4 |
 | Trigger-bound (Korea / USA-EU / PG-MySQL / notarize / cycle-2 live) | N/A | 외부 신호 대기 — Wave 5 |
 | Indefinite defer (Non-goal 또는 trigger 부재) | N/A | 잡지 말 것 — Wave 6 |
 
@@ -145,6 +145,9 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | W4-5 | Log-tail scrollback + auto-stop on run-end (W3-2 deferred follow-on-of-follow-on) | `internal/tui/model.go` |
 | **W4-6** | **TUI resize reflow** — `WindowSizeMsg` 가 m.Width/Height 저장만 하고 view function 들이 *전혀 사용 안 함* → resize 시 layout 깨짐. cycle-3 §C BA-4 출처. *4-6 h* | `internal/tui/model.go` + 각 view function |
 | **W4-7** | **Usage pane / `buddy usage` trend graph** — text-only 출력에 ASCII sparkline / bar chart 추가 (e.g., `asciigraph`). cycle-3 §D BA-5 (사용자 제안, defer 결정). *2-3 h* | `internal/tui/usage_view.go` + `cmd/buddy/usage_cmd.go` |
+| **W4-8** | **validate-idea Q3 예시 fragmentation** — 현 예시가 *완성형 sentence* 라 prompt mimicry 유도. fragmentary 예시 (이름 only / 직함 only / 보스 only) 로 분해. cycle-3 §C BA-6 출처. *1 h doc edit* | `plugin/skills/validate-idea/PROCEDURE.md` Q3 section |
+| **W4-9** | **validate-idea hybrid persona note** — single-named-human 강제하는 Q3 가 hybrid role (e.g., lead designer + frontend) case 미고려. *single-product-for-hybrid wedge* note 1-2 줄 추가. cycle-3 §C BA-7 출처. *1 h doc edit* | `plugin/skills/validate-idea/PROCEDURE.md` Q3 / Q4 section |
+| **W4-10** | **validate-idea 전제 체크의 active obligations carry-forward** — *qualifier (unverified/pending/upgrade-needed)* 포함 전제 가 design doc Open Questions OR The Assignment 로 자동 표기 의무. cycle-3 §C BA-8 출처. *1-2 h doc edit + template tweak* | `plugin/skills/validate-idea/PROCEDURE.md` post-Q6 + design doc template |
 
 ### Wave 5 — Trigger-bound (외부 신호 대기)
 

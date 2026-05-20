@@ -100,6 +100,20 @@ cycle-2 함정 (8 surface flat list 시도 시 baseline stale) 방지 위해 *ti
 - 한국어 friend-tone 일관성
 - 특히 `/buddy:concretize-idea` 의 6 forcing question 이 실제로 *demand reality* 를 분리해주는가
 
+**진행 결과 (2026-05-20, Stage 1 validate-idea 완주)**:
+
+- ✅ `/buddy:concretize-idea` slash → router → concretize-idea PROCEDURE → validate-idea Stage 1 cascade 정상 동작
+- ✅ **cycle-1 B2 fix (Q1 phrasing "내일 사라지면 진짜로 화내는 사람") production verified** — 자연스럽게 동작
+- ✅ Anti-sycophancy 의 "Push-back + calibrated 인정 + dwell 금지" pattern 이 *real wedge re-discovery* 트리거 — Q4 의 (d) → Q5 surprise → (d') re-formulation
+- ✅ Escape hatch ((B) 정직 인정) 가 *real anchor 발굴* 의 catalyst 로 작동 — Q3 mimicry → 세민 surface
+- ✅ Two-mode (Startup / Builder) 분기, 6 forcing question 완주, 전제 체크 4 항목, 2-3 대안 (A/B/C) 생성, 추천 (A→B sequence) 도출, design doc template (Startup) 산출 — *모든 stage 완료*
+- ⚠ 3 PROCEDURE-side findings: **BA-6 (Q3 prompt mimicry)** / **BA-7 (hybrid persona)** / **BA-8 (전제 active obligations silent)** — Wave 4 candidates (W4-8/9/10)
+- 📄 Design doc 산출: [`./2026-05-20-validate-idea-ai-figma-context-bridge.md`](./2026-05-20-validate-idea-ai-figma-context-bridge.md). 사용자 IP — 추후 claude-design-skill repo 또는 별 idea repo 로 이동 권장
+- ⏳ Stage 2-8 (validate-advanced-edge-idea → assess-business-viability → ... → autoplan) — 별 세션 권장 (token budget)
+- ⏳ The Assignment (세민 미팅 + 1-week trial) — 사용자 *이번 주* 실행 obligation
+
+**Token 비용**: 약 6 round forcing questions + 전제 체크 + 2-3 대안 + design doc generation ~ context 대량 소비. **Stage 1 only** 의 결정 후행 검증.
+
 ### B.2 cli buddy agent path (primary)
 
 ```bash
@@ -290,6 +304,42 @@ buddy notify status --limit 20      # notification_log v8 조회
 **Recommendation**: UX-fix 또는 documentation. 가장 가벼운 수정 = `notify test` 응답 끝에 "(audit log 에는 기록 안 함; daemon auto-dispatch 만 status 에 보임)" 한 줄 부연. 더 강한 수정 = synthetic dispatch 도 *kind=test* 로 notification_log 기록 후 `status --kind real` flag 추가.
 
 **Open** — Wave 4 candidates 에 등록 권장 (post-B-2 finding triage).
+
+---
+
+### BA-6 — validate-idea Q3 의 예시가 *너무 완성형* → prompt mimicry 유도
+
+**Surface**: plugin (validate-idea PROCEDURE)
+**Severity**: low-medium (Q3 의 *진짜 anchor 인간 surface* 실패 risk)
+**Repro**: cycle-3 §B.1 본 세션 — Q3 "이름 + 직함 + 보스 이름 + 캘린더 본 적" 예시 그대로 user 가 *2 토큰만 바꿔 복사* (민지→민규, 30→15)
+**Expected vs Actual**:
+- expected: founder 본인의 *real anchor 인간* 정보가 *유기적으로* 등장
+- actual: 예시 구조 mimic + cosmetic edit → escape hatch 발동 후에야 *real 세민* surface
+**Root cause**: validate-idea PROCEDURE 의 Q3 예시가 "Sarah, 50명 logistics 회사 ops 매니저..." 형태로 *완성형 sentence* — copy-edit 유혹 큼
+**Recommendation**: UX-fix (Wave 4 candidate). 예시를 *fragmentary* 로 (이름만, 또는 직함만, 또는 보스만 — 단편 3 개) 제공 → mimicry 자연 어려움, organic specificity 강제. PROCEDURE Stage 1 의 Q3 sample 단 1 곳 수정.
+**Open** — Wave 4 신규 W4-8 으로 BACKLOG 등록 권장.
+
+### BA-7 — validate-idea 가 hybrid persona 케이스 미고려
+
+**Surface**: plugin (validate-idea PROCEDURE)
+**Severity**: low (현 PROCEDURE 도 force-pick 으로 진행 가능; 단 wedge framing 의 정확도 저하)
+**Repro**: cycle-3 §B.1 본 세션 — anchor 세민 = *lead designer + frontend code* hybrid role. PROCEDURE Q3 는 *single named human + single role* 형태로 force, 그 후 wedge 가 *designer vs engineer* 둘 중 하나로 갈라짐. 실제로는 *hybrid persona at small startup* 이 더 sharp wedge.
+**Expected vs Actual**:
+- expected: PROCEDURE 가 hybrid persona case 를 *acknowledge* 하고 *wedge framing 조정 ask*
+- actual: AI 가 immediate 인식해서 surface (BA-7 본 finding) 했지만 PROCEDURE 본문에는 미서술 — 향후 dogfood 시 AI 가 인식 못 하면 wedge framing 실수 가능
+**Recommendation**: documentation 추가. PROCEDURE 의 Q3 또는 Q4 에 *"persona 가 hybrid role 일 경우 single-product-for-hybrid wedge 도 valid alternative"* note 1-2 줄. Optional reframe step (Q3 후): "이 사용자의 *role split* 이 *fundamental* 인지 *circumstantial* 인지 — 다른 같은 segment 의 디자이너 5 명도 *hybrid role* 인가?"
+**Open** — Wave 4 신규 W4-9 으로 BACKLOG 등록 권장.
+
+### BA-8 — 전제 체크의 *agree* 가 active obligation 을 silent 처리
+
+**Surface**: plugin (validate-idea PROCEDURE)
+**Severity**: medium (실제 발생 시 demand validation 결손 위험)
+**Repro**: cycle-3 §B.1 본 세션 — P2 ("20h/week wasted *self-reported only* — methodology unverified") 에 user 가 단순 *agree*. PROCEDURE 의 design doc template 의 *Open Questions* 또는 *Dependencies* 에 자동 reflection 없으면 P2 의 *upgrade obligation* 이 doc 작성 시 lost.
+**Expected vs Actual**:
+- expected: 전제 체크의 *qualifier 가 포함된 전제* (e.g., "X — but Y unverified") 에 user agree 시, PROCEDURE 가 *Y* 를 design doc 의 *Open Questions* / *Dependencies* / *The Assignment* 로 자동 carry-forward 강제
+- actual: PROCEDURE 명시 없음. AI 가 인식해서 *The Assignment* 에 직접 포함 (BA-8 surface) 했지만, 일반화된 가드는 없음
+**Recommendation**: documentation 추가. PROCEDURE 의 *전제 체크* step 에 *active obligations 추출 + doc carry-forward 의무* 명시. e.g., "전제 중 *qualifier (unverified / pending / upgrade-needed)* 포함된 항목 → design doc Open Questions OR The Assignment 에 *반드시* 표기."
+**Open** — Wave 4 신규 W4-10 으로 BACKLOG 등록 권장.
 
 ---
 
