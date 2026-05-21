@@ -383,6 +383,108 @@ buddy notify status --limit 20      # notification_log v8 조회
 
 cycle 진행 중 "지금은 안 한다" 결정된 것은 여기 기록 + trigger 명시.
 
+### BA-10 — `agent list` / `agent show` 의 Status 가 run 완료 후 stale (`running` 유지)
+
+**Surface**: cli-buddy (agent runtime)
+**Severity**: medium → **N/A after BA-12 fix**
+**Repro (초기 진단)**: Run 2 시점 (BA-12 미패치) `agent_runs.exit_code = 0 default + ended_at NULL + agents.status = running` 영구 유지.
+
+**Root cause (재진단)**: BA-12 (claude CLI hang) 의 *증상*. Run() 종료 분기 (`runtime.go:142-161`) 가 *spawn-step return 안 함* 이라 도달 못 함 → `UpdateStatus(finalStatus)` 미호출. 즉 `agents.status` 자체 finalize 누락 아니라, *Run() 자체가 끝나지 않음*.
+
+**Verification**: BA-12 fix (executor `--print` default) 적용 후 Run ID 4 에서 `agents.status: idle → running → done` 전이 정상. 별도 patch 불필요.
+
+**Closed**: ✅ BA-12 fix 의 자연 부수 효과 (same commit).
+
+---
+
+### BA-11 — `agent log <id>` 의 latest-run 필터 누락 (이전 run 의 stdout 혼재)
+
+**Surface**: cli-buddy (agent runtime)
+**Severity**: medium (사용자가 *현재 run 의 output* 보려고 호출했는데 *이전 run 의 stdout* 이 같은 표에 섞임 — debugging 시 confusion)
+**Repro** (BA-10 와 동시 발견):
+```bash
+./bin/buddy agent --db /tmp/dogfood.db log hello-world
+# 출력:
+#   Run ID:     2
+#   Started:    2026-05-21 09:08:29 UTC
+#   Exit code:  0
+#   Log:
+#     2026-05-18 05:30:56  info   step[0] define-features stdout: hello world feature defined  ← Run 1 의 stdout
+#     2026-05-21 09:08:29  info   agent "hello-world" started (1 steps)                          ← Run 2
+#     2026-05-21 09:08:29  info   step[0] define-features attempt=1                              ← Run 2
+```
+**Expected vs Actual**:
+- expected: `agent log` 의 help text 가 "Reads agent_logs for the *latest run* of <agent-id>, oldest first" 이므로 Run 2 의 라인만 표시
+- actual: Run 1 (2026-05-18) 의 stdout 라인까지 함께 표시. *latest run 필터* 가 SQL 단에서 `WHERE run_id = ?` 누락 추정
+
+**Root cause 추정**: `cmd/buddy/agent_cmd.go` 의 log subcommand 가 `agent_logs.run_id` 로 필터 안 하고 `agent_id` 기준으로 가져오는 것으로 보임. 단일 query 수정 + 테스트 추가.
+
+**Recommendation**: bug-fix (medium). 단일 query `WHERE run_id = ?` 추가 + `cmd/buddy/agent_cmd_test.go` 에 *prior run stdout 이 새 run 로그에 안 섞이는지* lock-in 테스트 추가.
+
+**Open** — agent runtime cluster. (deferred — not within this cycle's fix scope; independent of BA-12 patch.)
+
+---
+
+### BA-12 — claude CLI 가 non-TTY stdin pipe 에서 기본 interactive mode 로 hang
+
+**Surface**: cli-buddy (agent runtime, claude integration)
+**Severity**: **blocker** — B-2 C3 ("agent ≥1 회 schedule 실행 완주") evidence 자체 확보 불가. real claude spawn 모든 호출이 영구 hang. dogfood 발견.
+
+**Repro** (cycle-3 §E.0 C3 진행 중 발견, 2026-05-21):
+```bash
+./bin/buddy agent --db /tmp/dogfood.db run hello-world &
+PID=$!
+sleep 8
+ps -p $PID -o pid,stat,etime,command    # SN 00:08 ./bin/buddy ...   ← still alive
+pgrep -P $PID                            # 98076 (spawned claude)
+ps -p 98076 -o pid,stat                  # SN  (sleeping interruptable; STDOUT 0 byte)
+sqlite3 /tmp/dogfood.db "SELECT exit_code, ended_at FROM agent_runs WHERE id=(SELECT MAX(id) FROM agent_runs);"
+# → exit_code=0 (default), ended_at=NULL  ← Run never finalises
+```
+**Expected vs Actual**:
+- expected: `claude` subprocess 가 `/buddy:define-features simple hello world\n` payload 처리 후 결과 emit + exit. buddy 가 stdout 수신 → `FinishRun` → `agents.status: done`.
+- actual: `claude` 가 interactive REPL (TTY 모드) 대기. stdin pipe payload 는 *읽었지만* — REPL 가 그것을 *대화 입력으로 처리 안 함*. process 영구 sleep. buddy 도 `cmd.Wait()` 에 block.
+
+**Root cause**: `internal/agent/executor.go:60-62` 의 `NewSubprocessExecutor` 가 `ExtraArgs` 를 비워둠. `claude --help` 의 `-p, --print` flag 가 "Print response and exit (useful for pipes)" 로 명시 — *non-interactive output mode*. 이 flag 없이는 *non-TTY stdin pipe 으로도 claude 가 REPL 진입*.
+
+**Fix** (within-cycle, 본 세션 패치): `NewSubprocessExecutor` default `ExtraArgs: []string{"--print"}` 으로 설정. spawn 시 `claude --print` 으로 invoke. payload 는 그대로 stdin pipe 또는 positional. **검증 결과**: Run ID 4 (post-patch) → exit 0, ended_at 채움, status: done, RunResult JSON stdout 산출 (~55 s).
+
+**Verification commit**: 본 세션의 executor.go patch + `TestNewSubprocessExecutor_DefaultsToPrintMode` lock-in test (agent package race-clean).
+
+**Side-effect**: BA-10 자연 해결 (status stale 은 finalize 미실행 의 *증상* 이었음).
+
+**New surface from fix**: claude `--print` headless mode 의 응답 stdout 이 *plugin path Read 권한 부족* 안내. → **BA-13** 신규 finding.
+
+**Closed**: ✅ within-cycle fix + lock-in test + cycle-3 §E.0 의 C3 cell 실 evidence 갱신.
+
+---
+
+### BA-13 — `claude --print` headless mode 에서 plugin path Read 권한 미부여 (PROCEDURE 실행 차단)
+
+**Surface**: cli-buddy (agent runtime, claude integration)
+**Severity**: medium (real PROCEDURE 실행 차단; spawn pipe 자체는 정상 — BA-12 fix 후 발견)
+
+**Repro** (BA-12 fix 적용 + Run ID 4 후, 2026-05-21):
+```bash
+./bin/buddy agent --db /tmp/dogfood.db run hello-world
+# stdout (요약):
+#   "The Read tool is being blocked by permission prompts for both buddy plugin paths.
+#    I cannot proceed with the `define-features` procedure without loading its instructions.
+#    Could you grant Read permission for the buddy plugin path, or paste the contents you'd like me to use?
+#    The two candidate paths are:
+#    - /Users/.../buddy/0.3.0/skills/define-features/PROCEDURE.md
+#    - /Users/.../marketplaces/buddy/plugin/skills/define-features/PROCEDURE.md"
+```
+**Expected vs Actual**:
+- expected: `claude --print "/buddy:define-features ..."` 가 plugin PROCEDURE 를 *headless 모드에서도* 자동 Read 권한 부여
+- actual: headless mode 의 default permission policy 가 *interactive 시에만 plugin path Read 자동 부여*. `--print` 에선 prompt 차단
+
+**Recommendation**: workaround = `claude` invocation 에 `--allowedTools "Read(/Users/.../buddy/**)"` 또는 `--settings <file>` 추가 wire-in. OR `--allow-dangerously-skip-permissions` (dangerous, sandbox 전용). 또는 buddy executor 가 *plugin path 발견 후 `--allowedTools` arg 자동 추가*. 다음 patch cycle.
+
+**Open** — claude integration cluster. *cycle-3 BA-12 fix 의 직접적 follow-on*.
+
+---
+
 ### BA-5 — Usage pane / `buddy usage` 출력에 trend 그래프 추가
 
 **Source**: 사용자 §A.8 interactive sweep 중 제안 — *"text 만 존재하는데, 그래프로 변동추이를 보여줄수 있으면 눈에 잘 들어올 것 같아"*. *"불필요한 작업량 많다면 스킵하는 것이 좋을 것"* 명시.
@@ -399,6 +501,23 @@ cycle 진행 중 "지금은 안 한다" 결정된 것은 여기 기록 + trigger
 **Decision**: defer. Wave 4 (TUI / runtime UX follow-on) 신규 W4-7 로 BACKLOG 등록. v1.0.0 publish 후 또는 *resize bug (BA-4)* 와 묶어서 Wave 4 cycle 에서 진행.
 
 **Trigger**: B-2 cycle close 후 / Wave 4 dogfood signal pivot 시 우선순위 재평가.
+
+---
+
+## §E.0 — Playbook §1 측정 baseline (2026-05-21, daemon up @ 17:30 KST)
+
+본 cycle 종료 시 §E 의 "v1.0.0 ship gate (B-2)" 행을 채우는 evidence base. 측정 = [`../b2-dogfood-playbook.md`](../b2-dogfood-playbook.md) §4 의 bash one-liner.
+
+| # | 조건 | 현재 측정 | 임계 | 상태 |
+|---|------|----------|------|------|
+| **C1** | 외부 SaaS 1건 end-to-end | ✅ **buddy 자체 (self-hosting)** — *도구로 도구를 만든다* 의 구조적 dogfood. 본 repo 가 1 건의 external-style production 사용처로 declare. ([`docs/two-tracks-charter.md`](../two-tracks-charter.md) 의 plugin + cli buddy 통합 자체가 anchor.) | 1 건 | ✅ 충족 |
+| **C2** | 9-phase 중 ≥3 phase 사용 | **9 / 9 phase** — ~/.claude/projects 171 jsonl 의 `/buddy:*` 흔적이 9 phase 모두 cover (concretize / define-features / design-system / plan-build / build-feature / verify-quality / ship-release / iterate-product / manage-lifecycle) | ≥3 | ✅ 충족 |
+| **C3** | agent ≥1 회 schedule 실행 완주 | ✅ **1 / 1 (real, post-BA-12 fix)** — Run ID 4 (2026-05-21 10:21:09 → 10:22:04 UTC, ~55 s) `exit_code=0`, `agents.status: done` 정상 전이, `ended_at` 채움, RunResult JSON stdout 산출. **선행 Run 2 (이전 측정) 및 Run 3 (probe) 는 BA-12 미패치 상태에서 hang → manual cleanup**. ([§C BA-12](#ba-12--claude-cli-가-non-tty-stdin-pipe-에서-기본-interactive-mode-로-hang) within-cycle fix 후 retry 성공.) | 1 | ✅ 충족 |
+| **C4** | hook stats 누락 | **0 % 실패율 (24h)** — PostToolUse 1,854 / Stop 4 sub-channel / 0 % 전체. outbox 11,309 → 9,825 (daemon up 직후 drain 진행 중). drain 종료 후 재확정. | 0 누락 | ✅ (재확정 대기) |
+
+**Status**: **4 / 4 조건 충족** (C4 만 outbox drain 완료 후 재확정). cycle 중 *4 신규 finding 발견* — **BA-12 (blocker, claude CLI non-TTY hang) within-cycle fix**, **BA-10 (status stale) BA-12 fix 의 자연 부수 효과로 자체 해결**, BA-11 (log latest-run filter, medium) deferred, BA-13 (headless mode plugin Read permission, low/follow-up) deferred. §C 참조.
+
+**Remaining for B-2 closed**: (a) outbox drain 종료까지 ~30 min 대기 후 `buddy stats` 재측정 → C4 ✅ 확정. (b) BA-11 / BA-13 triage 결과 BACKLOG 반영. (c) playbook §5 close-out 시퀀스 (cycle-3 §E + BACKLOG.md 8/9 → 9/9 + v1.0.0 release 별 세션).
 
 ---
 

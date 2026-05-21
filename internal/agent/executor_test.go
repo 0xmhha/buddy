@@ -10,6 +10,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// ─── NewSubprocessExecutor defaults (cycle-3 BA-12 lock-in) ────────────
+
+// NewSubprocessExecutor must default ExtraArgs to ["--print"]. Without it
+// the spawned `claude` process drops into an interactive REPL and the run
+// never finalises (agent_runs.ended_at stays NULL, agents.status stays
+// "running"). cycle-3 dogfood surfaced this as BA-12; the test locks the
+// default in so a future refactor cannot silently drop --print without
+// also updating this assertion.
+func TestNewSubprocessExecutor_DefaultsToPrintMode(t *testing.T) {
+	t.Parallel()
+	e := NewSubprocessExecutor()
+	require.Equal(t, "claude", e.ClaudeBinary,
+		"default binary should remain `claude` (LookPath-resolved)")
+	require.Equal(t, []string{"--print"}, e.ExtraArgs,
+		"default ExtraArgs must contain --print for headless spawn")
+}
+
 // ─── MockExecutor sink emit ─────────────────────────────────────────────
 
 func TestMockExecutor_NilSinkSkipsStreaming(t *testing.T) {

@@ -57,8 +57,19 @@ type SubprocessExecutor struct {
 }
 
 // NewSubprocessExecutor constructs the production executor with sane defaults.
+//
+// ExtraArgs defaults to ["--print"] so the spawned `claude` process runs in
+// headless mode and exits after emitting its response. Without it, claude
+// drops into an interactive REPL waiting for a TTY — the stdin pipe payload
+// gets read but the process never emits a response, which surfaces as a
+// silent hang (run never finalises, agent.status stays "running"). The
+// cycle-3 BA-12 dogfood finding made this concrete; --print is documented
+// by the CLI as "Print response and exit (useful for pipes)".
 func NewSubprocessExecutor() *SubprocessExecutor {
-	return &SubprocessExecutor{ClaudeBinary: "claude"}
+	return &SubprocessExecutor{
+		ClaudeBinary: "claude",
+		ExtraArgs:    []string{"--print"},
+	}
 }
 
 // ErrClaudeMissing is returned when the executor cannot find the claude CLI.
