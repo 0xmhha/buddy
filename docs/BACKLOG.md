@@ -59,7 +59,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | Dogfood validation — cycle-2 production (B-2 trigger) | ~5% | pre-flight Done, 3 paths user-paced — Wave 1 |
 | i18n sweep (M5 deferred — 4 sub-task) | ✅ 100% | W2-1 / W2-2 / W2-3 / W2-4 모두 closed — Wave 2 완료 |
 | Release polish (M6 deferred — 4 sub-task) | 75% (AI 단독 가능 부분 100%) | W3-1 / W3-2 / W3-3 ✅; W3-4 notarization 만 trigger-bound (Apple Dev ID) |
-| TUI / runtime UX follow-on (10 sub-task) | 60% (W4-3/6/7/8/9/10 closed) | W4-1 (branch select, design pending) / W4-2 (self-check semantic, design pending) / W4-4 (scheduler indicator) / W4-5 (log-tail polish) — 모두 cycle-4 signal 권장 |
+| TUI / runtime UX follow-on (11 sub-task) | 91% (W4-1/2/3/4/5/6/7/8/9/10 closed; W4-5b scrollback only deferred) | W4-5b (log-tail scrollback via viewport widget) — **B-2 dogfood 완주 후** signal 기다림 (post-dogfood trigger) |
 | Trigger-bound (Korea / USA-EU / PG-MySQL / notarize / cycle-2 live) | N/A | 외부 신호 대기 — Wave 5 |
 | Indefinite defer (Non-goal 또는 trigger 부재) | N/A | 잡지 말 것 — Wave 6 |
 
@@ -138,11 +138,12 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 
 | ID | 작업 | 위치 |
 |----|------|------|
-| W4-1 | W3-4 branch-aware skill selection — `NextPhase.Branches` cascade 시 *어느 branch 채택* policy (env-var / CLI flag / interactive 중 design pending) | `internal/agent/runtime.go` |
-| W4-2 | W3-4 self-check fail → step retry / abort 의미 정립 — 현재 parser 만 verdict 추출, runtime 동작 동일 | `internal/agent/runtime.go` |
-| ~~W4-3~~ | ~~`buddy agent edit <id>` CLI subcommand~~ | ✅ Done (commit `36e160e`, 2026-05-21) — TUI `e` 의 CLI 동등. resolveEditor shared helper + editorRunner test seam + 4 tests (happy / rename-reject / not-found / env fallback). | — |
-| W4-4 | Scheduler pane live "currently running" indicator (W3-2 deferred follow-on-of-follow-on) | `internal/tui/model.go` |
-| W4-5 | Log-tail scrollback + auto-stop on run-end (W3-2 deferred follow-on-of-follow-on) | `internal/tui/model.go` |
+| ~~W4-1~~ | ~~branch-aware skill selection cascade policy~~ | ✅ Done (commit `a5c3d83`, 2026-05-21) — spec `branch_hints: { '<condition>': true }` per-run hint. Missing/false hint suppresses branch (no silent guess). 3 tests + e2e. | — |
+| ~~W4-2~~ | ~~self-check fail → retry / abort semantic~~ | ✅ Done (commit `a5c3d83`) — per-step `on_self_check_fail: continue\|abort\|retry`. default `continue` (현 행동 유지). Failure via ExitCode=1, Run() (result,nil) 계약 유지. 4 tests. | — |
+| ~~W4-3~~ | ~~`buddy agent edit <id>` CLI subcommand~~ | ✅ Done (commit `0880217`, 2026-05-21) — TUI `e` 의 CLI 동등. resolveEditor shared helper + editorRunner test seam + 4 tests. | — |
+| ~~W4-4~~ | ~~Scheduler pane "currently running" indicator~~ | ✅ Done (commit `ae84d54`, 2026-05-21) — SchedulerPreviewEntry.Status + ⏵ marker for running entries. 1 test lock-in. | — |
+| ~~W4-5~~ | ~~Log-tail auto-stop on run-end~~ | ✅ Done (commit `ae84d54`, 2026-05-21) — GetRun + LogTailChunkMsg.RunEnded + LogTailDone latch + footer "polling stopped" hint + 2 tests. *Scrollback portion deferred → W4-5b.* | — |
+| **W4-5b** | **Log-tail scrollback via viewport widget** — bubbletea `bubbles/viewport` 도입 + j/k or PgUp/PgDn scroll keys. cycle-3 BA-? scrollback portion of original W4-5. *Trigger: B-2 production dogfood 완주 + scrollback 필요성 확인 후 진입* (4 design 결정 — auto-follow / max buffer / resize / key bind 충돌 — 이 dogfood 사용 패턴 데이터 없이는 wrong-default 위험). 새 dep `bubbles` + reflow indirect, v1.0.0 이후가 안전. | `internal/tui/model.go` + new dep `bubbles` |
 | ~~W4-6~~ | ~~TUI resize reflow~~ | ✅ Done (commit `d6e7549`, 2026-05-21) — View() output 의 constrainWidth wrapper 로 per-line truncation + ellipsis. m.Width=0 no-op. 3 tests lock-in. | — |
 | ~~W4-7~~ | ~~Usage pane / `buddy usage` trend graph~~ | ✅ Done (commit `f7f6c47`, 2026-05-21) — `buddy usage trend` 에 daily horizontal bar chart + new `QueryDailySpend` method + 5 tests. No new dep. | — |
 | ~~W4-8~~ | ~~validate-idea Q3 예시 fragmentation~~ | ✅ Done (commit `c60885c`, 2026-05-20) — Q3 example 단일 sentence → 5 단편 분해. mimicry 유도 약화. | — |
@@ -196,7 +197,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 Wave 1 (B-2 dogfood, user-paced)  ║  Wave 7 (C-1~C-5, AI 단독, 병행 가능)
    │                                   │
    ▼                                   ▼
-~~Wave 2 (i18n)~~ ✅  ≥  ~~Wave 3 (release polish)~~ ✅ (AI 가능 부분 100%, W3-4 만 trigger-bound)  >  Wave 4 (TUI UX, dogfood signal 대기)  >>  Wave 5 (trigger-bound)  >>>  Wave 6 (defer)
+~~Wave 2 (i18n)~~ ✅  ≥  ~~Wave 3 (release polish)~~ ✅ (AI 가능 부분 100%, W3-4 만 trigger-bound)  >  Wave 4 (W4-5b only, **post-B-2 dogfood trigger**)  >>  Wave 5 (trigger-bound)  >>>  Wave 6 (defer)
 ```
 
 **Tiebreaker** (autoplan scope phase = P1 완성도 + P2 감당 가능 우선):
