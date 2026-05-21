@@ -59,7 +59,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | Dogfood validation — cycle-2 production (B-2 trigger) | ~5% | pre-flight Done, 3 paths user-paced — Wave 1 |
 | i18n sweep (M5 deferred — 4 sub-task) | ✅ 100% | W2-1 / W2-2 / W2-3 / W2-4 모두 closed — Wave 2 완료 |
 | Release polish (M6 deferred — 4 sub-task) | 75% (AI 단독 가능 부분 100%) | W3-1 / W3-2 / W3-3 ✅; W3-4 notarization 만 trigger-bound (Apple Dev ID) |
-| TUI / runtime UX follow-on (10 sub-task) | 50% (W4-6/7/8/9/10 closed) | W4-1~W4-5 (pre-cycle-3 candidates) 남음 — Wave 4. 모든 cycle-3 signal-driven 항목 (BA-4 ~ BA-8) ✅ closed. |
+| TUI / runtime UX follow-on (10 sub-task) | 60% (W4-3/6/7/8/9/10 closed) | W4-1 (branch select, design pending) / W4-2 (self-check semantic, design pending) / W4-4 (scheduler indicator) / W4-5 (log-tail polish) — 모두 cycle-4 signal 권장 |
 | Trigger-bound (Korea / USA-EU / PG-MySQL / notarize / cycle-2 live) | N/A | 외부 신호 대기 — Wave 5 |
 | Indefinite defer (Non-goal 또는 trigger 부재) | N/A | 잡지 말 것 — Wave 6 |
 
@@ -140,7 +140,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 |----|------|------|
 | W4-1 | W3-4 branch-aware skill selection — `NextPhase.Branches` cascade 시 *어느 branch 채택* policy (env-var / CLI flag / interactive 중 design pending) | `internal/agent/runtime.go` |
 | W4-2 | W3-4 self-check fail → step retry / abort 의미 정립 — 현재 parser 만 verdict 추출, runtime 동작 동일 | `internal/agent/runtime.go` |
-| W4-3 | `buddy agent edit <id>` CLI subcommand — 현재 TUI `e` 만 존재, CLI 없음 | `cmd/buddy/agent_cmd.go` |
+| ~~W4-3~~ | ~~`buddy agent edit <id>` CLI subcommand~~ | ✅ Done (commit `36e160e`, 2026-05-21) — TUI `e` 의 CLI 동등. resolveEditor shared helper + editorRunner test seam + 4 tests (happy / rename-reject / not-found / env fallback). | — |
 | W4-4 | Scheduler pane live "currently running" indicator (W3-2 deferred follow-on-of-follow-on) | `internal/tui/model.go` |
 | W4-5 | Log-tail scrollback + auto-stop on run-end (W3-2 deferred follow-on-of-follow-on) | `internal/tui/model.go` |
 | ~~W4-6~~ | ~~TUI resize reflow~~ | ✅ Done (commit `d6e7549`, 2026-05-21) — View() output 의 constrainWidth wrapper 로 per-line truncation + ellipsis. m.Width=0 no-op. 3 tests lock-in. | — |
