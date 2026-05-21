@@ -198,6 +198,62 @@ func TestService_QueryOverview_Composition(t *testing.T) {
 	require.Equal(t, "s1", ov.Top[0].ID)
 }
 
+// TestService_QueryDailySpend_GapFilled verifies that the per-day
+// series spans every day in the requested range, with zero-token rows
+// inserted for days that have no observed sessions. The chart caller
+// relies on this for a contiguous bar series.
+func TestService_QueryDailySpend_GapFilled(t *testing.T) {
+	t.Parallel()
+	svc, store := newTestService(t)
+	// Pin "now" to a known midday so the day-boundary math is stable.
+	anchor := time.Date(2026, 5, 21, 12, 0, 0, 0, time.UTC)
+	svc.Now = func() time.Time { return anchor }
+
+	// Seed two sessions on day-1 and one on day-3 of a 5-day window;
+	// day-0, day-2, and day-4 stay empty so the gap-fill path exercises.
+	seedSession(t, store, "d1-a", anchor.Add(-4*24*time.Hour+2*time.Hour), 60_000,
+		schema.TokenUsage{InputTokens: 100, OutputTokens: 200}, "g", false)
+	seedSession(t, store, "d1-b", anchor.Add(-4*24*time.Hour+5*time.Hour), 60_000,
+		schema.TokenUsage{InputTokens: 50, CacheReadTokens: 25}, "g", false)
+	seedSession(t, store, "d3", anchor.Add(-2*24*time.Hour+1*time.Hour), 60_000,
+		schema.TokenUsage{OutputTokens: 1000}, "g", false)
+
+	got, err := svc.QueryDailySpend(context.Background(), 5)
+	require.NoError(t, err)
+	require.Len(t, got, 5)
+
+	// Days are ordered oldest → newest. Index 0 = oldest = anchor-5d 00:00.
+	require.Equal(t, int64(150), got[0].InputTokens, "day-1 input = 100+50")
+	require.Equal(t, int64(200), got[0].OutputTokens, "day-1 output")
+	require.Equal(t, int64(25), got[0].CacheReadTokens, "day-1 cache read")
+
+	require.Equal(t, int64(0), got[1].TotalTokens(), "day-2 must be zero-filled")
+
+	require.Equal(t, int64(1000), got[2].OutputTokens, "day-3 output")
+	require.Equal(t, int64(1000), got[2].TotalTokens(), "day-3 total")
+
+	require.Equal(t, int64(0), got[3].TotalTokens(), "day-4 must be zero-filled")
+	require.Equal(t, int64(0), got[4].TotalTokens(), "day-5 (today) must be zero-filled")
+
+	// Dates are UTC start-of-day, monotonically increasing by 24h.
+	for i := 1; i < len(got); i++ {
+		require.Equal(t, 24*time.Hour, got[i].Date.Sub(got[i-1].Date), "day i-1 → i = 24h")
+		require.Equal(t, 0, got[i].Date.Hour(), "date must be 00:00 UTC")
+	}
+}
+
+// TestService_QueryDailySpend_ZeroOrNegativeDays — days≤0 returns nil
+// without a database call (lets callers passing 0 skip the chart cleanly).
+func TestService_QueryDailySpend_ZeroOrNegativeDays(t *testing.T) {
+	t.Parallel()
+	svc, _ := newTestService(t)
+	for _, d := range []int{0, -1, -100} {
+		got, err := svc.QueryDailySpend(context.Background(), d)
+		require.NoError(t, err)
+		require.Nil(t, got)
+	}
+}
+
 // TestTimeWindow_Helpers — IsAllTime + Duration sanity.
 func TestTimeWindow_Helpers(t *testing.T) {
 	t.Parallel()

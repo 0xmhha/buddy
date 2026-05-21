@@ -189,6 +189,66 @@ func (s *Service) QueryTopSessions(ctx context.Context, w TimeWindow, limit int)
 	return out, rows.Err()
 }
 
+// QueryDailySpend returns the per-day token breakdown for the last N
+// days, ordered from oldest to newest. Days with zero observed sessions
+// are still emitted (with zero counts), so callers rendering a trend
+// chart see a contiguous series and never need to gap-fill themselves.
+//
+// The day boundary is UTC start-of-day on the host's wall clock — the
+// same frame as windowQuery's UTC milli comparisons. days <= 0 returns
+// (nil, nil) without touching the database.
+func (s *Service) QueryDailySpend(ctx context.Context, days int) ([]DailySpend, error) {
+	if days <= 0 {
+		return nil, nil
+	}
+	now := s.now()
+	end := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC).
+		Add(24 * time.Hour)
+	start := end.Add(-time.Duration(days) * 24 * time.Hour)
+
+	const q = `
+		SELECT
+			(started_at / 86400000) * 86400000 AS day_ms,
+			COALESCE(SUM(total_input_tokens),  0),
+			COALESCE(SUM(total_output_tokens), 0),
+			COALESCE(SUM(total_cache_read),    0),
+			COALESCE(SUM(total_cache_create),  0)
+		FROM sessions
+		WHERE started_at >= ? AND started_at < ?
+		GROUP BY day_ms`
+	rows, err := s.db.QueryContext(ctx, q, start.UnixMilli(), end.UnixMilli())
+	if err != nil {
+		return nil, fmt.Errorf("usage: query daily spend: %w", err)
+	}
+	defer rows.Close()
+
+	byDay := make(map[int64]DailySpend, days)
+	for rows.Next() {
+		var d DailySpend
+		var ms int64
+		if err := rows.Scan(&ms, &d.InputTokens, &d.OutputTokens,
+			&d.CacheReadTokens, &d.CacheCreateTokens); err != nil {
+			return nil, err
+		}
+		d.Date = time.UnixMilli(ms).UTC()
+		byDay[ms] = d
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	out := make([]DailySpend, 0, days)
+	for i := 0; i < days; i++ {
+		day := start.Add(time.Duration(i) * 24 * time.Hour)
+		if d, ok := byDay[day.UnixMilli()]; ok {
+			out = append(out, d)
+			continue
+		}
+		out = append(out, DailySpend{Date: day})
+	}
+	return out, nil
+}
+
 // QueryOverview composes the four other queries into one snapshot.
 // Single-call convenience for the CLI's `buddy usage overview` and the
 // TUI Usage pane. Each sub-query runs sequentially against the same

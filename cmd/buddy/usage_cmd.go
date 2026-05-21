@@ -109,7 +109,18 @@ func newUsageTrendCmd() *cobra.Command {
 			}
 			defer closer()
 			w := usage.TimeWindow{Since: time.Now().UTC().Add(-time.Duration(days) * 24 * time.Hour)}
-			return printSpendAndStats(cmd.Context(), svc, w, fmt.Sprintf("지난 %d일", days))
+			if err := printSpendAndStats(cmd.Context(), svc, w, fmt.Sprintf("지난 %d일", days)); err != nil {
+				return err
+			}
+			daily, err := svc.QueryDailySpend(cmd.Context(), days)
+			if err != nil {
+				return err
+			}
+			if chart := renderDailyBarChart(daily); chart != "" {
+				fmt.Println()
+				fmt.Println(chart)
+			}
+			return nil
 		},
 	}
 	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
@@ -288,6 +299,35 @@ func renderTopSessions(top []usage.TopSession) string {
 		fmt.Fprintf(&b, "%-12s %-20s %12s  %s\n",
 			short, s.StartedAt.Local().Format("01-02 15:04"),
 			humanInt(s.TotalTokens), goal)
+	}
+	return b.String()
+}
+
+// renderDailyBarChart renders the per-day token totals as a horizontal
+// bar chart. Mirrors renderTimeDistribution's bar style — 30-cell width
+// scaled to the peak day, friend-tone Korean header. Returns "" when
+// the series is empty or every day is zero (no chart adds noise).
+func renderDailyBarChart(daily []usage.DailySpend) string {
+	if len(daily) == 0 {
+		return ""
+	}
+	var peak int64
+	for _, d := range daily {
+		if t := d.TotalTokens(); t > peak {
+			peak = t
+		}
+	}
+	if peak == 0 {
+		return ""
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "일별 토큰 추이 (peak %s)\n", humanInt(peak))
+	for _, d := range daily {
+		total := d.TotalTokens()
+		barLen := int(float64(total) / float64(peak) * 30)
+		bar := strings.Repeat("█", barLen)
+		fmt.Fprintf(&b, "  %s  %12s  %s\n",
+			d.Date.Local().Format("01-02"), humanInt(total), bar)
 	}
 	return b.String()
 }

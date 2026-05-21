@@ -86,6 +86,23 @@ type Overview struct {
 	Top              []TopSession
 }
 
+// DailySpend is the per-day token breakdown over a multi-day window.
+// Date is the UTC start-of-day timestamp (00:00:00). Zero-token days
+// are included so callers rendering a chart see every day in the
+// requested range without gap-filling at the call site.
+type DailySpend struct {
+	Date              time.Time
+	InputTokens       int64
+	OutputTokens      int64
+	CacheReadTokens   int64
+	CacheCreateTokens int64
+}
+
+// TotalTokens mirrors TokenSpend.TotalTokens for a single day.
+func (d DailySpend) TotalTokens() int64 {
+	return d.InputTokens + d.OutputTokens + d.CacheReadTokens + d.CacheCreateTokens
+}
+
 // TimeWindow scopes every query. Open-ended When-To means "now"
 // (queried at call time). Implementations clamp Since to the earliest
 // observed session start when caller passes a zero value, so callers
