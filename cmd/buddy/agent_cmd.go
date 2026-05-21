@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -30,6 +31,7 @@ func newAgentCmd() *cobra.Command {
 		newAgentCreateCmd(),
 		newAgentListCmd(),
 		newAgentShowCmd(),
+		newAgentEditCmd(),
 		newAgentRunCmd(),
 		newAgentLogCmd(),
 		newAgentPurgeCmd(),
@@ -162,6 +164,97 @@ func newAgentShowCmd() *cobra.Command {
 			}
 			fmt.Fprintln(out, "Spec YAML:")
 			fmt.Fprintln(out, indent(a.SpecYAML, "    "))
+			return nil
+		},
+	}
+	c.Flags().StringVar(&dbFlag, "db", "", "path to buddy.db (default ~/.buddy/buddy.db)")
+	return c
+}
+
+// ─── edit ──────────────────────────────────────────────────────────────────
+
+// resolveEditor picks an editor command in the same order the TUI uses:
+// $EDITOR, then $VISUAL, then "vi". Centralised so the CLI and the TUI
+// stay in agreement and a future config knob has one place to land.
+func resolveEditor() string {
+	if e := os.Getenv("EDITOR"); e != "" {
+		return e
+	}
+	if e := os.Getenv("VISUAL"); e != "" {
+		return e
+	}
+	return "vi"
+}
+
+// editorRunner runs the chosen editor against a file. Defaults to a real
+// exec.Command wired to the inherited terminal; tests substitute a fake
+// that mutates the file in-place to simulate a save.
+var editorRunner = func(editor, path string) error {
+	c := exec.Command(editor, path)
+	c.Stdin = os.Stdin
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+	return c.Run()
+}
+
+func newAgentEditCmd() *cobra.Command {
+	var dbFlag string
+	c := &cobra.Command{
+		Use:   "edit <agent-id>",
+		Short: "Edit an agent's YAML spec in $EDITOR (then save)",
+		Long: "Opens the agent's current YAML in $EDITOR (fall back to $VISUAL,\n" +
+			"then `vi`). On exit, the file is re-read, parsed, and saved via\n" +
+			"Store.UpdateSpec. Renames are rejected — the spec id must match\n" +
+			"the original, mirroring the TUI `e`-key flow.",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			id := args[0]
+
+			store, closer, err := openAgentStore(dbFlag)
+			if err != nil {
+				return err
+			}
+			defer closer()
+
+			existing, err := store.Get(ctx, id)
+			if err != nil {
+				return err
+			}
+
+			f, err := os.CreateTemp("", "buddy-agent-edit-*.yaml")
+			if err != nil {
+				return fmt.Errorf("create temp: %w", err)
+			}
+			defer os.Remove(f.Name())
+			if _, err := f.WriteString(existing.SpecYAML); err != nil {
+				_ = f.Close()
+				return fmt.Errorf("write temp: %w", err)
+			}
+			if err := f.Close(); err != nil {
+				return fmt.Errorf("close temp: %w", err)
+			}
+
+			if err := editorRunner(resolveEditor(), f.Name()); err != nil {
+				return fmt.Errorf("editor: %w", err)
+			}
+
+			edited, err := os.ReadFile(f.Name())
+			if err != nil {
+				return fmt.Errorf("read back: %w", err)
+			}
+			spec, err := agent.ParseSpec(edited)
+			if err != nil {
+				return fmt.Errorf("parse: %w", err)
+			}
+			if spec.ID != id {
+				return fmt.Errorf("rename not allowed: spec id %q != original %q",
+					spec.ID, id)
+			}
+			if err := store.UpdateSpec(ctx, spec, string(edited)); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%s 저장 완료\n", id)
 			return nil
 		},
 	}
