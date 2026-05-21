@@ -212,7 +212,7 @@ GCP Cloud Run ✓               ✓           ✓
 - **vs `design-mcp-server`** — 본 skill 은 일반 stack. design-mcp-server 는 MCP server 특수 설계 (tool exposure, transport). MCP server 가 system 의 일부라면 본 skill 이 stack 결정 후 design-mcp-server 가 후속 invoke.
 - **vs `design-data-model`** — 본 skill 은 DB *선택* (Postgres 인지 MongoDB 인지). design-data-model 은 선택된 DB 의 *스키마 설계* (table / index / migration). 본 skill 이 먼저.
 - **vs `design-api-contract`** — 본 skill 은 backend framework *선택* (Spring 인지 FastAPI 인지). design-api-contract 는 endpoint *contract 설계* (REST / GraphQL / RPC). 본 skill 이 먼저.
-- **vs `explore-design-variants`** — explore-design-variants 는 plan / proposal 의 multi-variant 탐색 (broader). 본 skill 은 stack 결정에 한정 (narrower).
+- **vs `verify-best-alternative`** — verify-best-alternative 는 *AI 편향 방지 다관점 검토 메커니즘* (모든 엔지니어링 결정 sub-step). 본 skill 은 stack 결정의 *전체 절차* — 본 skill *내부에서* stack 후보 평가 시 verify-best-alternative를 의무 호출.
 
 ## 10. 중요 규칙
 
@@ -235,5 +235,6 @@ GCP Cloud Run ✓               ✓           ✓
 - [ ] §4 의 posture (입장 / specificity / challenge / boring-by-default) 가 산출물에 적용됨 — hedge 표현 없음
 - [ ] §0 의 5 anti-pattern 들이 산출물에 등장하지 않음
 - [ ] ADR handoff 라인이 출력에 명시됨
+- [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. stack 결정(언어/프레임워크/DB/runtime/hosting)이 *첫 답*이 아니라 다관점 검토 후 *어떤 관점에서 봐도 최선*임을 확인. 자동 dispatch 또는 명시 호출 — `/buddy:verify-best-alternative "stack 결정 컨텍스트"`
 
 하나라도 no 면 해당 phase 로 돌아가 보강 후 재검증. 사용자에게 incomplete 산출물을 "충분하다" 고 보고하지 말 것.

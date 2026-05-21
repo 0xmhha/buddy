@@ -2,7 +2,7 @@
 
 A reliability and observability control plane for [Claude Code](https://claude.ai/code) sessions.
 
-Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 100 slash commands and 149 skills covering the full product development lifecycle, dispatched through a single auto-loaded `router` skill.
+Buddy wraps your Claude Code hooks, validates state schemas, and surfaces failures before they silently accumulate — plus a Claude Code plugin with 101 slash commands and 150 skills covering the full product development lifecycle, dispatched through a single auto-loaded `router` skill.
 
 ```
               ┌──────────────────────────┐
@@ -30,7 +30,7 @@ cli buddy *embeds* plugin buddy; plugin buddy stands alone. The Features table b
 
 | Area | Track | What it does |
 |------|-------|-------------|
-| **Claude Code plugin** | plugin buddy | 9-phase lifecycle orchestrator, 100 `/buddy:*` commands, 149 skills behind one router |
+| **Claude Code plugin** | plugin buddy | 9-phase lifecycle orchestrator, 101 `/buddy:*` commands, 150 skills behind one router |
 | **Hook reliability** | cli buddy (v0.1.0) | Wraps Claude Code hooks; surfaces silent failures with structured logs |
 | **State schema** | cli buddy (v0.1.0) | Zod-validated JSON state prevents corruption and schema drift |
 | **Task retry** | cli buddy (v0.1.0) | WAL-backed outbox ensures failed tasks are replayed, not dropped |
@@ -149,7 +149,7 @@ Full CLI reference: [`docs/v0.1-spec.md §7`](./docs/v0.1-spec.md).
 
 ### Claude Code plugin — slash commands
 
-Once the plugin is installed, 100 slash commands are available in any Claude Code session, all dispatched through the single auto-loaded `router` skill.
+Once the plugin is installed, 101 slash commands are available in any Claude Code session, all dispatched through the single auto-loaded `router` skill.
 
 #### Phase orchestrators (9 — pipeline entry points)
 
@@ -170,7 +170,7 @@ Once the plugin is installed, 100 slash commands are available in any Claude Cod
 | Phase | Commands |
 |-------|----------|
 | §1 | `/buddy:validate-idea`, `/buddy:validate-advanced-edge-idea`, `/buddy:assess-business-viability`, `/buddy:define-product-spec` |
-| §3 | `/buddy:explore-design-variants`, `/buddy:define-tech-stack`, `/buddy:design-data-model`, `/buddy:design-api-contract`, `/buddy:design-event-schema`, `/buddy:design-auth-model`, `/buddy:design-tenant-model`, `/buddy:map-use-cases-to-infra`, `/buddy:derive-system-topology`, `/buddy:write-adr` |
+| §3 | `/buddy:verify-best-alternative`, `/buddy:define-tech-stack`, `/buddy:design-data-model`, `/buddy:design-api-contract`, `/buddy:design-event-schema`, `/buddy:design-auth-model`, `/buddy:design-tenant-model`, `/buddy:map-use-cases-to-infra`, `/buddy:derive-system-topology`, `/buddy:write-adr` |
 | §4 | `/buddy:decompose-feature-to-actor-tracks`, `/buddy:decompose-track-to-tasks`, `/buddy:map-task-dependencies`, `/buddy:plan-parallel-execution`, `/buddy:define-acceptance-test-plan`, `/buddy:estimate-build-timeline` |
 | §5 | `/buddy:build-with-tdd`, `/buddy:diagnose-bug`, `/buddy:dispatch-parallel-agents` |
 | §6 | `/buddy:audit-security`, `/buddy:audit-accessibility`, `/buddy:audit-cost-efficiency`, `/buddy:run-load-test`, `/buddy:measure-code-health`, `/buddy:test-per-actor-use-case`, `/buddy:test-cross-actor-flow` |
@@ -187,6 +187,7 @@ Once the plugin is installed, 100 slash commands are available in any Claude Cod
 | `/buddy:save-context`    | Checkpoint git state + decisions + remaining tasks |
 | `/buddy:restore-context` | Restore most recent saved checkpoint |
 | `/buddy:write-a-skill`   | Author a new buddy skill (PROCEDURE.md + catalog + routing + ADR-003 attribution) with RED-GREEN-REFACTOR subagent pressure test |
+| `/buddy:decompose-blocker` | Decompose code-work stuck state (where-to-look unclear / next-action invisible) into fact/guess/unknown classification + decomposition axes + cost-information action candidates |
 
 #### Router dispatch (composition)
 
@@ -242,7 +243,7 @@ Portions of the Claude Code plugin skills (`plugin/skills/`) are derived from, i
 | make-interfaces-feel-better | (MIT) | `audit-ui-quality` (micro-detail patterns) |
 | agent-evaluation | Kevin + Claude, 2026 (OMAS v2) | `audit-test-coverage-meaningful`, `analyze-actor-failure-rate` (input-vs-output trust scoring) |
 | humanizer | Siqi Chen, 2025 | `analyze-customer-feedback-corpus` (AI-text inverse pattern) |
-| [superpowers](https://github.com/obra/superpowers) | Jesse Vincent, 2025 | `docs/superpowers/` directory naming + composable-skill + router-instruction pattern. `write-a-skill` (RED-GREEN-REFACTOR TDD-for-skills loop + anti-rationalization principle from `writing-skills`). See [ADR-003](./docs/superpowers/decisions/2026-05-10-superpowers-attribution.md). |
+| [superpowers](https://github.com/obra/superpowers) | Jesse Vincent, 2025 | `docs/superpowers/` directory naming + composable-skill + router-instruction pattern. `write-a-skill` (RED-GREEN-REFACTOR TDD-for-skills loop + anti-rationalization principle from `writing-skills`). `decompose-blocker` (forcing-question + design-thinking approach from `brainstorming`, inspired-by — buddy targets narrower stuck-state scope with different decomposition primitives). See [ADR-003](./docs/superpowers/decisions/2026-05-10-superpowers-attribution.md). |
 | Anthropic skill-creator | Anthropic, 2025 (proprietary terms) | `write-a-skill` — progressive disclosure principle + skill bundle anatomy concept (reference-only per ADR-003 §2.4; no verbatim code/text adopted) |
 | gpt-researcher | (referenced) | `conduct-customer-interview` (automation aid) |
 | Korean legal cluster | varies (MIT) | Korea cluster deferred (`consult-korea-legal-context` etc) — `ai-professional-replacement-legal-exploration_skill`, `korean-legal-guide_skill`, `patent-application-drafting_skill`, `KESE-KIT` |

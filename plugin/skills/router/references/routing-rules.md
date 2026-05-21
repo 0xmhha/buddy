@@ -95,7 +95,7 @@
 |-------|-------------|---------|---------------------|---------------|
 | §1 Idea & Business Validation | `concretize-idea` | idea/concept만 존재 | `validate-idea`, `validate-advanced-edge-idea`, `assess-business-viability`, `review-pricing-and-gtm`, `define-product-spec` | `apply-builder-ethos`, `autoplan`(review) |
 | §2 Feature Definition & Backlog | `define-features` | PRD 확정 | `identify-actors`, `map-actor-use-cases`, `map-use-case-to-system-boundary`, `compose-feature-from-use-cases`, `define-feature-spec`, `score-feature-priority`, `map-feature-dependencies`, `split-work-into-features`, `query-feature-registry`, `triage-work-items` | — |
-| §3 Technical Design | `design-system` | Feature backlog 확정 | `review-architecture`, `review-engineering`, `design-artifact-storage`, `design-billing-system`, `design-claude-hooks`, `design-deploy-strategy`, `design-embedding-search`, `design-mcp-server`, `consult-codex`, `consult-design-system`, `explore-design-variants` | `autoplan`(review) |
+| §3 Technical Design | `design-system` | Feature backlog 확정 | `review-architecture`, `review-engineering`, `design-artifact-storage`, `design-billing-system`, `design-claude-hooks`, `design-deploy-strategy`, `design-embedding-search`, `design-mcp-server`, `consult-codex`, `consult-design-system`, `verify-best-alternative` | `autoplan`(review) |
 | §4 Implementation Plan | `plan-build` | Technical design 확정 | — | `autoplan`(review) |
 | §5 Development | `build-feature` | Implementation plan 확정 | `build-with-tdd`, `iterate-fix-verify`, `freeze-edit-scope`, `dispatch-parallel-agents`, `diagnose-bug`, `consult-codex` | — |
 | §6 Quality | `verify-quality` | Code complete | `classify-qa-tiers`, `run-browser-qa`, `monitor-regressions`, `audit-security`, `audit-live-devex`, `measure-code-health`, `classify-review-risks`, `review-ai-safety-liability`, `review-privacy-data-risk`, `review-license-and-ip-risk`, `review-terms-policy-readiness` | — |
@@ -107,8 +107,8 @@
 
 ## 5. 노출된 커맨드 목록 (plugin.json commands)
 
-> 사용자가 `/buddy:<name>`으로 직접 호출할 수 있는 28개 커맨드.
-> 9개 단계 진입점 + 1개 다각도 리뷰 + 4개 공통 도구 + 13개 단계별 세부 작업 + 1개 상태 확인 = 28.
+> 사용자가 `/buddy:<name>`으로 직접 호출할 수 있는 29개 커맨드.
+> 9개 단계 진입점 + 1개 다각도 리뷰 + 5개 공통 도구 + 13개 단계별 세부 작업 + 1개 상태 확인 = 29.
 > 패턴 라이브러리와 보관 스킬은 manifest 에 노출하지 않는다.
 
 > **9-phase 라이프사이클 단계 약칭** (이하 표에서 사용):
@@ -144,7 +144,7 @@
 |--------|------|------|
 | `/buddy:autoplan` | 공통 (리뷰) | 산출물을 scope / design / engineering / DX 4개 관점으로 자동 리뷰 |
 
-### 5.4 공통 도구 (4)
+### 5.4 공통 도구 (5)
 
 > 단계 종속 없음. 어디서든 호출 가능.
 
@@ -154,6 +154,7 @@
 | `/buddy:save-context` | 공통 | 체크포인트 저장 (브랜치 무관 이어받기) |
 | `/buddy:restore-context` | 공통 | 체크포인트 복원 |
 | `/buddy:write-a-skill` | 공통 / 메타 | 신규 buddy 스킬 작성 + catalog 등재 + 차용 4분류 정책 적용 + RED-GREEN-REFACTOR subagent pressure test (한 사이클) |
+| `/buddy:decompose-blocker` | 공통 | 코드 작업 중 stuck 상태에서 문제 분해 + 비용-정보 매트릭스 기반 행동 후보 도출 (다음 스킬로 dispatch 준비) |
 
 ### 5.5 단계별 세부 작업 (13)
 
@@ -165,7 +166,7 @@
 | `/buddy:validate-advanced-edge-idea` | 1. 아이디어 구체화 | 엣지 케이스 / 숨은 가정 박멸 |
 | `/buddy:assess-business-viability` | 1. 아이디어 구체화 | 사업성 7차원 평가 |
 | `/buddy:define-product-spec` | 1. 아이디어 구체화 | PRD 고정 |
-| `/buddy:explore-design-variants` | 3. 기술 설계 | N개 설계 안 병렬 탐색 |
+| `/buddy:verify-best-alternative` | 3. 기술 설계 | AI 편향 방지 강제 다관점 검토 |
 | `/buddy:build-with-tdd` | 5. 개발 | TDD 루프 단독 실행 |
 | `/buddy:diagnose-bug` | 5. 개발 | 버그 재현 → 원인 → fix |
 | `/buddy:dispatch-parallel-agents` | 5. 개발 | worktree 격리 + worker 분배 |

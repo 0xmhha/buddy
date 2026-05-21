@@ -214,5 +214,6 @@ Schema 변경의 deploy 전략:
 - [ ] §4 posture 적용 — hedge 표현 없음, "scalable / fast" 류 카테고리 답변 없음
 - [ ] §0 anti-pattern 들이 산출물에 등장하지 않음
 - [ ] ADR handoff 라인 명시
+- [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. normalization / index 전략 / migration 접근이 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
 
 하나라도 no 면 해당 phase 로 돌아가 보강 후 재검증.

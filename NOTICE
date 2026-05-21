@@ -110,7 +110,13 @@ Inspiration acknowledgment per ADR-003
   RED-GREEN-REFACTOR TDD-for-skills loop and anti-rationalization
   principle from upstream's `writing-skills` (adopt-with-edits per
   ADR-003 §2.4 — structure/principle borrowed, body 100% independently
-  authored in buddy voice).
+  authored in buddy voice), and
+- plugin/skills/decompose-blocker/PROCEDURE.md draws inspiration from
+  upstream's `brainstorming` skill's forcing-question + design-thinking
+  approach, though buddy's skill targets a narrower scope (code-work
+  stuck state, not idea-to-design pipeline) and uses different
+  decomposition primitives (fact/guess/unknown 3-classification,
+  4D axes, cost-information matrix) — inspired-by per ADR-003 §2.4.
 
 No verbatim code or text was adopted. buddy's implementation is
 independently authored.

@@ -90,9 +90,9 @@ ALLOWLIST=(
   consult-codex
   consult-design-system
   critique-plan
+  decompose-blocker
   define-feature-spec
   design-ab-experiment
-  explore-design-variants
   freeze-edit-scope
   generate-improvement-tasks
   guard-destructive-commands
@@ -114,6 +114,7 @@ ALLOWLIST=(
   score-feature-priority
   summarize-retro
   sync-release-docs
+  verify-best-alternative
   write-changelog
   # B-3 (2026-05-19, ADR-006) — rich domain-design skills (Pattern 2)
   design-billing-system

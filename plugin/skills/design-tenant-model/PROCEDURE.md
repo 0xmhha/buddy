@@ -285,5 +285,6 @@ fastify.addHook('preHandler', async (req) => {
 - [ ] Compliance scope (SOC 2 / HIPAA / GDPR) 명시
 - [ ] §4 posture
 - [ ] §0 anti-pattern 부재 — model 결정 / single layer / identity 모호 / cost 무측정 / customization 미정 / compliance 모호 모두 충족
+- [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. tenant isolation model(shared/schema-per/DB-per) 결정이 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
 
 하나라도 no 면 해당 phase 회귀 후 재검증.

@@ -115,6 +115,7 @@ leak 발견 시 *5 분 내* 절차:
 - [ ] Leak detection 4 layer 모두 활성화?
 - [ ] Incident response 5 step 명시?
 - [ ] *코드 / repo 에 plaintext secret 0건* (gitleaks 검증)?
+- [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. secret store / rotation 주기 / detection 전략이 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
 
 ## 7. 다음 phase
 

@@ -1,9 +1,13 @@
-# Explore Design Variants — 병렬 Variant 탐색
+# Verify Best Alternative — AI 편향 방지 강제 다관점 검토
 
 
-수렴 전 **divergent 탐색**을 위한 범용 패턴. 한 답을 만들고 방어하는 대신, 의도적으로 다른 N개 답을 만들고, 구조화된 피드백을 모으고, 반복. 취향, 판단, 제약 트레이드오프가 연루된 모든 곳에 작동 — 시각 디자인, microcopy, 아키텍처 옵션, 네이밍, prompt 초안, API shape, 에러 메시지, "떠오른 첫 아이디어"가 약한 기본인 모든 것.
+AI 협업 개발에서 *모델이 첫 답에 commit하려는 경향*과 *학습 분포에 의한 편향*이 엔지니어링 결정 품질을 저하시키는 것을 차단하는 *강제 다관점 검토 절차*. "이 결정이 최선인가"를 기계적으로 검증 — 단일 방향이 그럴듯해 보이더라도 의도적으로 orthogonal한 N개 대안을 발산시키고, rubric으로 비교, **어느 관점에서 봐도 최선**인 설계·구현·알고리즘을 선택.
 
-이름이 "design-shotgun"인 이유는 시각 디자인에서 출발했기 때문, 그러나 메커니즘 — 병렬 탐색 → 나란히 비교 → rubric 피드백 → 개선 — 은 domain-agnostic.
+적용 영역: 시각 디자인, microcopy, 아키텍처 옵션, 네이밍, prompt 초안, API shape, 에러 메시지, 알고리즘 선택, 데이터 모델, 인증 모델, 이벤트 스키마, 멀티-tenant 격리 전략 — *AI 첫 답이 약한 기본*일 수 있는 모든 엔지니어링 결정. 취향·판단·제약 트레이드오프가 연루된 곳, *"첫 떠오른 아이디어"가 의심스러운* 모든 결정.
+
+본 스킬은 *옵션 발산*이 목적이 아니라 *결정 품질 보장*. buddy의 핵심 design 결정 스킬들(`design-system`, `define-tech-stack`, `design-api-contract`, `design-data-model`, `design-event-schema`, `design-auth-model`, `design-tenant-model`, `design-secret-management`)에서 *첫 답 commit 직전* 의무 호출되어야 한다 — 자동 dispatch 또는 명시 호출. 메커니즘(병렬 탐색 → 나란히 비교 → rubric 피드백 → 개선)은 domain-agnostic.
+
+> *이전 이름 `explore-design-variants`는 시각 디자인 한정으로 오해되어 2026-05-20 rename됨. 메커니즘과 본문은 동일.*
 
 ## 이 스킬을 사용하는 경우
 

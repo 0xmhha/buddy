@@ -157,7 +157,7 @@ define-features (§2 phase orchestrator)
 
 ### §3 `design-system`
 
-**구현됨 (Phase 1 + 기존)**: [Done] `define-tech-stack`, [Done] `design-data-model`, [Done] `design-api-contract`, [Done] `write-adr`, [Done] `review-architecture`, [Done] `review-engineering`, [Done] `review-design`, [Done] `review-devex`, [Done] `design-artifact-storage`, [Done] `design-billing-system`, [Done] `design-claude-hooks`, [Done] `design-deploy-strategy`, [Done] `design-embedding-search`, [Done] `design-mcp-server`, [Done] `consult-codex`, [Done] `consult-design-system`, [Done] `explore-design-variants`, [Done] `autoplan` (review).
+**구현됨 (Phase 1 + 기존)**: [Done] `define-tech-stack`, [Done] `design-data-model`, [Done] `design-api-contract`, [Done] `write-adr`, [Done] `review-architecture`, [Done] `review-engineering`, [Done] `review-design`, [Done] `review-devex`, [Done] `design-artifact-storage`, [Done] `design-billing-system`, [Done] `design-claude-hooks`, [Done] `design-deploy-strategy`, [Done] `design-embedding-search`, [Done] `design-mcp-server`, [Done] `consult-codex`, [Done] `consult-design-system`, [Done] `verify-best-alternative` (formerly `explore-design-variants`), [Done] `autoplan` (review).
 
 **Pending (use case → infra 브릿지)**:
 - [Pending] `map-use-cases-to-infra` — actor system boundary → 실제 infra component
@@ -238,7 +238,7 @@ Q4=(c) 결정에 따라 MCP 작성 보류. 현재 buddy MCP control plane (docto
 ### 6.3 Stage / Domain commands (15, [Done] 등록)
 
 Q2=(b) "dual-full" 결정에 따라 실제로는 14 개 제거 대신 보존:
-`/buddy:validate-idea`, `/buddy:validate-advanced-edge-idea`, `/buddy:assess-business-viability`, `/buddy:define-product-spec`, `/buddy:autoplan`, `/buddy:explore-design-variants`, `/buddy:dispatch-parallel-agents`, `/buddy:build-with-tdd`, `/buddy:diagnose-bug`, `/buddy:audit-security`, `/buddy:measure-code-health`, `/buddy:auto-create-pr`, `/buddy:setup-quality-gates`, `/buddy:summarize-retro`, `/buddy:status`.
+`/buddy:validate-idea`, `/buddy:validate-advanced-edge-idea`, `/buddy:assess-business-viability`, `/buddy:define-product-spec`, `/buddy:autoplan`, `/buddy:verify-best-alternative`, `/buddy:dispatch-parallel-agents`, `/buddy:build-with-tdd`, `/buddy:diagnose-bug`, `/buddy:audit-security`, `/buddy:measure-code-health`, `/buddy:auto-create-pr`, `/buddy:setup-quality-gates`, `/buddy:summarize-retro`, `/buddy:status`.
 
 ### 6.4 Dispatch commands (3, 신규 — 2026-05-06)
 

@@ -75,7 +75,7 @@ design-system (3단계 phase orchestrator)
 
 본 stage 의 산출물은 (a) human-readable mermaid (시스템 한 화면 이해), (b) machine-readable JSON (후속 design-* skill 이 edge type filter 로 자기 영역 추출). 후속 design-data-model 은 db-write/db-read edge, design-api-contract 는 sync-api edge 만 필터링.
 
-`explore-design-variants` skill 을 invoke해 토폴로지 후보 2-3 개 생성 + trade-off 비교 (high-stakes 의 경우).
+`verify-best-alternative` skill 을 invoke해 토폴로지 후보 2-3 개 생성 + trade-off 비교 (high-stakes 의 경우 — AI 편향 방지 의무).
 
 ### Stage 3: Tech Stack 선택
 

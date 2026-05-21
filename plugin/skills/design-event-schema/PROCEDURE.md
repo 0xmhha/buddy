@@ -255,5 +255,6 @@ at-least-once 결정 근거: at-most-once = 중요 event loss risk, exactly-once
 - [ ] DLQ + Retry 5 aspect 모두 정의
 - [ ] §4 posture 적용 — 단호
 - [ ] §0 anti-pattern 부재 — schema-less / versioning 부재 / DLQ 부재 / idempotency 없음 / single-side / sync 분리 모두 충족
+- [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. event schema format / registry / DLQ 전략이 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
 
 하나라도 no 면 해당 phase 회귀 후 재검증.

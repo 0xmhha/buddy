@@ -242,5 +242,6 @@ backup mechanisms:
 - [ ] ADR handoff 명시
 - [ ] §4 posture
 - [ ] §0 anti-pattern 부재 — auth only / lifetime 부재 / MFA 미정 / federation deferred / storage 모호 / password policy 부재 / recovery anti-pattern 모두 충족
+- [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. auth mechanism / session storage / federation 전략이 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
 
 하나라도 no 면 해당 phase 회귀 후 재검증.
