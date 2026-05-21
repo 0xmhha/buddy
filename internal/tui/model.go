@@ -1035,22 +1035,52 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 // kept restrained: cli buddy's persona is "친구 — silent default", and a
 // neon dashboard works against that.
 func (m Model) View() string {
+	var s string
 	switch m.Mode {
 	case ModeDetail:
-		return m.renderDetail()
+		s = m.renderDetail()
 	case ModeScheduler:
-		return m.renderScheduler()
+		s = m.renderScheduler()
 	case ModeDeleteConfirm:
-		return m.renderDeleteConfirm()
+		s = m.renderDeleteConfirm()
 	case ModeLogTail:
-		return m.renderLogTail()
+		s = m.renderLogTail()
 	case ModeHookStats:
-		return m.renderHookStats()
+		s = m.renderHookStats()
 	case ModeUsage:
-		return m.renderUsage()
+		s = m.renderUsage()
 	default:
-		return m.renderList()
+		s = m.renderList()
 	}
+	return m.constrainWidth(s)
+}
+
+// constrainWidth caps every visible line in s at m.Width display columns,
+// appending an ellipsis when a line is truncated. ANSI-aware via
+// lipgloss.Width. No-op when m.Width <= 0 (no WindowSizeMsg seen yet, or
+// test fixture) — that branch matches bubbletea's pre-resize behavior
+// where View() may be called before the terminal size is reported.
+//
+// Width-only: vertical overflow is left to the terminal's own scroll
+// region. cycle-3 BA-4 reported horizontal layout breakage on resize;
+// per-line truncation is the smallest fix that restores readability
+// without rewriting each render function's column math.
+func (m Model) constrainWidth(s string) string {
+	if m.Width <= 0 {
+		return s
+	}
+	lines := strings.Split(s, "\n")
+	for i, line := range lines {
+		if lipgloss.Width(line) <= m.Width {
+			continue
+		}
+		runes := []rune(line)
+		for len(runes) > 0 && lipgloss.Width(string(runes)+"…") > m.Width {
+			runes = runes[:len(runes)-1]
+		}
+		lines[i] = string(runes) + "…"
+	}
+	return strings.Join(lines, "\n")
 }
 
 func (m Model) renderList() string {

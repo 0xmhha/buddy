@@ -1918,3 +1918,63 @@ func TestInit_FiresAgentAndNotifyBatch(t *testing.T) {
 	_, ok := msg.(tea.BatchMsg)
 	require.True(t, ok, "Init must dispatch a Batch combining agents + notify")
 }
+
+// TestConstrainWidth_NoOpBeforeResize — until WindowSizeMsg lands, Width
+// stays at zero and constrainWidth must not touch the output. This
+// matches bubbletea's pre-resize lifecycle where View() can be called
+// before the first size report.
+func TestConstrainWidth_NoOpBeforeResize(t *testing.T) {
+	m := Model{Width: 0}
+	long := "this is intentionally a very long line that would otherwise be truncated"
+	require.Equal(t, long, m.constrainWidth(long))
+}
+
+// TestConstrainWidth_TruncatesWithEllipsis — every line exceeding Width
+// is shortened so the rendered width (including the trailing ellipsis)
+// is at most Width. Short lines stay byte-identical. Empty lines and the
+// trailing newline are preserved so render functions that join with "\n"
+// don't lose their layout.
+func TestConstrainWidth_TruncatesWithEllipsis(t *testing.T) {
+	m := Model{Width: 10}
+	input := "short\n" +
+		"this line is far too long for the cap\n" +
+		"\n" +
+		"another long line that must shrink"
+	out := m.constrainWidth(input)
+
+	lines := strings.Split(out, "\n")
+	require.Len(t, lines, 4, "constrainWidth must preserve newline boundaries")
+	require.Equal(t, "short", lines[0], "short line unchanged")
+	require.Equal(t, "", lines[2], "blank line stays blank")
+
+	for i, line := range lines {
+		// lipgloss.Width gives display columns; every line must fit.
+		// Imported via the same lipgloss package the package under test
+		// uses; here we just count runes since the test input is pure
+		// ASCII.
+		require.LessOrEqual(t, len([]rune(line)), m.Width,
+			"line %d (%q) exceeds Width=%d", i, line, m.Width)
+	}
+
+	require.Contains(t, lines[1], "…", "truncated line ends with ellipsis")
+	require.Contains(t, lines[3], "…", "truncated line ends with ellipsis")
+}
+
+// TestView_ConstrainsToWidth — drives the full View() pipeline with a
+// realistic narrow terminal and asserts that no rendered line exceeds
+// the reported Width. Guards against future render functions adding
+// new hardcoded-width output without going through constrainWidth.
+func TestView_ConstrainsToWidth(t *testing.T) {
+	m := Model{
+		Store:    &fakeLister{agents: []agent.Agent{}},
+		Loaded:   true,
+		Mode:     ModeList,
+		Width:    24,
+		Height:   20,
+	}
+	out := m.View()
+	for i, line := range strings.Split(out, "\n") {
+		require.LessOrEqual(t, len([]rune(line)), m.Width,
+			"View line %d (%q) exceeds Width=%d", i, line, m.Width)
+	}
+}
