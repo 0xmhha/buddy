@@ -20,6 +20,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 
@@ -31,6 +32,23 @@ import (
 	"github.com/0xmhha/buddy/internal/sessions"
 	"github.com/0xmhha/buddy/internal/usage"
 )
+
+// syncWriter serialises Write calls across the daemon's goroutines so
+// concurrent fmt.Fprintf calls into Config.LogTo (the main Run loop +
+// runSessionMonitor + runAdvisorMonitor) never overlap. io.Writer is
+// not required to be concurrent-safe; os.Stderr happens to be on POSIX
+// but a test's bytes.Buffer is not, and the race detector caught the
+// gap during cycle-3 dogfood.
+type syncWriter struct {
+	mu sync.Mutex
+	w  io.Writer
+}
+
+func (s *syncWriter) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.w.Write(p)
+}
 
 // Config governs how the daemon polls.
 type Config struct {
@@ -104,6 +122,13 @@ func (c *Config) Defaults() {
 	}
 	if c.LogTo == nil {
 		c.LogTo = os.Stderr
+	}
+	// Wrap the writer so the Run loop + every monitor goroutine share a
+	// mutex-protected sink. Re-wrapping an already-wrapped writer is OK
+	// — the outer mutex serialises calls through to the inner one,
+	// which is itself a no-op extra acquisition.
+	if _, alreadyWrapped := c.LogTo.(*syncWriter); !alreadyWrapped {
+		c.LogTo = &syncWriter{w: c.LogTo}
 	}
 	if c.PIDFile == "" && c.DBPath != "" {
 		c.PIDFile = filepath.Join(filepath.Dir(c.DBPath), "daemon.pid")
