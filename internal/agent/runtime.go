@@ -127,7 +127,7 @@ func (r *Runtime) Run(ctx context.Context, agent Agent) (RunResult, error) {
 		// cascade from failed steps (broken §next-phase shouldn't
 		// drive a fault path).
 		if cascadeEnabled && p.depth < maxCascadeDepth {
-			if next := pickCascadeTarget(stepResult.Parsed.NextPhase); next != "" {
+			if next := pickCascadeTarget(stepResult.Parsed.NextPhase, spec.BranchHints); next != "" {
 				queue = append(queue, pendingStep{
 					step:  ChainStep{Command: next},
 					depth: p.depth + 1,
@@ -239,9 +239,44 @@ func (r *Runtime) runOneStep(ctx context.Context, runID int64, idx int, step Cha
 							idx, step.Command, b.Condition, rhs))
 				}
 			}
-			_ = r.store.AppendLog(ctx, runID, "info",
-				fmt.Sprintf("step[%d] %s ok", idx, step.Command))
-			return last, nil
+			// W4-2 — self-check verdict policy. The verdict is already
+			// logged above; the runtime acts on it only when the spec
+			// opts in via OnSelfCheckFail. SelfCheckFailContinue (and
+			// the empty default) preserves v0.5.0+ behaviour: log the
+			// verdict, return the step as success.
+			//
+			// Failure surfaces through last.ExitCode (=1) rather than a
+			// non-nil error return — same contract as exit-code-fail so
+			// the cascade loop's stepFailed detector picks it up
+			// uniformly, and Run() keeps its (result, nil) success-on-
+			// soft-failure invariant.
+			if last.Parsed.SelfCheck.Verdict == SelfCheckFail {
+				switch step.OnSelfCheckFail {
+				case SelfCheckFailAbort:
+					last.ExitCode = 1
+					last.Error = "self-check failed (on_self_check_fail=abort)"
+					_ = r.store.AppendLog(ctx, runID, "error",
+						fmt.Sprintf("step[%d] %s self-check fail → abort", idx, step.Command))
+					return last, nil
+				case SelfCheckFailRetry:
+					last.ExitCode = 1
+					last.Error = "self-check failed (on_self_check_fail=retry)"
+					_ = r.store.AppendLog(ctx, runID, "warn",
+						fmt.Sprintf("step[%d] %s self-check fail → retry (attempt=%d)",
+							idx, step.Command, attempt))
+					// Skip the success-return path; fall through to the
+					// retry-backoff block below for the next attempt.
+				default:
+					// "" / "continue" — keep v0.5.0+ behaviour: success.
+					_ = r.store.AppendLog(ctx, runID, "info",
+						fmt.Sprintf("step[%d] %s ok", idx, step.Command))
+					return last, nil
+				}
+			} else {
+				_ = r.store.AppendLog(ctx, runID, "info",
+					fmt.Sprintf("step[%d] %s ok", idx, step.Command))
+				return last, nil
+			}
 		}
 
 		if attempt < maxAttempts {
@@ -302,17 +337,30 @@ func computeBackoff(retry *RetryPolicy, attemptJustFailed int) time.Duration {
 }
 
 // pickCascadeTarget chooses the next-phase skill to auto-cascade into.
-// The minimum-viable selection rule is "first parsed Skills entry"; it
-// is intentionally simple so the cascade does NOT silently pick a
-// branch whose condition doesn't match the run's environment. When
-// PROCEDURE outputs use conditional Branches (e.g. "Korea → skill-a /
-// USA → skill-b"), the parser surfaces them in NextPhase.Branches and
-// the union in NextPhase.Skills — we use Skills[0], which is what a
-// PROCEDURE with a single sequential candidate (the common case)
-// produces.
+//
+// Two code paths:
+//
+//   - No Branches: the PROCEDURE produced an unconditional next-phase
+//     section. We take Skills[0] — the common single-sequential-
+//     candidate case, identical to the pre-W4-1 behaviour.
+//   - Branches present: the PROCEDURE expresses conditional cascade
+//     ("Korea → skill-a / USA → skill-b"). We pick the first branch
+//     whose Condition has BranchHints[Condition] == true. Missing
+//     hint or hint=false suppresses that branch; if no branch
+//     matches, we return "" so the cascade stops rather than
+//     silently grabbing the union's first entry. W4-1 cycle-3 BA-?
+//     candidate.
 //
 // Returns "" when there is no cascade target.
-func pickCascadeTarget(np ParsedOutput_NextPhaseAlias) string {
+func pickCascadeTarget(np ParsedOutput_NextPhaseAlias, hints map[string]bool) string {
+	if len(np.Branches) > 0 {
+		for _, b := range np.Branches {
+			if hints[b.Condition] && len(b.Skills) > 0 {
+				return b.Skills[0]
+			}
+		}
+		return ""
+	}
 	if len(np.Skills) == 0 {
 		return ""
 	}

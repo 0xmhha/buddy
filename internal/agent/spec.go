@@ -50,6 +50,14 @@ func (s AgentSpec) Validate() error {
 		// Buddy convention: command names match skill directory names
 		// (kebab-case, no /buddy: prefix). We accept a leading slash for
 		// usability but strip it during Run.
+		switch step.OnSelfCheckFail {
+		case "", SelfCheckFailContinue, SelfCheckFailAbort, SelfCheckFailRetry:
+			// ok — empty is the documented default ("continue").
+		default:
+			return fmt.Errorf(
+				"agent: spec.chain[%d].on_self_check_fail %q is unsupported (want continue|abort|retry)",
+				i, step.OnSelfCheckFail)
+		}
 	}
 	if s.Retry != nil {
 		if s.Retry.MaxAttempts < 1 {

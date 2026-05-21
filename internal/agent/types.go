@@ -58,6 +58,14 @@ type AgentSpec struct {
 	Retry       *RetryPolicy        `yaml:"retry,omitempty"`
 	Output      *OutputTarget       `yaml:"output,omitempty"`
 	AutoCascade *AutoCascadeConfig  `yaml:"auto_cascade,omitempty"`
+	// BranchHints disambiguates conditional next-phase branches at
+	// cascade-pick time. Keys are the trimmed LHS prose the parser
+	// records in NextPhase.Branches[i].Condition (e.g. "글로벌",
+	// "Korea", "USA / EU / 기타"). A true value selects that branch's
+	// skills; false explicitly suppresses it. Missing key = unknown
+	// preference, which pickCascadeTarget logs and skips rather than
+	// silently picking. W4-1 cycle-3 BA-? candidate.
+	BranchHints map[string]bool `yaml:"branch_hints,omitempty"`
 }
 
 // AutoCascadeConfig opts an agent into auto-cascade: after every
@@ -105,7 +113,38 @@ type ChainStep struct {
 	// single failed cleanup step at the end still surfaces failure),
 	// or 0 when every step (including continue_on_fail ones) succeeded.
 	ContinueOnFail bool `yaml:"continue_on_fail,omitempty"`
+	// OnSelfCheckFail is the W4-2 policy knob for what the runtime does
+	// when the step's parsed §self-check section reports a fail verdict
+	// (any unchecked `- [ ]` in the section body). Allowed values:
+	//
+	//   - "" (default, equivalent to "continue"): runtime preserves the
+	//     v0.5.0+ behaviour — the verdict lands in the per-step log line
+	//     but the chain continues. RunResult.Steps still records the
+	//     verdict for downstream consumers.
+	//   - "continue": same as the empty-string default; explicit form.
+	//   - "abort": the cascade short-circuits as if the step itself had
+	//     failed. RunResult.ExitCode reflects the failure, the cascade
+	//     stops here, and ContinueOnFail still applies — a step marked
+	//     ContinueOnFail+abort will skip the rest of the chain but the
+	//     overall run is not failed by *this* step's verdict alone.
+	//   - "retry": treat the verdict as a transient failure and trigger
+	//     the agent's RetryPolicy. Bounded by MaxAttempts like exit-code
+	//     failures, so a deterministic self-check failure cannot loop
+	//     forever.
+	//
+	// Default ("") preserves every pre-W4-2 agent's behaviour; opt-in
+	// is the discipline. cycle-3 BA-? candidate.
+	OnSelfCheckFail string `yaml:"on_self_check_fail,omitempty"`
 }
+
+// SelfCheckFailPolicy* are the allowed values of ChainStep.OnSelfCheckFail.
+// Validate() in spec.go enforces this enum so a typo in the YAML lands
+// as a parse error rather than silently being ignored at runtime.
+const (
+	SelfCheckFailContinue = "continue"
+	SelfCheckFailAbort    = "abort"
+	SelfCheckFailRetry    = "retry"
+)
 
 // RetryPolicy is a uniform retry config for every step. v0.3 shipped a
 // fixed-delay capped retry; v0.6.x adds exponential backoff with an

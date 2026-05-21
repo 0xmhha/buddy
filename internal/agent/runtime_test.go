@@ -1143,3 +1143,206 @@ chain:
 	require.NoError(t, err)
 	require.Equal(t, StatusDone, after.Status)
 }
+
+// ─── W4-1 branch hints ────────────────────────────────────────────────
+
+// procWithBranches mirrors procWithNextPhase but emits two conditional
+// branches, exercising the parser's NextPhase.Branches surface that
+// W4-1's BranchHints disambiguates.
+func procWithBranches() string {
+	return "## 6. 검증\n\n- [x] decided\n\n" +
+		"## 7. 다음 phase\n\n" +
+		"- Korea → `consult-korea-legal-context`\n" +
+		"- 글로벌 → `review-legal-regulatory`\n"
+}
+
+// TestPickCascadeTarget_NoBranchesFallsBackToFirstSkill — the
+// no-branches path stays identical to pre-W4-1 behaviour: Skills[0].
+func TestPickCascadeTarget_NoBranchesFallsBackToFirstSkill(t *testing.T) {
+	t.Parallel()
+	np := NextPhase{Skills: []string{"a", "b"}}
+	require.Equal(t, "a", pickCascadeTarget(np, nil))
+	require.Equal(t, "a", pickCascadeTarget(np, map[string]bool{"unrelated": true}))
+}
+
+// TestPickCascadeTarget_HintSelectsMatchingBranch — when Branches are
+// present, only a true hint for a Condition picks that branch's first
+// skill. Branch order in the source is preserved.
+func TestPickCascadeTarget_HintSelectsMatchingBranch(t *testing.T) {
+	t.Parallel()
+	np := NextPhase{
+		Branches: []NextPhaseBranch{
+			{Condition: "Korea", Skills: []string{"consult-korea-legal-context"}},
+			{Condition: "글로벌", Skills: []string{"review-legal-regulatory"}},
+		},
+	}
+	require.Equal(t, "consult-korea-legal-context",
+		pickCascadeTarget(np, map[string]bool{"Korea": true}))
+	require.Equal(t, "review-legal-regulatory",
+		pickCascadeTarget(np, map[string]bool{"글로벌": true}))
+}
+
+// TestPickCascadeTarget_NoMatchingHintReturnsEmpty — missing hint, false
+// hint, and empty-skill branch all suppress the cascade so the runtime
+// stops rather than silently picking the union's first entry.
+func TestPickCascadeTarget_NoMatchingHintReturnsEmpty(t *testing.T) {
+	t.Parallel()
+	np := NextPhase{
+		Branches: []NextPhaseBranch{
+			{Condition: "Korea", Skills: []string{"consult-korea-legal-context"}},
+			{Condition: "글로벌", Skills: []string{"review-legal-regulatory"}},
+		},
+	}
+	require.Equal(t, "", pickCascadeTarget(np, nil))
+	require.Equal(t, "", pickCascadeTarget(np, map[string]bool{"USA": true}))
+	require.Equal(t, "", pickCascadeTarget(np, map[string]bool{"Korea": false, "글로벌": false}))
+}
+
+// TestRuntime_Run_BranchHintsDriveCascade — end-to-end: a spec with
+// branch_hints set picks the matching branch and the cascade only
+// executes that path, never the other branch.
+func TestRuntime_Run_BranchHintsDriveCascade(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+
+	yamlSrc := `
+id: hinted-cascade
+name: "Hinted cascade"
+auto_cascade: {}
+branch_hints:
+  Korea: true
+chain:
+  - command: status
+    args: ""
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{Stdout: procWithBranches(), ExitCode: 0}
+	mock.Responses["consult-korea-legal-context"] = MockResponse{Stdout: "", ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Len(t, res.Steps, 2, "Korea hint must trigger the Korea-branch cascade")
+	require.Equal(t, "consult-korea-legal-context", res.Steps[1].Command)
+}
+
+// ─── W4-2 on_self_check_fail ──────────────────────────────────────────
+
+// procWithSelfCheckFail emits a PROCEDURE body whose §self-check has
+// an unchecked checkbox so the parser records SelfCheckFail. No
+// next-phase block — cascade is irrelevant to this policy test.
+func procWithSelfCheckFail() string {
+	return "## 6. 검증 (self-check)\n" +
+		"- [x] some checks pass\n" +
+		"- [ ] one critical check fails\n"
+}
+
+// TestSpec_OnSelfCheckFail_RejectsUnknownValue — a typo in the YAML
+// must surface at parse time, not silently default at runtime.
+func TestSpec_OnSelfCheckFail_RejectsUnknownValue(t *testing.T) {
+	t.Parallel()
+	yamlSrc := `
+id: typo-policy
+name: "typo policy"
+chain:
+  - command: status
+    on_self_check_fail: maybeRetry
+`
+	_, err := ParseSpec([]byte(yamlSrc))
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "on_self_check_fail")
+}
+
+// TestRuntime_Run_SelfCheckFail_ContinueIsDefault — empty policy
+// preserves v0.5.0+ behaviour: the verdict is logged but the step
+// returns success and the run completes.
+func TestRuntime_Run_SelfCheckFail_ContinueIsDefault(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+	yamlSrc := `
+id: default-policy
+name: "default policy"
+chain:
+  - command: status
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{Stdout: procWithSelfCheckFail(), ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.Equal(t, 0, res.ExitCode, "self-check fail with default policy must not flip the run")
+	require.Len(t, mock.Calls, 1, "no retry, no extra calls")
+}
+
+// TestRuntime_Run_SelfCheckFail_AbortStopsChain — abort policy turns
+// a verdict-fail step into an immediate cascade halt.
+func TestRuntime_Run_SelfCheckFail_AbortStopsChain(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+	yamlSrc := `
+id: abort-policy
+name: "abort policy"
+chain:
+  - command: status
+    on_self_check_fail: abort
+  - command: status
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{Stdout: procWithSelfCheckFail(), ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err, "Run returns nil; failure surfaces via ExitCode")
+	require.NotEqual(t, 0, res.ExitCode, "abort must surface as a non-zero run exit code")
+	require.Len(t, res.Steps, 1, "the second step must not run after abort")
+}
+
+// TestRuntime_Run_SelfCheckFail_RetryHonoursMaxAttempts — retry policy
+// triggers the step's RetryPolicy on a verdict fail, just like an
+// exit-code failure. After max_attempts the run still surfaces failure.
+func TestRuntime_Run_SelfCheckFail_RetryHonoursMaxAttempts(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	store, _ := newTestStore(t)
+	yamlSrc := `
+id: retry-policy
+name: "retry policy"
+retry:
+  max_attempts: 3
+chain:
+  - command: status
+    on_self_check_fail: retry
+`
+	spec, err := ParseSpec([]byte(yamlSrc))
+	require.NoError(t, err)
+	a, err := store.Create(ctx, spec, yamlSrc)
+	require.NoError(t, err)
+
+	mock := NewMockExecutor()
+	mock.Responses["status"] = MockResponse{Stdout: procWithSelfCheckFail(), ExitCode: 0}
+
+	rt := NewRuntime(store, mock)
+	res, err := rt.Run(ctx, a)
+	require.NoError(t, err)
+	require.NotEqual(t, 0, res.ExitCode, "exhausted retries on self-check fail must surface failure")
+	require.Equal(t, 3, len(mock.Calls), "max_attempts=3 with verdict-fail every time = 3 calls")
+}
