@@ -1,8 +1,10 @@
 # Buddy Roadmap — Historical Milestone Log
 
-> **Scope**: M1 ~ M6 + v0.1.0 release 까지의 **역사적 milestone log**. *현재의 잔여 작업과 우선순위* 는 [`BACKLOG.md`](./BACKLOG.md) 가 단일 SSoT.
+> **Archived 2026-05-21** — M1~M6 all delivered (v0.1.0 released 2026-04-26). 잔여 작업의 SSoT는 [`../BACKLOG.md`](../BACKLOG.md).
+
+> **Scope**: M1 ~ M6 + v0.1.0 release 까지의 **역사적 milestone log**. *현재의 잔여 작업과 우선순위* 는 [`../BACKLOG.md`](../BACKLOG.md) 가 단일 SSoT.
 >
-> v0.4.1 시점 (2026-05-11) 의 §4 v0.2 Control Plane / §5 v0.3 Orchestration / §6 v1.0 통합 outline 은 본 cycle 에서 *ADR-002 + ADR-005 의 부분 supersede* + 본 backlog 통합으로 **`BACKLOG.md` 로 위임**. 향후 v0.x → v1.0 trigger 는 [`HANDOFF.md`](./HANDOFF.md) §1 + [`BACKLOG.md`](./BACKLOG.md) §1.
+> v0.4.1 시점 (2026-05-11) 의 §4 v0.2 Control Plane / §5 v0.3 Orchestration / §6 v1.0 통합 outline 은 본 cycle 에서 *ADR-002 + ADR-005 의 부분 supersede* + 본 backlog 통합으로 **`BACKLOG.md` 로 위임**. 향후 v0.x → v1.0 trigger 는 [`HANDOFF.md`](../HANDOFF.md) §1 + [`BACKLOG.md`](../BACKLOG.md) §1.
 >
 > 작성일: 2026-04-23 / 최종 갱신: 2026-05-19 (BACKLOG.md 통합 + 슬림화) / 상태: HISTORICAL
 
@@ -29,7 +31,7 @@
 - T8: read-only `db.Open` 이 missing parent/file 시 `ErrDBMissing` sentinel
 - T9: `uninstall` 이 자동 `daemon stop`, `--keep-daemon` escape hatch
 - Config 우선순위: 명시적 CLI flag > config 파일 > spec-locked default
-- 페르소나 catalog: `internal/persona/`, typed `Key` 상수, en↔ko parity ([`BACKLOG.md`](./BACKLOG.md) Wave 2-3 = ✅ Done, en/ko 57/57)
+- 페르소나 catalog: `internal/persona/`, typed `Key` 상수, en↔ko parity ([`BACKLOG.md`](../BACKLOG.md) Wave 2-3 = ✅ Done, en/ko 57/57)
 - DB busy_timeout: `_pragma=busy_timeout(5000)` (concurrent open race fix)
 - Daemon SIGTERM handler: PID 파일 publish 전 설치 (race fix)
 
@@ -70,7 +72,7 @@ v0.1.0 release 이후 본 cycle 까지의 publish:
 | v0.7.4 | 2026-05-19 | ADR-008 feature-management-mcp scope lock-in |
 | v0.7.5 | 2026-05-19 | dogfood guide v0.7.x |
 
-→ **cli buddy spec §9 W3-1~W3-6 모두 Done**. Plugin v1.0.0 entry conditions B-1/B-3/B-4 closed, **B-2 (production dogfood) 만 잔여** — [`BACKLOG.md`](./BACKLOG.md) Wave 1.
+→ **cli buddy spec §9 W3-1~W3-6 모두 Done**. Plugin v1.0.0 entry conditions B-1/B-3/B-4 closed, **B-2 (production dogfood) 만 잔여** — [`BACKLOG.md`](../BACKLOG.md) Wave 1.
 
 ---
 
@@ -82,7 +84,7 @@ v0.1.0 release 이후 본 cycle 까지의 publish:
 | 분산 시스템 (멀티-머신) | single-machine 가정 ([`v0.1-spec.md`](./v0.1-spec.md) §1 Non-goal) |
 | 자체 LLM provider proxy | Claude Code 본체 책임 |
 | Windows | macOS/Linux 우선 (POSIX 가정 다수) |
-| Cross-harness parity (Codex/OpenCode 동시) | harness-analysis 갭 C "환상" — v1.0+ 검토만 ([`BACKLOG.md`](./BACKLOG.md) W6-2) |
+| Cross-harness parity (Codex/OpenCode 동시) | harness-analysis 갭 C "환상" — v1.0+ 검토만 ([`BACKLOG.md`](../BACKLOG.md) W6-2) |
 | 자동 telemetry / 사용 통계 외부 전송 | 로컬 도구, opt-in 도 v1.0+ |
 
 ---
@@ -95,11 +97,11 @@ v0.1.0 release 이후 본 cycle 까지의 publish:
 
 ## 5. 참조
 
-- [`BACKLOG.md`](./BACKLOG.md) — **단일 잔여 작업 SSoT** + 진행률
+- [`BACKLOG.md`](../BACKLOG.md) — **단일 잔여 작업 SSoT** + 진행률
 - [`v0.1-spec.md`](./v0.1-spec.md) — M1~M5 LOCKED spec (역사적)
 - [`cli-buddy-spec.md`](./cli-buddy-spec.md) — cli buddy spec (Accepted, ADR-005)
-- [`two-tracks-charter.md`](./two-tracks-charter.md) — 두 트랙 책임 경계 SSoT
-- [`HANDOFF.md`](./HANDOFF.md) — 세션 인계 가이드
-- [`dogfood-guide.md`](./dogfood-guide.md) — v0.7.x dogfood 실행 절차
-- [`superpowers/decisions/README.md`](./superpowers/decisions/README.md) — ADR Index (8 건 Accepted)
+- [`two-tracks-charter.md`](../two-tracks-charter.md) — 두 트랙 책임 경계 SSoT
+- [`HANDOFF.md`](../HANDOFF.md) — 세션 인계 가이드
+- [`dogfood-guide.md`](../dogfood-guide.md) — v0.7.x dogfood 실행 절차
+- [`superpowers/decisions/README.md`](../superpowers/decisions/README.md) — ADR Index (8 건 Accepted)
 - [`decision-1-schema-fields.md`](./decision-1-schema-fields.md) — 옵션 A schema 결정 근거

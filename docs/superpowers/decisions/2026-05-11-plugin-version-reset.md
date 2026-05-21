@@ -6,7 +6,7 @@
 > **Tags**: versioning, release, semver, plugin-track, charter-alignment
 > **Related**:
 > - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §2 plugin buddy / §3 cli buddy
-> - [`docs/cli-buddy-spec.md`](../../cli-buddy-spec.md) — Draft (W3-2~6 미구현)
+> - [`docs/archive/cli-buddy-spec.md`](../../archive/cli-buddy-spec.md) — Draft (W3-2~6 미구현)
 > - [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](./2026-05-10-roadmap-charter-gap.md) (ADR-002)
 
 ---
@@ -208,7 +208,7 @@ charter 의 v1.0.0 milestone 정의를 *현재 자산만으로 v1.0.0* 으로 �
 ## 7. References
 
 - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §2 / §3 / §4 / §6
-- [`docs/cli-buddy-spec.md`](../../cli-buddy-spec.md) §9 Phase 분할
+- [`docs/archive/cli-buddy-spec.md`](../../archive/cli-buddy-spec.md) §9 Phase 분할
 - [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](./2026-05-10-roadmap-charter-gap.md) (ADR-002) — roadmap × charter gap
 - [`CHANGELOG.md`](../../../CHANGELOG.md) `[0.2.0]` entry — 본 ADR 적용 결과
 - semver 2.0 — https://semver.org/spec/v2.0.0.html

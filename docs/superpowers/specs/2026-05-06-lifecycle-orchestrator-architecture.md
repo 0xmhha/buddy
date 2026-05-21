@@ -2,7 +2,7 @@
 
 > **Date**: 2026-05-06
 > **Scope**: 9-phase lifecycle orchestrator 모델 + 단일-router 라우팅 인프라 + stage skill 구현 현황. plugin 의 architecture / routing / command surface 의 현행 SSoT.
-> **Related**: [`docs/skill-map.md`](../../skill-map.md), [`plugin/skills/router/SKILL.md`](../../../plugin/skills/router/SKILL.md), [`plugin/skills/router/references/routing-rules.md`](../../../plugin/skills/router/references/routing-rules.md), [`plugin/skills/router/references/skill-catalog.md`](../../../plugin/skills/router/references/skill-catalog.md).
+> **Related**: [`docs/archive/skill-map.md`](../../archive/skill-map.md), [`plugin/skills/router/SKILL.md`](../../../plugin/skills/router/SKILL.md), [`plugin/skills/router/references/routing-rules.md`](../../../plugin/skills/router/references/routing-rules.md), [`plugin/skills/router/references/skill-catalog.md`](../../../plugin/skills/router/references/skill-catalog.md).
 
 ---
 
@@ -289,7 +289,7 @@ Q2=(b) "dual-full" 결정에 따라 실제로는 14 개 제거 대신 보존:
 
 ## 9. 참조
 
-- 11-stage 상용 제품 빌딩 flow → [`docs/skill-map.md`](../../skill-map.md)
+- 11-stage 상용 제품 빌딩 flow → [`docs/archive/skill-map.md`](../../archive/skill-map.md)
 - 현재 skill router → [`plugin/skills/router/SKILL.md`](../../../plugin/skills/router/SKILL.md)
 - routing rules → [`plugin/skills/router/references/routing-rules.md`](../../../plugin/skills/router/references/routing-rules.md)
 - skill catalog → [`plugin/skills/router/references/skill-catalog.md`](../../../plugin/skills/router/references/skill-catalog.md)

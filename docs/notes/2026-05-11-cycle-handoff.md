@@ -229,7 +229,7 @@ Spec §9 추정: 6 phase × 평균 1~3 week = **3~6 month** single-dev cadence.
 - [`docs/superpowers/decisions/2026-05-11-cli-buddy-spec-lock-in.md`](../superpowers/decisions/2026-05-11-cli-buddy-spec-lock-in.md) (ADR-005) — cli buddy spec scope lock-in
 
 ### Spec 산출물
-- [`docs/cli-buddy-spec.md`](../cli-buddy-spec.md) — **Accepted** (Draft → Accepted by ADR-005). §9 W3-3 partial Done summary 포함
+- [`docs/archive/cli-buddy-spec.md`](../archive/cli-buddy-spec.md) — **Accepted** (Draft → Accepted by ADR-005). §9 W3-3 partial Done summary 포함
 - [`docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md`](../superpowers/specs/2026-05-10-analytics-mcp-spec.md) — **Accepted (v0.2.0 — W4-2.1)**. §8 phase table 갱신
 
 ### Code packages (본 cycle 신규)
@@ -243,7 +243,7 @@ Spec §9 추정: 6 phase × 평균 1~3 week = **3~6 month** single-dev cadence.
 ### 트랙 SSoT
 - [`docs/two-tracks-charter.md`](../two-tracks-charter.md) — plugin / cli buddy 정체성 (변경 없음)
 - [`docs/HANDOFF.md`](../HANDOFF.md) — track status table (본 cycle 갱신 — Last updated 2026-05-11 v0.3.0)
-- [`docs/tasks.md`](../tasks.md) — cross-track 작업 인벤토리 (본 cycle 갱신)
+- [`docs/archive/tasks.md`](../archive/tasks.md) — cross-track 작업 인벤토리 (본 cycle 갱신)
 
 ### Release tags
 - https://github.com/0xmhha/buddy/releases/tag/v0.2.0 — plugin buddy version reset baseline

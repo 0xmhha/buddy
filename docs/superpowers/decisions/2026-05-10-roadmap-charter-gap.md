@@ -6,7 +6,7 @@
 > **Tags**: roadmap, charter, cli-buddy, naming, scope-alignment
 > **Related**:
 > - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §3 (cli buddy 정의) + §6.2 (cli buddy 진화 방향)
-> - [`docs/roadmap.md`](../../roadmap.md) §4 (v0.2) / §5 (v0.3) / §6 (v1.0)
+> - [`docs/archive/roadmap.md`](../../archive/roadmap.md) §4 (v0.2) / §5 (v0.3) / §6 (v1.0)
 > - [`docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md`](./2026-05-09-buddy-commands-disable-model-invocation.md) (ADR-001)
 
 ---
@@ -175,7 +175,7 @@ charter §6.2 의 *우선순위 1번* (`docs/cli-buddy-spec.md` 신규 작성) �
 ## 7. References
 
 - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §3 / §6.2
-- [`docs/roadmap.md`](../../roadmap.md) §4 / §5 / §6
+- [`docs/archive/roadmap.md`](../../archive/roadmap.md) §4 / §5 / §6
 - [`docs/superpowers/decisions/2026-05-09-buddy-commands-disable-model-invocation.md`](./2026-05-09-buddy-commands-disable-model-invocation.md) — ADR-001 (commands frontmatter 컨벤션)
 
 본 ADR 의 결정은 *charter §6.2 의 우선순위 1번 작업 시점* 에 재평가된다. 그때까지 본 ADR 은 *gap 영구화* 로 read.

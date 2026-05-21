@@ -1,11 +1,13 @@
 # cli buddy — Spec
 
+> **Archived 2026-05-21** — §9 W3 cascade fully shipped (v0.4.0 ~ v0.7.2); §9 Wave 7 (W4~W8 = F2.A~F2.E) shipped v0.8.0 ~ v0.13.0. TUI 7 modes, agent runtime, scheduler, cascade chain all in `cmd/buddy/` + `internal/{tui,agent,sessions,usage,knowledge,advisor,notify}/`. Kept as historical lock-in reference.
+
 > **목적**: charter §6.2 의 *cli buddy 진화 1 순위* 작업 — *진짜 목적 (자동화 agent 관리) 의 spec 작성*. 본 문서는 cli buddy 의 *책임 / 구성 / runtime / 인터페이스 / lifecycle* 의 lock-in spec.
 >
 > **Status**: **Accepted (2026-05-11 — ADR-005)**. Lock-in 항목: §1.3 4-책임 scope / §4.1 option (a) Claude Code subprocess / §5.1 v0.1.0 자산 재배치 / §7 ADR-002 actual rewrite trigger / §9 6-phase 분할 (3-6 month estimate). §10 Open questions Q-1~Q-6 deferred — trigger 시점 별 ADR. W3-2 (TUI 설계) → W3-3 (agent runtime) → W3-4 (plugin buddy 내재화) → W3-5 (v0.1.0 재배치) → W3-6 (reference impl) cascade 가 *trigger 해제 상태* — 사용자 페이스 따라 진입.
 >
-> **Predecessor**: [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 / §6.2
-> **Lock-in ADR**: [`docs/superpowers/decisions/2026-05-11-cli-buddy-spec-lock-in.md`](./superpowers/decisions/2026-05-11-cli-buddy-spec-lock-in.md) (ADR-005)
+> **Predecessor**: [`docs/two-tracks-charter.md`](../two-tracks-charter.md) §3 / §6.2
+> **Lock-in ADR**: [`docs/superpowers/decisions/2026-05-11-cli-buddy-spec-lock-in.md`](../superpowers/decisions/2026-05-11-cli-buddy-spec-lock-in.md) (ADR-005)
 
 ---
 
@@ -418,8 +420,8 @@ cli buddy spec 작성 자체가 *roadmap.md §4/§5/§6 outline 의 actual rewri
 
 ## 12. References
 
-- [`docs/two-tracks-charter.md`](./two-tracks-charter.md) §3 / §4.1 / §6.2
-- [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](./superpowers/decisions/2026-05-10-roadmap-charter-gap.md) (ADR-002)
+- [`docs/two-tracks-charter.md`](../two-tracks-charter.md) §3 / §4.1 / §6.2
+- [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](../superpowers/decisions/2026-05-10-roadmap-charter-gap.md) (ADR-002)
 - [`docs/roadmap.md`](./roadmap.md) §4 / §5 / §6 (재평가 필요 마킹)
 - [`docs/v0.1-spec.md`](./v0.1-spec.md) (v0.1.0 자산)
 - charmbracelet/bubbletea / lipgloss / x/term — TUI stack (ai-m precedent)

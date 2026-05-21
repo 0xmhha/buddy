@@ -56,7 +56,7 @@
 | 11 | 마케팅 지원 |
 | 12 | 유지보수 지원 |
 
-> 위 12 stage 는 기존 `docs/skill-map.md` 의 11-stage 모델 및 `plugin/skills/router/references/skill-catalog.md` 의 9-phase orchestrator 와 *유사* 하지만 1:1 매핑은 별도 작업. 본 charter 는 *Scope 의 외연* 을 정의.
+> 위 12 stage 는 기존 `docs/archive/skill-map.md` 의 11-stage 모델 및 `plugin/skills/router/references/skill-catalog.md` 의 9-phase orchestrator 와 *유사* 하지만 1:1 매핑은 별도 작업. 본 charter 는 *Scope 의 외연* 을 정의.
 
 ### 2.4 구성 요소 — 현재 보유
 
@@ -73,7 +73,7 @@
 ### 2.5 현재 상태
 
 - **ACTIVE 트랙** — 본 cycle 의 main 작업 영역
-- 105 skill 중 *상당수 구현 완료*, *일부 미구현* (`docs/tasks.md` §A-2 의 잔여 29 skill — 단 사용자 발화에서 "@docs/ 하위 문서들 추가 검토하면 도움 됨" 이라고 명시했으므로 본 숫자는 *baseline*, 추가 누락 발견 가능)
+- 105 skill 중 *상당수 구현 완료*, *일부 미구현* (`docs/archive/tasks.md` §A-2 의 잔여 29 skill — 단 사용자 발화에서 "@docs/ 하위 문서들 추가 검토하면 도움 됨" 이라고 명시했으므로 본 숫자는 *baseline*, 추가 누락 발견 가능)
 - 미구현 skill 보완 시 외부 reference 활용 가능:
   - `/Users/kevin/work/github/aidax-dag/ai-cli/skill/<projects>/`
   - `/Users/kevin/work/github/aidax-dag/ai-cli/agent/<projects>/`
@@ -218,8 +218,8 @@
 | `internal/sessions/`, `internal/pricing/` | cli buddy (v0.1 시점에 작성된 이번 cycle 산출, 진짜 cli buddy 목적과의 관계는 추후 평가) |
 | `internal/persona/` | cli buddy (CLI 사용자 메시지 카탈로그) |
 | `archive/ts-poc/` | cli buddy (이전 TS PoC 자산, 보존용) |
-| `docs/HANDOFF.md`, `docs/v0.1-spec.md`, `docs/roadmap.md` | cli buddy (Go CLI 트랙 SSoT) |
-| `docs/skill-map.md`, `docs/tasks.md` §A-2 | plugin buddy (skill 카탈로그 SSoT) |
+| `docs/HANDOFF.md`, `docs/archive/v0.1-spec.md`, `docs/archive/roadmap.md` | cli buddy (Go CLI 트랙 SSoT) |
+| `docs/archive/skill-map.md`, `docs/archive/tasks.md` §A-2 | plugin buddy (skill 카탈로그 SSoT) |
 | `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` | plugin buddy (9-phase 아키텍처 SSoT) |
 | `docs/superpowers/decisions/` | plugin buddy (ADR) |
 | 본 charter (`docs/two-tracks-charter.md`) | 두 트랙 공통 — repo 전체 governance |
@@ -233,7 +233,7 @@
 
 | 우선순위 | 작업 | 트리거 |
 |---------|------|--------|
-| 1 (최우선) | 미구현 skill 보완 — `docs/tasks.md` §A-2 의 잔여 + `@docs/` 추가 검토 발견 항목 | 이번 cycle |
+| 1 (최우선) | 미구현 skill 보완 — `docs/archive/tasks.md` §A-2 의 잔여 + `@docs/` 추가 검토 발견 항목 | 이번 cycle |
 | 2 | 외부 reference (`aidax-dag/ai-cli/{skill,agent,harness,mcp}/`) 호환성 점검 → 적합한 것만 통합 | 1번 진행 중 |
 | 3 | MCP / agent / hook 자산 확장 (현재 plugin/mcp, plugin/agents, plugin/hooks 보유 자산 확인 후) | 1, 2 종료 후 |
 | 4 | skill 간 cascade / dispatch 일관성 (단어 / PROCEDURE 양식 / 의존 그래프) | 지속 |
@@ -242,7 +242,7 @@
 
 | 우선순위 | 작업 | 트리거 |
 |---------|------|--------|
-| 1 | 진짜 목적 (자동화 agent 관리) 의 spec 작성 — `docs/cli-buddy-spec.md` (가칭) | plugin buddy 1번 종료 후 |
+| 1 | 진짜 목적 (자동화 agent 관리) 의 spec 작성 — `docs/archive/cli-buddy-spec.md` (가칭) | plugin buddy 1번 종료 후 |
 | 2 | TUI / agent runtime / plugin buddy 내재화 layer 설계 | 1번 종료 후 |
 | 3 | 기존 v0.1.0 (hook reliability monitor) 을 cli buddy 의 sub-feature 로 재배치 또는 별개 유지 결정 | 1번 진행 중 |
 | 4 | 웹툰 agent 같은 사용 예시를 reference implementation 으로 작성 | 2번 종료 후 |
@@ -269,7 +269,7 @@
 | 트랙 추가 / 폐지 | 사용자 명시 결정 → ADR (`docs/superpowers/decisions/<date>-track-change.md`) → charter 갱신 |
 | 한 트랙의 핵심 책임 변경 (예: cli buddy 가 *agent 관리 외* 책임 추가) | 사용자 명시 결정 → ADR → charter 갱신 |
 
-> 본 charter 와 다른 문서 (`README.md`, `HANDOFF.md`, `roadmap.md`, `tasks.md`) 가 충돌할 때 — **본 charter 가 SSoT**. 다른 문서를 charter 에 맞춰 갱신.
+> 본 charter 와 다른 문서 (`README.md`, `HANDOFF.md`, `archive/roadmap.md`, `archive/tasks.md`) 가 충돌할 때 — **본 charter 가 SSoT**. 다른 문서를 charter 에 맞춰 갱신.
 
 ---
 
@@ -279,7 +279,7 @@
 
 1. `README.md` — 현재 "9-phase lifecycle orchestrator, 57 commands, 105 skills behind one router" 문구가 plugin buddy 만 반영. cli buddy 의 진짜 목적 (자동화 agent 관리) 추가
 2. `docs/HANDOFF.md` §0 트랙 상태 표 — 현재 "Plugin / Go CLI" 분류가 본 charter 의 "plugin buddy / cli buddy" 와 단어 정합. 단어 통일 갱신
-3. `docs/roadmap.md` — Go CLI 트랙 v0.2 / v0.3 / v1.0 outline 이 *cli buddy 의 진짜 목적* (TUI agent 관리) 과 정합 여부 재평가. v0.2 = "Control Plane multi-session dashboard" 가 agent 관리의 일부인지 / 별도 기능인지 결정
-4. `docs/tasks.md` C-2 (Module path drift) — 본 charter 직전 commit `4ce3ccb` 으로 완료, 항목 제거
+3. `docs/archive/roadmap.md` — Go CLI 트랙 v0.2 / v0.3 / v1.0 outline 이 *cli buddy 의 진짜 목적* (TUI agent 관리) 과 정합 여부 재평가. v0.2 = "Control Plane multi-session dashboard" 가 agent 관리의 일부인지 / 별도 기능인지 결정
+4. `docs/archive/tasks.md` C-2 (Module path drift) — 본 charter 직전 commit `4ce3ccb` 으로 완료, 항목 제거
 
 > 위 4 항목은 charter 와 *별도 commit* 으로 진행. 이 commit 은 charter 자체만.

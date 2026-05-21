@@ -1,5 +1,7 @@
 # Decision 1: Schema 필드 — 상세 분석
 
+> **Archived 2026-05-21** — Option A (toolName / toolArgs(off-by-default) / modelName / tokenUsage / customTags) locked into `internal/schema/hook_event.go`. Kept for the decision-context rationale.
+
 > v0.1 spec §6.1을 보강. 각 필드의 *출처·비용·활용·위험*을 평가하여
 > 사용자가 의미 있는 결정을 할 수 있도록 정보를 제공.
 >

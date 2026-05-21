@@ -1,6 +1,8 @@
 # Buddy — Task Inventory (deprecated, see `BACKLOG.md`)
 
-> **이 문서는 *deprecated***. cross-track 잔여 작업의 단일 SSoT 는 [`BACKLOG.md`](./BACKLOG.md).
+> **Archived 2026-05-21** — cross-track 작업 인벤토리의 historical snapshot.
+
+> **이 문서는 *deprecated***. cross-track 잔여 작업의 단일 SSoT 는 [`../BACKLOG.md`](../BACKLOG.md).
 >
 > v0.4.1 시점 (2026-05-11) 의 §A (Plugin) / §B (Go CLI) / §C (Housekeeping) / §D (Open Questions) 구조는 본 cycle (2026-05-19) 의 BACKLOG.md 통합으로 *대부분 완료* 되어 슬림화. 역사적 인벤토리는 `git log -- docs/tasks.md` 로 추적.
 
@@ -30,8 +32,8 @@
 
 ## 참조
 
-- [`BACKLOG.md`](./BACKLOG.md) — **단일 SSoT** (잔여 작업 + 진행률 + 코드 gap)
-- [`HANDOFF.md`](./HANDOFF.md) — 세션 인계 가이드
+- [`BACKLOG.md`](../BACKLOG.md) — **단일 SSoT** (잔여 작업 + 진행률 + 코드 gap)
+- [`HANDOFF.md`](../HANDOFF.md) — 세션 인계 가이드
 - [`roadmap.md`](./roadmap.md) — M1~M6 historical milestone log
 - [`cli-buddy-spec.md`](./cli-buddy-spec.md) — cli buddy spec (Accepted, ADR-005)
 - `git log --since='2026-05-01' -- docs/tasks.md` — 역사적 인벤토리 추적

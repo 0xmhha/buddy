@@ -5,7 +5,7 @@
 > **Deciders**: buddy maintainer
 > **Tags**: cli-buddy, agent-runtime, embedding, charter-alignment, spec-lock-in
 > **Related**:
-> - [`docs/cli-buddy-spec.md`](../../cli-buddy-spec.md) — Draft → Accepted by this ADR
+> - [`docs/archive/cli-buddy-spec.md`](../../archive/cli-buddy-spec.md) — Draft → Accepted by this ADR
 > - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §3 cli buddy 정체성
 > - [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](./2026-05-10-roadmap-charter-gap.md) (ADR-002)
 > - [`docs/superpowers/decisions/2026-05-11-plugin-version-reset.md`](./2026-05-11-plugin-version-reset.md) (ADR-004)
@@ -159,9 +159,9 @@ plugin buddy v0.3.0 ship (analytics-mcp W4-2.1~W4-2.6) 후 다음 의미 있는 
 
 ## 7. References
 
-- [`docs/cli-buddy-spec.md`](../../cli-buddy-spec.md) — 본 ADR 의 lock-in 대상 spec (§1.3 / §4.1 / §5.1 / §7 / §9 / §10)
+- [`docs/archive/cli-buddy-spec.md`](../../archive/cli-buddy-spec.md) — 본 ADR 의 lock-in 대상 spec (§1.3 / §4.1 / §5.1 / §7 / §9 / §10)
 - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §3 cli buddy / §6.2 진화 방향
 - [`docs/superpowers/decisions/2026-05-10-roadmap-charter-gap.md`](./2026-05-10-roadmap-charter-gap.md) (ADR-002) — roadmap × charter gap, *cli buddy 안으로 흡수* 정책
 - [`docs/superpowers/decisions/2026-05-11-plugin-version-reset.md`](./2026-05-11-plugin-version-reset.md) (ADR-004) — plugin track version reset + v1.0.0 entry condition #1 (본 ADR 이 trigger 해제)
-- [`docs/roadmap.md`](../../roadmap.md) §4 / §5 / §6 (재평가 마킹) — 본 ADR 채택 후 *actual rewrite* trigger
+- [`docs/archive/roadmap.md`](../../archive/roadmap.md) §4 / §5 / §6 (재평가 마킹) — 본 ADR 채택 후 *actual rewrite* trigger
 - [`docs/HANDOFF.md`](../../HANDOFF.md) — 트랙 상태 (cli buddy W3-1 Done 반영)

@@ -146,6 +146,6 @@ Non-2xx responses surface as a warn-level `agent_logs` line (without flipping th
 
 ## Reference
 
-- [`docs/cli-buddy-spec.md`](../../docs/cli-buddy-spec.md) §2.2 (motivating example)
-- [`docs/cli-buddy-spec.md`](../../docs/cli-buddy-spec.md) §9 W3-6 (this implementation)
+- [`docs/archive/cli-buddy-spec.md`](../../docs/archive/cli-buddy-spec.md) §2.2 (motivating example)
+- [`docs/archive/cli-buddy-spec.md`](../../docs/archive/cli-buddy-spec.md) §9 W3-6 (this implementation)
 - [`CHANGELOG.md`](../../CHANGELOG.md) entries for v0.6.3 → v0.6.6 (the dependencies this agent stitches together)

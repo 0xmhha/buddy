@@ -5,9 +5,9 @@
 > **Baseline**: v0.7.5 (2026-05-19) + ADR-006~011. **ADR-009 (cli buddy vision expansion) + ADR-010 (whole-product v1.0.0 scope) + ADR-011 (release policy) 가 본 문서의 진척률 framing 을 재정의함 — §1 / §2 / §4 모두 재산정.**
 >
 > **Identity / direction 문서 (변경 X 였으나 ADR-009 로 cli-buddy-spec §1.3 / §9 확장)**:
-> [`two-tracks-charter.md`](./two-tracks-charter.md) · [`v0.1-spec.md`](./v0.1-spec.md) · [`cli-buddy-spec.md`](./cli-buddy-spec.md) (§1.3 ADR-009 으로 9 책임 확장 / §9 W4~W8 추가) · [`decision-1-schema-fields.md`](./decision-1-schema-fields.md) · [`skill-map.md`](./skill-map.md) · [`dogfood-guide.md`](./dogfood-guide.md) · [`superpowers/decisions/README.md`](./superpowers/decisions/README.md) · [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md)
+> [`two-tracks-charter.md`](./two-tracks-charter.md) · [`archive/v0.1-spec.md`](./archive/v0.1-spec.md) · [`archive/cli-buddy-spec.md`](./archive/cli-buddy-spec.md) (§1.3 ADR-009 으로 9 책임 확장 / §9 W4~W8 추가) · [`archive/decision-1-schema-fields.md`](./archive/decision-1-schema-fields.md) · [`archive/skill-map.md`](./archive/skill-map.md) · [`dogfood-guide.md`](./dogfood-guide.md) · [`superpowers/decisions/README.md`](./superpowers/decisions/README.md) · [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md)
 >
-> **이 SSoT 의 redirect (slimmed)**: [`HANDOFF.md`](./HANDOFF.md) §1 · [`roadmap.md`](./roadmap.md) · [`tasks.md`](./tasks.md)
+> **이 SSoT 의 redirect (slimmed)**: [`HANDOFF.md`](./HANDOFF.md) §1 · [`archive/roadmap.md`](./archive/roadmap.md) · [`archive/tasks.md`](./archive/tasks.md)
 
 ---
 
@@ -239,7 +239,7 @@ Wave 1 (B-2 dogfood, user-paced)  ║  Wave 7 (C-1~C-5, AI 단독, 병행 가능
 ## §8. References
 
 - [`docs/HANDOFF.md`](./HANDOFF.md) — 세션 인계 (§1 patched to v0.7.5)
-- [`docs/cli-buddy-spec.md`](./cli-buddy-spec.md) §9 phase table — W3 cascade 100%
+- [`docs/archive/cli-buddy-spec.md`](./archive/cli-buddy-spec.md) §9 phase table — W3 cascade 100%
 - [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md) — 이전 cycle close baseline
 - [`docs/notes/2026-05-19-dogfood-result-cycle-2.md`](./notes/2026-05-19-dogfood-result-cycle-2.md) — 진행 중 cycle (Wave 1 의 실행 매뉴얼)
 - [`docs/superpowers/decisions/README.md`](./superpowers/decisions/README.md) — ADR Index (8건 모두 Accepted)

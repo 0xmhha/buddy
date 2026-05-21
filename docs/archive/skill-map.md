@@ -1,9 +1,11 @@
 # Buddy 상용 제품 빌딩 스킬맵 초안
 
+> **Archived 2026-05-21** — 11-stage 초안. 현행 SSoT는 9-phase orchestrator: [`../superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](../superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md) + `plugin/skills/router/references/skill-catalog.md`. 11-stage 매핑 reference 용으로 보존.
+
 > **STATUS — 2026-05-06 갱신**
 >
 > 이 문서의 11-stage 모델은 **9-phase multi-orchestrator 모델**(2026-05-06 spec)의 *입력 자료*다.
-> 라우팅·skill 카탈로그·command surface의 **현행 SSoT는** [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md), [`plugin/skills/router/references/routing-rules.md`](../plugin/skills/router/references/routing-rules.md), [`plugin/skills/router/references/skill-catalog.md`](../plugin/skills/router/references/skill-catalog.md).
+> 라우팅·skill 카탈로그·command surface의 **현행 SSoT는** [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](../superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md), [`plugin/skills/router/references/routing-rules.md`](../../plugin/skills/router/references/routing-rules.md), [`plugin/skills/router/references/skill-catalog.md`](../../plugin/skills/router/references/skill-catalog.md).
 >
 > 이 문서는 (a) 11-stage 분석 사고 보존, (b) Matt skills 추출 후보 평가, (c) 신규 skill 명명 후보의 reference 로 유지된다.
 > 새 skill을 phase에 매핑할 때는 아래 [§0 11-stage → 9-phase 매핑](#0-11-stage--9-phase-매핑)을 먼저 본다.

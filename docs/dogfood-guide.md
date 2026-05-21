@@ -253,7 +253,7 @@ dogfood 의 *각 finding* 은 적절한 release type 에 묶여서 publish. 5 re
 ### 6.1 Per-surface 상세
 
 - **plugin buddy 9-phase**: `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`
-- **cli buddy spec**: `docs/cli-buddy-spec.md` (ADR-005 locked-in)
+- **cli buddy spec**: `docs/archive/cli-buddy-spec.md` (ADR-005 locked-in)
 - **hook reliability**: `DOGFOOD.md` (v0.1 가이드, hook monitor 부분만 유효)
 
 ### 6.2 Decision history

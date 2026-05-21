@@ -145,7 +145,7 @@ buddy daemon stop
 buddy uninstall
 ```
 
-Full CLI reference: [`docs/v0.1-spec.md §7`](./docs/v0.1-spec.md).
+Full CLI reference: [`docs/archive/v0.1-spec.md §7`](./docs/archive/v0.1-spec.md).
 
 ### Claude Code plugin — slash commands
 

@@ -176,7 +176,7 @@
 | `/buddy:setup-quality-gates` | 7. 릴리즈 | pre-commit / pre-push 게이트 설치 |
 | `/buddy:summarize-retro` | 8. 운영·개선 | git history → 주간 회고 |
 
-> 단계 2 / 4 / 9 의 세부 작업 커맨드는 현재 0개 — 단계 진입점 안의 기존 stage skill 만 활성. 신규 작업은 [`docs/tasks.md`](../../../../docs/tasks.md) A-1 참조.
+> 단계 2 / 4 / 9 의 세부 작업 커맨드는 현재 0개 — 단계 진입점 안의 기존 stage skill 만 활성. 신규 작업은 [`docs/archive/tasks.md`](../../../../docs/archive/tasks.md) A-1 참조 (잔여 작업 SSoT 는 [`docs/BACKLOG.md`](../../../../docs/BACKLOG.md)).
 
 **규칙**: plugin.json `commands` 에 새 항목을 추가하려면 §2 의 도메인 우선순위 표에서 1~4 등급에 속해야 하고, 이 §5 의 적절한 sub-section 에 먼저 등재해야 한다. 패턴 라이브러리와 보관 스킬은 영구 비공개.
 
@@ -199,6 +199,6 @@
 - Skill 카탈로그 본문 → [`skill-catalog.md`](./skill-catalog.md)
 - Plugin manifest → [`.claude-plugin/plugin.json`](../../../.claude-plugin/plugin.json)
 - 9-phase 라이프사이클 아키텍처 설계 → [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](../../../../docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md)
-- 11-stage 상용 제품 빌딩 flow (참조용) → [`docs/skill-map.md`](../../../../docs/skill-map.md)
+- 11-stage 상용 제품 빌딩 flow (참조용) → [`docs/archive/skill-map.md`](../../../../docs/archive/skill-map.md)
 - Plugin scaffold spec → [`docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md`](../../../../docs/superpowers/specs/2026-04-24-buddy-plugin-architecture-design.md)
 - Archive 스킬 → [`plugin/_archive/`](../../../_archive/)
