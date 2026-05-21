@@ -59,7 +59,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | Dogfood validation — cycle-2 production (B-2 trigger) | ~5% | pre-flight Done, 3 paths user-paced — Wave 1 |
 | i18n sweep (M5 deferred — 4 sub-task) | ✅ 100% | W2-1 / W2-2 / W2-3 / W2-4 모두 closed — Wave 2 완료 |
 | Release polish (M6 deferred — 4 sub-task) | 75% (AI 단독 가능 부분 100%) | W3-1 / W3-2 / W3-3 ✅; W3-4 notarization 만 trigger-bound (Apple Dev ID) |
-| TUI / runtime UX follow-on (10 sub-task) | 30% (W4-8/9/10 closed) | W4-6 (resize) + W4-7 (graph) + W4-1~W4-5 (pre-cycle-3 candidates) 남음 — Wave 4 |
+| TUI / runtime UX follow-on (10 sub-task) | 50% (W4-6/7/8/9/10 closed) | W4-1~W4-5 (pre-cycle-3 candidates) 남음 — Wave 4. 모든 cycle-3 signal-driven 항목 (BA-4 ~ BA-8) ✅ closed. |
 | Trigger-bound (Korea / USA-EU / PG-MySQL / notarize / cycle-2 live) | N/A | 외부 신호 대기 — Wave 5 |
 | Indefinite defer (Non-goal 또는 trigger 부재) | N/A | 잡지 말 것 — Wave 6 |
 
@@ -143,8 +143,8 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | W4-3 | `buddy agent edit <id>` CLI subcommand — 현재 TUI `e` 만 존재, CLI 없음 | `cmd/buddy/agent_cmd.go` |
 | W4-4 | Scheduler pane live "currently running" indicator (W3-2 deferred follow-on-of-follow-on) | `internal/tui/model.go` |
 | W4-5 | Log-tail scrollback + auto-stop on run-end (W3-2 deferred follow-on-of-follow-on) | `internal/tui/model.go` |
-| **W4-6** | **TUI resize reflow** — `WindowSizeMsg` 가 m.Width/Height 저장만 하고 view function 들이 *전혀 사용 안 함* → resize 시 layout 깨짐. cycle-3 §C BA-4 출처. *4-6 h* | `internal/tui/model.go` + 각 view function |
-| **W4-7** | **Usage pane / `buddy usage` trend graph** — text-only 출력에 ASCII sparkline / bar chart 추가 (e.g., `asciigraph`). cycle-3 §D BA-5 (사용자 제안, defer 결정). *2-3 h* | `internal/tui/usage_view.go` + `cmd/buddy/usage_cmd.go` |
+| ~~W4-6~~ | ~~TUI resize reflow~~ | ✅ Done (commit `d6e7549`, 2026-05-21) — View() output 의 constrainWidth wrapper 로 per-line truncation + ellipsis. m.Width=0 no-op. 3 tests lock-in. | — |
+| ~~W4-7~~ | ~~Usage pane / `buddy usage` trend graph~~ | ✅ Done (commit `f7f6c47`, 2026-05-21) — `buddy usage trend` 에 daily horizontal bar chart + new `QueryDailySpend` method + 5 tests. No new dep. | — |
 | ~~W4-8~~ | ~~validate-idea Q3 예시 fragmentation~~ | ✅ Done (commit `c60885c`, 2026-05-20) — Q3 example 단일 sentence → 5 단편 분해. mimicry 유도 약화. | — |
 | ~~W4-9~~ | ~~validate-idea hybrid persona note~~ | ✅ Done (commit `c60885c`) — Q3 후 hybrid role 처리 note + follow-up probe 추가. | — |
 | ~~W4-10~~ | ~~validate-idea 전제 체크 active obligations carry-forward~~ | ✅ Done (commit `c60885c`) — qualifier-carrying premise 의 design doc carry-forward 의무 명시 (Open Questions / The Assignment / Dependencies). | — |
