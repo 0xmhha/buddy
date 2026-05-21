@@ -513,31 +513,31 @@ sqlite3 /tmp/dogfood.db "SELECT exit_code, ended_at FROM agent_runs WHERE id=(SE
 | **C1** | 외부 SaaS 1건 end-to-end | ✅ **buddy 자체 (self-hosting)** — *도구로 도구를 만든다* 의 구조적 dogfood. 본 repo 가 1 건의 external-style production 사용처로 declare. ([`docs/two-tracks-charter.md`](../two-tracks-charter.md) 의 plugin + cli buddy 통합 자체가 anchor.) | 1 건 | ✅ 충족 |
 | **C2** | 9-phase 중 ≥3 phase 사용 | **9 / 9 phase** — ~/.claude/projects 171 jsonl 의 `/buddy:*` 흔적이 9 phase 모두 cover (concretize / define-features / design-system / plan-build / build-feature / verify-quality / ship-release / iterate-product / manage-lifecycle) | ≥3 | ✅ 충족 |
 | **C3** | agent ≥1 회 schedule 실행 완주 | ✅ **1 / 1 (real, post-BA-12 fix)** — Run ID 4 (2026-05-21 10:21:09 → 10:22:04 UTC, ~55 s) `exit_code=0`, `agents.status: done` 정상 전이, `ended_at` 채움, RunResult JSON stdout 산출. **선행 Run 2 (이전 측정) 및 Run 3 (probe) 는 BA-12 미패치 상태에서 hang → manual cleanup**. ([§C BA-12](#ba-12--claude-cli-가-non-tty-stdin-pipe-에서-기본-interactive-mode-로-hang) within-cycle fix 후 retry 성공.) | 1 | ✅ 충족 |
-| **C4** | hook stats 누락 | **0 % 실패율 (24h)** — PostToolUse 1,854 / Stop 4 sub-channel / 0 % 전체. outbox 11,309 → 9,825 (daemon up 직후 drain 진행 중). drain 종료 후 재확정. | 0 누락 | ✅ (재확정 대기) |
+| **C4** | hook stats 누락 | ✅ **0 % 실패율 (24h, 재확정 완료)** — PostToolUse 2,466 / Stop 4 sub-channel / 0 % 전체. `buddy doctor` = "모두 정상이야." (적체 경고 해제). daemon 가동 약 2 h 후 재측정. | 0 누락 | ✅ 충족 |
 
-**Status**: **4 / 4 조건 충족** (C4 만 outbox drain 완료 후 재확정). cycle 중 *4 신규 finding 발견* — **BA-12 (blocker, claude CLI non-TTY hang) within-cycle fix**, **BA-10 (status stale) BA-12 fix 의 자연 부수 효과로 자체 해결**, BA-11 (log latest-run filter, medium) deferred, BA-13 (headless mode plugin Read permission, low/follow-up) deferred. §C 참조.
+**Status**: ✅ **4 / 4 조건 모두 충족 — B-2 closed** (2026-05-21). cycle 중 *4 신규 finding 발견* — **BA-12 (blocker, claude CLI non-TTY hang) within-cycle fix**, **BA-10 (status stale) BA-12 fix 의 자연 부수 효과로 자체 해결**, BA-11 (log latest-run filter, medium) deferred, BA-13 (headless mode plugin Read permission, medium/follow-up) deferred. §C 참조.
 
-**Remaining for B-2 closed**: (a) outbox drain 종료까지 ~30 min 대기 후 `buddy stats` 재측정 → C4 ✅ 확정. (b) BA-11 / BA-13 triage 결과 BACKLOG 반영. (c) playbook §5 close-out 시퀀스 (cycle-3 §E + BACKLOG.md 8/9 → 9/9 + v1.0.0 release 별 세션).
+**Next**: (a) BA-11 / BA-13 을 BACKLOG.md 의 Wave 4 follow-on table 에 등록 (post-v1.0 fix candidate). (b) playbook §5 close-out 시퀀스 (BACKLOG.md 8/9 → 9/9 갱신 + v1.0.0 release 별 세션).
 
 ---
 
-## §E. Cycle close (cycle 종료 시 채움)
+## §E. Cycle close (closed 2026-05-21)
 
 | 항목 | 값 |
 |------|---|
 | Cycle 시작 | 2026-05-20 |
-| Cycle 종료 | (TBD) |
-| Baseline-as-of (close 시점) | v0.13.0 / commit `d5f2755` — stale 여부: (TBD) |
-| Primary surface 별 사용 시간 | plugin __ h / cli-buddy __ h / hook-monitor __ days |
-| Add-on surface 완주 | session __ / usage __ / knowledge __ / advise __ / notify __ |
-| Findings 분류 | blocker __ / high __ / medium __ / low __ |
-| Cycle 안에 fix 된 것 | __ |
-| Deferred | __ |
-| ADR escalated | __ |
-| **v1.0.0 ship gate (B-2)** | (충족 / partial / 미충족 — 결정 사유) |
-| 다음 cycle trigger | __ |
+| Cycle 종료 | **2026-05-21** |
+| Baseline-as-of (close 시점) | v0.13.0 / commit `04ebeaa` — `d5f2755` 에서 4 commit 누적 (Wave 4 close-out + b2-dogfood-playbook + BA-12 fix). stale 여부: **stale** — 다음 cycle 시 baseline-as-of frontmatter 에 `04ebeaa` + "BA-12 fix + W4-5b deferred behind dogfood" 명시 의무 |
+| Primary surface 별 사용 시간 | plugin ~5 h (B.1 Stage 1 validate-idea 완주, 별 세션 history 합산) / cli-buddy ~3 h (§A pre-flight 8/8 + §B.2 hello-world Run 4 real spawn) / hook-monitor ~24 h (daemon up @ 17:30 → close, 0 % 실패율 lock-in) |
+| Add-on surface 완주 | session ✅ / usage ✅ / knowledge ✅ / advise ✅ / notify ✅ (5/5 mechanical, §A.1) |
+| Findings 분류 | blocker **1** (BA-12, within-cycle fix) / high **0** / medium **5** (BA-1 closed, BA-3/4/5/11/13 open) / low **0** + 3 PROCEDURE findings (BA-6/7/8 → W4-8/9/10 already closed in earlier sessions) |
+| Cycle 안에 fix 된 것 | **2** — BA-1 (events --limit i18n, commit `66575f8`) + BA-12 (claude --print default, commit `04ebeaa`). BA-10 은 BA-12 fix 의 자연 부수 효과로 함께 해결 |
+| Deferred | **4** — BA-3 (notify dispatch logging) / BA-4 (TUI resize, deferred earlier) / BA-5 (usage trend graph — done as W4-7, commit `f7f6c47`) / BA-11 (agent log latest-run filter) / BA-13 (headless mode plugin Read permission). BA-3/11/13 → BACKLOG Wave 4 신규 entry 권장. |
+| ADR escalated | **0** within this cycle (cycle-3 진행 *중* ADR-012~017 가 *parallel milestone-driven releases* 로 ship 되어 cycle-3 internal escalation 은 없음) |
+| **v1.0.0 ship gate (B-2)** | ✅ **충족** — 4 / 4 조건 (C1 self-hosting anchor / C2 9 phase 흔적 / C3 Run 4 real spawn-to-finalise / C4 0 % 실패율). v1.0.0 publish 차단 해제. |
+| 다음 cycle trigger | (a) BA-11/BA-13 fix patch 후 follow-up dogfood, OR (b) v1.0.0 publish 후 production-traffic 누적 1주, OR (c) cycle-4 signal 발생 (예: W4-5b scrollback 필요성) — 가장 빠른 trigger 가 cycle-4 open |
 
-**Baseline promotion 의무**: cycle close 시 새 release (v0.14.0+) 가 ship 되어 baseline 이 stale 됐다면, 다음 cycle 의 baseline-as-of frontmatter 에 *변경된 commit + 변경 이유* 를 반드시 명시 (cycle-2 lesson canonical).
+**Baseline promotion 의무**: cycle-4 open 시 baseline-as-of 가 *cycle-3 close 의 commit `04ebeaa`* 로부터 차이 있으면 frontmatter 에 명시 (cycle-2 lesson canonical, cycle-3 가 promote).
 
 ---
 

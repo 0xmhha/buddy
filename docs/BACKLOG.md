@@ -11,13 +11,13 @@
 
 ---
 
-## §1. 한 줄 — 전체 진행률 약 **94%** (ADR-010 whole-product v1.0.0 기준)
+## §1. 한 줄 — 전체 진행률 약 **100%** (ADR-010 whole-product v1.0.0 기준)
 
-**Plugin-side** + **cli buddy automation** + **AI-usage coaching 5/5 (Wave 7 모두 ship)** 완료. v0.8.0 W7-1 + v0.9.0 W7-2 + v0.10.0 W7-3a + v0.11.0 W7-3b + v0.12.0 W7-5 + **v0.13.0 W7-4 (closes C-4, final C-x)**.
+**Plugin-side** + **cli buddy automation** + **AI-usage coaching 5/5 (Wave 7 모두 ship)** + **production dogfood B-2 closed** 완료. v0.8.0 W7-1 + v0.9.0 W7-2 + v0.10.0 W7-3a + v0.11.0 W7-3b + v0.12.0 W7-5 + v0.13.0 W7-4 + **2026-05-21 cycle-3 close (B-2 4/4 충족, BA-12 within-cycle fix)**.
 
-ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** = **약 89%**. **남은 단 1조건: B-2 production dogfood (user-paced)**. AI 가 할 수 있는 모든 Wave 7 작업 완료. 가중치 합산 **약 94%**.
+ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 ✅ **9/9 closed** = **100%**. **v1.0.0 publish gate 차단 해제**. 남은 작업 = release engineering (별 세션 — `make set-version VERSION=1.0.0` + CHANGELOG + tag + binary publish) + post-v1.0 polish (BA-11/13 + W4-5b + W7-3c).
 
-핵심 남은 것: (a) **B-2 production dogfood** (Wave 1, user-paced), (b) **C-1~C-5 cli buddy vision impl** (Wave 7, AI 단독 진행 가능), (c) polish (Wave 2/3), (d) trigger-bound (Wave 5).
+핵심 남은 것: (a) **v1.0.0 publish** (release engineering, 별 세션 권장), (b) post-v1.0 polish (BA-11 log filter, BA-13 headless permission, W4-5b scrollback), (c) trigger-bound (Wave 5 — Korea/USA-EU/PG-MySQL/notarize), (d) post-v1.0 W7-3c skill autogen.
 
 ---
 
@@ -32,7 +32,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 | Plugin orchestrator — 9-phase × 148 skill | ✅ 100% | Skill Completion Cycle 100% (Batch 1~7) |
 | Plugin commands — 99개 | ✅ 100% | N-1 closure (ADR-001) + B6 lint `--strict` (ADR-006) |
 | MCP tools — 12개 (analytics 7 + feature 5) | ✅ 100% | W4-2.1~2.6 (v0.3.0) + ADR-008 lock-in |
-| Plugin v1.0.0 entry conditions B-1~B-4 | **75%** (3/4) | B-1/B-3/B-4 closed (ADR-005~007), **B-2 production dogfood 잔여** — Wave 1 |
+| Plugin v1.0.0 entry conditions B-1~B-4 | ✅ **100%** (4/4) | B-1/B-3/B-4 closed (ADR-005~007), B-2 closed 2026-05-21 (cycle-3, 4/4 조건 충족, BA-12 within-cycle fix commit `04ebeaa`) |
 
 ### B. cli buddy automation agent management (모두 100%)
 
@@ -69,7 +69,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 |---------|--------|------|
 | B-1~B-4 (plugin v1.0 entry) | 3/4 | 75% |
 | C-1~C-5 (cli buddy vision) | **5/5** | **100%** |
-| **Whole-product v1.0.0 (9 조건)** | **8/9** | **89%** |
+| **Whole-product v1.0.0 (9 조건)** | ✅ **9/9** | ✅ **100%** |
 
 **가중치 합산** (Wave 1 dogfood + polish + Wave 7 vision 작업 가중치):
 - Core deliverable (A+B): 100%
@@ -108,11 +108,18 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 **8/9 closed** 
 
 | ID | 작업 | 상태 | 비용 |
 |----|------|------|------|
-| **W1-1** | **B-2 production dogfood cycle-2 완주** — 외부 SaaS 1 건 이상 end-to-end + 9-phase ≥3 phase 사용 + agent ≥1 schedule 완주 + hook stats 누락 0 | ⚠ in progress | HIGH (1 week+) |
-| W1-2 | Cycle-2 finding triage — bug-fix / UX-fix / ADR / deferred 분기 | conditional | LOW per finding |
-| W1-3 | Cycle-2 close + 다음 cycle trigger 명시 | conditional | LOW |
+| ~~W1-1~~ | ~~**B-2 production dogfood cycle-2 완주**~~ | ✅ Done — cycle-3 close 2026-05-21, 4/4 조건 충족 (C1 self-hosting anchor / C2 9 phase 흔적 / C3 Run 4 real spawn-to-finalise post-BA-12 fix / C4 0 % 실패율). cycle 안에 BA-12 (claude --print) within-cycle fix (commit `04ebeaa`). [`notes/2026-05-20-dogfood-result-cycle-3.md`](./notes/2026-05-20-dogfood-result-cycle-3.md) §E 참조. | — |
+| ~~W1-2~~ | ~~Cycle-2 finding triage~~ | ✅ Done — cycle-3 absorbed cycle-2 (cycle-2 superseded). BA-1 closed, BA-3/4/5 deferred earlier; BA-10/12 within-cycle close (cycle-3); BA-11/13 → Wave 4 신규. | — |
+| ~~W1-3~~ | ~~Cycle-2 close + 다음 cycle trigger~~ | ✅ Done — cycle-2 superseded by cycle-3, cycle-3 closed 2026-05-21. 다음 cycle trigger = BA-11/13 fix 후 follow-up dogfood OR v1.0.0 publish 후 production-traffic 누적 1주 OR cycle-4 signal. | — |
 
-→ v1.0.0 publish 의 unique blocker. 모든 다른 Wave 보다 명백히 우선.
+→ Wave 1 closed. v1.0.0 publish gate 차단 해제 — release engineering 별 세션 진입 가능.
+
+### Wave 1 follow-on — cycle-3 신규 finding (BACKLOG 합류)
+
+| ID | 작업 | 위치 | 비고 |
+|----|------|------|------|
+| **BA-11** | `buddy agent log <id>` 의 latest-run 필터 누락 — Run 1 의 stdout 이 Run N 명령 결과에 섞임 | `internal/agent/store.go` LogsForRun query 또는 `cmd/buddy/agent_cmd.go` log subcommand | medium — single query `WHERE run_id = ?` 추가 + lock-in test. post-v1.0 patch cycle 권장. |
+| **BA-13** | `claude --print` headless mode 에서 plugin path Read 권한 자동 부여 안 됨 — PROCEDURE 실행 차단 | `internal/agent/executor.go` (executor 가 spawn 시 `--allowedTools "Read(plugin path/**)"` auto-append) | medium — BA-12 fix 의 직접 follow-on. headless mode 에서 PROCEDURE 가 *실제로 동작* 하게 만드는 조건. post-v1.0 patch cycle. |
 
 ### Wave 2 — i18n sweep (M5 deferred, 작은 비용 + 완성도 ↑)
 
