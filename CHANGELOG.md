@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Plugin track — engineering-process cluster audit follow-up (ADR-018, 2026-05-21)
+
+`SKILLS_ANALYSIS § A` surfaced three independent gaps in the plugin track's engineering-process cluster. Shipped as a single coherent intervention; details in ADR-018.
+
+What ships (skill content + routing):
+
+- **Rename `explore-design-variants` → `verify-best-alternative`** with an intent-forward rewrite. The previous title made the maintainer themselves forget the skill's actual purpose (AI commit-to-first-answer bias prevention, applicable to architecture / naming / algorithm / API shape / data model / auth / tenant / secret — not design-only). The new title leads with the goal, the new persona paragraph names the failure mode, the catalog description gains an `[AI bias prevention]` marker. Rename cascades through 9 files including the routing table, lifecycle architecture spec, and the lint allowlist; historical-reference note inside the renamed PROCEDURE preserves grep continuity for the prior name.
+- **Forced gate wired into 7 §3 leaf design skills**: `define-tech-stack`, `design-api-contract`, `design-data-model`, `design-event-schema`, `design-auth-model`, `design-tenant-model`, `design-secret-management`. Each `§11 Verification gate` gains a checklist item requiring `verify-best-alternative` was invoked at least once before the design can be declared complete. The orchestrator `design-system` already invokes the skill at Stage 2 topology decisions (updated to use the new name), so coverage is complete at both orchestrator and leaf levels. §5 development skills (`build-with-tdd`, `refactor-with-rename-trace`) are intentionally excluded — they execute upstream decisions rather than make new ones.
+- **New skill: `decompose-blocker`** (Cross-cutting Utility, 335 lines). Targets the ad-hoc stuck state during code work — "I don't know where to start looking" or "no next action is visible" — explicitly outside any single lifecycle phase. Procedure: classify utterance into fact / guess / unknown; pick decomposition axes (4D / binary-search / 5-Whys / fishbone / trade-off-matrix); build known-unknowns map with answer-cost per axis; ask up to three forcing questions from cheapest high-information axis; compress hypotheses to three or fewer with evidence + disproof; surface action candidates with a cost vs information-yield matrix in a single unit; confirm and dispatch. Boundary clauses distinguish from `diagnose-bug` (assumes repro), `verify-best-alternative` (assumes options), and `concretize-idea` (§1 lifecycle stage). First end-to-end dogfood case for `write-a-skill` — Step 2 RED surfaced five ambiguities that became the body's primary anti-patterns; Step 9 REFACTOR re-ran the same scenario and passed in one cycle.
+
+What ships (governance):
+
+- **ADR-018** — Three-decision lock-in (rename + forced gate + new skill). Decision rationale, alternatives considered, verification artifacts, and trigger-to-revisit conditions documented.
+- **NOTICE** — `inspired-by` attribution per ADR-003 §2.4 acknowledging superpowers `brainstorming`'s forcing-question + design-thinking influence on `decompose-blocker`. No verbatim adoption; `decompose-blocker` targets a narrower scope (in-flight code-work stuck state vs idea-to-design pipeline) and uses different decomposition primitives.
+- **README Acknowledgments table** — extended with the per-file mapping for `verify-best-alternative` and `decompose-blocker`.
+
+Routing counts roll: `§5.4` common-tools `4 → 5`, plugin slash-command total `100 → 101`, skills total `149 → 150`. No new tables, migrations, MCP tools, CLI subcommands, or TUI surfaces — entirely skill-cluster documents + lint allowlist.
+
+### Plugin track — `write-a-skill` meta-skill addition (2026-05-20)
+
+`SKILLS_ANALYSIS § A` meta-skill gap closed. `write-a-skill` (Cross-cutting Utility, 401 lines + 3 references files totalling 492 lines) provides a documented procedure for authoring new buddy skills — PROCEDURE.md scaffold, skill-catalog registration, routing-rules wiring, and ADR-003-compliant attribution — all in one cycle with a RED-GREEN-REFACTOR subagent pressure test enforced.
+
+Synthesised from three upstream sources per ADR-003 §2.4 classification: mattpocock `write-a-skill` (description format rules, when-to-split-files, review checklist — adopt-with-edits), superpowers `writing-skills` (RED-GREEN-REFACTOR TDD-for-skills loop, anti-rationalization principle — adopt-with-edits), Anthropic `skill-creator` (progressive disclosure principle, skill bundle anatomy concept — reference-only; no verbatim, no asset import). NOTICE and README Acknowledgments updated accordingly.
+
+Self-validated through five rounds of subagent RED / REFACTOR probing against the skill itself (dogfooding). 23 defects surfaced and fixed across rounds R1 (fact errors), R2 (§9/§10 alignment), R3 (scope clarification + mirror intent), R4 (subagent dispatch mechanism + `make test-routing` definition + yaml-A/B boundary + attribution examples), R5 (broken self-reference + orphan section entry points + Step 8 table SSoT split). Test G v2 (cross-file integrity) and Test H (end-to-end simulation) both passed clean afterwards.
+
+`decompose-blocker` (above) is the first real dogfood case for `write-a-skill`; the procedure handled it successfully in one cycle.
+
 ## [0.13.0] — 2026-05-20 — W7-4 F2.D Drift Detection (closes whole-product v1.0 entry C-4 — final C-x)
 
 **Milestone**: cli buddy F2.D Drift Detection ships. Closes whole-product v1.0.0 entry condition **C-4**. With this release **all five C-x conditions (cli buddy AI-usage coaching vision) are closed**. Only B-2 (production dogfood, user-paced) blocks v1.0.0.

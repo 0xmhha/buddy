@@ -373,6 +373,45 @@ func (s *Store) LatestRun(ctx context.Context, agentID string) (AgentRun, error)
 	return r, nil
 }
 
+// GetRun fetches one run row by id. Used by the TUI log-tail to detect
+// when a tailed run has finished (EndedAt != nil) so the polling loop
+// can stop instead of churning forever. Returns ErrNotFound when no
+// row has that id, distinct from a database error.
+func (s *Store) GetRun(ctx context.Context, runID int64) (AgentRun, error) {
+	const q = `
+		SELECT id, agent_id, started_at, ended_at, exit_code, error, result_json
+		FROM agent_runs
+		WHERE id = ?`
+	var r AgentRun
+	var startedAt int64
+	var endedAt sql.NullInt64
+	var exitCode sql.NullInt64
+	var errStr sql.NullString
+	var resultJSON sql.NullString
+	row := s.db.QueryRowContext(ctx, q, runID)
+	if err := row.Scan(&r.ID, &r.AgentID, &startedAt, &endedAt, &exitCode, &errStr, &resultJSON); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return AgentRun{}, ErrNotFound
+		}
+		return AgentRun{}, fmt.Errorf("agent: get run: %w", err)
+	}
+	r.StartedAt = time.UnixMilli(startedAt).UTC()
+	if endedAt.Valid {
+		t := time.UnixMilli(endedAt.Int64).UTC()
+		r.EndedAt = &t
+	}
+	if exitCode.Valid {
+		r.ExitCode = int(exitCode.Int64)
+	}
+	if errStr.Valid {
+		r.Error = errStr.String
+	}
+	if resultJSON.Valid {
+		r.ResultJSON = resultJSON.String
+	}
+	return r, nil
+}
+
 // nullableString turns empty strings into sql.NullString{Valid:false} so the
 // agent_runs.error column ends up NULL rather than the literal "".
 func nullableString(s string) any {

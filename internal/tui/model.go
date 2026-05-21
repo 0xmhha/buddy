@@ -49,6 +49,7 @@ import (
 type AgentLister interface {
 	List(ctx context.Context) ([]agent.Agent, error)
 	LatestRun(ctx context.Context, agentID string) (agent.AgentRun, error)
+	GetRun(ctx context.Context, runID int64) (agent.AgentRun, error)
 	Delete(ctx context.Context, agentID string) error
 	LogsSince(ctx context.Context, runID int64, sinceLogID int64) ([]agent.AgentLog, error)
 	UpdateSpec(ctx context.Context, spec agent.AgentSpec, yaml string) error
@@ -116,6 +117,10 @@ type SchedulerPreviewEntry struct {
 	Schedule string
 	Next     time.Time
 	Err      error
+	// Status mirrors agent.Status — only "running" gets a visible
+	// marker; the rest render blank so non-running schedules don't add
+	// glyph noise. W4-4 cycle-3 follow-on.
+	Status agent.Status
 }
 
 // Model is the bubbletea model. Fields are exported so reducer tests can
@@ -159,6 +164,11 @@ type Model struct {
 	LogTailLines  []agent.AgentLog
 	LogTailErr    error
 	LogTailLoaded bool
+	// LogTailDone latches once GetRun reports EndedAt != nil for the
+	// tailed run. The reducer stops scheduling the next tea.Tick once
+	// it is true, so a finished run doesn't keep the polling loop
+	// alive. W4-5 cycle-3 follow-on.
+	LogTailDone bool
 
 	// Edit-flow state. EditErr stashes the most recent edit failure
 	// (editor crash, parse fail, rename rejected, store err); the detail
@@ -230,9 +240,16 @@ type (
 		ID  string
 		Err error
 	}
-	LogTailChunkMsg struct{ Lines []agent.AgentLog }
-	LogTailErrMsg   struct{ Err error }
-	LogTailTickMsg  struct{}
+	LogTailChunkMsg struct {
+		Lines []agent.AgentLog
+		// RunEnded is true when the tailed run row has EndedAt != nil.
+		// The reducer uses this to stop scheduling the next tea.Tick so
+		// long-completed runs don't keep churning the polling loop.
+		// W4-5 cycle-3 follow-on.
+		RunEnded bool
+	}
+	LogTailErrMsg  struct{ Err error }
+	LogTailTickMsg struct{}
 	EditorExitedMsg struct {
 		AgentID string
 		Content []byte
@@ -545,13 +562,23 @@ func saveEditedSpecCmd(store AgentLister, originalID string, yaml []byte) tea.Cm
 // loadLogChunkCmd fetches new log lines for runID with id strictly
 // greater than sinceID and emits LogTailChunkMsg (or LogTailErrMsg).
 // Sorted oldest-first by id (matches Store.LogsSince contract).
+//
+// Also fetches the run row via GetRun so the reducer can detect
+// completion (RunEnded) and stop scheduling polls. A GetRun error
+// degrades to "still running" rather than failing the chunk: the user
+// would rather see fresh log lines than have a transient DB hiccup
+// abort their tail.
 func loadLogChunkCmd(store AgentLister, runID, sinceID int64) tea.Cmd {
 	return func() tea.Msg {
 		lines, err := store.LogsSince(context.Background(), runID, sinceID)
 		if err != nil {
 			return LogTailErrMsg{Err: err}
 		}
-		return LogTailChunkMsg{Lines: lines}
+		ended := false
+		if run, err := store.GetRun(context.Background(), runID); err == nil {
+			ended = run.EndedAt != nil
+		}
+		return LogTailChunkMsg{Lines: lines, RunEnded: ended}
 	}
 }
 
@@ -602,6 +629,7 @@ func loadSchedulerStatusCmd(store AgentLister) tea.Cmd {
 				Schedule: a.Schedule,
 				Next:     p.Next,
 				Err:      p.Err,
+				Status:   a.Status,
 			})
 		}
 		return SchedulerStatusLoadedMsg{Now: now, Entries: entries}
@@ -680,6 +708,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Lines are oldest-first; the last one is the new high-water.
 			m.LogTailLastID = msg.Lines[len(msg.Lines)-1].ID
 		}
+		if msg.RunEnded {
+			m.LogTailDone = true
+		}
+		// W4-5 — stop scheduling polls once the run has finished. The
+		// final chunk we just folded in carried EndedAt; any further
+		// log lines would only land if the runtime were resurrected
+		// (it doesn't). handleKey on `esc`/`h` returns the user to
+		// the detail pane normally.
+		if m.LogTailDone {
+			return m, nil
+		}
 		// Chain the next tick so polling continues. handleKey on `esc`/`h`
 		// just changes Mode; the next tick will see the mode change and
 		// self-cancel without dispatching.
@@ -690,13 +729,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.LogTailLoaded = true
 		// Keep polling on error too — transient DB locks shouldn't freeze
 		// the pane. The error stays visible until the next successful
-		// chunk clears it.
+		// chunk clears it. Done-runs still don't get polled.
+		if m.LogTailDone {
+			return m, nil
+		}
 		return m, tickLogTailCmd()
 
 	case LogTailTickMsg:
 		// Self-cancel if the user has navigated away. Without this guard
 		// every esc/h would leak a goroutine until quit.
 		if m.Mode != ModeLogTail {
+			return m, nil
+		}
+		if m.LogTailDone {
 			return m, nil
 		}
 		return m, loadLogChunkCmd(m.Store, m.LogTailRunID, m.LogTailLastID)
@@ -830,6 +875,7 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.LogTailLines = nil
 			m.LogTailErr = nil
 			m.LogTailLoaded = false
+			m.LogTailDone = false
 			return m, loadLogChunkCmd(m.Store, m.LogTailRunID, 0)
 		case "e":
 			// Edit the spec via $EDITOR shell-out. Need the current
@@ -1268,14 +1314,23 @@ func (m Model) renderScheduler() string {
 	}
 
 	for _, e := range m.SchedulerEntries {
+		// W4-4 — a one-glyph "currently running" marker. Only running
+		// agents get ⏵; everyone else stays blank so the scheduler pane
+		// doesn't gain noise for the common idle case.
+		marker := " "
+		if e.Status == agent.StatusRunning {
+			marker = "⏵"
+		}
 		if e.Err != nil {
-			b.WriteString(fmt.Sprintf("  %-30s %-20s %s\n",
+			b.WriteString(fmt.Sprintf("  %s %-30s %-20s %s\n",
+				marker,
 				e.AgentID,
 				e.Schedule,
 				errorStyle.Render("invalid: "+e.Err.Error())))
 			continue
 		}
-		b.WriteString(fmt.Sprintf("  %-30s %-20s next %s\n",
+		b.WriteString(fmt.Sprintf("  %s %-30s %-20s next %s\n",
+			marker,
 			e.AgentID,
 			e.Schedule,
 			e.Next.UTC().Format(time.RFC3339)))
@@ -1318,6 +1373,12 @@ func (m Model) renderLogTail() string {
 			l.Ts.UTC().Format("15:04:05"),
 			l.Level,
 			l.Message))
+	}
+	if m.LogTailDone {
+		// W4-5 — surface "run done, polling stopped" so the user knows
+		// the silence is intentional rather than a stuck tail.
+		b.WriteString(dimStyle.Render("  (run finished — polling stopped)"))
+		b.WriteString("\n")
 	}
 	b.WriteString("\n")
 	b.WriteString(footerHintLogTail())

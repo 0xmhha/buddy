@@ -32,6 +32,14 @@ type fakeLister struct {
 	runDefault    agent.AgentRun
 	runDefaultErr error
 
+	// runByID is returned by GetRun, keyed by run id. Falls back to
+	// runByIDDefault / runByIDDefaultErr when the id is not in the
+	// map — handy for "every fetch sees the same canned end state".
+	runByID           map[int64]agent.AgentRun
+	runByIDErr        map[int64]error
+	runByIDDefault    agent.AgentRun
+	runByIDDefaultErr error
+
 	deleted   []string // ids that Delete was called with, in order
 	deleteErr error    // canned error from Delete (nil = success)
 
@@ -84,6 +92,22 @@ func (f *fakeLister) LatestRun(_ context.Context, agentID string) (agent.AgentRu
 		return agent.AgentRun{}, f.runDefaultErr
 	}
 	return f.runDefault, nil
+}
+
+// GetRun mirrors LatestRun's lookup shape but keys on the run id used by
+// W4-5 log-tail auto-stop. Empty maps + zero-value default means "this
+// run is still running" (EndedAt nil) — the most common test fixture.
+func (f *fakeLister) GetRun(_ context.Context, runID int64) (agent.AgentRun, error) {
+	if err, ok := f.runByIDErr[runID]; ok {
+		return agent.AgentRun{}, err
+	}
+	if r, ok := f.runByID[runID]; ok {
+		return r, nil
+	}
+	if f.runByIDDefaultErr != nil {
+		return agent.AgentRun{}, f.runByIDDefaultErr
+	}
+	return f.runByIDDefault, nil
 }
 
 // Delete records the call into deleted so tests can assert what was
@@ -1917,6 +1941,57 @@ func TestInit_FiresAgentAndNotifyBatch(t *testing.T) {
 	msg := cmd()
 	_, ok := msg.(tea.BatchMsg)
 	require.True(t, ok, "Init must dispatch a Batch combining agents + notify")
+}
+
+// TestSchedulerEntry_RunningGetsMarker — W4-4. A scheduled agent whose
+// Status is "running" renders with the ⏵ glyph; idle agents leave the
+// marker column blank so the pane stays quiet at rest.
+func TestSchedulerEntry_RunningGetsMarker(t *testing.T) {
+	m := Model{
+		Mode:            ModeScheduler,
+		SchedulerLoaded: true,
+		SchedulerNow:    time.Now().UTC(),
+		SchedulerEntries: []SchedulerPreviewEntry{
+			{AgentID: "running-one", Schedule: "0 3 * * *",
+				Next: time.Now().Add(time.Hour), Status: agent.StatusRunning},
+			{AgentID: "idle-one", Schedule: "0 4 * * *",
+				Next: time.Now().Add(2 * time.Hour), Status: agent.StatusIdle},
+		},
+	}
+	out := m.View()
+	// One ⏵ for the running agent, none for the idle one.
+	require.Contains(t, out, "running-one")
+	require.Contains(t, out, "idle-one")
+	require.Equal(t, 1, strings.Count(out, "⏵"),
+		"only the running agent line should carry the marker")
+}
+
+// TestLogTailChunk_RunEndedSetsDoneAndStopsPolling — W4-5. When the
+// chunk reports RunEnded the reducer latches LogTailDone and emits a
+// nil command, leaving the tea.Tick loop drained. A subsequent stray
+// LogTailTickMsg is also a no-op because the same gate fires there.
+func TestLogTailChunk_RunEndedSetsDoneAndStopsPolling(t *testing.T) {
+	m := Model{Mode: ModeLogTail}
+	updated, cmd := m.Update(LogTailChunkMsg{Lines: nil, RunEnded: true})
+	mm := updated.(Model)
+	require.True(t, mm.LogTailDone, "RunEnded must latch the Done flag")
+	require.Nil(t, cmd, "no more ticks when the run has ended")
+
+	// Even if a tick somehow arrives later, no follow-up cmd is issued.
+	updated2, cmd2 := mm.Update(LogTailTickMsg{})
+	require.Equal(t, mm, updated2.(Model), "tick reducer is a no-op once Done")
+	require.Nil(t, cmd2, "tick after Done must not schedule a fetch")
+}
+
+// TestLogTailChunk_RunStillRunningKeepsPolling — control case: a chunk
+// without RunEnded leaves Done false and the reducer schedules the
+// next tick as before (preserves the v0.7.x default behaviour).
+func TestLogTailChunk_RunStillRunningKeepsPolling(t *testing.T) {
+	m := Model{Mode: ModeLogTail, Store: &fakeLister{}}
+	updated, cmd := m.Update(LogTailChunkMsg{Lines: nil, RunEnded: false})
+	mm := updated.(Model)
+	require.False(t, mm.LogTailDone)
+	require.NotNil(t, cmd, "still-running chunk must keep the polling loop alive")
 }
 
 // TestConstrainWidth_NoOpBeforeResize — until WindowSizeMsg lands, Width

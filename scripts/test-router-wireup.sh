@@ -76,11 +76,12 @@ fi
 # removed without updating tests. Bump this count when new skills land.
 # Excludes the .template/ placeholder.
 procedure_count=$(find "$SKILLS_DIR" -name PROCEDURE.md -not -path "*/.template/*" | wc -l | tr -d ' ')
-# 147 PROCEDURE-based skills + 1 router (SKILL.md, not PROCEDURE) = 148 total skill directories.
-if [ "$procedure_count" = "147" ]; then
-    pass "PROCEDURE.md count is 147 (+ 1 router SKILL.md = 148 skills total)"
+# 149 PROCEDURE-based skills + 1 router (SKILL.md, not PROCEDURE) = 150 total skill directories.
+# Last bumped 2026-05-21: +write-a-skill (2026-05-20) and +decompose-blocker (2026-05-21) per ADR-018.
+if [ "$procedure_count" = "149" ]; then
+    pass "PROCEDURE.md count is 149 (+ 1 router SKILL.md = 150 skills total)"
 else
-    fail "expected 147 PROCEDURE.md files (148 skills minus router), found $procedure_count"
+    fail "expected 149 PROCEDURE.md files (150 skills minus router), found $procedure_count"
 fi
 
 # --- Check 3: plugin.json must NOT declare a `commands` field ----------------
