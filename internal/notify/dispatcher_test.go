@@ -147,6 +147,40 @@ func TestDispatcher_MutedAdvisorySkipped(t *testing.T) {
 	require.Zero(t, ch.calls())
 }
 
+// TestSkipForDedup_TreatsLookupErrorAsDedupHit — skipForDedup must
+// suppress dispatch (return true) when the store's LastSent fails for
+// any reason other than ErrNoRows. The earlier default of "no dedup hit"
+// turned a transient DB hiccup into a notification storm — a suppressed
+// real notification is recoverable on the next tick, a storm is not.
+func TestSkipForDedup_TreatsLookupErrorAsDedupHit(t *testing.T) {
+	t.Parallel()
+	store, _ := newTestStore(t)
+	// Closing the underlying DB makes every subsequent LastSent call
+	// return a driver-level error (not sql.ErrNoRows), which is the
+	// case the inverted default exists to handle.
+	require.NoError(t, store.db.Close())
+
+	d := &Dispatcher{store: store}
+	got := d.skipForDedup(context.Background(), ChannelDesktop, "k",
+		time.Hour, time.Now().UTC())
+	require.True(t, got,
+		"lookup error must default to skip (assume dedup hit)")
+}
+
+// TestSkipForDedup_NoRowsAllowsDispatch — the no-prior-row case must
+// stay on the fire side; only genuine errors flip to skip. Otherwise
+// the very first notification for a (channel, kind) would never fire.
+func TestSkipForDedup_NoRowsAllowsDispatch(t *testing.T) {
+	t.Parallel()
+	store, _ := newTestStore(t)
+	d := &Dispatcher{store: store}
+
+	got := d.skipForDedup(context.Background(), ChannelDesktop, "fresh-kind",
+		time.Hour, time.Now().UTC())
+	require.False(t, got,
+		"no prior row must allow dispatch (no dedup hit)")
+}
+
 func TestDispatcher_TitleSpan(t *testing.T) {
 	t.Parallel()
 	// Title format is exposed via Notification body to channels.

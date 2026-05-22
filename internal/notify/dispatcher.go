@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"database/sql"
@@ -122,6 +123,12 @@ func (d *Dispatcher) Dispatch(ctx context.Context, advs []advisor.Advisory) map[
 // skipForDedup looks up the most recent "sent" row for (channel,kind)
 // and returns true when its sent_at is within the dedup window.
 // Window <= 0 disables dedup for this channel.
+//
+// On lookup error the default is "skip" — assume a duplicate hit
+// rather than risk a notification storm if the store is unhappy. A
+// suppressed real notification is recoverable (the next tick re-fires
+// once the window passes); spamming the user during a transient DB
+// hiccup is not. The error is logged so the cause stays visible.
 func (d *Dispatcher) skipForDedup(ctx context.Context, channel, kind string, window time.Duration, now time.Time) bool {
 	if window <= 0 {
 		return false
@@ -131,7 +138,8 @@ func (d *Dispatcher) skipForDedup(ctx context.Context, channel, kind string, win
 		return false
 	}
 	if err != nil {
-		return false // best-effort: treat lookup error as "no dedup hit"
+		log.Printf("notify: dedup lookup failed for channel=%s kind=%s: %v — assuming dedup hit", channel, kind, err)
+		return true
 	}
 	return now.Sub(last.SentAt) < window
 }
