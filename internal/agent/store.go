@@ -29,13 +29,18 @@ func NewStore(db *sql.DB) *Store {
 
 // Create inserts a new agent row. spec.ID becomes the primary key, so calling
 // Create twice with the same ID is an error (use Upsert if you want replace).
+//
+// The returned Agent mirrors the stored representation: timestamps are
+// truncated to millisecond precision and carry no monotonic reading, so
+// comparing them against values returned by Get() is wall-only and stable.
 func (s *Store) Create(ctx context.Context, spec AgentSpec, specYAML string) (Agent, error) {
-	now := time.Now().UTC()
+	nowMs := time.Now().UTC().UnixMilli()
+	now := time.UnixMilli(nowMs).UTC()
 	_, err := s.db.ExecContext(ctx, `
 		INSERT INTO agents (id, name, spec_yaml, schedule, status, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		spec.ID, spec.Name, specYAML, spec.Schedule, string(StatusIdle),
-		now.UnixMilli(), now.UnixMilli(),
+		nowMs, nowMs,
 	)
 	if err != nil {
 		return Agent{}, fmt.Errorf("agent: create: %w", err)

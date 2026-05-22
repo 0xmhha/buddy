@@ -165,11 +165,16 @@ func TestService_QueryTopSessions_OrderedAndLimited(t *testing.T) {
 	t.Parallel()
 	svc, store := newTestService(t)
 	now := time.Now().UTC().Truncate(time.Millisecond)
-	seedSession(t, store, "small", now, 0,
+	// Seed slightly in the past so the half-open window (started_at < Until,
+	// where resolveWindow fills Until with time.Now()) includes every row.
+	// Seeding at exactly `now` races the resolved Until and intermittently
+	// excludes all rows on fast machines.
+	seedAt := now.Add(-time.Hour)
+	seedSession(t, store, "small", seedAt, 0,
 		schema.TokenUsage{InputTokens: 10}, "small", false)
-	seedSession(t, store, "huge", now, 0,
+	seedSession(t, store, "huge", seedAt, 0,
 		schema.TokenUsage{InputTokens: 10000, OutputTokens: 5000}, "huge", false)
-	seedSession(t, store, "mid", now, 0,
+	seedSession(t, store, "mid", seedAt, 0,
 		schema.TokenUsage{InputTokens: 1000}, "mid", false)
 
 	top, err := svc.QueryTopSessions(context.Background(), TimeWindow{}, 2)
