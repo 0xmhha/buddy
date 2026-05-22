@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"database/sql"
-
-	"github.com/0xmhha/buddy/internal/advisor"
 )
 
 // Dispatcher orchestrates the per-channel filter + dedup + send loop.
@@ -62,23 +60,26 @@ func (d *Dispatcher) now() time.Time {
 //
 // Errors on individual channels are swallowed (logged via outcome).
 // Returns a count summary keyed by channel name → sent count.
-func (d *Dispatcher) Dispatch(ctx context.Context, advs []advisor.Advisory) map[string]int {
+func (d *Dispatcher) Dispatch(ctx context.Context, items []Notifiable) map[string]int {
 	sentCounts := map[string]int{}
-	if d.store == nil || len(advs) == 0 || len(d.entries) == 0 {
+	if d.store == nil || len(items) == 0 || len(d.entries) == 0 {
 		return sentCounts
 	}
 	now := d.now()
-	for _, a := range advs {
-		if a.Muted {
+	for _, it := range items {
+		if it.NotifyMuted() {
 			continue
 		}
+		id := it.NotifyID()
+		kind := it.NotifyKind()
+		sev := Severity(it.NotifySeverity())
 		n := Notification{
-			AdvisoryID: a.ID,
-			Kind:       a.Kind,
-			Severity:   Severity(a.Severity),
-			Title:      titleFor(a),
-			Body:       a.Message,
-			CreatedAt:  a.CreatedAt,
+			AdvisoryID: id,
+			Kind:       kind,
+			Severity:   sev,
+			Title:      it.NotifyTitle(),
+			Body:       it.NotifyBody(),
+			CreatedAt:  it.NotifyCreatedAt(),
 		}
 		for _, e := range d.entries {
 			if !e.config.Enabled {
@@ -86,16 +87,16 @@ func (d *Dispatcher) Dispatch(ctx context.Context, advs []advisor.Advisory) map[
 			}
 			if severityRank(n.Severity) < severityRank(e.config.SeverityMin) {
 				_, _ = d.store.Insert(ctx, LogRow{
-					AdvisoryID: a.ID, Channel: e.ch.Name(), Kind: a.Kind,
+					AdvisoryID: id, Channel: e.ch.Name(), Kind: kind,
 					Severity: n.Severity, SentAt: now,
 					Outcome: OutcomeSkippedSeverity,
 					Detail:  fmt.Sprintf("min=%s adv=%s", e.config.SeverityMin, n.Severity),
 				})
 				continue
 			}
-			if d.skipForDedup(ctx, e.ch.Name(), a.Kind, e.config.DedupWindow, now) {
+			if d.skipForDedup(ctx, e.ch.Name(), kind, e.config.DedupWindow, now) {
 				_, _ = d.store.Insert(ctx, LogRow{
-					AdvisoryID: a.ID, Channel: e.ch.Name(), Kind: a.Kind,
+					AdvisoryID: id, Channel: e.ch.Name(), Kind: kind,
 					Severity: n.Severity, SentAt: now,
 					Outcome: OutcomeSkippedDedup,
 					Detail:  fmt.Sprintf("window=%s", e.config.DedupWindow),
@@ -111,7 +112,7 @@ func (d *Dispatcher) Dispatch(ctx context.Context, advs []advisor.Advisory) map[
 				sentCounts[e.ch.Name()]++
 			}
 			_, _ = d.store.Insert(ctx, LogRow{
-				AdvisoryID: a.ID, Channel: e.ch.Name(), Kind: a.Kind,
+				AdvisoryID: id, Channel: e.ch.Name(), Kind: kind,
 				Severity: n.Severity, SentAt: now,
 				Outcome: outcome, Detail: detail,
 			})
@@ -144,18 +145,20 @@ func (d *Dispatcher) skipForDedup(ctx context.Context, channel, kind string, win
 	return now.Sub(last.SentAt) < window
 }
 
-// titleFor builds the short title each channel uses (desktop title,
+// RenderTitle builds the short title channels use (desktop title,
 // banner row, webhook payload). Renders the severity glyph + kind so
-// the user can scan at a glance.
-func titleFor(a advisor.Advisory) string {
+// the user can scan at a glance. Producers call this from their
+// NotifyTitle() implementation so every channel sees the same shape
+// regardless of which producer emitted the item.
+func RenderTitle(kind, severity string) string {
 	glyph := "·"
-	switch advisor.Severity(a.Severity) {
-	case advisor.SeverityHigh:
+	switch Severity(severity) {
+	case SeverityHigh:
 		glyph = "⚠"
-	case advisor.SeverityWarn:
+	case SeverityWarn:
 		glyph = "!"
-	case advisor.SeverityInfo:
+	case SeverityInfo:
 		glyph = "i"
 	}
-	return fmt.Sprintf("%s buddy %s", glyph, a.Kind)
+	return fmt.Sprintf("%s buddy %s", glyph, kind)
 }

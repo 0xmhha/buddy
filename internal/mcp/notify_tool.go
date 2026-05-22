@@ -84,7 +84,7 @@ func addNotifyTool(s *mcp.Server, opts Options) {
 			ID: -1, Kind: "buddy-test", Severity: advisor.SeverityWarn,
 			Message: "테스트 알림 — MCP 채널 동작 확인용", CreatedAt: time.Now().UTC(),
 		}
-		sent := opts.Notify.Dispatcher.Dispatch(ctx, []advisor.Advisory{fake})
+		sent := opts.Notify.Dispatcher.Dispatch(ctx, []notify.Notifiable{fake})
 		res := notifyTestResult{
 			Sent:    sent[args.Channel] > 0,
 			Channel: args.Channel,

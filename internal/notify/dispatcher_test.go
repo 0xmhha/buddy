@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/0xmhha/buddy/internal/advisor"
 )
 
 // recordingChannel captures every Send call so tests can assert order.
@@ -33,20 +31,42 @@ func (r *recordingChannel) calls() int {
 	return len(r.got)
 }
 
-func makeAdv(id int64, kind string, sev advisor.Severity) advisor.Advisory {
-	return advisor.Advisory{
-		ID: id, Kind: kind, Severity: sev,
-		Message: "msg-" + kind, CreatedAt: time.Now().UTC(),
+// fakeNotifiable is a minimal Notifiable test value. The dispatcher
+// test suite uses it instead of the real advisor.Advisory so the
+// notify package's tests do not depend on the advisor package — that
+// import direction is reserved for the production adapter.
+type fakeNotifiable struct {
+	id        int64
+	kind      string
+	severity  Severity
+	muted     bool
+	createdAt time.Time
+}
+
+func (f fakeNotifiable) NotifyID() int64           { return f.id }
+func (f fakeNotifiable) NotifyKind() string         { return f.kind }
+func (f fakeNotifiable) NotifySeverity() string     { return string(f.severity) }
+func (f fakeNotifiable) NotifyTitle() string        { return RenderTitle(f.kind, string(f.severity)) }
+func (f fakeNotifiable) NotifyBody() string         { return "msg-" + f.kind }
+func (f fakeNotifiable) NotifyCreatedAt() time.Time { return f.createdAt }
+func (f fakeNotifiable) NotifyMuted() bool          { return f.muted }
+
+func makeAdv(id int64, kind string, sev Severity) fakeNotifiable {
+	return fakeNotifiable{
+		id: id, kind: kind, severity: sev,
+		createdAt: time.Now().UTC(),
 	}
 }
 
-// seedAdv inserts an Advisory so notification_log.advisory_id FK
-// resolves. Test helpers in this file call this for any AdvisoryID
-// they want dispatcher.Dispatch to log against.
-func seedAdv(t *testing.T, as *advisor.Store, kind string, sev advisor.Severity) int64 {
+// seedAdv inserts a stub advisory row so notification_log.advisory_id
+// FK resolves. The dispatcher's Dispatch records every per-channel
+// attempt into notification_log, and the FK references an advisories
+// row by id.
+func seedAdv(t *testing.T, as *advisoryStub, kind string, sev Severity) int64 {
 	t.Helper()
-	id, err := as.Insert(context.Background(), advisor.Advisory{
-		Kind: kind, Severity: sev, Message: "msg-" + kind, CreatedAt: time.Now().UTC(),
+	id, err := as.Insert(context.Background(), advisoryStubRow{
+		Kind: kind, Severity: string(sev), Message: "msg-" + kind,
+		CreatedAt: time.Now().UTC(),
 	})
 	require.NoError(t, err)
 	return id
@@ -59,9 +79,9 @@ func TestDispatcher_SeverityFilterSkips(t *testing.T) {
 	ch := &recordingChannel{name: ChannelDesktop}
 	d.AddChannel(ch, ChannelConfig{Enabled: true, SeverityMin: SeverityHigh})
 
-	low := makeAdv(seedAdv(t, as, "low", advisor.SeverityInfo), "low", advisor.SeverityInfo)
-	hi := makeAdv(seedAdv(t, as, "hi", advisor.SeverityHigh), "hi", advisor.SeverityHigh)
-	got := d.Dispatch(context.Background(), []advisor.Advisory{low, hi})
+	low := makeAdv(seedAdv(t, as, "low", SeverityInfo), "low", SeverityInfo)
+	hi := makeAdv(seedAdv(t, as, "hi", SeverityHigh), "hi", SeverityHigh)
+	got := d.Dispatch(context.Background(), []Notifiable{low, hi})
 	require.Equal(t, map[string]int{ChannelDesktop: 1}, got)
 	require.Equal(t, 1, ch.calls(), "info advisory skipped, only high reaches channel")
 }
@@ -75,10 +95,10 @@ func TestDispatcher_DedupSkipsWithinWindow(t *testing.T) {
 	ch := &recordingChannel{name: ChannelDesktop}
 	d.AddChannel(ch, ChannelConfig{Enabled: true, SeverityMin: SeverityInfo, DedupWindow: time.Hour})
 
-	first := makeAdv(seedAdv(t, as, "k", advisor.SeverityWarn), "k", advisor.SeverityWarn)
-	_ = d.Dispatch(context.Background(), []advisor.Advisory{first})
-	second := makeAdv(seedAdv(t, as, "k", advisor.SeverityWarn), "k", advisor.SeverityWarn)
-	_ = d.Dispatch(context.Background(), []advisor.Advisory{second})
+	first := makeAdv(seedAdv(t, as, "k", SeverityWarn), "k", SeverityWarn)
+	_ = d.Dispatch(context.Background(), []Notifiable{first})
+	second := makeAdv(seedAdv(t, as, "k", SeverityWarn), "k", SeverityWarn)
+	_ = d.Dispatch(context.Background(), []Notifiable{second})
 	require.Equal(t, 1, ch.calls(), "dedup window blocks the second send")
 }
 
@@ -91,13 +111,13 @@ func TestDispatcher_DedupAllowsAfterWindowExpires(t *testing.T) {
 	ch := &recordingChannel{name: ChannelDesktop}
 	d.AddChannel(ch, ChannelConfig{Enabled: true, SeverityMin: SeverityInfo, DedupWindow: 30 * time.Minute})
 
-	first := makeAdv(seedAdv(t, as, "k", advisor.SeverityWarn), "k", advisor.SeverityWarn)
-	_ = d.Dispatch(context.Background(), []advisor.Advisory{first})
+	first := makeAdv(seedAdv(t, as, "k", SeverityWarn), "k", SeverityWarn)
+	_ = d.Dispatch(context.Background(), []Notifiable{first})
 
 	// Advance the dispatcher's view of "now" past the window.
 	d.Now = func() time.Time { return now.Add(time.Hour) }
-	second := makeAdv(seedAdv(t, as, "k", advisor.SeverityWarn), "k", advisor.SeverityWarn)
-	_ = d.Dispatch(context.Background(), []advisor.Advisory{second})
+	second := makeAdv(seedAdv(t, as, "k", SeverityWarn), "k", SeverityWarn)
+	_ = d.Dispatch(context.Background(), []Notifiable{second})
 	require.Equal(t, 2, ch.calls())
 }
 
@@ -110,8 +130,8 @@ func TestDispatcher_ChannelErrorRecordedNotFatal(t *testing.T) {
 	d.AddChannel(ch1, ChannelConfig{Enabled: true, SeverityMin: SeverityInfo})
 	d.AddChannel(ch2, ChannelConfig{Enabled: true, SeverityMin: SeverityInfo})
 
-	adv := makeAdv(seedAdv(t, as, "k", advisor.SeverityWarn), "k", advisor.SeverityWarn)
-	got := d.Dispatch(context.Background(), []advisor.Advisory{adv})
+	adv := makeAdv(seedAdv(t, as, "k", SeverityWarn), "k", SeverityWarn)
+	got := d.Dispatch(context.Background(), []Notifiable{adv})
 	require.Equal(t, 0, got[ChannelDesktop])
 	require.Equal(t, 1, got[ChannelShell], "failure on one channel doesn't stop others")
 
@@ -128,8 +148,8 @@ func TestDispatcher_DisabledChannelNoop(t *testing.T) {
 	ch := &recordingChannel{name: ChannelDesktop}
 	d.AddChannel(ch, ChannelConfig{Enabled: false, SeverityMin: SeverityInfo})
 
-	adv := makeAdv(seedAdv(t, as, "k", advisor.SeverityWarn), "k", advisor.SeverityWarn)
-	got := d.Dispatch(context.Background(), []advisor.Advisory{adv})
+	adv := makeAdv(seedAdv(t, as, "k", SeverityWarn), "k", SeverityWarn)
+	got := d.Dispatch(context.Background(), []Notifiable{adv})
 	require.Empty(t, got)
 	require.Zero(t, ch.calls())
 }
@@ -141,9 +161,9 @@ func TestDispatcher_MutedAdvisorySkipped(t *testing.T) {
 	ch := &recordingChannel{name: ChannelDesktop}
 	d.AddChannel(ch, ChannelConfig{Enabled: true, SeverityMin: SeverityInfo})
 
-	muted := makeAdv(seedAdv(t, as, "k", advisor.SeverityHigh), "k", advisor.SeverityHigh)
-	muted.Muted = true
-	_ = d.Dispatch(context.Background(), []advisor.Advisory{muted})
+	muted := makeAdv(seedAdv(t, as, "k", SeverityHigh), "k", SeverityHigh)
+	muted.muted = true
+	_ = d.Dispatch(context.Background(), []Notifiable{muted})
 	require.Zero(t, ch.calls())
 }
 
@@ -181,10 +201,9 @@ func TestSkipForDedup_NoRowsAllowsDispatch(t *testing.T) {
 		"no prior row must allow dispatch (no dedup hit)")
 }
 
-func TestDispatcher_TitleSpan(t *testing.T) {
+func TestRenderTitle_GlyphPerSeverity(t *testing.T) {
 	t.Parallel()
-	// Title format is exposed via Notification body to channels.
-	require.Contains(t, titleFor(advisor.Advisory{Kind: "k", Severity: advisor.SeverityHigh}), "⚠")
-	require.Contains(t, titleFor(advisor.Advisory{Kind: "k", Severity: advisor.SeverityWarn}), "!")
-	require.Contains(t, titleFor(advisor.Advisory{Kind: "k", Severity: advisor.SeverityInfo}), "i")
+	require.Contains(t, RenderTitle("k", string(SeverityHigh)), "⚠")
+	require.Contains(t, RenderTitle("k", string(SeverityWarn)), "!")
+	require.Contains(t, RenderTitle("k", string(SeverityInfo)), "i")
 }

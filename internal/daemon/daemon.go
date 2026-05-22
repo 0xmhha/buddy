@@ -309,7 +309,11 @@ func runAdvisorMonitor(ctx context.Context, conn *sql.DB, cfg AdvisorMonitorConf
 		// after persist. Returning a count map per channel so the
 		// daemon log records "what got delivered where".
 		if notifyDisp != nil && len(advs) > 0 {
-			sent := notifyDisp.Dispatch(ctx, advs)
+			items := make([]notify.Notifiable, len(advs))
+			for i, a := range advs {
+				items[i] = a
+			}
+			sent := notifyDisp.Dispatch(ctx, items)
 			for ch, n := range sent {
 				if n > 0 {
 					fmt.Fprintf(logTo, "buddy: notify dispatched %d via %s\n", n, ch)

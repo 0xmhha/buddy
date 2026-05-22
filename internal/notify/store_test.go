@@ -10,27 +10,71 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/0xmhha/buddy/internal/advisor"
 	"github.com/0xmhha/buddy/internal/db"
 )
 
-func newTestStore(t *testing.T) (*Store, *advisor.Store) {
+// advisoryStub holds the minimum information the notification_log
+// FK references — the row id from advisories. Test helpers below
+// insert directly via SQL so the notify test suite does not import
+// the advisor package; that would create an import cycle now that
+// the advisor package satisfies notify.Notifiable.
+type advisoryStub struct{ db *sql.DB }
+
+func newTestStore(t *testing.T) (*Store, *advisoryStub) {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "notify.db")
 	conn, err := db.Open(db.Options{Path: path})
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = conn.Close() })
-	return NewStore(conn), advisor.NewStore(conn)
+	return NewStore(conn), &advisoryStub{db: conn}
 }
 
-func seedAdvisory(t *testing.T, as *advisor.Store) int64 {
+// seedAdvisory inserts a minimal advisory row so notification_log's
+// FK on advisory_id resolves. The notify package owns no advisor
+// type; this helper writes the raw columns the schema expects.
+func seedAdvisory(t *testing.T, as *advisoryStub) int64 {
 	t.Helper()
-	id, err := as.Insert(context.Background(), advisor.Advisory{
-		Kind: advisor.KindTokenSpikeDay, Severity: advisor.SeverityWarn,
-		Message: "test", CreatedAt: time.Now().UTC(),
-	})
+	res, err := as.db.ExecContext(context.Background(), `
+		INSERT INTO advisories (kind, severity, message, created_at, muted)
+		VALUES (?, ?, ?, ?, 0)`,
+		"token-spike-day", "warn", "test",
+		time.Now().UTC().UnixMilli(),
+	)
+	require.NoError(t, err)
+	id, err := res.LastInsertId()
 	require.NoError(t, err)
 	return id
+}
+
+// Insert mimics the previous advisor.Store.Insert signature so other
+// test files (e.g. dispatcher_test) can keep using the same shape.
+// Only the columns notification_log's FK and the dispatcher actually
+// read are populated; everything else stays at the DB default.
+func (s *advisoryStub) Insert(_ context.Context, row advisoryStubRow) (int64, error) {
+	res, err := s.db.Exec(`
+		INSERT INTO advisories (kind, severity, message, created_at, muted)
+		VALUES (?, ?, ?, ?, ?)`,
+		row.Kind, row.Severity, row.Message,
+		row.CreatedAt.UTC().UnixMilli(),
+		boolToInt(row.Muted),
+	)
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+
+type advisoryStubRow struct {
+	Kind, Severity, Message string
+	CreatedAt               time.Time
+	Muted                   bool
+}
+
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 func TestStore_Insert_RoundTrip(t *testing.T) {

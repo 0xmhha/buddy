@@ -1,6 +1,7 @@
 // Package notify implements the notification delivery layer (ADR-016).
-// It surfaces advisor.Advisory rows to OS-level / out-of-band channels.
-// Four channels ship out of the box:
+// It surfaces Notifiable items (the advisor is the v1 producer; future
+// producers attach by satisfying the same interface) to OS-level /
+// out-of-band channels. Four channels ship out of the box:
 //
 //   - desktop   : macOS osascript / Linux notify-send.
 //   - webhook   : HTTP POST/PUT/PATCH + custom headers (lifted from
@@ -90,6 +91,24 @@ type WebhookConfig struct {
 	SeverityMin Severity          // default info
 	DedupWindow time.Duration     // default 1h
 	Timeout     time.Duration     // default 30s
+}
+
+// Notifiable is the contract the dispatcher expects from a single
+// alert item. The advisor is the canonical producer (advisor.Advisory
+// satisfies it), but the dispatcher does not import the advisor
+// package: any future source — daemon health alerts, agent run
+// failures, manual user injection — can attach by implementing the
+// same six accessors. Severity is exchanged as the raw string the
+// producer stores (the dispatcher converts to its own typed Severity
+// at the edge) so the producer side stays free of notify imports.
+type Notifiable interface {
+	NotifyID() int64
+	NotifyKind() string
+	NotifySeverity() string
+	NotifyTitle() string
+	NotifyBody() string
+	NotifyCreatedAt() time.Time
+	NotifyMuted() bool
 }
 
 // LogRow is the read-back shape of a notification_log entry.

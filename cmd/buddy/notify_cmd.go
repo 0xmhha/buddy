@@ -67,7 +67,7 @@ func newNotifyTestCmd() *cobra.Command {
 				ID: -1, Kind: "buddy-test", Severity: advisor.SeverityWarn,
 				Message: "테스트 알림 — 채널 동작 확인용", CreatedAt: time.Now().UTC(),
 			}
-			sent := disp.Dispatch(ctx, []advisor.Advisory{fake})
+			sent := disp.Dispatch(ctx, []notify.Notifiable{fake})
 			if sent[channel] == 0 {
 				return fmt.Errorf("channel=%q 가 dispatch 안 됐어. config 확인해줘 (severity_min / dedup window 등)", channel)
 			}
