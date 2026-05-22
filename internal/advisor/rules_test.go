@@ -235,3 +235,125 @@ func TestTruncateToRunes_PreservesKoreanGlyphBoundary(t *testing.T) {
 	// ASCII path stays correct (one rune == one byte).
 	require.Equal(t, "abcde…", truncateToRunes("abcdefghij", 5))
 }
+
+// Boundary-pair tests for the rule predicates. Each surviving mutant
+// from the previous coverage audit corresponded to a one-sided
+// threshold check (one side tested, the other never exercised). The
+// pairs below pin both sides so a future mutation that flips < to <=
+// or > to >= breaks at least one assertion.
+
+func TestRuleTokenSpikeDay_RatioAtExactThresholdFires(t *testing.T) {
+	t.Parallel()
+	// Default TokenSpikeRatio is 1.5. Choose 24h vs 7d numbers so the
+	// computed ratio lands exactly on the threshold — ratio < threshold
+	// must NOT fire, ratio == threshold MUST fire.
+	thr := DefaultThresholds()
+	now := time.Now().UTC()
+
+	// 300k / (1_400_000 / 7) = 300k / 200k = 1.5 exactly.
+	at := Snapshot{
+		Now:      now,
+		Spend24h: usage.TokenSpend{InputTokens: 300_000},
+		Spend7d:  usage.TokenSpend{InputTokens: 1_400_000},
+	}
+	require.NotNil(t, ruleTokenSpikeDay(thr, at),
+		"ratio == TokenSpikeRatio is the >= side and must fire")
+
+	// 200k / 200k = 1.0 — strictly below threshold, no fire.
+	below := Snapshot{
+		Now:      now,
+		Spend24h: usage.TokenSpend{InputTokens: 200_000},
+		Spend7d:  usage.TokenSpend{InputTokens: 1_400_000},
+	}
+	require.Nil(t, ruleTokenSpikeDay(thr, below))
+}
+
+func TestRuleTokenSpikeDay_SeverityHighBoundaryAtRatio2(t *testing.T) {
+	t.Parallel()
+	thr := DefaultThresholds()
+	now := time.Now().UTC()
+
+	// 400k / 200k = 2.0 exactly — the >= 2.0 side, so high.
+	at := Snapshot{
+		Now:      now,
+		Spend24h: usage.TokenSpend{InputTokens: 400_000},
+		Spend7d:  usage.TokenSpend{InputTokens: 1_400_000},
+	}
+	a := ruleTokenSpikeDay(thr, at)
+	require.NotNil(t, a)
+	require.Equal(t, SeverityHigh, a.Severity, "ratio == 2.0 must be high")
+
+	// 399_999 / 200_000 ≈ 1.999995 — strictly under 2.0, so warn.
+	below := Snapshot{
+		Now:      now,
+		Spend24h: usage.TokenSpend{InputTokens: 399_999},
+		Spend7d:  usage.TokenSpend{InputTokens: 1_400_000},
+	}
+	a = ruleTokenSpikeDay(thr, below)
+	require.NotNil(t, a)
+	require.Equal(t, SeverityWarn, a.Severity, "ratio < 2.0 must stay warn")
+}
+
+func TestRuleLongSession_DurationAtExactThresholdFires(t *testing.T) {
+	t.Parallel()
+	thr := DefaultThresholds()
+	threshold := time.Duration(thr.LongSessionHours) * time.Hour
+	now := time.Now().UTC()
+
+	atSnap := Snapshot{
+		Now: now,
+		ActiveSessions: []sessions.Session{{
+			ID: "exactly-4h", PID: 1,
+			StartedAt:  now.Add(-threshold),
+			LastActive: now,
+			GoalText:   "g",
+		}},
+	}
+	require.NotNil(t, ruleLongSession(thr, atSnap),
+		"dur == LongSessionHours is the >= side and must fire")
+
+	belowSnap := Snapshot{
+		Now: now,
+		ActiveSessions: []sessions.Session{{
+			ID: "just-under", PID: 1,
+			StartedAt:  now.Add(-threshold + time.Minute),
+			LastActive: now,
+			GoalText:   "g",
+		}},
+	}
+	require.Nil(t, ruleLongSession(thr, belowSnap),
+		"dur < LongSessionHours must not fire")
+}
+
+func TestRuleLongSession_SeverityHighBoundaryAtDoubleThreshold(t *testing.T) {
+	t.Parallel()
+	thr := DefaultThresholds()
+	threshold := time.Duration(thr.LongSessionHours) * time.Hour
+	now := time.Now().UTC()
+
+	atDouble := Snapshot{
+		Now: now,
+		ActiveSessions: []sessions.Session{{
+			ID: "exactly-2x", PID: 1,
+			StartedAt:  now.Add(-2 * threshold),
+			LastActive: now,
+			GoalText:   "g",
+		}},
+	}
+	a := ruleLongSession(thr, atDouble)
+	require.NotNil(t, a)
+	require.Equal(t, SeverityHigh, a.Severity, "dur == 2*threshold must be high")
+
+	belowDouble := Snapshot{
+		Now: now,
+		ActiveSessions: []sessions.Session{{
+			ID: "just-under-2x", PID: 1,
+			StartedAt:  now.Add(-2*threshold + time.Minute),
+			LastActive: now,
+			GoalText:   "g",
+		}},
+	}
+	a = ruleLongSession(thr, belowDouble)
+	require.NotNil(t, a)
+	require.Equal(t, SeverityWarn, a.Severity, "dur < 2*threshold must stay warn")
+}

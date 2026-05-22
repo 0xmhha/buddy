@@ -1346,3 +1346,59 @@ chain:
 	require.NotEqual(t, 0, res.ExitCode, "exhausted retries on self-check fail must surface failure")
 	require.Equal(t, 3, len(mock.Calls), "max_attempts=3 with verdict-fail every time = 3 calls")
 }
+
+// Boundary tests for computeBackoff. The exponential branch has two
+// guards a previous coverage audit flagged as one-sided: the shift
+// clamp (attempt-1 ≤ 30) and the BackoffMax cap (wait > BackoffMax).
+// The pairs below pin both sides so a future mutation that flips a
+// strict inequality to a non-strict one breaks at least one assertion.
+
+func TestComputeBackoff_ExponentialCapAtExactMax(t *testing.T) {
+	t.Parallel()
+	// BackoffDelay=1s, exponent attempt-1 = 1 → wait = 2s.
+	// BackoffMax = 2s exactly. Current code uses `wait > BackoffMax` so
+	// equality keeps wait — the cap only kicks in strictly above max.
+	policy := &RetryPolicy{
+		BackoffStrategy: BackoffStrategyExponential,
+		BackoffDelay:    time.Second,
+		BackoffMax:      2 * time.Second,
+	}
+	require.Equal(t, 2*time.Second, computeBackoff(policy, 2),
+		"wait == BackoffMax is allowed; strict-greater drives the cap")
+
+	// attempt=3 → wait would be 4s; cap to 2s.
+	require.Equal(t, 2*time.Second, computeBackoff(policy, 3),
+		"wait > BackoffMax is clamped to BackoffMax")
+}
+
+func TestComputeBackoff_ExponentClampAtThirty(t *testing.T) {
+	t.Parallel()
+	// The clamp on (attempt-1, 30) prevents 2^k from running away when
+	// MaxAttempts is misconfigured. At attempt 31 the shift exponent
+	// must equal the attempt-32 result — same 2^30 multiplier.
+	policy := &RetryPolicy{
+		BackoffStrategy: BackoffStrategyExponential,
+		BackoffDelay:    time.Nanosecond,
+		// No BackoffMax so the cap doesn't mask the clamp behaviour.
+	}
+	at31 := computeBackoff(policy, 31)
+	at32 := computeBackoff(policy, 32)
+	require.Equal(t, at31, at32,
+		"attempt >= 31 must reuse the 2^30 multiplier (shift clamp)")
+	// And the value itself: 2^30 nanoseconds.
+	require.Equal(t, time.Duration(1<<30)*time.Nanosecond, at31)
+}
+
+func TestComputeBackoff_GuardsBelowAttemptOne(t *testing.T) {
+	t.Parallel()
+	policy := &RetryPolicy{
+		BackoffStrategy: BackoffStrategyExponential,
+		BackoffDelay:    time.Second,
+	}
+	require.Equal(t, time.Duration(0), computeBackoff(policy, 0),
+		"attempt < 1 short-circuits to zero")
+	require.Equal(t, time.Duration(0), computeBackoff(policy, -1),
+		"negative attempt also short-circuits")
+	require.Equal(t, time.Duration(0), computeBackoff(nil, 1),
+		"nil policy short-circuits to zero")
+}
