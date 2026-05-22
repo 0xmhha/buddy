@@ -172,6 +172,8 @@ actor track별로 최소 task 1개 완료 시 1 commit.
 
 ## 완료 기준
 
+> Iron Law: 본 checklist 각 항목 체크 직전 [`router/references/verification-discipline.md`](../router/references/verification-discipline.md) 의 Gate Function 5-step 적용. subagent dispatch 의 success 보고는 *VCS diff + 변경 실재 verify* 후에만 채택. agent 자체 보고만으로 체크 금지.
+
 - [ ] 모든 actor track의 task 완료
 - [ ] unit test 통과 (TDD 루프 green)
 - [ ] integration test 통과 (cross-actor 흐름)

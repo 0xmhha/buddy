@@ -73,6 +73,7 @@
 8. **Implementation detail 금지** — `expect(cache.size).toBe(3)` 대신 `expect(getUser('id')).toBe(...)` — 외부 행동만. 내부 자료구조는 언제든 바뀔 수 있다.
 9. **Test도 코드다** — DRY/명명/구조 규칙 동일하게 적용. test 코드 품질이 떨어지면 production 코드 품질도 따라 떨어진다.
 10. **Mock은 경계에서만** — DB driver, HTTP client, system clock 같은 IO 경계에서만 mock. 비즈니스 로직 mock은 안티패턴.
+11. **완료 발화 전 Iron Law** — RED / GREEN / REFACTOR 전이마다 [`router/references/verification-discipline.md`](../router/references/verification-discipline.md) 의 Iron Law + Gate Function 5-step 적용. "RED 확인" / "GREEN 통과" / "REFACTOR 안전" 발화는 *이번 메시지에서 실제로 test 명령을 실행하고 출력을 본 뒤*에만 한다. "이전에 통과했었음" / "통과할 것" 은 evidence 0건 — 위반.
 
 ## 5. 단계 (Phases)
 

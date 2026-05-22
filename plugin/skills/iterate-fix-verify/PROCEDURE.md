@@ -70,6 +70,8 @@ git commit -m "<scope>: FINDING-NNN — short description"
 
 쌍이 영수증이다. 이게 없으면 "fixed"는 증거가 아니라 주장이다.
 
+> Iron Law: `verified` / `best-effort` / `reverted` 발화 직전 [`router/references/verification-discipline.md`](../router/references/verification-discipline.md) 의 Gate Function 5-step 적용. fresh re-exercise 결과를 본 뒤에만 분류 라벨을 부여한다. 증거 없는 `verified` 는 sycophantic pass.
+
 ### 5. 결과 분류
 
 - **verified** — re-test가 fix를 확인; 새 에러 없음.

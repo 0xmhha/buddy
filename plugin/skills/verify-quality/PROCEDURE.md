@@ -94,6 +94,8 @@ verify-quality (6단계 phase orchestrator)
 
 ## Quality Gate 판단
 
+> Iron Law: 본 표의 *통과 기준* 발화 (각 dimension "100% pass" / "No critical" / "≥ 7.0" 등) 직전 [`router/references/verification-discipline.md`](../router/references/verification-discipline.md) 의 Gate Function 5-step 적용 — *이번 메시지에서* 해당 stage 명령을 실제 실행하고 출력을 확인한 뒤에만 발화. "이전 run 통과", "dimension 별 no issues found" 빈 통과는 review-engineering Anti-Rationalization 의 *All-clean STOP rule* 과 동일 위반.
+
 | 항목 | 통과 기준 | Block 조건 |
 |------|---------|-----------|
 | Unit + Integration test | 100% pass | 1개라도 실패 |

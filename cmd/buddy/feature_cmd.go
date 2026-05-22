@@ -93,6 +93,12 @@ func newFeatureUpsertCmd() *cobra.Command {
 			if statusFlag == "" {
 				statusFlag = feature.StatusDraft
 			}
+			if !validFeatureStatus(statusFlag) {
+				return newFriendError(fmt.Sprintf(
+					"buddy: --status 값이 올바르지 않아 (%q). draft | in_progress | done | cancelled 중에서 골라줘.",
+					statusFlag,
+				))
+			}
 			f := feature.Feature{
 				FeatureID:          idFlag,
 				Name:               nameFlag,
@@ -202,4 +208,18 @@ func renderFeatureDetail(f feature.Feature) {
 			fmt.Printf("  - %s\n", c)
 		}
 	}
+}
+
+// validFeatureStatus reports whether s is one of the four feature
+// statuses defined in internal/feature. Used as the CLI write-boundary
+// guard so a typo like --status=in-progress (hyphen vs underscore) or
+// --status=todo fails fast with friend-tone guidance instead of
+// silently persisting an unknown value the registry cannot interpret.
+func validFeatureStatus(s string) bool {
+	switch s {
+	case feature.StatusDraft, feature.StatusInProgress,
+		feature.StatusDone, feature.StatusCancelled:
+		return true
+	}
+	return false
 }
