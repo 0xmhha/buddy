@@ -209,3 +209,29 @@ func TestRuleGoalDrift_PicksLowestScoredSession(t *testing.T) {
 	require.NotNil(t, a)
 	require.Contains(t, a.Message, "severe", "worst-drifted session is named")
 }
+
+// truncateToRunes must clip on rune boundaries so a Korean character
+// never gets split mid-byte (a plain byte slice would yield "" with the
+// trailing UTF-8 bytes orphaned). Each Korean glyph is 3 bytes in UTF-8;
+// the test exercises an exact-boundary case + a short-input no-op case.
+func TestTruncateToRunes_PreservesKoreanGlyphBoundary(t *testing.T) {
+	t.Parallel()
+
+	// "한국어로 작성된 긴 목적 텍스트입니다" — 17 Korean characters.
+	korean := "한국어로 작성된 긴 목적 텍스트입니다"
+
+	// Truncate to 5 runes: must keep exactly "한국어로 " and append "…",
+	// not a partial byte sequence.
+	got := truncateToRunes(korean, 5)
+	require.Equal(t, "한국어로 …", got)
+
+	// No truncation when input is shorter than the budget.
+	require.Equal(t, "짧음", truncateToRunes("짧음", 5))
+
+	// Empty / zero budget edge cases.
+	require.Equal(t, "", truncateToRunes("", 5))
+	require.Equal(t, "", truncateToRunes("anything", 0))
+
+	// ASCII path stays correct (one rune == one byte).
+	require.Equal(t, "abcde…", truncateToRunes("abcdefghij", 5))
+}

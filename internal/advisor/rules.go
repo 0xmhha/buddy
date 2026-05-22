@@ -133,8 +133,8 @@ func ruleLongSession(t Thresholds, snap Snapshot) *Advisory {
 	goal := longest.GoalText
 	if goal == "" {
 		goal = "(목적 미기록)"
-	} else if len(goal) > 60 {
-		goal = goal[:60] + "…"
+	} else {
+		goal = truncateToRunes(goal, 60)
 	}
 	return &Advisory{
 		Kind:     KindLongSession,
@@ -275,10 +275,7 @@ func ruleGoalDrift(t Thresholds, snap Snapshot) *Advisory {
 	if len(shortID) > 8 {
 		shortID = shortID[:8]
 	}
-	goal := worst.GoalText
-	if len(goal) > 60 {
-		goal = goal[:60] + "…"
-	}
+	goal := truncateToRunes(worst.GoalText, 60)
 	a := &Advisory{
 		Kind:     KindGoalDrift,
 		Severity: severity,
@@ -293,13 +290,9 @@ func ruleGoalDrift(t Thresholds, snap Snapshot) *Advisory {
 		CreatedAt: snap.Now,
 	}
 	if worst.WorstChunk != "" {
-		preview := worst.WorstChunk
-		if len(preview) > 120 {
-			preview = preview[:120] + "…"
-		}
 		a.Evidence = append(a.Evidence, EvidenceItem{
 			Type:   "chunk",
-			Detail: preview,
+			Detail: truncateToRunes(worst.WorstChunk, 120),
 		})
 	}
 	return a
@@ -318,6 +311,21 @@ func humanCount(n int64) string {
 	default:
 		return fmt.Sprintf("%.1fM", float64(n)/1_000_000)
 	}
+}
+
+// truncateToRunes returns s clipped to at most maxRunes runes with "…"
+// appended when truncation actually occurred. Operating on []rune avoids
+// splitting Korean glyphs (3 bytes/char in UTF-8) or emoji surrogates at
+// a multi-byte boundary, which a plain byte slice would do.
+func truncateToRunes(s string, maxRunes int) string {
+	if maxRunes <= 0 {
+		return ""
+	}
+	runes := []rune(s)
+	if len(runes) <= maxRunes {
+		return s
+	}
+	return string(runes[:maxRunes]) + "…"
 }
 
 // shortDur is the same idea as humanCount but for durations — "2h30m"
