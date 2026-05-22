@@ -28,6 +28,8 @@ API key / DB credential / OAuth token / 인증서 등 *secret* 의 **저장 (whe
 
 ### Stage 1: Secret store 결정
 
+> **AI 편향 차단 게이트** — 본 Stage 시작 전 *3개 이상의 orthogonal secret store 후보*(예: cloud KMS / HashiCorp Vault / k8s Secret + sealed-secrets / managed identity 기반 keyless / 자체 운영 PKI) 발산. 직접 또는 `verify-best-alternative` 호출. *첫 답 commit 금지*. 산출물에 3+ 후보의 *(rotation 비용·access audit·multi-cloud 지원·운영 복잡도·compliance)* rubric 비교 존재해야 §6 검증 통과. 적용 근거: [`docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md`](../../../../docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md) §3.
+
 | 옵션 | 적합 시점 | 단점 |
 |------|--------|------|
 | Cloud KMS (AWS Secrets Manager / GCP Secret Manager / Azure Key Vault) | cloud-native, 단일 cloud | vendor lock-in |
@@ -116,6 +118,7 @@ leak 발견 시 *5 분 내* 절차:
 - [ ] Incident response 5 step 명시?
 - [ ] *코드 / repo 에 plaintext secret 0건* (gitleaks 검증)?
 - [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. secret store / rotation 주기 / detection 전략이 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
+- [ ] **3+ orthogonal secret store 후보의 rubric 비교 표가 산출물에 존재** — 체크박스만 체크하는 *anti-rationalization 회피* 금지. Stage 1의 store 옵션 표로 증명
 
 ## 7. 다음 phase
 

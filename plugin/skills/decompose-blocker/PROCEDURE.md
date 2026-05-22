@@ -1,13 +1,16 @@
 # Decompose Blocker — 막힘 상태 해소를 위한 문제 분해 + 행동 후보 도출
 
 
-코드 작업 중 *stuck 상태*(어디서 봐야 할지 entry point 불분명 / 가설 안 떠오름 / 옵션 사이 선택 불가)일 때, 문제를 *기계적으로 분해*하여 *비용-정보 매트릭스* 기반의 행동 후보를 도출하는 절차. 직진 시도하다 막힌 상태에서 *한 발 물러서 탐색 공간 자체를 정리*하는 것이 핵심.
+엔지니어링 작업 중 *stuck 상태* — 어디서 봐야 할지 entry point 불분명 / 가설 안 떠오름 / 옵션 사이 선택 불가 / **AI가 동일 문제를 3회 이상 시도해도 해결 안 됨** — 일 때, 문제를 *기계적으로 분해*하여 *비용-정보 매트릭스* 기반의 행동 후보를 도출하는 절차. 직진 시도하다 막힌 상태에서 *한 발 물러서 탐색 공간 자체를 정리* + *문제를 더 작은 단위로 세분화*하는 것이 핵심. *언어·플랫폼 독립* — Python/Go/Rust/TypeScript/Java 등 모든 엔지니어링 작업에 적용.
+
+**3회 한도 원칙 (token escalation 차단)**: AI가 *동일 문제·동일 코드 영역*에서 *3회 시도 후에도 미해결*이면 본 스킬을 자동 호출. 그 이상 시도는 토큰 낭비 + 잘못된 fix 위험 (얕은 root cause로 surface fix만 누적). *문제가 가장 작은 단위인지 검토 → 아니면 세분화*가 본 스킬의 1차 책임.
 
 핵심 차별점:
-- `diagnose-bug`이 *bug 증상이 명확해진 후*의 root cause 분석이라면, `decompose-blocker`은 *증상조차 모호한* stuck 상태에서 *어디부터 볼지*를 결정한다 — 진단 진입 *전* 단계.
-- `verify-best-alternative`가 *이미 옵션 후보가 보이는* 결정의 다관점 검토라면, `decompose-blocker`은 *옵션이 안 보이는* stuck에서 *후보를 도출*한다.
+- `diagnose-bug`이 *bug 증상이 명확해진 후*의 root cause 분석이라면, `decompose-blocker`은 *증상조차 모호한* stuck 상태 또는 *3회 시도 후에도 못 풀리는* 상태에서 *문제 분해부터* 시작한다.
+- `verify-best-alternative`가 *이미 옵션 후보가 보이는* 결정의 다관점 검토라면, `decompose-blocker`은 *옵션이 안 보이는* stuck 또는 *시도한 옵션이 모두 실패*한 상태에서 *후보를 도출*한다.
 - `critique-plan`이 *plan이 있을 때*의 strategic 비판이라면, `decompose-blocker`은 *plan을 만들기 전*의 entry point 결정.
-- `concretize-idea`(§1)가 *새 제품 아이디어*의 PRD화라면, `decompose-blocker`은 *기존 작업 중 막힘*의 ad-hoc 해소.
+- `concretize-idea`(§1)가 *새 제품 아이디어*의 PRD화라면, `decompose-blocker`은 *기존 엔지니어링 작업 중 막힘*의 ad-hoc 해소.
+- `iterate-fix-verify`가 *fix→commit→verify 루프*라면, `decompose-blocker`은 그 루프가 *3회 실패한 시점에 호출되어 문제를 분해*한다 (fail counter cascade).
 
 **용어 안내**:
 
@@ -25,7 +28,20 @@ stuck 상태인 사용자(또는 AI 자체)가 *진단·결정·구현* 어느 �
 
 ## 2. 사용 시점
 
-다음 상황에서 호출하라:
+### 2.1 자동 trigger 조건 (반드시 호출)
+
+다음 조건 중 **하나라도** 충족되면 *즉시 본 스킬 자동 호출* — 사용자 명시 호출 없어도 AI가 self-trigger:
+
+- **3회 한도 도달**: AI가 *동일 문제·동일 코드 영역*에서 *3회 시도 후에도 미해결*. (`iterate-fix-verify`의 fail counter 또는 동등한 시도 카운터가 3 도달)
+- **동일 가설 2회 fix 실패**: 같은 root cause 가설로 만든 fix가 2회 연속 실패 (test/regression 또는 동일 증상 재발)
+- **회귀 패턴**: 시도마다 변경 사항이 *비슷한 패턴으로 회귀* (예: 같은 함수의 다른 line만 계속 수정, surface fix 반복)
+- **token escalation 위험**: 단일 task에서 토큰 사용이 비정상적으로 증가하는데 진전은 없음
+
+이 조건에서 *그 이상 시도하는 것은 토큰 낭비 + 잘못된 fix risk*. 본 스킬로 *문제 세분화* 후 작은 단위부터 다시 풀어야 함.
+
+### 2.2 사용자 명시 호출 조건
+
+다음 발화·상황에서 호출:
 
 - 사용자가 "어디서 봐야 할지 모르겠어", "어떻게 시작해야 할지 모르겠어"와 같이 *entry point 불명*을 표명
 - AI 자체가 코드 분석 중 *너무 많은 가능성*에 직면해 다음 행동 결정 불가
@@ -33,13 +49,14 @@ stuck 상태인 사용자(또는 AI 자체)가 *진단·결정·구현* 어느 �
 - 가설이 다수 떠올랐는데 *어떤 가설을 먼저 검증할지* 우선순위 불명
 - 시간 압박은 있는데 *직진 시도가 막힘*
 
-다음 상황에서는 **호출하지 마라**:
+### 2.3 호출하지 마라
 
-- bug repro 가능 + 증상 명확 → `diagnose-bug`
+- bug repro 가능 + 증상 명확 + 시도 횟수 0~2회 → `diagnose-bug`
 - 옵션 후보 2~5개 있고 비교 필요 → `verify-best-alternative`
 - 작성된 plan/spec critique → `critique-plan`
 - 새 기능 idea의 PRD화 → `concretize-idea`(§1)
-- 작은 코드 변경 + 방향 명확 → 그냥 진행, decompose-blocker는 *과한 ceremony*
+- 작은 코드 변경 + 방향 명확 + 첫 시도 → 그냥 진행, decompose-blocker는 *과한 ceremony*
+- **비엔지니어링 영역** (그래픽 디자인 / 브랜드 / 마케팅 / 사업 기획) — 별도 스킬 (미래)
 
 ## 3. 입력
 
@@ -66,7 +83,7 @@ stuck 상태인 사용자(또는 AI 자체)가 *진단·결정·구현* 어느 �
 
 ## 4. 핵심 원칙 (Principles)
 
-1. **Fact / 추측 / 모름 3분류** — 사용자 발화에서 *반드시 분리*. "504 timeout이 난다"(fact)와 "코드 문제 같다"(추측)와 "어느 endpoint인지 모름"(모름)을 같은 단락에 섞지 말 것.
+1. **Fact / 추측 / 모름 3분류** — 사용자 발화 또는 시도 history에서 *반드시 분리*. 예 (인프라 도메인): "504 timeout이 난다"(fact) / "코드 문제 같다"(추측) / "어느 endpoint인지 모름"(모름). 예 (test 도메인): "함수 X test가 fail한다"(fact) / "input handling 문제"(추측) / "mock setup이 어떻게 되어 있는지 모름"(모름). *언어·플랫폼 독립* — Python/Go/Rust/TS/Java 모두 동일.
 
 2. **분해 축 명시 선언** — 4D(WHERE/WHEN/WHAT/WHY) 기본. 도메인에 따라 *binary search of code path*, *5 Whys*, *fishbone* 등 선택 가능. 무엇을 선택했는지 *반드시 명시*.
 
@@ -86,17 +103,22 @@ stuck 상태인 사용자(또는 AI 자체)가 *진단·결정·구현* 어느 �
 
 10. **종료 조건 default = 행동 후보 제시** — 한 사이클의 끝은 *사용자가 다음 행동을 선택 가능한 상태*. 실행·follow-up은 별도 호출.
 
+11. **3회 한도 원칙 (token escalation 차단)** — AI가 동일 문제 3회 시도 후 미해결이면 *그 이상 시도 금지*. 본 스킬 호출하여 문제를 *더 작은 단위로 세분화*. 4회·5회 시도는 *합리화로 위장한 토큰 낭비* — surface fix만 누적, 진짜 root cause는 더 깊은 곳. 본 한도는 *작업 단위*당이 아니라 *동일 problem statement*당 — 다른 sub-problem으로 명확히 분리되면 카운터 reset.
+
 ## 5. 실행 단계 (Steps)
 
 ### Step 1. Stuck 정체 식별
 
-사용자 발화 직후, *stuck의 종류*를 결정한다:
+사용자 발화 또는 자동 trigger 직후, *stuck의 종류*를 결정한다:
 
 - **too-wide**: "어디부터 볼지 모르겠어" / "옵션이 너무 많아" → 탐색공간 압축이 우선
 - **too-narrow**: "아무것도 안 떠올라" / "다 시도해봤어" → 옵션 발산이 우선
 - **mixed**: 둘 다 — 우선 *too-wide*를 먼저 (압축 후 발산이 더 효율)
+- **repeated** (자동 trigger 시): "동일 문제·동일 코드 영역에서 3회 시도 후 미해결" → *문제 세분화*가 우선. 진짜 원인은 *현재 인식하는 문제 단위보다 더 작은 sub-problem*에 있을 가능성 높음
 
 판정 모호 시 forcing question 1번으로 확정.
+
+**repeated 케이스 특별 처리**: 3회 시도 후 자동 호출된 경우, Step 2의 *Fact* 분류에 *시도 history*(어떤 fix를 했고 어떻게 실패했나) 포함. 시도들의 *공통 가정*을 식별 — 그 가정이 잘못됐을 가능성이 높음.
 
 ### Step 2. Fact / 추측 / 모름 3분류
 
@@ -251,6 +273,8 @@ default_assumptions:
 ### 앞 단계 (선행 스킬)
 
 - (진입점) — 사용자가 stuck 상태를 표명하면 직접 호출
+- **`iterate-fix-verify` cascade** — fix→commit→re-verify 루프의 *fail counter 3 도달*시 자동 호출 (§2.1 자동 trigger). 3회 fail = 진짜 root cause가 *현재 인식 문제 단위보다 더 작은 sub-problem*에 있음을 시사.
+- **`diagnose-bug` cascade** — diagnose-bug Phase 4 (hypothesis test) 또는 Phase 5 (verify root cause)가 *동일 가설 2회 검증 실패* 시 본 스킬로 escalate (가설 자체가 잘못됨 → 문제 분해 필요).
 - `concretize-idea`(§1) — 새 기능 idea level의 모호함이면 §1 stage로 회귀
 
 ### 페어 (동시 동작 가능)
@@ -269,20 +293,42 @@ default_assumptions:
 
 ### 호출 흐름 예시
 
+**예시 1 — 사용자 명시 호출 (too-wide, 인프라 도메인 예)**:
 ```
-사용자: "504 timeout 가끔 나는데 어디부터 봐야 할지 모르겠어"
+사용자: "API가 가끔 timeout으로 죽어. 어디부터 봐야 할지 모르겠어"
     → decompose-blocker
         → Step 1 (too-wide 판정)
         → Step 2 (fact/추측/모름 3분류)
-        → Step 3 (4D 분해 채택)
+        → Step 3 (4D 분해 채택 — 인프라 도메인)
         → Step 4 (모름의 지도)
         → Step 5 (3개 질문)
         → Step 6 (응답 반영 → H1, H2 압축)
         → Step 7 (information-gathering 단위, A1·A2·A3 후보)
         → Step 8 (사용자 A1 선택)
-    → 사용자가 nginx access.log 검색 (직접)
+    → 사용자가 로그 검색 (직접)
     → 결과 가지고 diagnose-bug 호출 또는 decompose-blocker 재호출
 ```
+
+**예시 2 — 자동 trigger (repeated, 언어 독립)**:
+```
+AI가 함수 X의 unit test가 실패하는 것을 fix 시도:
+    1차 시도: null check 추가 → test 여전히 fail
+    2차 시도: edge case 핸들링 → test 여전히 fail
+    3차 시도: 다른 input 가정 변경 → test 여전히 fail
+    → fail counter 3 도달 → decompose-blocker 자동 호출
+        → Step 1 (repeated 판정)
+        → Step 2 (Fact = "3 시도 모두 surface fix만"; 시도 history 분석;
+                  시도들의 공통 가정 = "test가 검증하는 게 함수 X의 출력이라고 가정")
+        → Step 3 (5-Whys 채택 — 가정 자체를 의심)
+        → Step 4 (모름의 지도 — "test가 실제로 무엇을 측정하는지 확인 안 함")
+        → Step 5 (질문: "test의 assertion이 정말 함수 X의 출력을 검증하나, 아니면 다른 side effect인가?")
+        → Step 6 (가설 H1: test가 mock 환경 의존 — 함수 X 외부에 진짜 문제)
+        → Step 7 (information-gathering: test 본문·dependency·setup 분석)
+        → Step 8 (사용자가 진단 채택)
+    → 진짜 문제는 함수 X가 아니라 mock setup 부재 — 4번째 시도 안 했어도 토큰 절약
+```
+
+핵심: 자동 trigger 예시에서 *반복된 시도가 surface fix만 누적*하는 패턴 catch + *공통 가정 의심*이 본 스킬의 가치.
 
 ## 8. Anti-patterns
 
@@ -308,11 +354,13 @@ default_assumptions:
 
 10. **default 가정 미명시** — 입력 모호한데 가정을 *조용히 적용*. 사용자가 가정에 동의 안 하면 전체 사이클 무용. 교정: 출력 yaml의 `default_assumptions` 필드에 *반드시* 명시 — 사용자가 거절하면 재시작.
 
+11. **3회 한도 무시 — "한 번 더 시도하면 될 것 같아" 합리화** — 가장 흔하고 가장 비싼 anti-pattern. 같은 fix 패턴을 3회 시도했다는 건 *문제 인식 자체가 잘못*되었음을 의미. 4회·5회 시도는 *얕은 root cause로 surface fix만 누적* → 토큰 폭발 + 진짜 원인 더 깊이 묻힘. 교정: 3회 시도 후 *반드시* 본 스킬 호출하여 문제를 *더 작은 단위로 분해*. *동일 사이클*에서 fix 시도 횟수를 명시적으로 카운트.
+
 ## 9. 체크리스트 (Step별 자가 점검)
 
 각 Step 종료 시:
 
-- [ ] Step 1: stuck 종류(too-wide/too-narrow/mixed) 명시했는가?
+- [ ] Step 1: stuck 종류(too-wide/too-narrow/mixed/**repeated**) 명시했는가? repeated인 경우 시도 history도 포함했는가?
 - [ ] Step 2: fact/추측/모름 3분류 표 작성했는가?
 - [ ] Step 3: 분해 축 선택 + 근거 명시했는가?
 - [ ] Step 4: 모름의 지도(축별 답 가능성·비용)를 표로 작성했는가?

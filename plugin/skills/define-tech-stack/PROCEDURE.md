@@ -127,6 +127,8 @@ GCP Cloud Run ✓               ✓           ✓
 
 ### Phase 4. 선택 + 결정 근거 작성
 
+> **AI 편향 차단 게이트** — 본 Phase 시작 전 *3개 이상의 orthogonal한 stack 후보*를 발산시킨다. 발산은 직접 또는 `verify-best-alternative` 호출로. *첫 답으로 commit 금지*. Phase 4 산출물에 3개 이상 후보의 *rubric 비교 표*(언어/framework·DB·hosting·observability·5년 lock-in)가 나란히 존재해야 §11 검증 게이트 통과. 체크박스만 체크하는 회피는 *anti-rationalization 위반*. 적용 근거: [`docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md`](../../../../docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md) §3.
+
 차원별로 선택을 확정. 각 결정에 다음 형태로 근거 명시:
 
 > Selected: <option>
@@ -236,5 +238,6 @@ GCP Cloud Run ✓               ✓           ✓
 - [ ] §0 의 5 anti-pattern 들이 산출물에 등장하지 않음
 - [ ] ADR handoff 라인이 출력에 명시됨
 - [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. stack 결정(언어/프레임워크/DB/runtime/hosting)이 *첫 답*이 아니라 다관점 검토 후 *어떤 관점에서 봐도 최선*임을 확인. 자동 dispatch 또는 명시 호출 — `/buddy:verify-best-alternative "stack 결정 컨텍스트"`
+- [ ] **3+ orthogonal 후보의 rubric 비교 표가 산출물에 존재** — 체크박스만 체크하는 *anti-rationalization 회피* 금지. Phase 4 산출물의 dimensions evaluated 표 또는 별도 rubric 표로 증명
 
 하나라도 no 면 해당 phase 로 돌아가 보강 후 재검증. 사용자에게 incomplete 산출물을 "충분하다" 고 보고하지 말 것.

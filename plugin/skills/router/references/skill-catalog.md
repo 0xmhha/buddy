@@ -118,7 +118,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `write-adr` | command + dispatch | Architecture Decision Record 작성 — 표준 7 섹션 (Status/Context/Decision/Consequences/Alternatives/References) + supersede 체인 + Index 갱신 |
 | `consult-codex` | command + dispatch | 독립 컨텍스트의 외부 LLM CLI(codex 등)를 호출해 review/challenge/consult 3 modes로 second opinion을 얻음 |
 | `consult-design-system` | dispatch | research → synthesize → output pipeline으로 complete design system 생성 |
-| `verify-best-alternative` | command + dispatch | [AI 편향 방지] 엔지니어링 결정(설계·구현·알고리즘)의 *첫 답 commit 직전* 강제 다관점 검토 — orthogonal N개 대안 발산 + rubric 비교. design-* 결정 스킬들에서 sub-step 의무 호출 |
+| `verify-best-alternative` | command + dispatch | [AI 편향 방지 — 엔지니어링 한정] 아키텍처·데이터모델·알고리즘·API·인증·스택·코드네이밍·prompt 등 *엔지니어링 결정*의 첫 답 commit 직전 강제 다관점 검토 (orthogonal N개 대안 발산 + rubric 비교). §3 design-* 스킬들에서 sub-step 의무 호출. **scope: 엔지니어링만 — 그래픽 디자인·브랜드·마케팅·사업기획은 별도 스킬(미래)** |
 | `critique-plan` | dispatch | Implementation plan에 대한 strategic critique (CEO/founder 페르소나) |
 
 ### §4 Stage Skills — Implementation Plan
@@ -234,7 +234,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 |------------|---------|------------------|
 | `apply-builder-ethos` | dispatch | Boil the Lake, Search Before Building, User Sovereignty 3 원칙을 주입해 AI collaboration project에 적용 |
 | `benchmark-llm-models` | dispatch | [패턴 라이브러리] multi-provider LLM benchmark 패턴 (Claude/GPT/Gemini) — dry-run auth verify, provider select, comparison |
-| `decompose-blocker` | command + dispatch | 코드 작업 중 stuck 상태(어디서 봐야 할지 모름·다음 행동 안 보임)에서 문제를 기계적으로 분해(fact/추측/모름 3분류 + 분해 축) + 비용-정보 매트릭스 기반 행동 후보 도출. *fix는 수행 X*, 다음 스킬로 dispatch 준비. 사용자가 "막혔어/어디부터 봐야 할지 모르겠어" 할 때 호출 |
+| `decompose-blocker` | command + dispatch | [엔지니어링·언어독립] 코드 작업 stuck 상태에서 문제 분해 + 비용-정보 매트릭스 행동 후보 도출. **자동 trigger: AI가 동일 문제 3회 시도 후 미해결 (token escalation 차단 + 문제 세분화)** 또는 사용자 명시 호출. fact/추측/모름 3분류 + 분해 축(4D/5-Whys/fishbone) + 가설 압축. *fix 수행 X*, 다음 스킬로 dispatch 준비 |
 | `detect-install-type` | dispatch | [패턴 라이브러리] tool install type(global-git/local-git/vendored/package-manager/dev-symlink) detect + upgrade path |
 | `guide-setup-wizard` | dispatch | [패턴 라이브러리] auto-detect → picker → verify pattern으로 credential/config setup flow 설계 |
 | `write-a-skill` | command + dispatch | [META] 신규 buddy 스킬을 PROCEDURE.md + skill-catalog 등재 + 차용 4분류 정책 적용까지 한 사이클로 작성. RED-GREEN-REFACTOR subagent pressure test 강제. 사용자가 "새 스킬 만들자/추가하자/skill 작성" 할 때 호출 |

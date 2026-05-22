@@ -89,6 +89,8 @@ async event 의 schema-first contract. design-api-contract 가 sync layer 결정
 
 ### Phase 2. Schema format + registry 결정
 
+> **AI 편향 차단 게이트** — 본 Phase 시작 전 *3개 이상의 schema format 후보*(예: JSON Schema / Protobuf / Avro / CloudEvents)와 *registry 옵션* 후보 발산. 직접 또는 `verify-best-alternative` 호출. *첫 답 commit 금지*. 산출물에 3+ 후보의 *(versioning·codegen·validation·DLQ 통합·idempotency)* rubric 비교 존재해야 §11 통과. 적용 근거: [`docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md`](../../../../docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md) §3.
+
 | Aspect | Decision |
 |--------|----------|
 | Schema format | **JSON Schema** (1차 — SQS / SNS json payload, low entry barrier). v2+ Protobuf 검토 (Kafka 도입 시). |
@@ -256,5 +258,6 @@ at-least-once 결정 근거: at-most-once = 중요 event loss risk, exactly-once
 - [ ] §4 posture 적용 — 단호
 - [ ] §0 anti-pattern 부재 — schema-less / versioning 부재 / DLQ 부재 / idempotency 없음 / single-side / sync 분리 모두 충족
 - [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. event schema format / registry / DLQ 전략이 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
+- [ ] **3+ orthogonal schema format 후보의 rubric 비교 표가 산출물에 존재** — 체크박스만 체크하는 *anti-rationalization 회피* 금지. Phase 2의 schema decision 표로 증명
 
 하나라도 no 면 해당 phase 회귀 후 재검증.

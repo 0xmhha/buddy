@@ -90,6 +90,8 @@
 
 ### Phase 3. Normalization decision
 
+> **AI 편향 차단 게이트** — 본 Phase 시작 전 *3개 이상의 normalization 전략 후보*(예: 3NF / denormalized read-model / event-sourced / document) + *PK/index 전략* 후보 발산. 직접 또는 `verify-best-alternative` 호출. *첫 답 commit 금지*. 산출물에 3+ 후보의 *(write 단순성·read 효율·migration 비용·schema evolution)* rubric 비교 존재해야 §11 통과. 적용 근거: [`docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md`](../../../../docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md) §3.
+
 각 entity 별로 결정:
 
 | Entity | Default | Decision | Reason |
@@ -215,5 +217,6 @@ Schema 변경의 deploy 전략:
 - [ ] §0 anti-pattern 들이 산출물에 등장하지 않음
 - [ ] ADR handoff 라인 명시
 - [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. normalization / index 전략 / migration 접근이 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
+- [ ] **3+ orthogonal normalization 후보의 rubric 비교 표가 산출물에 존재** — 체크박스만 체크하는 *anti-rationalization 회피* 금지. Phase 3의 entity별 결정 + Phase 4의 index 전략 비교 표로 증명
 
 하나라도 no 면 해당 phase 로 돌아가 보강 후 재검증.

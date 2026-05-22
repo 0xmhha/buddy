@@ -68,6 +68,8 @@ multi-tenant 격리 전략을 v1 부터 design — 후 도입 비용 큰 결정.
 
 ### Phase 1. 3 모델 trade-off 분석
 
+> **AI 편향 차단 게이트** — 본 Phase는 Shared (RLS) / Schema-per / DB-per 3 모델을 *기본 후보*로 비교하지만, 도메인에 따라 *추가 orthogonal 옵션*(예: 지역별 격리 / namespace-per-tenant in k8s / hybrid — premium tier만 DB-per) 검토 필요. 직접 또는 `verify-best-alternative` 호출. 3 기본 모델이 *유일한 alternatives*라고 가정하지 말 것 — 추가 후보가 없는지 확인 후 진행. 적용 근거: [`docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md`](../../../../docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md) §3.
+
 | Aspect | Shared (RLS) | Schema-per-tenant | DB-per-tenant |
 |--------|--------------|---------------------|------------------|
 | Isolation | logical (RLS policy) | strong (schema namespace) | strongest (separate DB instance) |
@@ -286,5 +288,6 @@ fastify.addHook('preHandler', async (req) => {
 - [ ] §4 posture
 - [ ] §0 anti-pattern 부재 — model 결정 / single layer / identity 모호 / cost 무측정 / customization 미정 / compliance 모호 모두 충족
 - [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. tenant isolation model(shared/schema-per/DB-per) 결정이 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
+- [ ] **3+ orthogonal tenant isolation 후보의 rubric 비교 표가 산출물에 존재** — 체크박스만 체크하는 *anti-rationalization 회피* 금지. 기본 3 모델 + 추가 옵션(hybrid/지역별/namespace-per-tenant) 검토 여부 명시
 
 하나라도 no 면 해당 phase 회귀 후 재검증.

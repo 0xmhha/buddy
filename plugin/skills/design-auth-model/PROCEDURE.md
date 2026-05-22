@@ -67,6 +67,8 @@ auth 영역의 5 axis decision 통합. design-api-contract 가 endpoint level �
 
 ### Phase 1. Authentication (sign-in mechanism)
 
+> **AI 편향 차단 게이트** — 본 Phase 시작 전 *3개 이상의 orthogonal auth mechanism 후보*(예: email+password / OAuth2 federation / passwordless magic-link / WebAuthn passkey / SAML enterprise SSO) 발산. 직접 또는 `verify-best-alternative` 호출. *첫 답 commit 금지*. 산출물에 3+ 후보의 *(공격 표면·lifecycle 복잡도·federation 비용·UX·compliance)* rubric 비교 존재해야 §11 통과. 같은 게이트가 Phase 2 (session) / Phase 3 (authz model) / Phase 4 (federation) / Phase 5 (MFA) 결정에도 적용. 적용 근거: [`docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md`](../../../../docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md) §3.
+
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Primary mechanism | **email + password** | broadest reach, fallback before SSO |
@@ -243,5 +245,6 @@ backup mechanisms:
 - [ ] §4 posture
 - [ ] §0 anti-pattern 부재 — auth only / lifetime 부재 / MFA 미정 / federation deferred / storage 모호 / password policy 부재 / recovery anti-pattern 모두 충족
 - [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. auth mechanism / session storage / federation 전략이 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
+- [ ] **3+ orthogonal auth mechanism 후보의 rubric 비교 표가 산출물에 존재** — 체크박스만 체크하는 *anti-rationalization 회피* 금지. Phase 1~5 결정 표로 증명 (각 Phase별 candidate 비교)
 
 하나라도 no 면 해당 phase 회귀 후 재검증.

@@ -3,21 +3,29 @@
 
 AI 협업 개발에서 *모델이 첫 답에 commit하려는 경향*과 *학습 분포에 의한 편향*이 엔지니어링 결정 품질을 저하시키는 것을 차단하는 *강제 다관점 검토 절차*. "이 결정이 최선인가"를 기계적으로 검증 — 단일 방향이 그럴듯해 보이더라도 의도적으로 orthogonal한 N개 대안을 발산시키고, rubric으로 비교, **어느 관점에서 봐도 최선**인 설계·구현·알고리즘을 선택.
 
-적용 영역: 시각 디자인, microcopy, 아키텍처 옵션, 네이밍, prompt 초안, API shape, 에러 메시지, 알고리즘 선택, 데이터 모델, 인증 모델, 이벤트 스키마, 멀티-tenant 격리 전략 — *AI 첫 답이 약한 기본*일 수 있는 모든 엔지니어링 결정. 취향·판단·제약 트레이드오프가 연루된 곳, *"첫 떠오른 아이디어"가 의심스러운* 모든 결정.
+적용 영역 (**엔지니어링 한정**): 아키텍처 옵션 / 데이터 모델 / 알고리즘 선택 / API shape / 인증 모델 / 멀티-tenant 격리 전략 / 이벤트 스키마 / 시크릿 관리 전략 / 스택 선택 / 코드 네이밍 (함수·타입·변수·모듈) / prompt engineering (AI 기능 구현) — *AI 첫 답이 약한 기본*일 수 있는 모든 엔지니어링 결정. 요구사항과 환경 제약 하에서 *베스트 선택지로 작업이 진행되도록* 강제하는 것이 목적.
 
-본 스킬은 *옵션 발산*이 목적이 아니라 *결정 품질 보장*. buddy의 핵심 design 결정 스킬들(`design-system`, `define-tech-stack`, `design-api-contract`, `design-data-model`, `design-event-schema`, `design-auth-model`, `design-tenant-model`, `design-secret-management`)에서 *첫 답 commit 직전* 의무 호출되어야 한다 — 자동 dispatch 또는 명시 호출. 메커니즘(병렬 탐색 → 나란히 비교 → rubric 피드백 → 개선)은 domain-agnostic.
+> **Scope 제한**: 본 스킬은 *엔지니어링 결정 한정*. 그래픽 디자인 (typography·color·layout), 브랜드/제품 네이밍, microcopy/UI text, 마케팅 카피, 사업 기획 옵션 검토는 *별도 스킬* (미래 작업, 본 스킬과 분리). "design"이라는 단어가 그래픽 디자인·엔지니어링 설계·브랜딩·사업 기획 모두에 쓰여 혼란을 야기하나, 본 스킬은 *엔지니어링 설계·구현 결정*에만 해당.
+
+본 스킬은 *옵션 발산*이 목적이 아니라 *결정 품질 보장*. buddy의 §3 Technical Design 결정 스킬들(`design-system`, `define-tech-stack`, `design-api-contract`, `design-data-model`, `design-event-schema`, `design-auth-model`, `design-tenant-model`, `design-secret-management`)에서 *첫 답 commit 직전* 의무 호출되어야 한다 — 자동 dispatch 또는 명시 호출. 메커니즘(병렬 탐색 → 나란히 비교 → rubric 피드백 → 개선)은 *엔지니어링 영역 내에서* domain-agnostic.
 
 > *이전 이름 `explore-design-variants`는 시각 디자인 한정으로 오해되어 2026-05-20 rename됨. 메커니즘과 본문은 동일.*
 
 ## 이 스킬을 사용하는 경우
 
-- 단일 방향이 premature commitment일 때 (아직 뭐가 좋은지 모름).
-- 여러 옵션 생성 비용이 잘못 고르는 비용에 비해 작을 때.
-- 사용자가 "옵션 보여줘", "이건 안 좋아", "탐색", "brainstorm"이라 말했거나, 답이 정답이 아니라 취향인 질문을 했을 때.
-- Stakeholder가 방향에 불일치하고 반응할 구체적 artifact 필요.
-- 떠오른 첫 아이디어로 수렴하는 자신을 catch.
+- 엔지니어링 결정에서 *단일 방향이 premature commitment*일 때 — AI가 첫 답을 굳히려 함, 사용자도 다른 옵션 못 본 상태
+- 요구사항·환경 제약 하에 *여러 viable한 후보가 존재*할 가능성이 높을 때 (예: 여러 DB·여러 framework·여러 API style·여러 알고리즘이 모두 통할 때)
+- 잘못 고르면 *재작업 비용이 후보 생성 비용보다 큰* 결정 (스택 lock-in, 데이터 모델, 인증 구조 등)
+- AI 또는 사용자가 *떠오른 첫 아이디어로 수렴*하는 자신을 catch
+- §3 design 스킬 (design-system / define-tech-stack 등) 결정 Step 진입 직전 — 의무 호출
 
-**이 스킬 쓰지 말 것:** 답이 정확성에 의해 결정 (버그 fix, 수학 문제), 제약 주어지면 하나의 viable 방향만, 또는 사용자가 이미 방향을 잠그고 실행만 원할 때.
+**이 스킬 쓰지 말 것**:
+- 답이 *정확성*에 의해 결정되는 문제 (bug fix, 수학 문제, 알려진 spec 구현)
+- 제약 하에 *하나의 viable 방향만* 존재 (예: legacy 호환 요구로 stack 고정)
+- 사용자가 *이미 방향을 잠그고 실행만 원함*
+- **그래픽 디자인 / 브랜드 / 마케팅 / 사업 기획 옵션 검토** — 별도 스킬 (미래)
+- **막힘 상태에서 문제 분해** (옵션이 아예 안 보임) → `decompose-blocker` 사용
+- **bug 증상은 명확한데 root cause 분석** → `diagnose-bug` 사용
 
 ## 패턴
 
@@ -53,13 +61,15 @@ Concept 개정 최대 2 라운드, 그다음 commit하고 생성.
 
 **Swap test:** 두 variant의 표면 세부를 swap해도 인상이 실질적으로 바뀌지 않으면 둘은 너무 비슷. 약한 쪽을 의도적으로 다른 premise로 regenerate.
 
-Swap test의 도메인별 적용:
+Swap test의 엔지니어링 도메인별 적용:
 
-- **시각 디자인:** 다른 font family, 색상 팔레트, AND 레이아웃 접근. A와 B 둘 다 light 배경에 centered hero의 sans-serif면 실패.
-- **Copy / microcopy:** 다른 voice, 다른 수사적 move, 다른 길이. A와 B 둘 다 "공손 + 기능적 + 12 단어"면 하나 실패.
-- **아키텍처 옵션:** 다른 fundamental decomposition (예: monolith vs services vs serverless), "monolith with feature flag X" vs "monolith with feature flag Y"가 아니라.
-- **네이밍:** 다른 metaphor family, 세 synonym 아님 (`Pulse`, `Beat`, `Tempo`는 세 옵션 아님 — 하나 옵션).
+- **아키텍처 옵션:** 다른 fundamental decomposition (예: monolith vs microservices vs serverless), "monolith with feature flag X" vs "monolith with feature flag Y"가 아니라.
+- **데이터 모델:** 다른 normalization 전략 (예: 3NF vs denormalized read-model vs event-sourced), 또는 다른 primary key 전략 (UUID vs sequential vs composite). 같은 schema의 column 1~2개 차이 아님.
+- **알고리즘 선택:** 다른 시간복잡도 trade-off (예: hash + O(1) lookup vs sorted + O(log n) + range query 가능). 같은 O() 안의 변형 아님.
 - **API shape:** 다른 추상화 레벨 (예: low-level primitive vs declarative DSL vs object-oriented facade), REST의 세 flavor 아님.
+- **인증 메커니즘:** 다른 trust model (예: session cookie vs JWT bearer vs OAuth2 federation), 같은 mechanism의 token TTL 차이 아님.
+- **스택 선택:** 다른 *runtime category* (예: Go monolith vs Python + FastAPI vs Node + Express vs Rust + Axum), 같은 언어의 framework 변형 아님.
+- **코드 네이밍:** 다른 *의미 framework* (예: `userToken` vs `sessionHandle` vs `authContext` — abstraction level이 다름), `userToken` vs `userTok` vs `usrToken` 같은 *철자 변형*은 한 옵션.
 
 수렴을 catch하면 빠진 것 명명: "세 개 모두 [공유 axis] 탐색. variant C를 [orthogonal axis]로 regenerate."
 
@@ -106,13 +116,16 @@ Runtime이 병렬 dispatch 못 하면 순차 생성하되 "각 에이전트는 �
 
 Variant별 테이블 뒤, 하나의 **전체 방향 문장** 요청 — 여기서 사용자가 다음 라운드에 원하는 synthesis 표현 (예: "A로 가되, B의 더 큰 CTA").
 
-### 도메인별 제안 기준
+### 엔지니어링 도메인별 제안 기준
 
-- **시각 디자인:** clarity, hierarchy, taste, on-brand-ness, accessibility 힌트.
-- **Copy:** clarity, voice 매치, 길이 적절, action 유도, no jargon.
-- **아키텍처:** simplicity, 변경 tolerance, 운영 비용, 팀 친숙도, 실패 모드 blast radius.
-- **네이밍:** memorable, pronounceable, not-already-taken, signals-the-thing, ages-well.
-- **API shape:** discoverable, misuse 어려움, consistent, evolvable, debuggable.
+- **아키텍처 옵션:** simplicity, 변경 tolerance, 운영 비용, 팀 친숙도, 실패 모드 blast radius
+- **데이터 모델:** write 단순성, read 효율, migration 비용, schema evolution 가능성, integrity 보장 수준
+- **알고리즘 선택:** 시간복잡도 (target input scale), 공간복잡도, 구현 복잡도, debuggability, library 가용성
+- **API shape:** discoverable, misuse 어려움 (오용 방지), consistent, evolvable, debuggable
+- **인증 모델:** 공격 표면, key/token lifecycle 복잡도, federation 비용, 사용자 경험, compliance 적합도
+- **스택 선택:** 5년 lock-in 비용, 팀 hiring 풀, 생태계 성숙도, observability 도구, 학습 곡선
+- **코드 네이밍:** 의도 명시도 (intent clarity), 일관성 (codebase convention 정합), grep-ability, callsite 가독성, 약어 회피
+- **prompt engineering:** robustness (입력 변형에 강함), 길이 효율 (토큰), misuse 어려움, output 정합도, observable failure modes
 
 3-5 기준 선택. 5 이상이면 사용자 disengage; 3 미만이면 signal이 action하기엔 너무 noisy.
 
@@ -127,14 +140,18 @@ Variant별 테이블 뒤, 하나의 **전체 방향 문장** 요청 — 여기�
 
 나란히가 순차를 매번 이긴다. 사용자 눈과 판단은 절대 평가가 아니라 대조로 작동. 도메인 무관, axis별 비교가 싸도록 variant 제시.
 
-각 도메인:
+엔지니어링 각 도메인 비교 framework:
 
-- **시각:** literal 나란히 렌더링 (이미지 그리드, 비교 HTML 페이지, 인쇄 시트). 같은 스케일, 같은 crop, 같은 주변 chrome.
-- **Copy:** variant당 한 컬럼, 사용 context(버튼 레이블, 에러 메시지, empty state 등)당 한 row의 markdown 테이블. 사용자가 각 voice가 context에 어떻게 재생되는지 봄.
-- **아키텍처:** variant당 parallel 섹션, 동일 sub-header(Decomposition, Data flow, Failure modes, Cost, Migration path)의 단일 문서. Apples-to-apples 강제.
-- **네이밍:** 왼쪽에 이름, 각 axis(memorability, domain fit, availability 등) 컬럼 + 사용자가 채우는 "first reaction" 컬럼의 테이블.
+- **아키텍처 옵션:** variant당 parallel 섹션, 동일 sub-header (Decomposition, Data flow, Failure modes, Cost, Migration path, Team familiarity) 의 단일 문서. Apples-to-apples 강제.
+- **데이터 모델:** variant당 parallel 섹션, 동일 sub-header (Entities, R/W pattern, Normalization, Index, Migration, Risks) — design-data-model 출력 schema와 정합.
+- **알고리즘 선택:** 표 — variant 행 × (시간복잡도 best/avg/worst, 공간복잡도, 구현 LOC 추정, library 가용성, debuggability) 열.
+- **API shape:** variant당 parallel 섹션, 동일 sub-header (Style, Actor-Operation Map, Schema sample, Error taxonomy, Versioning, Contract test) — design-api-contract 출력과 정합.
+- **인증 모델:** 표 — variant 행 × (mechanism, session TTL/rotation, federation 지원, MFA 통합 비용, recovery flow, compliance flag) 열.
+- **스택 선택:** 표 — variant 행 × (언어/framework, DB, hosting, observability, CI, 5년 lock-in score, team-fit score) 열.
+- **코드 네이밍:** 표 — variant 행 × (의도 명시도, codebase 일관성, grep-ability, callsite 예시 1줄, 약어 여부) 열.
+- **prompt engineering:** variant당 동일 input 예시 처리 결과 나란히 + 표 (robustness, 토큰 길이, misuse 어려움, output 정합도).
 
-Framework는 시각이 아니라 구조. 터미널에서도 동일 sub-header의 parallel 섹션이 대부분 일 수행.
+Framework는 시각이 아니라 *구조*. 터미널에서도 동일 sub-header의 parallel 섹션이 대부분 일 수행.
 
 ## 반복 루프
 
@@ -152,48 +169,72 @@ Framework는 시각이 아니라 구조. 터미널에서도 동일 sub-header의
 
 **안티패턴: 움직이는 타겟 쫓기.** 사용자 피드백이 이전 라운드 피드백과 모순되면 명명: "지난 라운드엔 더 높은 밀도 원하셨고, 이번엔 더 많은 여백 요청. 어느 쪽으로 push하길 원하세요?" 꼬투리 잡기가 아니라 — 진동(oscillation)을 막아주는 것.
 
-## 도메인 Adaptation
+## 엔지니어링 도메인 Adaptation
 
-패턴은 동일. Artifact와 rubric 기준이 변경.
+패턴은 동일. Artifact와 rubric 기준이 도메인별로 변경. *모두 엔지니어링 영역 — 그래픽 디자인·브랜드·마케팅·사업기획은 별도 스킬*.
 
-### 시각 디자인
+### 아키텍처 옵션 (design-system / derive-system-topology 결정 시점)
 
-- N = 3 typical, 중요 스크린엔 5-8.
-- 다양성 axis: typeface family, 색상 팔레트, 레이아웃 그리드, 밀도.
-- 비교: 나란히 이미지 그리드, 같은 crop과 스케일.
-- Rubric: clarity, hierarchy, on-brand, accessibility, "고객에게 보여줄까".
-- 반복: 승자 variant refine, 또는 element remix.
-
-### Copy / Microcopy
-
-- N = 3-5.
-- 다양성 axis: voice(formal/casual), 길이, 수사적 move (instructive/inviting/warning), reading level.
-- 비교: variant당 한 컬럼, context(button, empty state, error, success)당 한 row의 테이블.
-- Rubric: clarity, voice fit, action-driving, jargon-free, length-appropriate.
-- 반복: 승자 refine OR remix (이 voice + 저 길이).
-
-### 아키텍처 옵션
-
-- N = 2-4 (4 이상은 분석 depth 희석).
-- 다양성 axis: fundamental decomposition (mono/services/serverless/hybrid), data ownership, sync vs async boundaries, build vs buy.
-- 비교: 동일 sub-header(Decomposition, Data flow, Failure modes, Cost, Migration path, Team familiarity)의 parallel 섹션.
+- N = 2~4 (4 이상은 분석 depth 희석).
+- 다양성 axis: fundamental decomposition (mono/services/serverless/hybrid), data ownership, sync vs async boundaries, build vs buy, state location (DB/cache/edge).
+- 비교: 동일 sub-header (Decomposition / Data flow / Failure modes / Cost / Migration path / Team familiarity) 의 parallel 섹션.
 - Rubric: simplicity, change-tolerance, ops cost, team-fit, blast radius.
-- 반복: 더 깊은 엣지 케이스 분석으로 승자 refine, 또는 두 옵션을 hybrid로 merge.
+- 반복: 깊은 엣지 케이스 분석으로 승자 refine, 또는 두 옵션을 hybrid로 merge.
 
-### 네이밍
+### 데이터 모델 (design-data-model 결정 시점)
 
-- N = 5-10 (네이밍은 cheap exploration value 많음).
-- 다양성 axis: metaphor family, 음절 수, 어원, phonetics.
-- 비교: axes(memorable, pronounceable, available, signals-the-thing, ages-well, "first reaction") 테이블.
-- Rubric: signal, availability, 구별성, ages-well, "회의에서 소리 내 말하기" 테스트.
-- 반복: landing한 metaphor 가져와 같은 family에서 5개 더 생성. 또는 runner-up의 가장 강한 속성 pick하고 그것 유지하는 variant 요청.
+- N = 2~4.
+- 다양성 axis: normalization (3NF / denormalized / event-sourced / document), PK 전략 (UUID / sequential / composite), index 전략 (covering / partial / generated column), partitioning (single / sharded / temporal).
+- 비교: 동일 sub-header (Entities / R-W Pattern / Normalization / Index / Migration / Risks) 의 parallel 섹션 — design-data-model §6 출력 schema와 정합.
+- Rubric: write 단순성, read 효율, migration 비용, schema evolution, integrity 수준.
+- 반복: 승자 refine 또는 read/write 분리된 hybrid 검토.
 
-### Prompt / Spec 초안
+### 알고리즘 선택 (build-with-tdd 또는 refactor 결정 시점)
 
-- N = 3-4.
-- 다양성 axis: 구조 (numbered step vs prose vs role-based vs example-driven), 제약 레벨, 가정 reader 전문성.
-- 비교: 각 variant가 처리한 동일 input 예시로 나란히.
-- Rubric: clarity, variation robustness, 길이, misuse 어려움, outputs-match-intent.
+- N = 2~4.
+- 다양성 axis: 시간복잡도 트레이드오프 (hash O(1) vs sorted O(log n) vs naive O(n)), space-time trade-off, online vs batch, deterministic vs probabilistic (예: bloom filter).
+- 비교: 표 — variant 행 × (시간복잡도 best/avg/worst / 공간복잡도 / 구현 LOC / library 가용성 / debuggability) 열.
+- Rubric: target input scale 적합도, 구현 복잡도, debuggability, library 가용성, future-proof.
+- 반복: target scale 변경 가정으로 재평가, 또는 hybrid (작은 input은 naive / 큰 input은 indexed).
+
+### API shape (design-api-contract 결정 시점)
+
+- N = 2~4.
+- 다양성 axis: 추상화 레벨 (low-level primitive / declarative DSL / OO facade), protocol (REST / GraphQL / RPC / streaming), error semantic (status code / typed errors / Result type).
+- 비교: 동일 sub-header (Style / Actor-Operation Map / Schema sample / Error taxonomy / Versioning / Contract test) 의 parallel 섹션 — design-api-contract §6과 정합.
+- Rubric: discoverable, misuse 어려움, consistent, evolvable, debuggable.
+- 반복: 실제 client 코드 sample 작성해 풍부도 검증, 또는 두 protocol의 hybrid (예: REST + GraphQL gateway).
+
+### 인증 모델 (design-auth-model 결정 시점)
+
+- N = 2~4.
+- 다양성 axis: trust model (session / JWT bearer / OAuth2 federation / SAML), MFA 통합 (TOTP / WebAuthn / SMS), recovery flow.
+- 비교: 표 — variant 행 × (mechanism / session TTL·rotation / federation / MFA 통합 비용 / recovery / compliance flag) 열.
+- Rubric: 공격 표면, lifecycle 복잡도, federation 비용, UX, compliance 적합도.
+- 반복: threat model 갱신 후 재평가, 또는 두 mechanism의 hybrid (예: session + JWT for service-to-service).
+
+### 스택 선택 (define-tech-stack 결정 시점)
+
+- N = 2~4 (좁히기).
+- 다양성 axis: language family (Go / Rust / Python / TS / JVM), framework category (minimalist / batteries-included / opinionated), DB family (relational / document / graph / time-series), hosting (serverless / k8s / VM / managed PaaS).
+- 비교: 표 — variant 행 × (언어/framework / DB / hosting / observability / CI / 5년 lock-in score / team-fit score) 열 — define-tech-stack §6 dimension table과 정합.
+- Rubric: lock-in 비용, hiring 풀, 생태계 성숙도, observability, 학습 곡선.
+- 반복: 5년 prediction 가정 변경하여 재평가, 또는 mixed-runtime (예: Go backend + Python ML).
+
+### 코드 네이밍 (refactor 또는 새 모듈 추가 시점)
+
+- N = 3~5 (네이밍은 cheap exploration).
+- 다양성 axis: 의미 framework (data-shape / process / role), abstraction level (concrete / interface / metaphor), 단어 갯수 (1 / 2-3 / 4+).
+- 비교: 표 — variant 행 × (의도 명시도 / codebase 일관성 / grep-ability / callsite 예시 1줄 / 약어 여부) 열.
+- Rubric: intent clarity, codebase convention 정합, grep-ability, callsite 가독성, 약어 회피.
+- 반복: callsite 5개에서 가독성 sample, 또는 두 후보의 axis 결합 (예: A의 framework + B의 abstraction level).
+
+### Prompt Engineering (AI 기능 구현 시점)
+
+- N = 3~4.
+- 다양성 axis: 구조 (numbered step / prose / role-based / example-driven / chain-of-thought), 제약 레벨, 가정 reader 전문성 (zero-shot / few-shot).
+- 비교: 각 variant가 처리한 동일 input 예시 나란히 + 표 (robustness / 토큰 길이 / misuse 어려움 / output 정합도).
+- Rubric: variation robustness, 토큰 효율, misuse 어려움, output 정합, observable failure modes.
 - 반복: adversarial input으로 승자 refine, 또는 다른 variant의 구조 + 제약 레벨 remix.
 
 ## 출력

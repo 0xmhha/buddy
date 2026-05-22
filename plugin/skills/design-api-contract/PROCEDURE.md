@@ -69,6 +69,8 @@ API 계약 의사결정 누수 — "REST 가 표준이니까" / "schema 는 코�
 
 ### Phase 1. API style 선택
 
+> **AI 편향 차단 게이트** — 본 Phase 시작 전 *3개 이상의 orthogonal한 API style 후보*(예: REST / GraphQL / gRPC, 또는 REST의 추상화 레벨 변형 — RPC-style vs resource-style vs hypermedia)를 발산. 직접 또는 `verify-best-alternative` 호출. *첫 답 commit 금지*. 매트릭스에 3개 이상 후보의 *rubric 비교*가 존재해야 §11 게이트 통과. 적용 근거: [`docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md`](../../../../docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md) §3.
+
 다음 매트릭스로 평가:
 
 | Style | Best fit | 단점 | Mature ecosystem |
@@ -234,5 +236,6 @@ Change conditions: <어떤 signal 시 재평가>
 - [ ] §0 anti-pattern 들이 산출물에 등장하지 않음
 - [ ] ADR handoff 라인 명시
 - [ ] **`verify-best-alternative` 1회 이상 호출 완료** — AI 편향 방지 의무. API style(REST/GraphQL/RPC) 결정과 schema 설계가 *첫 답*이 아니라 다관점 검토 후 최선임을 확인
+- [ ] **3+ orthogonal API style 후보의 rubric 비교 표가 산출물에 존재** — 체크박스만 체크하는 *anti-rationalization 회피* 금지. Phase 1의 매트릭스로 증명
 
 하나라도 no 면 해당 phase 로 돌아가 보강 후 재검증.
