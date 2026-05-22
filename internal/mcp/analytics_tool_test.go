@@ -27,11 +27,11 @@ func TestAnalyticsTools_Registered(t *testing.T) {
 
 	serverSession, err := server.Connect(ctx, st, nil)
 	require.NoError(t, err)
-	defer serverSession.Close()
+	defer func() { _ = serverSession.Close() }()
 
 	clientSession, err := client.Connect(ctx, ct, nil)
 	require.NoError(t, err)
-	defer clientSession.Close()
+	defer func() { _ = clientSession.Close() }()
 
 	got, err := clientSession.ListTools(ctx, nil)
 	require.NoError(t, err)
@@ -73,11 +73,11 @@ func TestAnalyticsTools_StubReturnsFriendToneText(t *testing.T) {
 
 	serverSession, err := server.Connect(ctx, st, nil)
 	require.NoError(t, err)
-	defer serverSession.Close()
+	defer func() { _ = serverSession.Close() }()
 
 	clientSession, err := client.Connect(ctx, ct, nil)
 	require.NoError(t, err)
-	defer clientSession.Close()
+	defer func() { _ = clientSession.Close() }()
 
 	res, err := clientSession.CallTool(ctx, &mcp.CallToolParams{
 		Name: "analytics_query_funnel",
@@ -172,10 +172,10 @@ func TestAnalyticsTools_AdapterWiredReturnsJSON(t *testing.T) {
 	st, ct := mcp.NewInMemoryTransports()
 	serverSession, err := server.Connect(ctx, st, nil)
 	require.NoError(t, err)
-	defer serverSession.Close()
+	defer func() { _ = serverSession.Close() }()
 	clientSession, err := client.Connect(ctx, ct, nil)
 	require.NoError(t, err)
-	defer clientSession.Close()
+	defer func() { _ = clientSession.Close() }()
 
 	res, err := clientSession.CallTool(ctx, &mcp.CallToolParams{
 		Name: "analytics_query_funnel",

@@ -75,11 +75,11 @@ func TestStore_List_SinceFilter(t *testing.T) {
 	store, as := newTestStore(t)
 	advID := seedAdvisory(t, as)
 	now := time.Now().UTC()
-	store.Insert(context.Background(), LogRow{
+	_, _ = store.Insert(context.Background(), LogRow{
 		AdvisoryID: advID, Channel: ChannelDesktop, Kind: "k", Severity: SeverityInfo,
 		SentAt: now.Add(-48 * time.Hour), Outcome: OutcomeSent,
 	})
-	store.Insert(context.Background(), LogRow{
+	_, _ = store.Insert(context.Background(), LogRow{
 		AdvisoryID: advID, Channel: ChannelDesktop, Kind: "k", Severity: SeverityInfo,
 		SentAt: now, Outcome: OutcomeSent,
 	})
@@ -93,7 +93,7 @@ func TestStore_LastSent_HappyPath(t *testing.T) {
 	store, as := newTestStore(t)
 	advID := seedAdvisory(t, as)
 	now := time.Now().UTC()
-	store.Insert(context.Background(), LogRow{
+	_, _ = store.Insert(context.Background(), LogRow{
 		AdvisoryID: advID, Channel: ChannelDesktop, Kind: "k",
 		Severity: SeverityWarn, SentAt: now.Add(-30 * time.Minute), Outcome: OutcomeSent,
 	})
@@ -108,11 +108,11 @@ func TestStore_LastSent_SkipsNonSentOutcomes(t *testing.T) {
 	advID := seedAdvisory(t, as)
 	now := time.Now().UTC()
 	// Most recent row has outcome=skipped — LastSent must skip it.
-	store.Insert(context.Background(), LogRow{
+	_, _ = store.Insert(context.Background(), LogRow{
 		AdvisoryID: advID, Channel: ChannelDesktop, Kind: "k",
 		Severity: SeverityInfo, SentAt: now.Add(-1 * time.Hour), Outcome: OutcomeSent,
 	})
-	store.Insert(context.Background(), LogRow{
+	_, _ = store.Insert(context.Background(), LogRow{
 		AdvisoryID: advID, Channel: ChannelDesktop, Kind: "k",
 		Severity: SeverityInfo, SentAt: now, Outcome: OutcomeSkippedDedup,
 	})
@@ -134,11 +134,11 @@ func TestStore_DeleteOlderThan(t *testing.T) {
 	store, as := newTestStore(t)
 	advID := seedAdvisory(t, as)
 	now := time.Now().UTC()
-	store.Insert(context.Background(), LogRow{
+	_, _ = store.Insert(context.Background(), LogRow{
 		AdvisoryID: advID, Channel: ChannelDesktop, Kind: "k",
 		Severity: SeverityInfo, SentAt: now.Add(-48 * time.Hour), Outcome: OutcomeSent,
 	})
-	store.Insert(context.Background(), LogRow{
+	_, _ = store.Insert(context.Background(), LogRow{
 		AdvisoryID: advID, Channel: ChannelDesktop, Kind: "k",
 		Severity: SeverityInfo, SentAt: now, Outcome: OutcomeSent,
 	})

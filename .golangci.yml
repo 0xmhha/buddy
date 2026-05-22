@@ -1,0 +1,32 @@
+version: "2"
+
+linters:
+  default: standard
+  settings:
+    errcheck:
+      # Closes / cleanup writes whose error has no actionable response are
+      # excluded. The intent is to silence the noise that motivates
+      # "wrap every defer in a closure" style noise, not to weaken the
+      # check on calls that genuinely need handling.
+      #
+      # - Close on io.Closer in a defer: a Close error during cleanup
+      #   cannot be returned, and the most useful path (log + continue)
+      #   is already conventional Go.
+      # - fmt.Fprint family: writes to os.Stderr/Stdout almost always
+      #   ignore the return value; a failure to write means the user
+      #   already cannot see anything.
+      # - os.Remove for tempfile cleanup: the tempfile is best-effort
+      #   removed; a missing file on cleanup is not an error worth
+      #   surfacing through the call site.
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (*database/sql.DB).Close
+        - (*database/sql.Rows).Close
+        - (*database/sql.Stmt).Close
+        - (*net/http.Response).Body.Close
+        - (net/http.Response).Body.Close
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - os.Remove
