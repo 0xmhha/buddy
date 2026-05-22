@@ -300,3 +300,74 @@ func TestEvaluator_GoalDrift_InsufficientChunksSkipped(t *testing.T) {
 		require.NotEqual(t, KindGoalDrift, a.Kind, "few chunks → no drift entry")
 	}
 }
+
+// countingEmbedder wraps a real Embedder and counts how many times
+// Embed was invoked. Used by the batch-invariant test below to assert
+// drift over N sessions still issues exactly one Embed call rather than
+// N (each call carries a multi-second model-load cost in production).
+type countingEmbedder struct {
+	inner knowledge.Embedder
+	calls int
+}
+
+func (c *countingEmbedder) Embed(ctx context.Context, reqs []knowledge.EmbedRequest) ([]knowledge.EmbedResult, error) {
+	c.calls++
+	return c.inner.Embed(ctx, reqs)
+}
+
+// TestComputeDriftItems_BatchesEmbedAcrossSessions — computeDriftItems
+// must issue a single Embed call covering every drift candidate's goal,
+// not one call per session. The old per-iteration spawn turned an
+// N-session tick into N python subprocesses (≈2-5s each); the batched
+// path collapses that cost to a single spawn regardless of N.
+//
+// The test calls computeDriftItems directly (same package) so the
+// downstream enrichWithRetrieval — which legitimately embeds its own
+// query string when a rule actually fires — doesn't pollute the count.
+func TestComputeDriftItems_BatchesEmbedAcrossSessions(t *testing.T) {
+	t.Parallel()
+	r, ss, _ := newRunner(t)
+	ctx := context.Background()
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	r.Now = func() time.Time { return now }
+
+	// Seed three active sessions, each with enough chunks to qualify
+	// as a drift candidate.
+	kstore := knowledge.NewStore(r.Advisories.db)
+	ids := []string{"sess-a", "sess-b", "sess-c"}
+	active := make([]sessions.Session, 0, len(ids))
+	for _, id := range ids {
+		s := sessions.Session{
+			ID: id, PID: 1, TranscriptPath: "/tmp/" + id + ".jsonl",
+			StartedAt: now.Add(-1 * time.Hour), LastActive: now,
+			GoalText: "goal-" + id, Metadata: "{}",
+		}
+		require.NoError(t, ss.Upsert(ctx, s))
+		active = append(active, s)
+		for i := 0; i < 10; i++ {
+			_, err := kstore.Insert(ctx, knowledge.Chunk{
+				SessionID:  id,
+				Content:    "drifted",
+				TokenCount: 1,
+				Embedding:  []float32{0, 1, 0},
+			})
+			require.NoError(t, err)
+		}
+	}
+	r.Knowledge = kstore
+
+	mock := &knowledge.MockEmbedder{
+		Vectors: map[string][]float32{
+			"goal-sess-a": {1, 0, 0},
+			"goal-sess-b": {1, 0, 0},
+			"goal-sess-c": {1, 0, 0},
+		},
+	}
+	spy := &countingEmbedder{inner: mock}
+	r.Embedder = spy
+
+	got := r.computeDriftItems(ctx, active, 10)
+	require.Len(t, got, 3, "every active candidate must produce a drift entry")
+	require.Equal(t, 1, spy.calls,
+		"three drift candidates must share one batched Embed call")
+}

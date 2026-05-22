@@ -157,14 +157,28 @@ func (e *Evaluator) buildSnapshot(ctx context.Context, t Thresholds) (Snapshot, 
 }
 
 // computeDriftItems builds per-active-session drift scores. Strict
-// graceful-fail: any embedder error on either side just drops that
-// session's drift entry (no advisory rather than a noisy "drift
-// unavailable" one).
+// graceful-fail: any embedder error or missing per-session evidence
+// drops that session's drift entry rather than emitting a noisy
+// "drift unavailable" advisory.
+//
+// The pass is two-phase so the embedder spawns once per tick instead
+// of once per active session: the first phase walks every session and
+// collects candidates that already have a usable chunk-side average,
+// then a single Embed call covers every candidate's goal_text. With
+// N active sessions and ~2-5s Python startup per spawn, the tick
+// time drops from O(N) seconds to roughly the cost of one spawn.
 func (e *Evaluator) computeDriftItems(ctx context.Context, active []sessions.Session, sampleN int) []SessionDrift {
 	if sampleN <= 0 {
 		sampleN = 10
 	}
-	var out []SessionDrift
+
+	type candidate struct {
+		s       sessions.Session
+		avg     []float32
+		worst   string
+		samples int
+	}
+	candidates := make([]candidate, 0, len(active))
 	for _, s := range active {
 		if strings.TrimSpace(s.GoalText) == "" {
 			continue
@@ -180,21 +194,43 @@ func (e *Evaluator) computeDriftItems(ctx context.Context, active []sessions.Ses
 		if avg == nil {
 			continue // no embeddings on these chunks (ingest --skip-embed run)
 		}
-		// Embed goal_text via the wired embedder.
-		goalReq := []knowledge.EmbedRequest{{ID: 0, Text: s.GoalText}}
-		res, err := e.Embedder.Embed(ctx, goalReq)
-		if err != nil || len(res) == 0 || len(res[0].Embedding) == 0 {
+		candidates = append(candidates, candidate{s, avg, worst, len(recent)})
+	}
+	if len(candidates) == 0 {
+		return nil
+	}
+
+	// One batched Embed call carries every candidate's goal_text. ID is
+	// the candidate's slice index so the result can be zipped back even
+	// when the embedder reorders or drops individual entries.
+	reqs := make([]knowledge.EmbedRequest, len(candidates))
+	for i, c := range candidates {
+		reqs[i] = knowledge.EmbedRequest{ID: int64(i), Text: c.s.GoalText}
+	}
+	res, err := e.Embedder.Embed(ctx, reqs)
+	if err != nil {
+		return nil
+	}
+	embByID := make(map[int64][]float32, len(res))
+	for _, r := range res {
+		if len(r.Embedding) > 0 {
+			embByID[r.ID] = r.Embedding
+		}
+	}
+
+	out := make([]SessionDrift, 0, len(candidates))
+	for i, c := range candidates {
+		emb, ok := embByID[int64(i)]
+		if !ok {
 			continue
 		}
-		score := knowledge.CosineSimilarity(res[0].Embedding, avg)
-		drift := SessionDrift{
-			SessionID:    s.ID,
-			GoalText:     s.GoalText,
-			Score:        score,
-			SampleChunks: len(recent),
-			WorstChunk:   worst,
-		}
-		out = append(out, drift)
+		out = append(out, SessionDrift{
+			SessionID:    c.s.ID,
+			GoalText:     c.s.GoalText,
+			Score:        knowledge.CosineSimilarity(emb, c.avg),
+			SampleChunks: c.samples,
+			WorstChunk:   c.worst,
+		})
 	}
 	return out
 }
