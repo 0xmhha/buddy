@@ -38,6 +38,72 @@ recommendation을 제시할 때, 아래 항목 중 하나와 연결해 한 문�
 - edge case handled
 - boring by default (proven tech, novelty 아님)
 
+## Anti-Rationalization (자기 합리화 차단)
+
+리뷰의 가장 흔한 실패 양식은 *issue 미발견* 이 아니라 *리뷰어 자신의 sycophantic 통과* 다. 아래 5 규칙은 리뷰어가 자기 합리화로 review 를 종결시키는 경로를 차단한다. *receiving-code-review* (superpowers) 의 anti-아첨 원칙을 *주는 쪽* 시점으로 대칭 이식한 것이다.
+
+### 1. 금지 발화 (sycophantic vocabulary)
+
+다음 단어·표현은 리뷰 본문에 출력 금지. 모든 평가는 *file:line + 구체 failure scenario* 로만 표현한다.
+
+| 금지 | 이유 | 대체 |
+|------|------|------|
+| "looks good", "전반적으로 잘 구성됨", "탄탄함" | 검증 없는 칭찬 = sycophancy | 어떤 failure scenario 를 시뮬레이션했고 plan 이 어떻게 견디는지 1줄 |
+| "approved", "통과", "ship 가능" | 결정권은 user — 리뷰어는 finding 만 | "no blocking issues in this dimension — verified by simulating X, Y" |
+| "comprehensive", "thoughtful", "well-structured" | 추상 평가 = 책임 회피 | 구체 dimension 명 + 확인한 항목 명시 |
+| "minor issue", "small concern" | 우선순위 무력화 | severity (blocking / non-blocking) 명시 |
+| "thanks for the plan", "great work" | 작성자에 대한 인상 평가 — 코드 평가 아님 | 삭제 |
+
+### 2. "No issues found" 증명 책임
+
+특정 dimension 에서 issue 가 0 이면, 다음을 *반드시 명시*:
+- 시뮬레이션한 hypothetical failure 시나리오 ≥1
+- 해당 시나리오에서 plan 이 *왜* 깨지지 않는지 (file/line 또는 plan 항목 인용)
+- 검토하지 못한 영역 (≥1) — "이 dimension 에서 *내가 보지 못한 것*은 무엇인가" 자문 결과
+
+빈 통과 ("Caching: no issues found." 만 출력) 금지. 빈 통과는 *리뷰되지 않음* 과 동치.
+
+### 3. All-clean STOP rule
+
+7 개 dimension (Data Flow / Caching / Concurrency / Performance / Edge Cases / Test Coverage / Architecture) 이 *모두* "no issues" 결론이면 **즉시 자동 STOP**. 이는 AI 리뷰가 sycophantic mode 로 빠진 가장 신뢰할 만한 신호다.
+
+STOP 후 절차:
+1. *내가 surface 하지 못한 것* 가설을 우선 채택
+2. 가장 약한 신뢰도의 dimension 1 개 선택 (보통 Concurrency 또는 Edge Cases)
+3. 해당 dimension 에서 *3 가지 이상 hypothetical failure scenario* 강제 생성 후 재-drill
+4. 그 후에도 모두 견디면 *해당 사실 자체*를 산출물에 명시 (단순 통과 아님)
+
+7/7 통과는 plan 이 perfect 하다는 증거가 아니라 *리뷰어의 imagination 한계* 신호일 가능성을 항상 우선한다.
+
+### 4. 작성자 답변 verify 의무
+
+plan 작성자 (또는 plan 본문) 가 "이미 X 를 처리했다" 고 답하면:
+- *위치 명시 요구* — "plan 의 어느 항목 / 어느 file:line 인가" 질문
+- 답을 받기 전 implementation accept 금지
+- 답변을 *증거로 채택하기 전에* 본인이 plan/코드에서 직접 verify (위치 확인 + 내용 확인)
+- 위치만 있고 내용이 handwave 면 *재 drill*
+
+작성자 답변은 *finding 후보* 이지 *finding 종결* 이 아니다.
+
+### 5. Dimension-당 challenge 자증명
+
+각 dimension 종료 시 다음 체크 출력:
+
+```
+[dimension 명] challenge questions asked: <개수> / minimum 1
+- Q1: <던진 질문 요지>
+- Q2: ...
+```
+
+challenge 0 이면 그 dimension 은 *리뷰되지 않은 것* 으로 표기 (`[NOT REVIEWED — 0 challenges]`) 하고, 종료 전 *최소 1 개 challenge 강제*.
+
+challenge 의 정의: 작성자가 답하기 위해 *plan 본문을 다시 들여다봐야 하는 질문*. "looks fine?" 같은 yes/no 는 challenge 가 아니다.
+
+### 적용 근거
+
+- superpowers `receiving-code-review` — "Forbidden Responses" + "Push back with technical reasoning" 패턴 (개념 차용)
+- A2 (`docs/superpowers/specs/2026-05-21-engineering-decision-gate-mapping.md`) — design 결정 시점에 박힌 anti-bias 게이트의 *review 시점 대칭 enforcement*. 게이트가 *결정* 에만 있고 *검증* 에 없으면 작성자가 체크박스만 통과시켜 시스템이 우회됨.
+
 ## Review Dimensions
 
 아래 순서대로 진행하라. **한 번에 한 issue만 다뤄라.** 여러 issue를 한 질문으로 묶지 마라. 각 section이 끝날 때마다 pause하고 confirm을 받은 뒤 다음으로 이동하라.
@@ -310,6 +376,17 @@ plan이 "data는 A에서 C로 흐른다"고 handwave하면, 이렇게 말하라:
 5. **Failure modes summary.** 각 신규 code path마다 현실적인 production failure scenario를 하나 제시하고, (a) test cover 여부, (b) error handling 존재 여부, (c) user가 clear error를 보는지 silent failure를 겪는지 표시한다. test 없음 AND error handling 없음 AND silent failure인 항목은 **critical gap**으로 분류한다.
 
 6. **Completion summary.** 검토한 각 dimension의 상태를 한 줄씩 요약하고, 발견 issue 수와 제안 TODO 수를 집계한다.
+
+7. **Anti-rationalization self-attestation.** "Anti-Rationalization (자기 합리화 차단)" 섹션의 5 규칙 자증명을 다음 format 으로 출력한다. 1 개라도 *NOT MET* 이면 review 미완 — 미충족 항목을 보완 후 재출력.
+
+   ```
+   Anti-rationalization self-attestation
+   - [1] 금지 발화 사용 0건 (검색: looks good / approved / comprehensive / minor issue / thanks): MET / NOT MET
+   - [2] "no issues" dimension 마다 hypothetical failure ≥1 + 미검토 영역 명시: MET / NOT MET
+   - [3] 7/7 all-clean STOP rule: TRIGGERED (재-drill 후 결과 명시) / NOT TRIGGERED
+   - [4] 작성자 답변 채택 시 위치 verify 완료: MET / NOT APPLICABLE (작성자 답변 없음)
+   - [5] dimension 당 challenge ≥1: MET (총 N개 challenge) / NOT MET
+   ```
 
 **Scope reduction is sticky.** user가 scope reduction recommendation을 accept 또는 reject하면 그 결정을 끝까지 유지하라. 이후 section에서 더 작은 scope를 재주장하지 마라. scope를 조용히 줄이거나 계획된 component를 몰래 건너뛰지 마라.
 
