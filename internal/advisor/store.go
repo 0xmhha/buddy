@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/0xmhha/buddy/internal/db"
 )
 
 // ErrNotFound mirrors the sibling stores so callers can route around
@@ -16,11 +18,12 @@ var ErrNotFound = errors.New("advisor: not found")
 // Store wraps the advisories table. Read-heavy + append-mostly —
 // CLI / TUI / MCP read; daemon inserts; mute updates muted flag.
 type Store struct {
-	db *sql.DB
+	db db.Conn
 }
 
-// NewStore wraps an open *sql.DB.
-func NewStore(conn *sql.DB) *Store { return &Store{db: conn} }
+// NewStore wraps any db.Conn implementation. *sql.DB satisfies the
+// interface natively, so existing call sites keep working unchanged.
+func NewStore(conn db.Conn) *Store { return &Store{db: conn} }
 
 // Insert appends one advisory. CreatedAt zero → time.Now().UTC().
 // Returns the autoincrement id.

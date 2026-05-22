@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+
+	"github.com/0xmhha/buddy/internal/db"
 )
 
 // ErrNotFound mirrors the agent / sessions / feature pkgs so callers can
@@ -18,11 +20,11 @@ var ErrNotFound = errors.New("knowledge: not found")
 // Store owns the `chunks` table CRUD. Mirrors the sessions.Store shape
 // (one method per intent) so callers across the binary look uniform.
 type Store struct {
-	db *sql.DB
+	db db.Conn
 }
 
-// NewStore wraps an open *sql.DB.
-func NewStore(conn *sql.DB) *Store { return &Store{db: conn} }
+// NewStore wraps any db.Conn implementation.
+func NewStore(conn db.Conn) *Store { return &Store{db: conn} }
 
 // Insert appends a new chunk row. Returns the autoincrement id.
 // Caller-supplied CreatedAt is preserved (zero → now()).

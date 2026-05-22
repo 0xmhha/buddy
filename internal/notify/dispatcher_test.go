@@ -2,6 +2,7 @@ package notify
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"sync"
 	"testing"
@@ -177,8 +178,10 @@ func TestSkipForDedup_TreatsLookupErrorAsDedupHit(t *testing.T) {
 	store, _ := newTestStore(t)
 	// Closing the underlying DB makes every subsequent LastSent call
 	// return a driver-level error (not sql.ErrNoRows), which is the
-	// case the inverted default exists to handle.
-	require.NoError(t, store.db.Close())
+	// case the inverted default exists to handle. The Store carries
+	// the connection as a db.Conn interface, so this test pulls the
+	// concrete *sql.DB out via a type assertion before closing.
+	require.NoError(t, store.db.(*sql.DB).Close())
 
 	d := &Dispatcher{store: store}
 	got := d.skipForDedup(context.Background(), ChannelDesktop, "k",

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/0xmhha/buddy/internal/db"
 	"github.com/0xmhha/buddy/internal/schema"
 )
 
@@ -14,14 +15,15 @@ import (
 // distinguish "session doesn't exist" from "DB had a real problem".
 var ErrNotFound = errors.New("session: not found")
 
-// Store wraps the SQLite sessions table. Methods take a *sql.DB so callers
-// share the same connection pool used elsewhere in the binary.
+// Store wraps the SQLite sessions table. Methods take a db.Conn so the
+// same connection pool can be shared with sibling stores; tests can
+// substitute an in-memory fake without touching the production driver.
 type Store struct {
-	db *sql.DB
+	db db.Conn
 }
 
-// NewStore wraps an open connection.
-func NewStore(conn *sql.DB) *Store {
+// NewStore wraps any db.Conn implementation.
+func NewStore(conn db.Conn) *Store {
 	return &Store{db: conn}
 }
 

@@ -5,17 +5,19 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/0xmhha/buddy/internal/db"
 )
 
 // Store wraps the notification_log table. Append-only on the daemon
 // side, read on CLI / TUI / MCP. No update or mute path — once a
 // dispatch attempt is logged, its row is immutable.
 type Store struct {
-	db *sql.DB
+	db db.Conn
 }
 
-// NewStore wraps an open *sql.DB.
-func NewStore(conn *sql.DB) *Store { return &Store{db: conn} }
+// NewStore wraps any db.Conn implementation.
+func NewStore(conn db.Conn) *Store { return &Store{db: conn} }
 
 // Insert appends a single notification_log row. SentAt zero → now().
 func (s *Store) Insert(ctx context.Context, row LogRow) (int64, error) {

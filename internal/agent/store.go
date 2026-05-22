@@ -7,22 +7,24 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	buddydb "github.com/0xmhha/buddy/internal/db"
 )
 
 // ErrNotFound mirrors the analytics package's sentinel so CLI callers can
 // give a "no such agent" message uniformly.
 var ErrNotFound = errors.New("agent: not found")
 
-// Store is the SQLite-backed persistence layer. Callers wrap an open *sql.DB
-// (the same one buddy uses for hook events / sessions / features). v4 migration
-// adds the agents / agent_runs / agent_logs tables.
+// Store is the SQLite-backed persistence layer. Callers wrap any
+// db.Conn implementation (production: *sql.DB; tests: in-memory fake).
+// v4 migration adds the agents / agent_runs / agent_logs tables.
 type Store struct {
-	db *sql.DB
+	db buddydb.Conn
 }
 
-// NewStore wraps an open DB. The DB is not owned — caller closes it.
-func NewStore(db *sql.DB) *Store {
-	return &Store{db: db}
+// NewStore wraps an open Conn. The connection is not owned — caller closes it.
+func NewStore(conn buddydb.Conn) *Store {
+	return &Store{db: conn}
 }
 
 // ─── agent CRUD ────────────────────────────────────────────────────────────
