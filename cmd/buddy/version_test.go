@@ -9,7 +9,7 @@ import (
 //
 //	`buddy <ver> (sha=<short>, built=<rfc3339>)`
 //
-// so a future refactor can't drift the output silently. Roadmap §3 M6 T3.
+// so a future refactor can't drift the output silently.
 func TestVersionString_FormatExact(t *testing.T) {
 	// Set the package vars to known values, restore after.
 	oldVer, oldSHA, oldDate := version, gitSHA, buildDate

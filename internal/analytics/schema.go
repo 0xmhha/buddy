@@ -16,8 +16,8 @@ import (
 //   - No JSON column type — properties live in a TEXT field. Queries can
 //     pattern-match if needed; structured filters use dedicated columns.
 //
-// Spec §8 W4-2.2 reference impl is SQLite. Other backends layer on top of
-// the same Adapter interface with their own DDL.
+// Spec §8 reference impl is SQLite. Other backends layer on top of the
+// same Adapter interface with their own DDL.
 const Schema = `
 -- events: unified event stream backing funnel / cohort / feature-adoption.
 -- Funnels query by event_name in stage order. Cohorts use a "signup" event

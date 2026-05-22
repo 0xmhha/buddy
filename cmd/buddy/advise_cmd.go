@@ -17,8 +17,7 @@ import (
 	"github.com/0xmhha/buddy/internal/usage"
 )
 
-// newAdviseCmd wires `buddy advise ...` per ADR-015 (W7-3b / F2.C
-// Phase 2). Subcommands:
+// newAdviseCmd wires `buddy advise ...` per ADR-015. Subcommands:
 //
 //   - (root)    : current advisories (run rules now, optionally persist)
 //   - history   : list persisted advisories
@@ -37,7 +36,7 @@ func newAdviseCmd() *cobra.Command {
 	)
 	c := &cobra.Command{
 		Use:   "advise",
-		Short: "Friend-tone advisories generated from usage + knowledge (W7-3b / ADR-015)",
+		Short: "Friend-tone advisories generated from usage + knowledge (ADR-015)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
 

@@ -1,6 +1,6 @@
-// Package knowledge implements F2.C Phase 1 (W7-3a, ADR-014) — the
-// knowledge-retrieval foundation that feeds the future F2.C Advisor
-// (Phase 2, W7-3b, v0.11.0). Components:
+// Package knowledge implements the knowledge-retrieval foundation
+// (ADR-014). It feeds the advisor (ADR-015) with chunk-level evidence.
+// Components:
 //
 //   - Chunk + Store : SQLite-backed chunk records (migration v6).
 //   - Chunker       : transcript JSONL → chunks (user/assistant pair,

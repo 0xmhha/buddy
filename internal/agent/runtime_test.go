@@ -62,7 +62,7 @@ func TestParseSpec_MinimalValid(t *testing.T) {
 	require.Equal(t, "status", spec.Chain[0].Command)
 }
 
-// TestParseSpec_ReferenceWebtoonAgentValidates pins the W3-6 reference
+// TestParseSpec_ReferenceWebtoonAgentValidates pins the reference
 // example to ParseSpec so a future schema change can't silently break
 // the shipped example. The example sits in examples/webtoon-agent/spec.yaml
 // and exercises every v0.6.x cli buddy capability (retry exponential,
@@ -309,7 +309,7 @@ func TestRuntime_Run_ExecutorErrorMarksFailed(t *testing.T) {
 	require.Equal(t, StatusFailed, after.Status)
 }
 
-// TestRuntime_Run_ParsesSelfCheckAndNextPhase verifies the W3-4 wire-up:
+// TestRuntime_Run_ParsesSelfCheckAndNextPhase verifies the parser wire-up:
 // when the executor returns a Claude-style stdout containing §self-check
 // and §next phase sections, the Runtime parses them into StepResult.Parsed
 // and writes a self-check log line. v0.3 contract: parse result is metadata
@@ -357,7 +357,7 @@ func TestRuntime_Run_ParsesSelfCheckAndNextPhase(t *testing.T) {
 	require.True(t, selfCheckLogged, "expected self-check log line, got %+v", logs)
 }
 
-// TestRuntime_Run_ParsesConditionalBranches covers the W3-4 follow-on
+// TestRuntime_Run_ParsesConditionalBranches covers the follow-on parser
 // (conditional next-phase parse): when the Claude output describes
 // branch-style cascade rules, Runtime persists Branches into StepResult
 // and emits one log line per branch instead of (or alongside) the
@@ -1144,11 +1144,11 @@ chain:
 	require.Equal(t, StatusDone, after.Status)
 }
 
-// ─── W4-1 branch hints ────────────────────────────────────────────────
+// ─── branch hints ─────────────────────────────────────────────────────
 
 // procWithBranches mirrors procWithNextPhase but emits two conditional
 // branches, exercising the parser's NextPhase.Branches surface that
-// W4-1's BranchHints disambiguates.
+// the BranchHints disambiguates.
 func procWithBranches() string {
 	return "## 6. 검증\n\n- [x] decided\n\n" +
 		"## 7. 다음 phase\n\n" +
@@ -1157,7 +1157,7 @@ func procWithBranches() string {
 }
 
 // TestPickCascadeTarget_NoBranchesFallsBackToFirstSkill — the
-// no-branches path stays identical to pre-W4-1 behaviour: Skills[0].
+// no-branches path stays identical to the original behaviour: Skills[0].
 func TestPickCascadeTarget_NoBranchesFallsBackToFirstSkill(t *testing.T) {
 	t.Parallel()
 	np := NextPhase{Skills: []string{"a", "b"}}
@@ -1232,7 +1232,7 @@ chain:
 	require.Equal(t, "consult-korea-legal-context", res.Steps[1].Command)
 }
 
-// ─── W4-2 on_self_check_fail ──────────────────────────────────────────
+// ─── on_self_check_fail policy ────────────────────────────────────────
 
 // procWithSelfCheckFail emits a PROCEDURE body whose §self-check has
 // an unchecked checkbox so the parser records SelfCheckFail. No

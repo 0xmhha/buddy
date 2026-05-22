@@ -17,15 +17,16 @@ import (
 )
 
 // newAgentCmd assembles the `buddy agent ...` subtree. Per cli-buddy-spec §6.2
-// (locked in by ADR-005), v0.3 ships create / list / show / run / delete. tui
-// / edit / log / schedule list land in W3-2 (TUI) and W3-3 follow-ons.
+// (locked in by ADR-005), the initial release ships create / list / show /
+// run / delete; the TUI, edit, log, and schedule-list surfaces land in
+// follow-on releases.
 func newAgentCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "agent",
 		Short: "Manage cli buddy automation agents",
 		Long: "Manage automation agents that drive plugin buddy command chains.\n" +
 			"Per cli-buddy-spec §3 + ADR-005, agents = static YAML spec + on-demand or\n" +
-			"scheduled Run(). v0.3 ships on-demand only; scheduler arrives in W3-3 follow-on.",
+			"scheduled Run(). On-demand ships first; the cron-driven scheduler follows.",
 	}
 	c.AddCommand(
 		newAgentCreateCmd(),

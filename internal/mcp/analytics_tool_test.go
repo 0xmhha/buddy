@@ -59,7 +59,7 @@ func TestAnalyticsTools_Registered(t *testing.T) {
 // an in-memory MCP session with BUDDY_ANALYTICS_BACKEND unset and verifies the
 // response is a friend-tone text body (not a transport error). v0.2.0
 // contract: stubs never error out — they return guidance so Claude can
-// surface it to the user verbatim. W4-2.2+ adapters preserve this for the
+// surface it to the user verbatim. Real adapters preserve this for the
 // "backend present but query failed" case.
 //
 // Not parallel — t.Setenv is mutually exclusive with t.Parallel.
@@ -101,7 +101,7 @@ func TestAnalyticsTools_StubReturnsFriendToneText(t *testing.T) {
 
 // TestResolveAnalyticsBackend_RecognisedBackendsAreStubbed pins the v0.2.0
 // promise that *valid* backend names also return a stub error (errBackendStubOnly),
-// not silent success. When W4-2.2 lands real adapters, this test should be
+// not silent success. When real adapters land, this test should be
 // narrowed per-adapter rather than weakened.
 //
 // Not parallel — t.Setenv mutates a process-global.
@@ -137,7 +137,7 @@ func TestResolveAnalyticsBackend_UnsetReturnsNotConfigured(t *testing.T) {
 	require.ErrorIs(t, err, errBackendNotConfigured)
 }
 
-// TestAnalyticsTools_AdapterWiredReturnsJSON proves the W4-2.2 + W4-2.3 wire-up:
+// TestAnalyticsTools_AdapterWiredReturnsJSON proves the adapter wire-up:
 // when Options.Analytics is a real adapter (here, the SQL reference impl over
 // an in-memory SQLite), the funnel handler returns a JSON body with the typed
 // result — not the friend-tone "backend not configured" stub. This is the

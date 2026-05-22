@@ -45,7 +45,7 @@ func main() {
 		opts.Analytics = adapter
 	}
 
-	// Wire the F2.B Usage service against the same buddy.db. The MCP
+	// Wire the usage service against the shared buddy.db. The MCP
 	// server is read-only here — usage_query_* tools live or die with
 	// the sessions table existing in this DB. If Open fails (no DB
 	// yet) the tools register and return the friend-tone "not wired"
@@ -56,8 +56,8 @@ func main() {
 		opts.Usage = svc
 	}
 
-	// Wire the F2.C Phase 1 knowledge store + embedder (W7-3a /
-	// ADR-014). Store opens against the same buddy.db; embedder is
+	// Wire the knowledge store + embedder (ADR-014). Store opens
+	// against the same buddy.db; embedder is
 	// always set so the MCP path tries vector first, falling back to
 	// BM25 only when the Python venv is missing — handled inside
 	// knowledge.PythonEmbedder.Embed via ErrEmbedderUnavailable.
@@ -67,7 +67,7 @@ func main() {
 		opts.Knowledge = kopt
 	}
 
-	// Wire the F2.C Phase 2 advisor (W7-3b / ADR-015). Builds an
+	// Wire the advisor (ADR-015). Builds an
 	// Evaluator over the same buddy.db connection sources. Falls back
 	// silently when DB open fails — usage_advise will report "not
 	// wired" rather than crashing the MCP server boot.
@@ -77,7 +77,7 @@ func main() {
 		opts.Advisor = aopt
 	}
 
-	// Wire the W7-5 notify tools. Same defensive pattern: failure on
+	// Wire the notify tools (ADR-016). Same defensive pattern: failure on
 	// DB open or config load disables only the notify path.
 	if nopt, err := configureNotify(opts.DBPath); err != nil {
 		log.Printf("buddy-mcp: notify tools disabled: %v", err)
@@ -133,8 +133,8 @@ func configureUsage(dbPath string) (*usage.Service, error) {
 	return usage.NewService(conn), nil
 }
 
-// configureKnowledge opens buddy.db and returns the W7-3a Knowledge
-// options bundle. Always wires the Python embedder — its Embed method
+// configureKnowledge opens buddy.db and returns the knowledge options
+// bundle (ADR-014). Always wires the Python embedder — its Embed method
 // returns ErrEmbedderUnavailable if the script / venv isn't ready, and
 // the knowledge_query handler degrades to BM25-only on that error.
 func configureKnowledge(dbPath string) (buddymcp.KnowledgeOptions, error) {

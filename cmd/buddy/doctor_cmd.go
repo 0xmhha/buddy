@@ -12,8 +12,8 @@ import (
 // stdout (it is the user-facing report, not log noise). Exit code is 0 when
 // the report is healthy, 1 otherwise — matches m4-plan §Task 2.
 //
-// M5 T3: thresholds (HookTimeoutMs, HookSlowMs, HookFailRatePct, OutboxBacklog)
-// are now read from ~/.buddy/config.json via loadEffectiveConfig. A missing
+// Thresholds (HookTimeoutMs, HookSlowMs, HookFailRatePct, OutboxBacklog)
+// are read from ~/.buddy/config.json via loadEffectiveConfig. A missing
 // config file falls back to spec defaults silently. Pass --config <path> to
 // point at a different file.
 func newDoctorCmd() *cobra.Command {

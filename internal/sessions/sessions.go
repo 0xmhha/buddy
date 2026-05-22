@@ -32,8 +32,8 @@ import (
 //                       (default 1h). Cleared on resume — no row split.
 //                       Added by migration v5 (ADR-012).
 //   - GoalText        — first user message extracted by fsLister on
-//                       the first tail pass. F2.D Drift Detection
-//                       (W7-4) compares current activity against this.
+//                       the first tail pass. Drift Detection (ADR-017)
+//                       compares current activity against this.
 //                       "" when no user message yet or extraction
 //                       skipped (e.g., first message is /clear).
 //                       Added by migration v5 (ADR-012).

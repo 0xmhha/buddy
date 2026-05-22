@@ -1,6 +1,6 @@
 package main
 
-// loadconfig.go is the M5 T3 integration boundary between the cmd layer and
+// loadconfig.go is the integration boundary between the cmd layer and
 // the internal/config package. The two policy consumers — doctor (diagnose)
 // and daemon — DO NOT import internal/config: they keep accepting plain
 // typed fields (Thresholds / Config) so their unit tests stay free of file
@@ -107,7 +107,7 @@ func resolveDaemonRunConfig(dbFlag, pidFile string, pollFlag time.Duration, batc
 		PIDFile:      pidFile,
 		PollInterval: poll,
 		BatchSize:    batch,
-		// W7-1 (ADR-012) session monitor wiring from config. No CLI flag
+		// Session monitor (ADR-012) wiring from config. No CLI flag
 		// override yet — config-driven only. Disabled=true skips the
 		// goroutine entirely; defaults wire to 30s / 1h via config.Defaults.
 		SessionMonitor: daemon.SessionMonitorConfig{
@@ -115,7 +115,7 @@ func resolveDaemonRunConfig(dbFlag, pidFile string, pollFlag time.Duration, batc
 			PollInterval:   eff.SessionMonitorPollInterval,
 			EndedThreshold: eff.SessionMonitorEndedThreshold,
 		},
-		// W7-3b (ADR-015) advisor monitor wiring. Same config-driven
+		// Advisor monitor (ADR-015) wiring. Same config-driven
 		// pattern. Thresholds.PollInterval governs cadence (default 1h).
 		Advisor: daemon.AdvisorMonitorConfig{
 			Disabled: eff.AdvisorDisabled,

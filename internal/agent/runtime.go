@@ -239,10 +239,10 @@ func (r *Runtime) runOneStep(ctx context.Context, runID int64, idx int, step Cha
 							idx, step.Command, b.Condition, rhs))
 				}
 			}
-			// W4-2 — self-check verdict policy. The verdict is already
-			// logged above; the runtime acts on it only when the spec
-			// opts in via OnSelfCheckFail. SelfCheckFailContinue (and
-			// the empty default) preserves v0.5.0+ behaviour: log the
+			// Self-check verdict policy. The verdict is already logged
+			// above; the runtime acts on it only when the spec opts in
+			// via OnSelfCheckFail. SelfCheckFailContinue (and the
+			// empty default) preserves the prior behaviour: log the
 			// verdict, return the step as success.
 			//
 			// Failure surfaces through last.ExitCode (=1) rather than a
@@ -342,14 +342,13 @@ func computeBackoff(retry *RetryPolicy, attemptJustFailed int) time.Duration {
 //
 //   - No Branches: the PROCEDURE produced an unconditional next-phase
 //     section. We take Skills[0] — the common single-sequential-
-//     candidate case, identical to the pre-W4-1 behaviour.
+//     candidate case.
 //   - Branches present: the PROCEDURE expresses conditional cascade
 //     ("Korea → skill-a / USA → skill-b"). We pick the first branch
 //     whose Condition has BranchHints[Condition] == true. Missing
 //     hint or hint=false suppresses that branch; if no branch
 //     matches, we return "" so the cascade stops rather than
-//     silently grabbing the union's first entry. W4-1 cycle-3 BA-?
-//     candidate.
+//     silently grabbing the union's first entry.
 //
 // Returns "" when there is no cascade target.
 func pickCascadeTarget(np ParsedOutput_NextPhaseAlias, hints map[string]bool) string {

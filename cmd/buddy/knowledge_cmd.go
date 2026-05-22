@@ -13,8 +13,7 @@ import (
 	"github.com/0xmhha/buddy/internal/sessions"
 )
 
-// newKnowledgeCmd wires `buddy knowledge ...` per ADR-014 (W7-3a /
-// F2.C Phase 1). Surfaces:
+// newKnowledgeCmd wires `buddy knowledge ...` per ADR-014. Surfaces:
 //
 //   - ingest  : transcript JSONL → chunks (+ optional embedding pass).
 //   - query   : BM25 / vector / hybrid retrieval against the corpus.
@@ -24,7 +23,7 @@ import (
 func newKnowledgeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "knowledge",
-		Short: "Local knowledge retrieval over your Claude Code sessions (W7-3a / ADR-014)",
+		Short: "Local knowledge retrieval over your Claude Code sessions (ADR-014)",
 	}
 	cmd.AddCommand(
 		newKnowledgeIngestCmd(),

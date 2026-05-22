@@ -72,7 +72,7 @@ func TestStore_LatestRun_UnknownAgentReturnsNotFound(t *testing.T) {
 	require.True(t, errors.Is(err, ErrNotFound))
 }
 
-// ─── UpdateSpec (TUI in-app edit follow-on, W3-2) ──────────────────────
+// ─── UpdateSpec (used by TUI in-app edit) ─────────────────────────────
 
 // TestStore_UpdateSpec_SuccessReplacesEditableFields — name / schedule /
 // spec_yaml are swapped in one UPDATE; status, created_at, last_run_at
@@ -167,7 +167,7 @@ chain:
 		"last_run_at value must be identical (preserved verbatim)")
 }
 
-// ─── LogsSince (TUI log-tail follow-on, W3-2) ──────────────────────────
+// ─── LogsSince (used by TUI live log-tail) ────────────────────────────
 
 // TestStore_LogsSince_ReturnsOnlyNewerLines covers the incremental-poll
 // path: a sinceLogID > 0 must skip everything at or below that id and

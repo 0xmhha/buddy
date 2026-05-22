@@ -95,8 +95,8 @@ func (f *fakeLister) LatestRun(_ context.Context, agentID string) (agent.AgentRu
 }
 
 // GetRun mirrors LatestRun's lookup shape but keys on the run id used by
-// W4-5 log-tail auto-stop. Empty maps + zero-value default means "this
-// run is still running" (EndedAt nil) — the most common test fixture.
+// log-tail auto-stop. Empty maps + zero-value default means "this run is
+// still running" (EndedAt nil) — the most common test fixture.
 func (f *fakeLister) GetRun(_ context.Context, runID int64) (agent.AgentRun, error) {
 	if err, ok := f.runByIDErr[runID]; ok {
 		return agent.AgentRun{}, err
@@ -365,7 +365,7 @@ func TestView_ErrorState(t *testing.T) {
 		"error message must be visible in View output, got:\n%s", out)
 }
 
-// ─── Detail view (W3-2 follow-on) ──────────────────────────────────────
+// ─── Detail view ──────────────────────────────────────
 
 // TestUpdate_EnterSwitchesToDetailAndFiresLoad — Enter on a populated list
 // transitions Mode to Detail, marks DetailLoaded=false, and returns the
@@ -591,7 +591,7 @@ func TestView_DetailLoadingPlaceholder(t *testing.T) {
 	require.Contains(t, out, "loading")
 }
 
-// ─── Scheduler status pane (W3-2 follow-on #2) ─────────────────────────
+// ─── Scheduler status pane ─────────────────────────
 
 // TestUpdate_SSwitchesToScheduler — pressing `s` in list mode opens the
 // scheduler pane, marks SchedulerLoaded=false, and fires the preview cmd.
@@ -775,7 +775,7 @@ func TestView_SchedulerErrorState(t *testing.T) {
 	require.Contains(t, out, "esc")
 }
 
-// ─── In-app delete confirm (W3-2 follow-on #3) ─────────────────────────
+// ─── In-app delete confirm ─────────────────────────
 
 // TestUpdate_DEntersConfirmMode — pressing `d` on a populated list
 // transitions to ModeDeleteConfirm and locks PendingDeleteID to the
@@ -947,7 +947,7 @@ func TestView_DeleteErrorShowsInListAfterFailure(t *testing.T) {
 	require.Contains(t, out, "disk full")
 }
 
-// ─── Live log tail (W3-2 follow-on #4 — P1-1) ──────────────────────────
+// ─── Live log tail ──────────────────────────
 
 // TestUpdate_TInDetailEntersLogTailAndFiresInitialLoad — `t` in detail
 // mode switches to ModeLogTail, locks in the detail run's ID, and
@@ -1157,7 +1157,7 @@ func TestView_LogTailErrorState(t *testing.T) {
 	require.Contains(t, out, "db locked")
 }
 
-// ─── In-app edit (W3-2 follow-on #5 — P1-2) ────────────────────────────
+// ─── In-app edit ────────────────────────────
 
 // minimalEditableYAML mirrors internal/agent's minimalSpecYAML — kept
 // local so the TUI test file doesn't have to reach into a sibling
@@ -1354,7 +1354,7 @@ func TestView_DetailRendersEditErrorBanner(t *testing.T) {
 	require.Contains(t, out, "press e", "retry hint must guide the user")
 }
 
-// ─── Create form (W3-2 follow-on #6 — P3-1) ────────────────────────────
+// ─── Create form ────────────────────────────
 
 // TestSaveNewSpec_ValidYAMLDispatchesCreate — successful parse + Store
 // .Create → AgentCreatedMsg with the new agent's ID.
@@ -1496,7 +1496,7 @@ func TestCreateStarterYAML_ParsesAsValidSpec(t *testing.T) {
 	require.NotEmpty(t, spec.Chain, "starter template must contain at least one chain step")
 }
 
-// ─── Hook stats pane (A-3.2 W3-5 follow-on) ────────────────────────────
+// ─── Hook stats pane ────────────────────────────
 
 // fakeStatsFetcher returns canned rows + records the window arg.
 func fakeStatsFetcher(rows []queries.Row, err error, captured *[]string) HookStatsFetcher {
@@ -1658,7 +1658,7 @@ func TestView_HookStatsErrorState(t *testing.T) {
 	require.Contains(t, out, "db locked")
 }
 
-// ─── Usage pane (W7-2 / ADR-013) ───────────────────────────────────────
+// ─── Usage pane (ADR-013) ───────────────────────────────────────
 
 func fakeUsageFetcher(ov usage.Overview, err error, calls *int) UsageFetcher {
 	return func() (usage.Overview, error) {
@@ -1760,7 +1760,7 @@ func TestView_UsageUnavailableWithoutFetcher(t *testing.T) {
 	require.Contains(t, out, "UsageFetcher 미설정")
 }
 
-// ─── Advisor section (W7-3b / ADR-015) ────────────────────────────────
+// ─── Advisor section (ADR-015) ────────────────────────────────
 
 func fakeAdvisorFetcher(advs []advisor.Advisory, err error, calls *int) AdvisorFetcher {
 	return func() ([]advisor.Advisory, error) {
@@ -1847,7 +1847,7 @@ func TestView_UsageAdvisorSectionEmpty(t *testing.T) {
 	require.Contains(t, out, "지금은 알릴 조언이 없어")
 }
 
-// ─── Notify banner (W7-5 / ADR-016) ───────────────────────────────────
+// ─── Notify banner (ADR-016) ───────────────────────────────────
 
 func fakeNotifyFetcher(rows []notify.LogRow, err error, calls *int) NotifyFetcher {
 	return func() ([]notify.LogRow, error) {
@@ -1943,7 +1943,7 @@ func TestInit_FiresAgentAndNotifyBatch(t *testing.T) {
 	require.True(t, ok, "Init must dispatch a Batch combining agents + notify")
 }
 
-// TestSchedulerEntry_RunningGetsMarker — W4-4. A scheduled agent whose
+// TestSchedulerEntry_RunningGetsMarker — a scheduled agent whose
 // Status is "running" renders with the ⏵ glyph; idle agents leave the
 // marker column blank so the pane stays quiet at rest.
 func TestSchedulerEntry_RunningGetsMarker(t *testing.T) {
@@ -1966,7 +1966,7 @@ func TestSchedulerEntry_RunningGetsMarker(t *testing.T) {
 		"only the running agent line should carry the marker")
 }
 
-// TestLogTailChunk_RunEndedSetsDoneAndStopsPolling — W4-5. When the
+// TestLogTailChunk_RunEndedSetsDoneAndStopsPolling — when the
 // chunk reports RunEnded the reducer latches LogTailDone and emits a
 // nil command, leaving the tea.Tick loop drained. A subsequent stray
 // LogTailTickMsg is also a no-op because the same gate fires there.

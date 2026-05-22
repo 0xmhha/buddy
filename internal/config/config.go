@@ -7,7 +7,7 @@
 //     config.json files only override the fields they mention.
 //
 //   - Effective is the resolved view with non-pointer fields. The rest of the
-//     codebase (M5 T3: doctor / aggregator / daemon) consumes Effective.
+//     codebase consumes Effective.
 //
 //   - Defaults are spec-locked (v0.1-spec §6.2 + §6.3). Changing them requires a
 //     spec update — they are not user-facing.
@@ -48,13 +48,13 @@ type Config struct {
 	BatchSize       *int      `json:"batchSize,omitempty"`
 	PersonaLocale   *string   `json:"personaLocale,omitempty"` // "ko" | "en"
 
-	// SessionMonitor* are W7-1 (ADR-012) — daemon-side observation of
+	// SessionMonitor* (ADR-012) configure daemon-side observation of
 	// Claude Code sessions. Disabled=true skips the goroutine entirely.
 	SessionMonitorDisabled       *bool     `json:"sessionMonitorDisabled,omitempty"`
 	SessionMonitorPollInterval   *Duration `json:"sessionMonitorPollInterval,omitempty"`
 	SessionMonitorEndedThreshold *Duration `json:"sessionMonitorEndedThreshold,omitempty"`
 
-	// Advisor* are W7-3b (ADR-015) — daemon-side advisory generator.
+	// Advisor* (ADR-015) configure the daemon-side advisory generator.
 	// 5 rule thresholds + dedup window + poll interval + master toggle.
 	AdvisorDisabled              *bool     `json:"advisorDisabled,omitempty"`
 	AdvisorTokenSpikeRatio       *float64  `json:"advisorTokenSpikeRatio,omitempty"`
@@ -68,7 +68,7 @@ type Config struct {
 	AdvisorGoalDriftThreshold    *float64  `json:"advisorGoalDriftThreshold,omitempty"`
 	AdvisorGoalDriftSampleChunks *int      `json:"advisorGoalDriftSampleChunks,omitempty"`
 
-	// Notify* are W7-5 (ADR-016) — daemon-side notification dispatcher.
+	// Notify* (ADR-016) configure the daemon-side notification dispatcher.
 	// Per-channel toggles + severity floor + dedup window.
 	NotifyDesktopEnabled       *bool     `json:"notifyDesktopEnabled,omitempty"`
 	NotifyDesktopSeverityMin   *string   `json:"notifyDesktopSeverityMin,omitempty"`
@@ -417,7 +417,7 @@ func (c Config) Validate() error {
 			eff.PersonaLocale)
 	}
 
-	// Advisor thresholds (W7-3b / ADR-015). Permissive bounds — these
+	// Advisor thresholds (ADR-015). Permissive bounds — these
 	// are user-tunable taste knobs, not safety floors.
 	if eff.AdvisorTokenSpikeRatio < 1.0 {
 		add("advisorTokenSpikeRatio", fmt.Sprintf("must be >= 1.0 (got %g)", eff.AdvisorTokenSpikeRatio))
@@ -447,7 +447,7 @@ func (c Config) Validate() error {
 		add("advisorGoalDriftSampleChunks", fmt.Sprintf("must be >= 1 (got %d)", eff.AdvisorGoalDriftSampleChunks))
 	}
 
-	// Notify thresholds (W7-5 / ADR-016). Severity strings constrained
+	// Notify thresholds (ADR-016). Severity strings constrained
 	// to the advisor-side enum; webhook entries validated individually.
 	validSev := map[string]bool{"info": true, "warn": true, "high": true}
 	if !validSev[eff.NotifyDesktopSeverityMin] {

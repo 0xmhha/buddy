@@ -43,7 +43,7 @@ type Executor interface {
 // and piping `/buddy:<command> "<args>"` to its stdin. This is the canonical
 // path per ADR-005 §2.2.
 //
-// v0.3 caveats (tracked as W3-3 follow-ons):
+// Caveats:
 //   - assumes `claude` is on PATH; surfaces a clear error if missing
 //   - does not yet stream incremental output to AgentLog — only captures
 //     the final stdout/stderr buffers
@@ -63,8 +63,8 @@ type SubprocessExecutor struct {
 // drops into an interactive REPL waiting for a TTY — the stdin pipe payload
 // gets read but the process never emits a response, which surfaces as a
 // silent hang (run never finalises, agent.status stays "running"). The
-// cycle-3 BA-12 dogfood finding made this concrete; --print is documented
-// by the CLI as "Print response and exit (useful for pipes)".
+// dogfood finding that surfaced this made it concrete; --print is
+// documented by the CLI as "Print response and exit (useful for pipes)".
 func NewSubprocessExecutor() *SubprocessExecutor {
 	return &SubprocessExecutor{
 		ClaudeBinary: "claude",

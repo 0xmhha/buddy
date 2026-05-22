@@ -1,5 +1,5 @@
 // fs_lister.go — the filesystem-scanning Lister referenced as "core-3" in
-// sessions.go. Per ADR-012 W7-1 (Hybrid observation), this implementation
+// sessions.go. Per ADR-012 (hybrid observation), this implementation
 // scans ~/.claude/projects/*/*.jsonl, tails each file from its last_offset,
 // updates token / activity / goal_text in the sessions table.
 

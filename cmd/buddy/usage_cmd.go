@@ -24,7 +24,7 @@ import (
 func newUsageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "usage",
-		Short: "AI-usage analytics over the sessions table (W7-2 / ADR-013)",
+		Short: "AI-usage analytics over the sessions table (ADR-013)",
 	}
 	cmd.AddCommand(
 		newUsageTodayCmd(),

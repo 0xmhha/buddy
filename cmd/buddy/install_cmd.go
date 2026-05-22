@@ -95,7 +95,7 @@ func newUninstallCmd() *cobra.Command {
 			default:
 				fmt.Fprintln(os.Stderr, persona.M(persona.KeyUninstallNothingRegistered))
 			}
-			// M5 T9: friend-tone note about daemon disposition. The Uninstall
+			// Friend-tone note about daemon disposition. The Uninstall
 			// call already attempted (or skipped) the stop based on
 			// KeepDaemon — we just report what happened.
 			if res.DaemonWasRunning {

@@ -96,7 +96,7 @@ var migrations = []migration{
 		`,
 	},
 	{
-		// v4 — cli buddy W3-3 agent runtime tables. Per cli-buddy-spec §3.3
+		// v4 — agent runtime tables. Per cli-buddy-spec §3.3
 		// + ADR-005 lock-in. agents = static definition, agent_runs = one
 		// row per Run(agent) invocation, agent_logs = streaming log events
 		// (line-level) so the TUI / future buddy:status can tail without
@@ -140,13 +140,13 @@ var migrations = []migration{
 		`,
 	},
 	{
-		// v5 — F2.A Session Monitor (W7-1) — ADR-012 lock-in. Additive
+		// v5 — Session Monitor — ADR-012 lock-in. Additive
 		// columns on the v3 sessions table:
 		//   - ended_at  : NULL while session may be active. Daemon sets it
 		//                 when last_active is older than EndedThreshold
 		//                 (default 1h). Cleared on resume — no row split.
-		//   - goal_text : first user message extracted by fsLister. F2.D
-		//                 (W7-4) Drift Detection compares against this.
+		//   - goal_text : first user message extracted by fsLister. Drift
+		//                 Detection (ADR-017) compares against this.
 		//   - metadata  : JSON escape hatch for future per-session fields.
 		// All three are backward-compat: existing rows get NULL / "" / "{}".
 		version: 5,
@@ -158,7 +158,7 @@ var migrations = []migration{
 		`,
 	},
 	{
-		// v6 — F2.C Advisory foundation (W7-3a) — ADR-014. The chunks
+		// v6 — Advisory foundation — ADR-014. The chunks
 		// table holds knowledge data extracted from sessions transcripts:
 		//   - session_id     : FK back to sessions(id) — cascade delete.
 		//   - content        : raw chunk text (user+assistant pair, max
@@ -186,7 +186,7 @@ var migrations = []migration{
 		`,
 	},
 	{
-		// v7 — F2.C Advisor (W7-3b) — ADR-015. The advisories table
+		// v7 — Advisor — ADR-015. The advisories table
 		// holds advisor output records for dedup + history + future mute
 		// UX. Columns:
 		//   - kind          : rule identifier (e.g., "token-spike-day").
@@ -218,7 +218,7 @@ var migrations = []migration{
 		`,
 	},
 	{
-		// v8 — F2.E Notification (W7-5) — ADR-016. The notification_log
+		// v8 — Notification — ADR-016. The notification_log
 		// table records every dispatch attempt (sent + skipped). Used
 		// by the dispatcher for per-channel dedup, by `buddy notify
 		// status` for visibility, and by `notification_log_*` indices

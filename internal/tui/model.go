@@ -1,9 +1,8 @@
-// Package tui hosts the bubbletea-based terminal UI for cli buddy. v0.6.6
-// shipped the W3-2 minimum-viable subset: a read-only agent list with
-// j/k navigation and q-to-quit. The detail view (Enter on a list row →
-// the latest-run summary) is the first W3-2 follow-on item, tracked in
-// cli-buddy-spec.md §9. Create form, live log tail, and scheduler status
-// pane remain follow-on cycles.
+// Package tui hosts the bubbletea-based terminal UI for cli buddy. The
+// surface started as a read-only agent list with j/k navigation and a
+// q-to-quit binding, then accreted the detail view (Enter on a list row
+// jumps to the latest-run summary), create form, live log tail, and
+// scheduler status pane in subsequent releases.
 //
 // The Update method is intentionally a pure-function reducer so tests
 // can drive it with synthetic tea.Msg values without spinning up a real
@@ -81,8 +80,8 @@ const (
 // instead of crashing on the H keypress.
 type HookStatsFetcher func(window string) (queries.Result, error)
 
-// UsageFetcher is the read-only surface for the TUI's Usage pane (W7-2 /
-// ADR-013 F2.B). Production wiring closes over a *usage.Service; tests
+// UsageFetcher is the read-only surface for the TUI's Usage pane
+// (ADR-013). Production wiring closes over a *usage.Service; tests
 // can inject a stub that returns canned Overview without touching SQLite.
 //
 // nil = pane shows "unavailable" copy and stays in list mode (mirrors
@@ -90,13 +89,13 @@ type HookStatsFetcher func(window string) (queries.Result, error)
 type UsageFetcher func() (usage.Overview, error)
 
 // AdvisorFetcher returns advisories to render under the Usage pane's
-// metric blocks (W7-3b / ADR-015). Same nil-tolerant policy as
+// metric blocks (ADR-015). Same nil-tolerant policy as
 // UsageFetcher — nil renders an empty advisory section silently rather
 // than erroring.
 type AdvisorFetcher func() ([]advisor.Advisory, error)
 
 // NotifyFetcher returns recent notification_log rows for the ModeList
-// top banner (W7-5 / ADR-016). Daemon dispatched advisories show up
+// top banner (ADR-016). Daemon dispatched advisories show up
 // here even without TUI navigation. nil = banner suppressed (silent
 // install).
 type NotifyFetcher func() ([]notify.LogRow, error)
@@ -119,7 +118,7 @@ type SchedulerPreviewEntry struct {
 	Err      error
 	// Status mirrors agent.Status — only "running" gets a visible
 	// marker; the rest render blank so non-running schedules don't add
-	// glyph noise. W4-4 cycle-3 follow-on.
+	// glyph noise.
 	Status agent.Status
 }
 
@@ -166,8 +165,7 @@ type Model struct {
 	LogTailLoaded bool
 	// LogTailDone latches once GetRun reports EndedAt != nil for the
 	// tailed run. The reducer stops scheduling the next tea.Tick once
-	// it is true, so a finished run doesn't keep the polling loop
-	// alive. W4-5 cycle-3 follow-on.
+	// it is true, so a finished run doesn't keep the polling loop alive.
 	LogTailDone bool
 
 	// Edit-flow state. EditErr stashes the most recent edit failure
@@ -188,13 +186,13 @@ type Model struct {
 	// Usage-pane state — only meaningful when Mode==ModeUsage.
 	// UsageFetcher is the injected read closure that wraps a
 	// usage.Service. nil = pane shows "unavailable" copy and the U
-	// keypress is a no-op (W7-2 / ADR-013).
+	// keypress is a no-op (ADR-013).
 	UsageFetcher UsageFetcher
 	UsageResult  usage.Overview
 	UsageErr     error
 	UsageLoaded  bool
 
-	// Advisor section state (W7-3b / ADR-015) — co-rendered inside the
+	// Advisor section state (ADR-015) — co-rendered inside the
 	// Usage pane. Independent loaded flag so the metric blocks render
 	// even when advisories are still in-flight.
 	AdvisorFetcher    AdvisorFetcher
@@ -202,7 +200,7 @@ type Model struct {
 	AdvisorErr        error
 	AdvisorLoaded     bool
 
-	// Notify banner state (W7-5 / ADR-016) — rendered at the top of
+	// Notify banner state (ADR-016) — rendered at the top of
 	// ModeList view. NotifyFetcher nil keeps the banner suppressed.
 	NotifyFetcher NotifyFetcher
 	NotifyRows    []notify.LogRow
@@ -245,7 +243,6 @@ type (
 		// RunEnded is true when the tailed run row has EndedAt != nil.
 		// The reducer uses this to stop scheduling the next tea.Tick so
 		// long-completed runs don't keep churning the polling loop.
-		// W4-5 cycle-3 follow-on.
 		RunEnded bool
 	}
 	LogTailErrMsg  struct{ Err error }
@@ -393,7 +390,7 @@ func loadHookStatsCmd(fetcher HookStatsFetcher, window string) tea.Cmd {
 	}
 }
 
-// loadUsageCmd fetches the F2.B Overview snapshot for the Usage pane.
+// loadUsageCmd fetches the Overview snapshot for the Usage pane.
 // Mirrors loadHookStatsCmd's nil-tolerant + error-channelled pattern.
 func loadUsageCmd(fetcher UsageFetcher) tea.Cmd {
 	if fetcher == nil {
@@ -408,7 +405,7 @@ func loadUsageCmd(fetcher UsageFetcher) tea.Cmd {
 	}
 }
 
-// loadAdvisorCmd is the W7-3b advisor companion. Dispatched alongside
+// loadAdvisorCmd is the advisor companion. Dispatched alongside
 // loadUsageCmd whenever the user enters / refreshes the Usage pane.
 // Failure is non-fatal — the pane keeps rendering metric blocks while
 // the advisor section shows the error.
@@ -425,7 +422,7 @@ func loadAdvisorCmd(fetcher AdvisorFetcher) tea.Cmd {
 	}
 }
 
-// loadNotifyCmd is the W7-5 banner companion. Dispatched on Init and
+// loadNotifyCmd is the notify-banner companion. Dispatched on Init and
 // on ModeList `r` so the banner reflects daemon-side dispatch state.
 // nil fetcher → no banner.
 func loadNotifyCmd(fetcher NotifyFetcher) tea.Cmd {
@@ -711,7 +708,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.RunEnded {
 			m.LogTailDone = true
 		}
-		// W4-5 — stop scheduling polls once the run has finished. The
+		// Stop scheduling polls once the run has finished. The
 		// final chunk we just folded in carried EndedAt; any further
 		// log lines would only land if the runtime were resurrected
 		// (it doesn't). handleKey on `esc`/`h` returns the user to
@@ -1042,7 +1039,7 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, beginCreateCmd()
 
 	case "H":
-		// Hook reliability stats pane (A-3.2 W3-5 follow-on — surfaces
+		// Hook reliability stats pane (surfaces
 		// the v0.1.0 daemon/aggregator output inside the cli buddy
 		// TUI). Capital H so lowercase `h` stays free for back-nav in
 		// other modes. No-op when no fetcher is wired (e.g., a TUI
@@ -1059,7 +1056,7 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, loadHookStatsCmd(m.HookStatsFetcher, m.HookStatsWindow)
 
 	case "U":
-		// F2.B Usage pane (W7-2 / ADR-013). Capital U so lowercase u
+		// Usage pane (ADR-013). Capital U so lowercase u
 		// stays free for future use. No-op when fetcher unset.
 		if m.UsageFetcher == nil {
 			return m, nil
@@ -1108,7 +1105,7 @@ func (m Model) View() string {
 // where View() may be called before the terminal size is reported.
 //
 // Width-only: vertical overflow is left to the terminal's own scroll
-// region. cycle-3 BA-4 reported horizontal layout breakage on resize;
+// region. Dogfood reported horizontal layout breakage on resize;
 // per-line truncation is the smallest fix that restores readability
 // without rewriting each render function's column math.
 func (m Model) constrainWidth(s string) string {
@@ -1132,7 +1129,7 @@ func (m Model) constrainWidth(s string) string {
 func (m Model) renderList() string {
 	var b strings.Builder
 
-	// Notify banner (W7-5 / ADR-016) — top-of-screen advisory teaser.
+	// Notify banner (ADR-016) — top-of-screen advisory teaser.
 	// Suppressed when no fetcher wired, no rows loaded, or rows are
 	// all dedup/severity skips. Shows up to 3 most recent "sent"
 	// outcomes so a fresh daemon dispatch surfaces immediately.
@@ -1314,7 +1311,7 @@ func (m Model) renderScheduler() string {
 	}
 
 	for _, e := range m.SchedulerEntries {
-		// W4-4 — a one-glyph "currently running" marker. Only running
+		// A one-glyph "currently running" marker. Only running
 		// agents get ⏵; everyone else stays blank so the scheduler pane
 		// doesn't gain noise for the common idle case.
 		marker := " "
@@ -1375,7 +1372,7 @@ func (m Model) renderLogTail() string {
 			l.Message))
 	}
 	if m.LogTailDone {
-		// W4-5 — surface "run done, polling stopped" so the user knows
+		// Surface "run done, polling stopped" so the user knows
 		// the silence is intentional rather than a stuck tail.
 		b.WriteString(dimStyle.Render("  (run finished — polling stopped)"))
 		b.WriteString("\n")
@@ -1438,7 +1435,7 @@ func (m Model) renderHookStats() string {
 func (m Model) renderUsage() string {
 	var b strings.Builder
 
-	b.WriteString(headerStyle.Render("buddy usage — F2.B AI-usage analytics"))
+	b.WriteString(headerStyle.Render("buddy usage — AI-usage analytics"))
 	b.WriteString("\n\n")
 
 	if m.UsageFetcher == nil {
@@ -1540,7 +1537,7 @@ func (m Model) renderUsage() string {
 		b.WriteString("\n")
 	}
 
-	// Advisor section (W7-3b / ADR-015) — co-rendered when fetcher
+	// Advisor section (ADR-015) — co-rendered when fetcher
 	// is wired. Skipping entirely when no fetcher keeps the pane
 	// clean for installs that haven't enabled the advisor.
 	if m.AdvisorFetcher != nil {

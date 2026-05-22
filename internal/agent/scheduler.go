@@ -13,9 +13,10 @@ import (
 )
 
 // Scheduler drives agents that have a non-empty `schedule` cron expression.
-// It is the W3-3 follow-on to the on-demand `buddy agent run` CLI: each tick
-// fires Runtime.Run for one agent. v0.3.x ships single-process / sequential
-// dispatch — multi-process clustering or parallel runs land in later cycles.
+// It is the background-tick counterpart to the on-demand `buddy agent run`
+// CLI: each tick fires Runtime.Run for one agent. Single-process /
+// sequential dispatch ships first; multi-process clustering or parallel
+// runs land in later cycles.
 //
 // Concurrency contract:
 //   - The cron library invokes job callbacks in its own goroutines. Our
@@ -25,7 +26,7 @@ import (
 //     pile up if last run is still going."
 //   - The Scheduler does not refresh the agent set live. Adding / deleting an
 //     agent while the scheduler is running has no effect until restart.
-//     Live refresh (W3-3 follow-on follow-on) is a separate cycle.
+//     Live refresh is a separate cycle.
 type Scheduler struct {
 	store    *Store
 	runtime  *Runtime

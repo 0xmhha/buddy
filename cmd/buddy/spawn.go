@@ -10,7 +10,7 @@ import (
 // Release, because (*os.Process).Release sets Pid = -1 on Unix on success
 // (see Go stdlib os/exec_unix.go: (*Process).release zeroes the public Pid
 // field). Reading cmd.Process.Pid after Release would always yield -1, which
-// is the original M5 T7 bug — see docs/roadmap.md §M5 T7.
+// is the regression first surfaced when start/detach captured PID after release.
 //
 // The helper is split out from spawnDetached so a unit test can lock in the
 // "PID captured pre-Release" invariant without exercising the full daemon

@@ -62,10 +62,9 @@ type Options struct {
 	// that a subsequent `buddy doctor` (with no --db flag) can read it.
 	DBPath string
 	// KeepDaemon, when true on Uninstall, leaves any running daemon alone.
-	// Default behavior (M5 T9) is to stop the daemon if its PID file at
+	// Default behavior is to stop the daemon if its PID file at
 	// <dir(DBPath)>/daemon.pid shows it's running, so users don't end up with
-	// an orphan daemon polling a DB they no longer use. See docs/roadmap.md
-	// §M5 T9 for the friction this fixes.
+	// an orphan daemon polling a DB they no longer use.
 	KeepDaemon bool
 }
 
@@ -95,13 +94,13 @@ type Result struct {
 	// DaemonWasRunning is true when Uninstall observed a running daemon at
 	// the start of the call. Reported regardless of whether KeepDaemon
 	// suppressed the actual stop, so the CLI can render the right message
-	// in either case. (M5 T9.)
+	// in either case.
 	DaemonWasRunning bool
 	// DaemonStopped is true when Uninstall sent SIGTERM to a running daemon
 	// AND confirmed (via PID-file disappearance) that it exited within the
 	// wait window. False when no daemon was running, when KeepDaemon
 	// suppressed the stop, or when the wait window expired before the
-	// daemon released its PID file. (M5 T9.)
+	// daemon released its PID file.
 	DaemonStopped bool
 }
 
@@ -139,7 +138,7 @@ func Install(opts Options) (*Result, error) {
 		BackupPath:   resolved.backupPath,
 	}
 
-	// M5 T6: pre-create buddy-dir + migrate the DB BEFORE touching settings.
+	// Pre-create buddy-dir + migrate the DB BEFORE touching settings.
 	// Doing it here (not gated on --with-cliwrap and not gated on settings
 	// being present) means a subsequent `buddy doctor` always sees a
 	// migrated DB, even on the same-failed-install / re-install paths.
@@ -201,9 +200,9 @@ func Install(opts Options) (*Result, error) {
 // (preserving original byte-for-byte). Otherwise walks the JSON and unwraps
 // any buddy-wrapped command back to its original form.
 //
-// M5 T9: Uninstall also stops a running daemon up front (unless
-// opts.KeepDaemon is set). The rationale, per docs/roadmap.md §M5 T9, is to
-// avoid orphan daemons that keep polling a DB the user no longer uses.
+// Uninstall also stops a running daemon up front (unless
+// opts.KeepDaemon is set). The rationale is to avoid orphan daemons that
+// keep polling a DB the user no longer uses.
 // Failures of the stop attempt are advisory — we proceed with the unwrap
 // regardless, since leaving the wrap in place is strictly worse than leaving
 // the daemon alone (the user can always run `buddy daemon stop` themselves).
@@ -278,7 +277,7 @@ type resolvedPaths struct {
 	// pidFile is <dir(dbPath)>/daemon.pid — same convention as
 	// cmd/buddy/main.go's defaultPIDFromDB. Resolving it alongside dbPath
 	// keeps Uninstall's auto-stop in lockstep with whatever DB layout
-	// install pre-created. (M5 T9.)
+	// install pre-created.
 	pidFile string
 }
 
@@ -342,7 +341,7 @@ func resolve(opts Options) (resolvedPaths, error) {
 // the DB at install time means `buddy doctor` (run before the daemon ever
 // starts) opens a properly migrated DB and surfaces the friend-tone "daemon이
 // 실행 중이 아니야" message instead of a raw "no such table: hook_outbox" SQL
-// error. (M5 T6.)
+// error.
 func initBuddyState(dbPath string) error {
 	conn, err := db.Open(db.Options{Path: dbPath})
 	if err != nil {

@@ -132,7 +132,7 @@ func TestOpen_ReadOnly_DoesNotCreateMissingParentDir(t *testing.T) {
 // parent directory exists but the DB file itself does not. Without the sentinel
 // translation, modernc.org/sqlite would lazily create an empty file in mode=ro
 // (or surface "no such table: hook_outbox" on first query) — neither helpful.
-// (M5 T8.)
+//
 func TestOpen_ReadOnly_MissingFile_ReturnsErrDBMissing(t *testing.T) {
 	parent := t.TempDir() // exists
 	dbPath := filepath.Join(parent, "missing.db")

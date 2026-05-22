@@ -18,19 +18,17 @@ import (
 	"github.com/0xmhha/buddy/internal/usage"
 )
 
-// newTuiCmd wires `buddy tui` — the W3-2 terminal UI. v0.6.6 shipped the
-// minimum-viable list. Follow-on cycles add: detail pane (Enter/l opens
-// the latest-run summary), scheduler-preview pane (s shows when each
-// scheduled agent would fire next), in-app delete with confirmation
-// (d → y/N prompt → FK-cascading delete), live log-tail pane (t from
-// detail view → ~1s polling of `agent_logs` for the run shown), in-app
-// spec edit (e from detail view → $EDITOR shell-out → ParseSpec
-// validation → Store.UpdateSpec), create form (c from list view →
-// $EDITOR shell-out on a starter YAML → Store.Create), and a hook-
-// reliability stats pane (H from list view → queries.Run snapshot of
-// the v0.1.0 daemon/aggregator output, A-3.2 W3-5 follow-on integrating
-// the hook monitor as a cli buddy sub-feature). All 6 named W3-2
-// follow-on items per cli-buddy-spec §9 are now shipped.
+// newTuiCmd wires `buddy tui` — the terminal UI. The initial release
+// shipped a minimum-viable list; subsequent cycles added: detail pane
+// (Enter/l opens the latest-run summary), scheduler-preview pane (s
+// shows when each scheduled agent would fire next), in-app delete with
+// confirmation (d → y/N prompt → FK-cascading delete), live log-tail
+// pane (t from detail view → ~1s polling of agent_logs for the run
+// shown), in-app spec edit (e from detail view → $EDITOR shell-out →
+// ParseSpec validation → Store.UpdateSpec), create form (c from list
+// view → $EDITOR shell-out on a starter YAML → Store.Create), and a
+// hook-reliability stats pane (H from list view → queries.Run snapshot
+// of the daemon / aggregator output).
 //
 // AltScreen is enabled so the previous shell content is preserved and
 // restored on quit — the friend-tone "silent default" stays intact.
@@ -78,7 +76,7 @@ func newTuiCmd() *cobra.Command {
 				})
 			}
 
-			// Usage fetcher (W7-2 / ADR-013). Opens its own connection
+			// Usage fetcher (ADR-013). Opens its own connection
 			// per call; closes immediately so a stale TUI doesn't leak.
 			// Best-effort: failures yield UsageErrMsg via the loader.
 			model.UsageFetcher = func() (usage.Overview, error) {
@@ -90,7 +88,7 @@ func newTuiCmd() *cobra.Command {
 				return usage.NewService(conn).QueryOverview(context.Background(), usage.TimeWindow{}, 5)
 			}
 
-			// Advisor fetcher (W7-3b / ADR-015). Same fresh-conn pattern.
+			// Advisor fetcher (ADR-015). Same fresh-conn pattern.
 			// Run() (not Persist) so the TUI never silently writes —
 			// users explicitly opt in via `buddy advise --persist` or
 			// the daemon's advisorMonitor.
@@ -111,7 +109,7 @@ func newTuiCmd() *cobra.Command {
 				return runner.Run(context.Background())
 			}
 
-			// Notify banner fetcher (W7-5 / ADR-016). Pulls the 10
+			// Notify banner fetcher (ADR-016). Pulls the 10
 			// newest notification_log rows from the last 24h. The
 			// renderer filters down to "sent" outcomes and caps the
 			// banner at 3 lines.

@@ -1,6 +1,6 @@
-// Package notify implements F2.E Notification (W7-5, ADR-016) — the
-// delivery layer that surfaces advisor.Advisory rows to OS-level /
-// out-of-band channels. Four channels ship in v0.12.0:
+// Package notify implements the notification delivery layer (ADR-016).
+// It surfaces advisor.Advisory rows to OS-level / out-of-band channels.
+// Four channels ship out of the box:
 //
 //   - desktop   : macOS osascript / Linux notify-send.
 //   - webhook   : HTTP POST/PUT/PATCH + custom headers (lifted from

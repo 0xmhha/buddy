@@ -10,12 +10,12 @@ import (
 	"github.com/0xmhha/buddy/internal/usage"
 )
 
-// usage_tool.go wires the 5 `usage_query_*` MCP tools per ADR-013 W7-2.
+// usage_tool.go wires the 5 `usage_query_*` MCP tools per ADR-013.
 // Read-only over the sessions table. Each tool takes an optional ISO
 // `since` (and `until` for time-bounded calls) plus tool-specific args.
 //
-// W7-3 Advisory will consume these tools as LLM input to derive
-// actionable Korean prose recommendations.
+// The advisor consumes these tools as LLM input to derive actionable
+// Korean prose recommendations.
 
 // ─── shared time-range arg (analytics_tool 와 형식 일치) ─────────────────
 
@@ -80,7 +80,7 @@ func addUsageTools(s *mcp.Server, opts Options) {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "usage_query_token_spend",
-		Description: "Sum of token usage (input + output + cache_read + cache_create) over the given window. Reads from buddy's sessions table populated by F2.A Session Monitor (W7-1, ADR-012). Returns aggregate counts and the cache hit ratio.",
+		Description: "Sum of token usage (input + output + cache_read + cache_create) over the given window. Reads from buddy's sessions table populated by the session monitor (ADR-012). Returns aggregate counts and the cache hit ratio.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, args usageTokenSpendArgs) (*mcp.CallToolResult, usage.TokenSpend, error) {
 		if svc == nil {
 			return usageNotWired("usage_query_token_spend"), usage.TokenSpend{}, nil
@@ -98,7 +98,7 @@ func addUsageTools(s *mcp.Server, opts Options) {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "usage_query_session_stats",
-		Description: "Per-window session counts (total / active / ended), duration percentiles (p50 / p90 / max over ended sessions), and the goal_text coverage ratio. Useful for W7-3 Advisory to detect 'long sessions' or 'sessions without recorded goal'.",
+		Description: "Per-window session counts (total / active / ended), duration percentiles (p50 / p90 / max over ended sessions), and the goal_text coverage ratio. Useful for the advisor to detect 'long sessions' or 'sessions without recorded goal'.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, args usageSessionStatsArgs) (*mcp.CallToolResult, usage.SessionStats, error) {
 		if svc == nil {
 			return usageNotWired("usage_query_session_stats"), usage.SessionStats{}, nil
@@ -153,7 +153,7 @@ func addUsageTools(s *mcp.Server, opts Options) {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "usage_query_overview",
-		Description: "Combined snapshot: token_spend + session_stats + time_distribution + top sessions in a single call. The TUI Usage pane and `buddy usage overview` CLI use this. Cheaper than four separate tool calls for W7-3 Advisory's one-shot summarisation.",
+		Description: "Combined snapshot: token_spend + session_stats + time_distribution + top sessions in a single call. The TUI Usage pane and `buddy usage overview` CLI use this. Cheaper than four separate tool calls for the advisor's one-shot summarisation.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, args usageOverviewArgs) (*mcp.CallToolResult, usage.Overview, error) {
 		if svc == nil {
 			return usageNotWired("usage_query_overview"), usage.Overview{}, nil

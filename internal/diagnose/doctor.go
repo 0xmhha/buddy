@@ -156,7 +156,7 @@ func Check(opts Options) (Report, error) {
 //
 // db.ErrDBMissing gets a dedicated, friendlier message so users who pointed
 // --db at a path where nothing has been written yet don't see SQLite's
-// "out of memory (14)" or "no such table" leak through (M5 T8).
+// "out of memory (14)" or "no such table" leak through.
 func dbOpenReport(dbPath string, err error) Report {
 	if errors.Is(err, db.ErrDBMissing) {
 		return Report{

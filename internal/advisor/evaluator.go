@@ -15,9 +15,9 @@ import (
 // Evaluator runs the rule set against live data and emits advisories.
 // Combines the four substrates ADR-015 calls out:
 //
-//   - Usage      : token / session metrics (W7-2).
-//   - Sessions   : active-session list for ruleLongSession (W7-1).
-//   - Knowledge  : retrieval enrichment per advisory (W7-3a). Optional —
+//   - Usage      : token / session metrics.
+//   - Sessions   : active-session list for ruleLongSession.
+//   - Knowledge  : retrieval enrichment per advisory. Optional —
 //                  nil store skips evidence enrichment; nil embedder
 //                  forces BM25-only.
 //   - Advisories : dedup window lookup (this package's Store).

@@ -1,7 +1,7 @@
 // Package analytics is the adapter layer that backs analytics-mcp tools.
 // It owns the schema, the query interface, and the SQLite-flavoured SQL
 // reference implementation. Mixpanel / Amplitude / Datadog adapters land
-// under the same Adapter interface in later cycles (spec §8 W4-2.2+).
+// under the same Adapter interface in later cycles (spec §8).
 //
 // The package is internal/-only; the MCP wrapper (internal/mcp) is the
 // public surface that translates JSON-RPC arguments into these typed

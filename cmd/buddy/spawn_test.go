@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// TestStartAndDetach_CapturesPIDBeforeRelease seals the M5 T7 regression:
+// TestStartAndDetach_CapturesPIDBeforeRelease seals the daemon-spawn PID-capture regression:
 // spawnDetached used to read cmd.Process.Pid AFTER Release(), and Release()
 // on Unix sets Pid = -1, so the user always saw "buddy: daemon 시작 (pid -1)".
 //
@@ -38,7 +38,7 @@ func TestStartAndDetach_CapturesPIDBeforeRelease(t *testing.T) {
 		t.Fatalf("expected positive PID captured before Release, got %d", pid)
 	}
 	if pid == -1 {
-		t.Fatalf("PID is -1 — Release() ran before capture (M5 T7 regression)")
+		t.Fatalf("PID is -1 — Release() ran before capture")
 	}
 
 	// Structural seal: Release() must have zeroed the public Pid field.

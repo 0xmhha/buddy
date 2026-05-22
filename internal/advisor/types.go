@@ -1,7 +1,7 @@
-// Package advisor implements F2.C Phase 2 (W7-3b, ADR-015) — the
-// advisory generator. Walks usage metric (W7-2) over configurable
+// Package advisor implements the rule-driven advisory generator
+// (ADR-015). Walks usage metric over configurable
 // thresholds; enriches triggered advisories with retrieval evidence
-// (W7-3a). 4-surface ship: CLI buddy advise, TUI Usage advisory
+//. 4-surface ship: CLI buddy advise, TUI Usage advisory
 // section, MCP usage_advise, daemon advisorMonitor.
 //
 // Composition:

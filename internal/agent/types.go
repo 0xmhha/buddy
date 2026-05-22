@@ -11,14 +11,14 @@
 //                  record run/log rows in SQLite
 //
 // v0.3.x ships the storage + runtime + Subprocess/Mock executor + on-demand
-// `buddy agent run` CLI. Background scheduler (W3-3 follow-on), TUI
-// (W3-2), and the reference webtoon agent (W3-6) are subsequent phases.
+// `buddy agent run` CLI. Background scheduler, TUI
+//, and the reference webtoon agent are subsequent phases.
 package agent
 
 import "time"
 
-// Status is the agent's lifecycle state. It is intentionally narrow in v0.3 —
-// future statuses (paused, errored, archived) land in W3-3 follow-ons.
+// Status is the agent's lifecycle state. The set is intentionally narrow —
+// future statuses (paused, errored, archived) will land in follow-ons.
 type Status string
 
 const (
@@ -45,7 +45,7 @@ type Agent struct {
 //   - id / name        — required
 //   - schedule         — optional cron expression (currently informational; the
 //                        on-demand `buddy agent run` ignores it). Background
-//                        ticking lands in the W3-3 follow-on.
+//                        ticking is implemented separately by the scheduler.
 //   - chain            — ordered list of buddy commands to dispatch
 //   - retry            — optional retry policy applied uniformly to every step
 //   - output           — optional terminal destination (stdout / file). v0.3
@@ -64,7 +64,7 @@ type AgentSpec struct {
 	// "Korea", "USA / EU / 기타"). A true value selects that branch's
 	// skills; false explicitly suppresses it. Missing key = unknown
 	// preference, which pickCascadeTarget logs and skips rather than
-	// silently picking. W4-1 cycle-3 BA-? candidate.
+	// silently picking the first one.
 	BranchHints map[string]bool `yaml:"branch_hints,omitempty"`
 }
 
@@ -113,7 +113,7 @@ type ChainStep struct {
 	// single failed cleanup step at the end still surfaces failure),
 	// or 0 when every step (including continue_on_fail ones) succeeded.
 	ContinueOnFail bool `yaml:"continue_on_fail,omitempty"`
-	// OnSelfCheckFail is the W4-2 policy knob for what the runtime does
+	// OnSelfCheckFail is the policy knob for what the runtime does
 	// when the step's parsed §self-check section reports a fail verdict
 	// (any unchecked `- [ ]` in the section body). Allowed values:
 	//
@@ -132,8 +132,8 @@ type ChainStep struct {
 	//     failures, so a deterministic self-check failure cannot loop
 	//     forever.
 	//
-	// Default ("") preserves every pre-W4-2 agent's behaviour; opt-in
-	// is the discipline. cycle-3 BA-? candidate.
+	// Default ("") preserves the prior behaviour; opt-in is the
+	// discipline.
 	OnSelfCheckFail string `yaml:"on_self_check_fail,omitempty"`
 }
 
@@ -177,9 +177,9 @@ const (
 	BackoffStrategyExponential = "exponential"
 )
 
-// OutputTarget describes where the final aggregated result goes. v0.3 ships
-// stdout and file targets — webhook / API endpoints (spec §2.2 webtoon
-// example) land in W3-6.
+// OutputTarget describes where the final aggregated result goes. The
+// initial release ships stdout, file, and webhook destinations (the spec
+// §2.2 webtoon example is the canonical webhook case).
 type OutputTarget struct {
 	Type string `yaml:"type"`           // "stdout" | "file" | "webhook"
 	Path string `yaml:"path,omitempty"` // file path when Type=="file"

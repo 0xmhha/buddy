@@ -23,7 +23,7 @@ func NewBuddyServer(opts Options) *mcp.Server {
 			"Use these tools to inspect hook health, query hook statistics, manage the " +
 			"local feature registry, read product analytics (analytics_query_* — backed by " +
 			"BUDDY_ANALYTICS_BACKEND), query AI-usage metrics over the local sessions " +
-			"table (usage_query_* — populated by F2.A Session Monitor / ADR-012), " +
+			"table (usage_query_* — populated by the session monitor, ADR-012), " +
 			"retrieve past session content via local BM25 + vector hybrid search " +
 			"(knowledge_query — populated by `buddy knowledge ingest` / ADR-014), and " +
 			"generate friend-tone Korean advisories from metric + retrieval " +
@@ -53,26 +53,26 @@ type Options struct {
 	// configured" text body instead of querying real data.
 	Analytics analytics.Adapter
 
-	// Usage is the service backing the usage_query_* tools (W7-2 / ADR-013).
+	// Usage is the service backing the usage_query_* tools (ADR-013).
 	// When nil, those tools register but report "sessions store not wired"
 	// instead of querying. The CLI wires this from the same buddy.db it
 	// already opens for the agent / feature stores.
 	Usage *usage.Service
 
-	// Knowledge wires the `knowledge_query` tool (W7-3a / ADR-014).
+	// Knowledge wires the `knowledge_query` tool (ADR-014).
 	// Store nil → tool registers but reports "store not wired". Embedder
 	// nil → tool still serves BM25-only retrieval (channel tag reflects
 	// the missing vector channel). Both can be nil during early CLI use
 	// before any ingest run.
 	Knowledge KnowledgeOptions
 
-	// Advisor wires the `usage_advise` tool (W7-3b / ADR-015). Runner
+	// Advisor wires the `usage_advise` tool (ADR-015). Runner
 	// nil → tool reports "not wired" verbatim. Store needed only when
 	// callers pass history=true.
 	Advisor AdvisorOptions
 
-	// Notify wires the `notify_status` + `notify_test` tools (W7-5 /
-	// ADR-016). Store powers read-side queries; Dispatcher carries
+	// Notify wires the `notify_status` + `notify_test` tools (ADR-016).
+	// Store powers read-side queries; Dispatcher carries
 	// the configured channels for synthetic test dispatch.
 	Notify NotifyOptions
 }

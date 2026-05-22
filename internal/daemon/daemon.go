@@ -38,7 +38,7 @@ import (
 // runSessionMonitor + runAdvisorMonitor) never overlap. io.Writer is
 // not required to be concurrent-safe; os.Stderr happens to be on POSIX
 // but a test's bytes.Buffer is not, and the race detector caught the
-// gap during cycle-3 dogfood.
+// gap during dogfood.
 type syncWriter struct {
 	mu sync.Mutex
 	w  io.Writer
@@ -58,7 +58,7 @@ type Config struct {
 	PIDFile      string    // default: <dirname(DBPath)>/daemon.pid
 	LogTo        io.Writer // structured info/errors. default os.Stderr.
 
-	// SessionMonitor governs the W7-1 sessionMonitor goroutine (ADR-012).
+	// SessionMonitor governs the sessionMonitor goroutine (ADR-012).
 	// Disabled=true skips the goroutine entirely (matches the v0.1 daemon
 	// behavior for users who don't want session observation). When
 	// enabled, PollInterval governs cadence (default 30s) and
@@ -66,7 +66,7 @@ type Config struct {
 	// than the threshold (default 1h).
 	SessionMonitor SessionMonitorConfig
 
-	// Advisor governs the W7-3b advisorMonitor goroutine (ADR-015).
+	// Advisor governs the advisorMonitor goroutine (ADR-015).
 	// Disabled=true skips entirely; otherwise the goroutine runs at
 	// PollInterval (default 1h) and inserts fired advisories into the
 	// advisories table (with dedup window applied per-kind).
@@ -87,7 +87,7 @@ type AdvisorMonitorConfig struct {
 	Disabled   bool
 	Thresholds advisor.Thresholds
 
-	// NotifyChannels are W7-5 / ADR-016 channel specs the daemon turns
+	// NotifyChannels are ADR-016 channel specs the daemon turns
 	// into a *notify.Dispatcher at Run() time (it needs the live
 	// *sql.DB the daemon already owns). Empty slice = no out-of-band
 	// delivery; advisories still persist and can be read via CLI /
@@ -178,7 +178,7 @@ func Run(ctx context.Context, cfg Config) error {
 		fmt.Fprintf(cfg.LogTo, "buddy: tick processed %d rows\n", n)
 	}
 
-	// W7-1 sessionMonitor goroutine (ADR-012). Runs alongside the outbox
+	// sessionMonitor goroutine (ADR-012). Runs alongside the outbox
 	// aggregator. Disabled=true skips entirely; otherwise tick at
 	// SessionMonitor.PollInterval (default 30s).
 	if !cfg.SessionMonitor.Disabled {
@@ -188,7 +188,7 @@ func Run(ctx context.Context, cfg Config) error {
 			cfg.SessionMonitor.PollInterval, cfg.SessionMonitor.EndedThreshold)
 	}
 
-	// W7-3b advisorMonitor goroutine (ADR-015). Polls at
+	// advisorMonitor goroutine (ADR-015). Polls at
 	// Thresholds.PollInterval (default 1h) and persists fresh
 	// advisories. Disabled=true skips entirely.
 	if !cfg.Advisor.Disabled {
@@ -216,7 +216,7 @@ func Run(ctx context.Context, cfg Config) error {
 	}
 }
 
-// runSessionMonitor is the W7-1 goroutine. It periodically fs-scans
+// runSessionMonitor is the session-observer goroutine. It periodically fs-scans
 // ~/.claude/projects/ via fsLister, then sweeps existing sessions for
 // stale-vs-active state transitions (ended_at marker on / off).
 //
@@ -274,7 +274,7 @@ func runSessionMonitor(ctx context.Context, store *sessions.Store, cfg SessionMo
 	}
 }
 
-// runAdvisorMonitor is the W7-3b goroutine. Polls the rule evaluator
+// runAdvisorMonitor is the advisor goroutine. Polls the rule evaluator
 // at Thresholds.PollInterval, persisting fired advisories (dedup
 // applied via the advisor.Evaluator path). All errors are logged but
 // non-fatal — a transient retrieval failure shouldn't kill the daemon.
@@ -305,7 +305,7 @@ func runAdvisorMonitor(ctx context.Context, conn *sql.DB, cfg AdvisorMonitorConf
 		if len(advs) > 0 {
 			fmt.Fprintf(logTo, "buddy: advisor monitor wrote %d advisor(y/ies)\n", len(advs))
 		}
-		// W7-5 / ADR-016 — dispatch through notify channels right
+		// Dispatch through notify channels right (ADR-016).
 		// after persist. Returning a count map per channel so the
 		// daemon log records "what got delivered where".
 		if notifyDisp != nil && len(advs) > 0 {

@@ -28,7 +28,7 @@ func newDaemonCmd() *cobra.Command {
 	return cmd
 }
 
-// newDaemonRunCmd wires `buddy daemon run`. M5 T3: pollInterval / batchSize
+// newDaemonRunCmd wires `buddy daemon run`. pollInterval / batchSize
 // are read from ~/.buddy/config.json (spec defaults: 1s / 500). Explicit
 // --poll / --batch flags still win — the precedence is flag > config > default.
 // Zero is the "use config / default" sentinel for the flags, so the help text
@@ -64,7 +64,7 @@ func newDaemonRunCmd() *cobra.Command {
 // newDaemonStartCmd spawns `buddy daemon run` detached. Flags here mirror
 // `daemon run` so the user can express the same intent at start time; we
 // forward them as argv to the spawned child, which then loads config itself.
-// M5 T3: --config and --batch are now propagated alongside --poll.
+// --config and --batch are propagated alongside --poll.
 func newDaemonStartCmd() *cobra.Command {
 	var (
 		dbFlag     string
@@ -186,7 +186,7 @@ func defaultPIDFromDB(dbPath string) string {
 // is forwarded only when set (non-zero / non-empty) so the child can fall
 // back to its own config / spec defaults — the parent does NOT pre-resolve
 // poll / batch here, that resolution happens once on the child via
-// loadEffectiveConfig (M5 T3).
+// loadEffectiveConfig.
 func spawnDetached(dbFlag, pidFile string, poll time.Duration, batch int, configFlag string) error {
 	self, err := os.Executable()
 	if err != nil {

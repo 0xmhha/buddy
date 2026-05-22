@@ -1,5 +1,5 @@
 // Package usage derives AI-usage analytic primitives from the sessions
-// table. ADR-013 (W7-2 F2.B Usage Analysis) — sessions-only data source,
+// table. ADR-013 — sessions-only data source,
 // live SQL aggregation, no derived table. Consumed by:
 //
 //   - `buddy usage` CLI subcommand (cmd/buddy/usage_cmd.go)

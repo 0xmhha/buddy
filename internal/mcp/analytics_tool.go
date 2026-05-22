@@ -14,10 +14,10 @@ import (
 )
 
 // analytics_tool.go wires the 7 analytics_query_* MCP tools (spec §4) to a
-// pluggable analytics.Adapter. v0.2.0 keeps the friend-tone stub behaviour
-// from W4-2.1 as the *fallback*: if Options.Analytics is nil (no adapter
-// configured), every handler returns guidance text. With an adapter, the
-// handler delegates to it and renders the typed result.
+// pluggable analytics.Adapter. Friend-tone stub behaviour is the
+// fallback: if Options.Analytics is nil (no adapter configured), every
+// handler returns guidance text. With an adapter, the handler delegates
+// to it and renders the typed result.
 //
 // Args carry MCP-side jsonschema annotations; results reuse analytics
 // package types directly so JSON shapes track spec §4 verbatim.
@@ -116,14 +116,14 @@ var (
 		"analytics backend not configured — set BUDDY_ANALYTICS_BACKEND to one of: sql, mixpanel, amplitude, datadog, stripe, elasticsearch",
 	)
 	errBackendStubOnly = errors.New(
-		"analytics backend recognised but the adapter is not implemented yet (analytics-mcp v0.2.0 ships stubs only — see docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md §8 phase W4-2.2)",
+		"analytics backend recognised but the adapter is not implemented yet (analytics-mcp ships stubs only — see docs/superpowers/specs/2026-05-10-analytics-mcp-spec.md §8 for the adapter roadmap)",
 	)
 )
 
 func notConfiguredResponse(toolName string, err error) *mcp.CallToolResult {
 	body := fmt.Sprintf(
 		"analytics-mcp/%s 호출은 받았는데, 데이터 백엔드 연결이 아직 안 돼 있어.\n\n%s\n\n"+
-			"임시 처리: 본 tool 의 응답은 빈 값. 본격 데이터 query 는 adapter 구현 (W4-2.2~W4-2.3) 후.\n"+
+			"임시 처리: 본 tool 의 응답은 빈 값. 본격 데이터 query 는 adapter 구현 후.\n"+
 			"요청한 시각: %s",
 		toolName, err.Error(), time.Now().UTC().Format(time.RFC3339),
 	)

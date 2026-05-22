@@ -88,7 +88,7 @@ func TestCheck_DBOpenFailure_ReturnsSingleIssueAndBails(t *testing.T) {
 	assert.Contains(t, rep.Issues[0].Message, "DB를 못 열었어")
 }
 
-// TestCheck_DBMissing_RendersFriendTone covers M5 T8: when the user points
+// TestCheck_DBMissing_RendersFriendTone — when the user points
 // --db at a path that doesn't exist (parent dir missing OR file missing), the
 // doctor report must surface the friend-tone "DB가 아직 없어 ..." message
 // instead of leaking SQLite's "out of memory (14)" or "no such table" wording.

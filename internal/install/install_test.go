@@ -703,7 +703,7 @@ func TestInstall_WithCliwrap_DefaultDBPath(t *testing.T) {
 	assertMigratedDB(t, defaultDB)
 }
 
-// --- M5 T9: uninstall auto-stops daemon ---
+// --- uninstall auto-stops daemon ---
 
 // spawnInProcessDaemon runs daemon.Run on a goroutine, waits for the PID file
 // to report Running, and returns a (cancel, done) pair so tests can either

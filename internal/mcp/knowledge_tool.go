@@ -9,7 +9,7 @@ import (
 )
 
 // knowledge_tool.go wires the single `knowledge_query` MCP tool per
-// ADR-014 (W7-3a F2.C Phase 1). Read-only over the chunks table.
+// ADR-014. Read-only over the chunks table.
 // v0.11.0 (Phase 2) advisor will consume this as its retrieval primitive.
 
 type knowledgeQueryArgs struct {
@@ -39,7 +39,7 @@ func addKnowledgeTools(s *mcp.Server, opts Options) {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "knowledge_query",
-		Description: "Retrieve top-K chunks of past Claude Code session content for a natural-language query. Hybrid BM25 + vector retrieval over the local chunks table populated by `buddy knowledge ingest` (W7-3a / ADR-014). When the Python embedder is unavailable, falls back to BM25-only and tags hits with channel='bm25'.",
+		Description: "Retrieve top-K chunks of past Claude Code session content for a natural-language query. Hybrid BM25 + vector retrieval over the local chunks table populated by `buddy knowledge ingest` (ADR-014). When the Python embedder is unavailable, falls back to BM25-only and tags hits with channel='bm25'.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, args knowledgeQueryArgs) (*mcp.CallToolResult, knowledgeQueryResult, error) {
 		if k.Store == nil {
 			return knowledgeNotWired(), knowledgeQueryResult{}, nil

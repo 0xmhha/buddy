@@ -69,7 +69,7 @@ func segmentClause(seg *Segment, clauses *[]string, args *[]any) {
 // v1 semantics: "loose funnel" — each stage counts distinct users who fired
 // that event within the time window and the (optional) segment. Ordered
 // funnel (user must have fired stage[i-1] strictly before stage[i]) is a
-// follow-up flag once a real user requests it (W4-2.3 follow-on).
+// follow-up flag once a real user requests it.
 func (a *SQLAdapter) QueryFunnel(ctx context.Context, q FunnelQuery) (FunnelResult, error) {
 	if len(q.Stages) == 0 {
 		return FunnelResult{}, fmt.Errorf("analytics: funnel requires at least one stage")

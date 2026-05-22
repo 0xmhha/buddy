@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 )
 
-// parser.go implements W3-4 of the cli-buddy-spec: extract structured
+// parser.go implements the cli-buddy-spec output parser: extract structured
 // signals from a Claude subprocess's stdout after a buddy command runs.
 //
 // Two signals matter for v0.3:

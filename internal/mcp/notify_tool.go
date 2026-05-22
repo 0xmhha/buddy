@@ -10,7 +10,7 @@ import (
 	"github.com/0xmhha/buddy/internal/notify"
 )
 
-// notify_tool.go wires the W7-5 / ADR-016 notify MCP surface. Two
+// notify_tool.go wires the notify MCP surface (ADR-016). Two
 // tools:
 //
 //   - notify_status : read notification_log (visibility + dedup debug)

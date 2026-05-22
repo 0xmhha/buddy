@@ -13,7 +13,7 @@ import (
 	"github.com/0xmhha/buddy/internal/config"
 )
 
-// TestLoadEffectiveConfig_MissingFile_ReturnsDefaults locks the M5 T3
+// TestLoadEffectiveConfig_MissingFile_ReturnsDefaults locks the
 // "first-run UX": when ~/.buddy/config.json doesn't exist, doctor / daemon
 // must fall back to the spec defaults silently — not error out.
 func TestLoadEffectiveConfig_MissingFile_ReturnsDefaults(t *testing.T) {
@@ -99,7 +99,7 @@ func TestBuildDoctorOptions_MapsAllFourThresholds(t *testing.T) {
 }
 
 // TestDoctor_UsesConfiguredHookSlowMs is the user-visible acceptance test
-// from M5 T3: after `buddy config set hookSlowMs 2000`, doctor must build
+// after `buddy config set hookSlowMs 2000`, doctor must build
 // its diagnose.Options with HookSlowMs=2000. We exercise the precise path
 // the cobra RunE takes (loadEffectiveConfig → buildDoctorOptions) without
 // reaching for sqlite — the threshold mapping is the contract under test.

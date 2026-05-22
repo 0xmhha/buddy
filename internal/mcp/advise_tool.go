@@ -9,10 +9,10 @@ import (
 	"github.com/0xmhha/buddy/internal/advisor"
 )
 
-// advise_tool.go wires the `usage_advise` MCP tool per ADR-015
-// (W7-3b F2.C Phase 2). Pulls live usage metric + retrieval, returns
-// the structured Advisory[] payload. W7-5 Notification will consume
-// this for desktop / Slack / webhook dispatch.
+// advise_tool.go wires the `usage_advise` MCP tool per ADR-015. Pulls
+// live usage metric + retrieval, returns the structured Advisory[]
+// payload. The notification layer (ADR-016) consumes this for desktop /
+// webhook / banner / shell dispatch.
 
 type adviseArgs struct {
 	Persist bool   `json:"persist,omitempty" jsonschema:"When true, write fresh advisories to the advisories table (subject to dedup window). Default: false."`

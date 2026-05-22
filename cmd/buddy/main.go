@@ -25,8 +25,6 @@ import (
 // version. The Makefile mirrors it as RELEASE_VERSION (used in release
 // artifact filenames like `dist/buddy_0.1.0_linux_amd64`) — when bumping for
 // a release, update both. See Makefile §RELEASE_VERSION.
-//
-// Roadmap §3 M6 T3.
 var (
 	version   = "1.0.0"
 	gitSHA    = "dev"
@@ -74,7 +72,7 @@ func resolvedDBPath(dbFlag string) string {
 	return "~/.buddy/buddy.db"
 }
 
-// dbMissingFriendError renders the M5 T8 friend-tone message for read-only
+// dbMissingFriendError renders the friend-tone message for read-only
 // commands (stats, events) when db.Open returns ErrDBMissing. Centralised so
 // stats and events stay in sync with each other and with diagnose's wording.
 func dbMissingFriendError(dbFlag string) error {
