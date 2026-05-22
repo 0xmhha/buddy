@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/0xmhha/buddy/internal/db"
 	"github.com/0xmhha/buddy/internal/schema"
 )
 
@@ -30,12 +29,6 @@ func NewStore(conn *sql.DB) *Store {
 // packages so the "open store" pattern stays consistent across packages.
 type Options struct {
 	DBPath string
-}
-
-// open returns a connection scoped to the given Options. Used by the
-// package-level helpers below for one-shot CLI invocations.
-func open(opts Options) (*sql.DB, error) {
-	return db.Open(db.Options{Path: opts.DBPath})
 }
 
 // Upsert inserts the session or updates every field except StartedAt (which
