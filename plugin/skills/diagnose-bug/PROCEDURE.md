@@ -78,11 +78,13 @@ input 5개 이상 비어 있으면 분석 시작 거부 — "재현 정보 부�
 
 ## 5. 단계 (Phases)
 
-### Phase 1. Reproduce
+### Phase 1. Reproduce — Build a feedback loop
+
+> **이 단계가 본 skill 의 본질이며 나머지 Phase 는 mechanical.** 빠른·결정적·날카로운 feedback loop 가 있으면 bisection / hypothesis-testing / instrumentation 은 그 loop 를 *소비* 할 뿐. loop 가 없으면 코드를 들여다봐도 해결되지 않는다. **disproportionate effort 권장.** loop 구성 10 가지 메뉴 + iterate-on-loop + non-deterministic + cannot-build-a-loop 절차는 [`references/loop-methods.md`](./references/loop-methods.md) 참조.
 
 1. 사용자 보고 시나리오 그대로 재현 시도
 2. 환경 일치 (browser version, OS, data state, locale, timezone)
-3. 재현 빈도 측정 (10회 시도 중 몇 회 발생)
+3. 재현 빈도 측정 (10회 시도 중 몇 회 발생). *재현률 < 5%* 면 debug 불가능 — [`references/loop-methods.md`](./references/loop-methods.md) §non-deterministic 의 *reproduction rate raise* 전술 (loop 100×, parallel, stress, timing window 좁히기) 로 50%+ 까지 끌어올린 뒤 Phase 2 진입.
 4. 재현되면 → Phase 2
 5. 재현 안 되면 → Phase 1.5
 
@@ -91,6 +93,8 @@ input 5개 이상 비어 있으면 분석 시작 거부 — "재현 정보 부�
 - 동일 browser version (browserstack 등)
 - locale / timezone 일치
 - feature flag / A-B test bucket 일치
+
+> Phase 3 (Hypothesize) 진입 *전*에 loop 가 반드시 있어야 함. loop 없이 hypothesize 진행은 금지 — 막연한 추측 fix 의 진입점.
 
 ### Phase 1.5. Re-reproduce (재현 실패 시)
 
@@ -112,6 +116,8 @@ input 5개 이상 비어 있으면 분석 시작 거부 — "재현 정보 부�
 - 추가 instrumentation production 배포 (sampled logging)
 - 증상 발생 사용자에게 trace ID 요청
 - 가설 기반 mitigation만 우선 배포 (root cause 미상 명시)
+
+> **loop 구성 (= 결정적 재현 신호 확보) 자체가 막힌 경우** ([`references/loop-methods.md`](./references/loop-methods.md) §cannot-build-a-loop 적용): (1) STOP 후 시도한 method 목록 + 실패 사유 명시, (2) 사용자에게 환경 접근 / HAR·log·core dump / production 임시 instrumentation 권한 요청, (3) **Phase 1 + Phase 1.5 의 loop 구성 시도가 합산 3 회 연속 실패하면 [`decompose-blocker`](../decompose-blocker/PROCEDURE.md) 자동 trigger** (A3 token escalation 차단). loop 없이 Phase 3 진행 금지.
 
 ### Phase 2. Minimize Repro
 
