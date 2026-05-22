@@ -167,6 +167,14 @@ feature-C || feature-D (병렬 진행 가능)
 
 ---
 
+## 옵션: 외부 stakeholder 공유 (PRD 발행)
+
+비기술 stakeholder (PM / 마케팅 / legal) 공유 또는 dispatch-parallel-agents 의 *parent PRD reference* 가 필요하면 [`publish-to-tracker`](../publish-to-tracker/PROCEDURE.md) 를 `--mode=prd` 로 호출. feature spec → PRD 1건 (Problem / Solution / User Stories / Implementation Decisions / Testing Decisions / Out of Scope / Further Notes) 을 GitHub Issues / Linear / Jira 로 발행.
+
+호출 형태: `/buddy:publish-to-tracker --mode=prd "<feature spec 경로>"` — 발행 결과 issue ID 는 §4 `plan-build` 완료 후 `--mode=issues` 호출 시 *parent PRD reference* 로 사용.
+
+---
+
 ## 다음 phase
 
 - `/buddy:design-system` — 3단계 Technical Design (권장)

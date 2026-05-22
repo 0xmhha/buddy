@@ -161,6 +161,12 @@ Worst: 9 days (known risk: 3rd-party API uncertainty)
 
 `autoplan`을 invoke해 task plan을 4-mode review한다.
 
+### Stage 8 (옵션): 외부 tracker 발행
+
+팀 collaboration 또는 dispatch-parallel-agents 의 *외부 grabbable surface* 가 필요하면 [`publish-to-tracker`](../publish-to-tracker/PROCEDURE.md) 를 `--mode=issues` 로 호출. autoplan review 통과 후 권장. tracer-bullet vertical slice 를 GitHub Issues / Linear / Jira 로 발행 (의존성 순서 + HITL/AFK 라벨 + ready-for-agent surface).
+
+호출 형태: `/buddy:publish-to-tracker --mode=issues "<task plan 경로>"` (parent PRD issue ID 필수 — `define-features` 단계에서 `--mode=prd` 선행 발행)
+
 ---
 
 ## 다음 phase

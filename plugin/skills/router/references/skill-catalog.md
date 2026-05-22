@@ -131,6 +131,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `plan-parallel-execution` | command + dispatch | worker batch + sync points — capability fit + critical path 우선 + bottleneck 식별, AI agent 통합 |
 | `define-acceptance-test-plan` | command + dispatch | per-actor (unit/integration/contract) + cross-actor (E2E flow) test plan + test infra 결정 + acceptance gate |
 | `estimate-build-timeline` | command + dispatch | critical path 기반 calendar timeline + CI (best/expected/p90/worst) + risk buffer + holiday 반영 |
+| `publish-to-tracker` | command + dispatch | 내부 §2 feature spec / §4 task plan → 외부 issue tracker (GitHub/Linear/Jira) 발행. 모드 `prd` (PRD 1건) / `issues` (tracer-bullet vertical slice N건, HITL·AFK 라벨, ready-for-agent surface, blocked-by 의존성 순서). dispatch-parallel-agents 의 grabbable surface 생성. mattpocock to-prd/to-issues adopt-with-edits. |
 
 ### §5 Stage Skills — Development
 
