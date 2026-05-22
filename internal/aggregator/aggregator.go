@@ -15,7 +15,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"slices"
+	"sync/atomic"
 
 	"github.com/0xmhha/buddy/internal/db"
 	"github.com/0xmhha/buddy/internal/schema"
@@ -23,6 +25,14 @@ import (
 
 // StatsWindowsMin lists the rolling-window sizes (minutes) we maintain.
 var StatsWindowsMin = []int{5, 60, 1440}
+
+// MalformedDroppedTotal counts outbox payloads that failed to parse and
+// were consumed without insertion since process start. The aggregator
+// trusts upstream to validate, so a non-zero value points at a real
+// regression rather than expected runtime behaviour. Exported so doctor
+// / monitoring tooling can read the running count without scraping
+// stderr logs.
+var MalformedDroppedTotal atomic.Int64
 
 // BucketStartMs returns the inclusive start (unix ms) of the window-aligned
 // bucket containing tsMs.
@@ -58,9 +68,14 @@ func ProcessBatch(conn *sql.DB, batchSize int) (int, error) {
 	for _, r := range rows {
 		var p schema.HookEventPayload
 		if err := json.Unmarshal([]byte(r.Payload), &p); err != nil {
-			// Malformed payload — mark consumed so it stops blocking the queue,
-			// but skip the event. (We trust upstream to validate; this is
-			// a defense-in-depth catch.)
+			// Malformed payload — mark consumed so it stops blocking the
+			// queue but skip the event. Upstream is trusted to validate;
+			// reaching this branch means that contract was violated, so
+			// the drop must be observable. Bump the running counter and
+			// emit a structured stderr line that names the outbox row id
+			// + the parse error so an operator can investigate.
+			MalformedDroppedTotal.Add(1)
+			log.Printf("aggregator: malformed outbox payload id=%d dropped: %v", r.ID, err)
 			consumed = append(consumed, r.ID)
 			continue
 		}

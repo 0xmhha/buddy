@@ -208,3 +208,33 @@ func TestProcessBatch_HandlesMalformedPayload(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, pending)
 }
+
+// TestProcessBatch_MalformedPayloadIncrementsCounter — the silent-drop
+// branch must observably bump aggregator.MalformedDroppedTotal so an
+// operator (or a future doctor probe) can detect upstream regressions
+// rather than letting events disappear without a trace. The counter is
+// a process-global, so the test snapshots it before / after and asserts
+// on the delta.
+func TestProcessBatch_MalformedPayloadIncrementsCounter(t *testing.T) {
+	conn, err := db.Open(db.Options{Path: openTmp(t)})
+	require.NoError(t, err)
+	defer conn.Close()
+
+	before := aggregator.MalformedDroppedTotal.Load()
+
+	for i := 0; i < 3; i++ {
+		_, err := conn.Exec(
+			"INSERT INTO hook_outbox (ts, payload) VALUES (?, ?)",
+			baseTs, "{not valid json}",
+		)
+		require.NoError(t, err)
+	}
+
+	n, err := aggregator.ProcessBatch(conn, 100)
+	require.NoError(t, err)
+	require.Equal(t, 3, n, "all three malformed rows consumed")
+
+	after := aggregator.MalformedDroppedTotal.Load()
+	require.Equal(t, int64(3), after-before,
+		"counter must advance once per dropped payload")
+}
