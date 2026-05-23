@@ -10,9 +10,9 @@ import (
 	"github.com/0xmhha/buddy/internal/usage"
 )
 
-// usage_tool.go wires the 5 `usage_query_*` MCP tools per ADR-013.
-// Read-only over the sessions table. Each tool takes an optional ISO
-// `since` (and `until` for time-bounded calls) plus tool-specific args.
+// usage_tool.go wires the 5 `usage_query_*` MCP tools. Read-only over
+// the sessions table. Each tool takes an optional ISO `since` (and
+// `until` for time-bounded calls) plus tool-specific args.
 //
 // The advisor consumes these tools as LLM input to derive actionable
 // Korean prose recommendations.
@@ -80,7 +80,7 @@ func addUsageTools(s *mcp.Server, opts Options) {
 
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "usage_query_token_spend",
-		Description: "Sum of token usage (input + output + cache_read + cache_create) over the given window. Reads from buddy's sessions table populated by the session monitor (ADR-012). Returns aggregate counts and the cache hit ratio.",
+		Description: "Sum of token usage (input + output + cache_read + cache_create) over the given window. Reads from buddy's sessions table populated by the session monitor. Returns aggregate counts and the cache hit ratio.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, args usageTokenSpendArgs) (*mcp.CallToolResult, usage.TokenSpend, error) {
 		if svc == nil {
 			return usageNotWired("usage_query_token_spend"), usage.TokenSpend{}, nil

@@ -9,10 +9,10 @@ import (
 	"github.com/0xmhha/buddy/internal/advisor"
 )
 
-// advise_tool.go wires the `usage_advise` MCP tool per ADR-015. Pulls
-// live usage metric + retrieval, returns the structured Advisory[]
-// payload. The notification layer (ADR-016) consumes this for desktop /
-// webhook / banner / shell dispatch.
+// advise_tool.go wires the `usage_advise` MCP tool. Pulls live usage
+// metric + retrieval, returns the structured Advisory[] payload. The
+// notification layer consumes this for desktop / webhook / banner /
+// shell dispatch.
 
 type adviseArgs struct {
 	Persist bool   `json:"persist,omitempty" jsonschema:"When true, write fresh advisories to the advisories table (subject to dedup window). Default: false."`
@@ -25,8 +25,8 @@ type adviseResult struct {
 }
 
 // AdvisorOptions configures the usage_advise tool. The two fields
-// mirror the ADR-015 substrate split: Runner is the rule path
-// (preview / persist); Store is the read-back path (history).
+// mirror the substrate split: Runner is the rule path (preview /
+// persist); Store is the read-back path (history).
 type AdvisorOptions struct {
 	Runner *advisor.Evaluator
 	Store  *advisor.Store
@@ -35,7 +35,7 @@ type AdvisorOptions struct {
 func addAdvisorTool(s *mcp.Server, opts Options) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "usage_advise",
-		Description: "Generate friend-tone Korean advisories from local usage + knowledge data (ADR-015). With history=true, returns persisted advisories from the advisories table instead of running rules. Each advisory has Kind / Severity / Message / Evidence[]. The 5 v0.11.0 rule kinds: token-spike-day, long-session, low-cache-ratio, session-volume-day, token-daily-cap. Threshold tuning lives in `buddy config` (advisor.* keys).",
+		Description: "Generate friend-tone Korean advisories from local usage + knowledge data. With history=true, returns persisted advisories from the advisories table instead of running rules. Each advisory has Kind / Severity / Message / Evidence[]. The 5 built-in rule kinds: token-spike-day, long-session, low-cache-ratio, session-volume-day, token-daily-cap. Threshold tuning lives in `buddy config` (advisor.* keys).",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, args adviseArgs) (*mcp.CallToolResult, adviseResult, error) {
 		if opts.Advisor.Runner == nil {
 			return advisorNotWired(), adviseResult{}, nil

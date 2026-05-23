@@ -17,8 +17,7 @@ import (
 // (one line per event) on stdout — debug surface, not friend tone. With
 // --follow the command installs a signal-aware context so Ctrl-C / SIGTERM
 // cleanly stops the polling loop and the command writes friend-tone start /
-// end markers to stderr (the only friendly touch on this command). See
-// m4-plan §Task 4.
+// end markers to stderr (the only friendly touch on this command).
 func newEventsCmd() *cobra.Command {
 	var (
 		dbFlag     string

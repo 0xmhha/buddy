@@ -1,16 +1,16 @@
-// Package advisor implements the rule-driven advisory generator
-// (ADR-015). Walks usage metric over configurable
-// thresholds; enriches triggered advisories with retrieval evidence
-//. 4-surface ship: CLI buddy advise, TUI Usage advisory
-// section, MCP usage_advise, daemon advisorMonitor.
+// Package advisor implements the rule-driven advisory generator. Walks
+// usage metric over configurable thresholds; enriches triggered
+// advisories with retrieval evidence. Four surfaces consume it: CLI
+// `buddy advise`, TUI Usage advisory section, MCP usage_advise, daemon
+// advisorMonitor.
 //
 // Composition:
 //
-//   Evaluator{Thresholds, Usage, Knowledge}.Run(ctx) → []Advisory
-//                  ↓
-//   Store (advisories table, migration v7) for persistence + dedup
-//                  ↓
-//   CLI / TUI / MCP / daemon render or push the result
+//	Evaluator{Thresholds, Usage, Knowledge}.Run(ctx) → []Advisory
+//	               ↓
+//	Store (advisories table, migration v7) for persistence + dedup
+//	               ↓
+//	CLI / TUI / MCP / daemon render or push the result
 package advisor
 
 import "time"
@@ -26,8 +26,8 @@ const (
 	SeverityHigh Severity = "high"
 )
 
-// Rule kind identifiers. v0.11.0 shipped five (token / session
-// shape); v0.13.0 (ADR-017) adds KindGoalDrift.
+// Rule kind identifiers — five usage/session rules plus the
+// goal-drift rule.
 const (
 	KindTokenSpikeDay    = "token-spike-day"
 	KindLongSession      = "long-session"
@@ -78,8 +78,8 @@ type EvidenceItem struct {
 	ChunkID int64  `json:"chunk_id,omitempty"`
 }
 
-// Thresholds are the rule knobs sourced from buddy config (per
-// ADR-015 §Q2). Zero values fall back to DefaultThresholds().
+// Thresholds are the rule knobs sourced from buddy config. Zero values
+// fall back to DefaultThresholds().
 type Thresholds struct {
 	// Master toggle. When true, Run returns an empty slice.
 	Disabled bool
@@ -105,7 +105,7 @@ type Thresholds struct {
 	// KindTokenDailyCap. Default 500_000.
 	TokenDailyThreshold int64
 
-	// GoalDriftDisabled bypasses ruleGoalDrift entirely (ADR-017).
+	// GoalDriftDisabled bypasses ruleGoalDrift entirely.
 	GoalDriftDisabled bool
 
 	// GoalDriftThreshold: cosine similarity (0..1) below this between
@@ -113,7 +113,7 @@ type Thresholds struct {
 	GoalDriftThreshold float64
 
 	// GoalDriftSampleChunks: chunks-from-end window the drift score
-	// averages over (ADR-017 Q2). Default 10.
+	// averages over. Default 10.
 	GoalDriftSampleChunks int
 
 	// DedupWindow: same Kind doesn't re-fire inside this window.
@@ -124,7 +124,7 @@ type Thresholds struct {
 	PollInterval time.Duration
 }
 
-// DefaultThresholds returns spec-locked defaults (ADR-015 §Q2 + ADR-017).
+// DefaultThresholds returns the hard-coded default tuning.
 func DefaultThresholds() Thresholds {
 	return Thresholds{
 		Disabled:              false,

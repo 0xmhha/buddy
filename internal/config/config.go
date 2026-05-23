@@ -9,15 +9,11 @@
 //   - Effective is the resolved view with non-pointer fields. The rest of the
 //     codebase consumes Effective.
 //
-//   - Defaults are spec-locked (v0.1-spec §6.2 + §6.3). Changing them requires a
-//     spec update — they are not user-facing.
+//   - Defaults are not user-facing; they ship hard-coded and a code change is
+//     required to alter them.
 //
 //   - Validate runs on the EFFECTIVE values, so a zero Config (all defaults)
 //     always passes. Invalid configs only come from explicit user overrides.
-//
-// T1 scope is the schema, Defaults, Effective, Validate, Load, Save. The
-// `buddy config get/set/unset/show` CLI is T2; doctor/aggregator/daemon
-// integration is T3.
 package config
 
 import (
@@ -43,19 +39,19 @@ type Config struct {
 	HookSlowMs      *int64    `json:"hookSlowMs,omitempty"`
 	HookFailRatePct *int      `json:"hookFailRatePct,omitempty"`
 	OutboxBacklog   *int      `json:"outboxBacklog,omitempty"`
-	NotifyChannel   *string   `json:"notifyChannel,omitempty"` // v0.1: only "stderr"
+	NotifyChannel   *string   `json:"notifyChannel,omitempty"` // currently only "stderr" is accepted
 	PollInterval    *Duration `json:"pollInterval,omitempty"`
 	BatchSize       *int      `json:"batchSize,omitempty"`
 	PersonaLocale   *string   `json:"personaLocale,omitempty"` // "ko" | "en"
 
-	// SessionMonitor* (ADR-012) configure daemon-side observation of
-	// Claude Code sessions. Disabled=true skips the goroutine entirely.
+	// SessionMonitor* configure daemon-side observation of Claude Code
+	// sessions. Disabled=true skips the goroutine entirely.
 	SessionMonitorDisabled       *bool     `json:"sessionMonitorDisabled,omitempty"`
 	SessionMonitorPollInterval   *Duration `json:"sessionMonitorPollInterval,omitempty"`
 	SessionMonitorEndedThreshold *Duration `json:"sessionMonitorEndedThreshold,omitempty"`
 
-	// Advisor* (ADR-015) configure the daemon-side advisory generator.
-	// 5 rule thresholds + dedup window + poll interval + master toggle.
+	// Advisor* configure the daemon-side advisory generator: rule
+	// thresholds + dedup window + poll interval + master toggle.
 	AdvisorDisabled              *bool     `json:"advisorDisabled,omitempty"`
 	AdvisorTokenSpikeRatio       *float64  `json:"advisorTokenSpikeRatio,omitempty"`
 	AdvisorLongSessionHours      *int      `json:"advisorLongSessionHours,omitempty"`
@@ -68,8 +64,8 @@ type Config struct {
 	AdvisorGoalDriftThreshold    *float64  `json:"advisorGoalDriftThreshold,omitempty"`
 	AdvisorGoalDriftSampleChunks *int      `json:"advisorGoalDriftSampleChunks,omitempty"`
 
-	// Notify* (ADR-016) configure the daemon-side notification dispatcher.
-	// Per-channel toggles + severity floor + dedup window.
+	// Notify* configure the daemon-side notification dispatcher:
+	// per-channel toggles + severity floor + dedup window.
 	NotifyDesktopEnabled       *bool     `json:"notifyDesktopEnabled,omitempty"`
 	NotifyDesktopSeverityMin   *string   `json:"notifyDesktopSeverityMin,omitempty"`
 	NotifyDesktopDedup         *Duration `json:"notifyDesktopDedup,omitempty"`
@@ -142,9 +138,8 @@ type EffectiveWebhook struct {
 	Timeout     time.Duration
 }
 
-// Defaults returns the spec-locked defaults from v0.1-spec §6.2 + §6.3 plus
-// the daemon's own defaults (PollInterval, BatchSize) which were never
-// user-tunable until M5. Session Monitor defaults are ADR-012.
+// Defaults returns the hard-coded defaults for every Effective field. A zero
+// Config (no overrides) resolves to exactly this value.
 func Defaults() Effective {
 	return Effective{
 		HookTimeoutMs:   30_000,
@@ -417,8 +412,8 @@ func (c Config) Validate() error {
 			eff.PersonaLocale)
 	}
 
-	// Advisor thresholds (ADR-015). Permissive bounds — these
-	// are user-tunable taste knobs, not safety floors.
+	// Advisor thresholds — permissive bounds because these are
+	// user-tunable taste knobs, not safety floors.
 	if eff.AdvisorTokenSpikeRatio < 1.0 {
 		add("advisorTokenSpikeRatio", fmt.Sprintf("must be >= 1.0 (got %g)", eff.AdvisorTokenSpikeRatio))
 	}
@@ -447,8 +442,8 @@ func (c Config) Validate() error {
 		add("advisorGoalDriftSampleChunks", fmt.Sprintf("must be >= 1 (got %d)", eff.AdvisorGoalDriftSampleChunks))
 	}
 
-	// Notify thresholds (ADR-016). Severity strings constrained
-	// to the advisor-side enum; webhook entries validated individually.
+	// Notify thresholds — severity strings constrained to the
+	// advisor-side enum; webhook entries validated individually.
 	validSev := map[string]bool{"info": true, "warn": true, "high": true}
 	if !validSev[eff.NotifyDesktopSeverityMin] {
 		add("notifyDesktopSeverityMin", fmt.Sprintf("must be info|warn|high (got %q)", eff.NotifyDesktopSeverityMin))

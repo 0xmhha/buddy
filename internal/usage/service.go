@@ -9,9 +9,9 @@ import (
 )
 
 // Service derives metric primitives from the sessions table.
-// Stateless — every method reads the live rows on call. Per ADR-013 Q2
-// (live aggregation, no derived table) the row count is small enough
-// (~1500 rows / 30d at the user's profile) that SQL aggregate is ms-fast.
+// Stateless — every method reads the live rows on call. Live SQL
+// aggregation (no derived table) is fine because the row count is small
+// (~1500 rows / 30d at the user's profile) and aggregate is ms-fast.
 //
 // Concurrency: safe for parallel callers; each method opens its own
 // QueryContext.
@@ -128,9 +128,8 @@ func (s *Service) QuerySessionStats(ctx context.Context, w TimeWindow) (SessionS
 }
 
 // QueryTimeDistribution buckets sessions by the *local* hour of
-// StartedAt. local = host time zone (time.Local). Per ADR-013 Q4 the
-// metric exists to surface "peak hours" so user-local is what they
-// expect, not UTC.
+// StartedAt. local = host time zone (time.Local). The metric exists to
+// surface "peak hours" so user-local is what they expect, not UTC.
 func (s *Service) QueryTimeDistribution(ctx context.Context, w TimeWindow) (TimeDistribution, error) {
 	w = s.resolveWindow(w)
 	q, args := s.windowQuery(`SELECT started_at FROM sessions`, w)

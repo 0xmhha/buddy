@@ -58,22 +58,21 @@ type Config struct {
 	PIDFile      string    // default: <dirname(DBPath)>/daemon.pid
 	LogTo        io.Writer // structured info/errors. default os.Stderr.
 
-	// SessionMonitor governs the sessionMonitor goroutine (ADR-012).
-	// Disabled=true skips the goroutine entirely (matches the v0.1 daemon
-	// behavior for users who don't want session observation). When
-	// enabled, PollInterval governs cadence (default 30s) and
+	// SessionMonitor governs the sessionMonitor goroutine, which observes
+	// Claude Code sessions. Disabled=true skips the goroutine entirely.
+	// When enabled, PollInterval governs cadence (default 30s) and
 	// EndedThreshold marks a session as ended once last_active is older
 	// than the threshold (default 1h).
 	SessionMonitor SessionMonitorConfig
 
-	// Advisor governs the advisorMonitor goroutine (ADR-015).
-	// Disabled=true skips entirely; otherwise the goroutine runs at
-	// PollInterval (default 1h) and inserts fired advisories into the
-	// advisories table (with dedup window applied per-kind).
+	// Advisor governs the advisorMonitor goroutine. Disabled=true skips
+	// entirely; otherwise the goroutine runs at PollInterval (default 1h)
+	// and inserts fired advisories into the advisories table (with dedup
+	// window applied per-kind).
 	Advisor AdvisorMonitorConfig
 }
 
-// SessionMonitorConfig — ADR-012 daemon role config.
+// SessionMonitorConfig configures the session-observer goroutine.
 type SessionMonitorConfig struct {
 	Disabled        bool
 	PollInterval    time.Duration
@@ -81,17 +80,16 @@ type SessionMonitorConfig struct {
 	ProjectsRoot    string // override for tests; empty → $HOME/.claude/projects
 }
 
-// AdvisorMonitorConfig — ADR-015 daemon role config. Mirrors the same
-// shape as SessionMonitorConfig for consistency.
+// AdvisorMonitorConfig configures the advisor goroutine. Mirrors the
+// same shape as SessionMonitorConfig for consistency.
 type AdvisorMonitorConfig struct {
 	Disabled   bool
 	Thresholds advisor.Thresholds
 
-	// NotifyChannels are ADR-016 channel specs the daemon turns
-	// into a *notify.Dispatcher at Run() time (it needs the live
-	// *sql.DB the daemon already owns). Empty slice = no out-of-band
-	// delivery; advisories still persist and can be read via CLI /
-	// TUI / MCP.
+	// NotifyChannels are channel specs the daemon turns into a
+	// *notify.Dispatcher at Run() time (it needs the live *sql.DB the
+	// daemon already owns). Empty slice = no out-of-band delivery;
+	// advisories still persist and can be read via CLI / TUI / MCP.
 	NotifyChannels []NotifyChannelSpec
 }
 
@@ -178,8 +176,8 @@ func Run(ctx context.Context, cfg Config) error {
 		fmt.Fprintf(cfg.LogTo, "buddy: tick processed %d rows\n", n)
 	}
 
-	// sessionMonitor goroutine (ADR-012). Runs alongside the outbox
-	// aggregator. Disabled=true skips entirely; otherwise tick at
+	// sessionMonitor goroutine runs alongside the outbox aggregator.
+	// Disabled=true skips entirely; otherwise it ticks at
 	// SessionMonitor.PollInterval (default 30s).
 	if !cfg.SessionMonitor.Disabled {
 		store := sessions.NewStore(conn)
@@ -188,9 +186,8 @@ func Run(ctx context.Context, cfg Config) error {
 			cfg.SessionMonitor.PollInterval, cfg.SessionMonitor.EndedThreshold)
 	}
 
-	// advisorMonitor goroutine (ADR-015). Polls at
-	// Thresholds.PollInterval (default 1h) and persists fresh
-	// advisories. Disabled=true skips entirely.
+	// advisorMonitor goroutine polls at Thresholds.PollInterval (default
+	// 1h) and persists fresh advisories. Disabled=true skips entirely.
 	if !cfg.Advisor.Disabled {
 		go runAdvisorMonitor(ctx, conn, cfg.Advisor, cfg.LogTo)
 		t := cfg.Advisor.Thresholds.WithDefaults()
@@ -305,9 +302,9 @@ func runAdvisorMonitor(ctx context.Context, conn *sql.DB, cfg AdvisorMonitorConf
 		if len(advs) > 0 {
 			fmt.Fprintf(logTo, "buddy: advisor monitor wrote %d advisor(y/ies)\n", len(advs))
 		}
-		// Dispatch through notify channels right (ADR-016).
-		// after persist. Returning a count map per channel so the
-		// daemon log records "what got delivered where".
+		// Dispatch through the configured notify channels right after
+		// persist. Returns a count map per channel so the daemon log
+		// records "what got delivered where".
 		if notifyDisp != nil && len(advs) > 0 {
 			items := make([]notify.Notifiable, len(advs))
 			for i, a := range advs {

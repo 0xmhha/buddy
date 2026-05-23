@@ -17,9 +17,9 @@ const (
 )
 
 // BM25Index is a tiny in-memory BM25 retriever. Build it from a Chunk
-// corpus once, then call Search repeatedly. Per ADR-014 §Q3 the corpus
-// is small (~10k chunks) so in-memory full scan beats any disk-backed
-// inverted index in both code complexity and latency.
+// corpus once, then call Search repeatedly. The corpus is small (~10k
+// chunks), so in-memory full scan beats any disk-backed inverted index
+// in both code complexity and latency.
 //
 // Thread-safety: Search is safe for concurrent callers (read-only).
 // Construction must finish before Search is invoked.
@@ -164,9 +164,9 @@ func termFrequency(tokens []string, t string) float64 {
 // because unicode.IsLetter covers Hangul.
 //
 // Future work: language-aware tokenisation (Korean morpheme splitter)
-// would improve recall on prose mixing Korean + English. Deferred to
-// v0.10.x — BM25's bag-of-words approximation tolerates the simpler
-// split well enough for v0.10.0.
+// would improve recall on prose mixing Korean + English. Deferred —
+// BM25's bag-of-words approximation tolerates the simpler split well
+// enough for now.
 func tokenizeBM25(s string) []string {
 	var out []string
 	var b strings.Builder

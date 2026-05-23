@@ -27,8 +27,8 @@ import (
 //
 // Despite the historical name, the interface now covers a non-trivial
 // in-app mutation (Delete). Renaming to "AgentStore" would be cleaner
-// but breaks every external caller — left as-is per cli-buddy-spec's
-// "additive only until v1.0" stance.
+// but breaks every external caller — left as-is to keep the public
+// surface additive until a major bump.
 //
 // LatestRun mirrors the Store method of the same name. Callers must
 // receive agent.ErrNotFound when the agent has never run — the View
@@ -72,24 +72,22 @@ const (
 // instead of crashing on the H keypress.
 type HookStatsFetcher func(window string) (queries.Result, error)
 
-// UsageFetcher is the read-only surface for the TUI's Usage pane
-// (ADR-013). Production wiring closes over a *usage.Service; tests
-// can inject a stub that returns canned Overview without touching SQLite.
+// UsageFetcher is the read-only surface for the TUI's Usage pane.
+// Production wiring closes over a *usage.Service; tests can inject a
+// stub that returns canned Overview without touching SQLite.
 //
 // nil = pane shows "unavailable" copy and stays in list mode (mirrors
 // HookStatsFetcher's nil-tolerant policy).
 type UsageFetcher func() (usage.Overview, error)
 
 // AdvisorFetcher returns advisories to render under the Usage pane's
-// metric blocks (ADR-015). Same nil-tolerant policy as
-// UsageFetcher — nil renders an empty advisory section silently rather
-// than erroring.
+// metric blocks. Same nil-tolerant policy as UsageFetcher — nil
+// renders an empty advisory section silently rather than erroring.
 type AdvisorFetcher func() ([]advisor.Advisory, error)
 
 // NotifyFetcher returns recent notification_log rows for the ModeList
-// top banner (ADR-016). Daemon dispatched advisories show up
-// here even without TUI navigation. nil = banner suppressed (silent
-// install).
+// top banner. Daemon dispatched advisories show up here even without
+// TUI navigation. nil = banner suppressed (silent install).
 type NotifyFetcher func() ([]notify.LogRow, error)
 
 // logTailPollInterval is the cadence at which the log-tail pane polls
@@ -178,22 +176,22 @@ type Model struct {
 	// Usage-pane state — only meaningful when Mode==ModeUsage.
 	// UsageFetcher is the injected read closure that wraps a
 	// usage.Service. nil = pane shows "unavailable" copy and the U
-	// keypress is a no-op (ADR-013).
+	// keypress is a no-op.
 	UsageFetcher UsageFetcher
 	UsageResult  usage.Overview
 	UsageErr     error
 	UsageLoaded  bool
 
-	// Advisor section state (ADR-015) — co-rendered inside the
-	// Usage pane. Independent loaded flag so the metric blocks render
-	// even when advisories are still in-flight.
-	AdvisorFetcher    AdvisorFetcher
-	AdvisorResult     []advisor.Advisory
-	AdvisorErr        error
-	AdvisorLoaded     bool
+	// Advisor section state — co-rendered inside the Usage pane.
+	// Independent loaded flag so the metric blocks render even when
+	// advisories are still in-flight.
+	AdvisorFetcher AdvisorFetcher
+	AdvisorResult  []advisor.Advisory
+	AdvisorErr     error
+	AdvisorLoaded  bool
 
-	// Notify banner state (ADR-016) — rendered at the top of
-	// ModeList view. NotifyFetcher nil keeps the banner suppressed.
+	// Notify banner state — rendered at the top of ModeList view.
+	// NotifyFetcher nil keeps the banner suppressed.
 	NotifyFetcher NotifyFetcher
 	NotifyRows    []notify.LogRow
 	NotifyLoaded  bool

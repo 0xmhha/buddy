@@ -15,8 +15,7 @@ import (
 	"github.com/0xmhha/buddy/internal/notify"
 )
 
-// newNotifyCmd wires `buddy notify ...` per ADR-016.
-// Subcommands + flags:
+// newNotifyCmd wires `buddy notify ...`. Subcommands + flags:
 //
 //   - test    --channel <name>    : fire a synthetic notification
 //   - status  [--since DUR]       : recent log rows
@@ -25,7 +24,7 @@ func newNotifyCmd() *cobra.Command {
 	var prompt bool
 	cmd := &cobra.Command{
 		Use:   "notify",
-		Short: "Notification delivery for advisor advisories (ADR-016)",
+		Short: "Notification delivery for advisor advisories",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if !prompt {
 				return cmd.Help()

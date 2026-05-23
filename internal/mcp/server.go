@@ -23,11 +23,11 @@ func NewBuddyServer(opts Options) *mcp.Server {
 			"Use these tools to inspect hook health, query hook statistics, manage the " +
 			"local feature registry, read product analytics (analytics_query_* — backed by " +
 			"BUDDY_ANALYTICS_BACKEND), query AI-usage metrics over the local sessions " +
-			"table (usage_query_* — populated by the session monitor, ADR-012), " +
+			"table (usage_query_* — populated by the session monitor), " +
 			"retrieve past session content via local BM25 + vector hybrid search " +
-			"(knowledge_query — populated by `buddy knowledge ingest` / ADR-014), and " +
+			"(knowledge_query — populated by `buddy knowledge ingest`), and " +
 			"generate friend-tone Korean advisories from metric + retrieval " +
-			"(usage_advise / ADR-015). All locally-derived tools degrade " +
+			"(usage_advise). All locally-derived tools degrade " +
 			"gracefully when their respective stores or embedders are unconfigured.",
 	})
 
@@ -53,26 +53,26 @@ type Options struct {
 	// configured" text body instead of querying real data.
 	Analytics analytics.Adapter
 
-	// Usage is the service backing the usage_query_* tools (ADR-013).
-	// When nil, those tools register but report "sessions store not wired"
-	// instead of querying. The CLI wires this from the same buddy.db it
-	// already opens for the agent / feature stores.
+	// Usage is the service backing the usage_query_* tools. When nil,
+	// those tools register but report "sessions store not wired" instead
+	// of querying. The CLI wires this from the same buddy.db it already
+	// opens for the agent / feature stores.
 	Usage *usage.Service
 
-	// Knowledge wires the `knowledge_query` tool (ADR-014).
-	// Store nil → tool registers but reports "store not wired". Embedder
-	// nil → tool still serves BM25-only retrieval (channel tag reflects
-	// the missing vector channel). Both can be nil during early CLI use
-	// before any ingest run.
+	// Knowledge wires the `knowledge_query` tool. Store nil → tool
+	// registers but reports "store not wired". Embedder nil → tool still
+	// serves BM25-only retrieval (channel tag reflects the missing
+	// vector channel). Both can be nil during early CLI use before any
+	// ingest run.
 	Knowledge KnowledgeOptions
 
-	// Advisor wires the `usage_advise` tool (ADR-015). Runner
-	// nil → tool reports "not wired" verbatim. Store needed only when
-	// callers pass history=true.
+	// Advisor wires the `usage_advise` tool. Runner nil → tool reports
+	// "not wired" verbatim. Store needed only when callers pass
+	// history=true.
 	Advisor AdvisorOptions
 
-	// Notify wires the `notify_status` + `notify_test` tools (ADR-016).
-	// Store powers read-side queries; Dispatcher carries
-	// the configured channels for synthetic test dispatch.
+	// Notify wires the `notify_status` + `notify_test` tools. Store
+	// powers read-side queries; Dispatcher carries the configured
+	// channels for synthetic test dispatch.
 	Notify NotifyOptions
 }

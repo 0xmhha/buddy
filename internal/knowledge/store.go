@@ -99,7 +99,7 @@ func (s *Store) ListBySession(ctx context.Context, sessionID string) ([]Chunk, e
 
 // All returns every chunk in id ASC order. Used by the BM25 indexer +
 // vector retrieval — both load the full set into memory and compute over
-// it (acceptable at v0.10.0's expected ~10k chunks per ADR-014 §Q2).
+// it (acceptable at the expected ~10k chunks).
 func (s *Store) All(ctx context.Context) ([]Chunk, error) {
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT id, session_id, content, token_count, embedding, created_at

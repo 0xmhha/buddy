@@ -1,14 +1,14 @@
-// Package notify implements the notification delivery layer (ADR-016).
-// It surfaces Notifiable items (the advisor is the v1 producer; future
-// producers attach by satisfying the same interface) to OS-level /
-// out-of-band channels. Four channels ship out of the box:
+// Package notify implements the notification delivery layer. It
+// surfaces Notifiable items (the advisor is the current producer;
+// future producers attach by satisfying the same interface) to
+// OS-level / out-of-band channels. Four channels ship out of the box:
 //
 //   - desktop   : macOS osascript / Linux notify-send.
 //   - webhook   : HTTP POST/PUT/PATCH + custom headers (lifted from
-//                 agent/postWebhook).
+//     agent/postWebhook).
 //   - tui-banner: TUI ModeList top section reads recent advisories.
 //   - shell     : `buddy notify --prompt` emits a single-line string
-//                 for PS1.
+//     for PS1.
 //
 // The Dispatcher orchestrates severity filter + per-channel dedup +
 // channel calls; each Channel implementation is trivial (one-shot

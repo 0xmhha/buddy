@@ -42,7 +42,7 @@ type Scheduler struct {
 	// refreshInterval is the cadence at which the scheduler re-reads the
 	// store and reconciles its in-memory cron entries against what the DB
 	// says. Zero means refresh is disabled and the scheduler keeps the
-	// entry set it loaded at startup (the v0.6.4 behavior).
+	// entry set it loaded at startup.
 	refreshInterval time.Duration
 
 	// tracked maps agent.ID → the cron entry ID we registered for it.
@@ -75,9 +75,9 @@ type SchedulerOptions struct {
 	// production default of 60s"; pass a small value in tests to drive the
 	// loop fast. To turn live refresh off entirely, set RefreshDisabled.
 	RefreshInterval time.Duration
-	// RefreshDisabled, when true, keeps the v0.6.4 behavior: load once at
-	// startup and never re-read the store. Mainly an escape hatch for
-	// users on a single shell who edit specs via restart anyway.
+	// RefreshDisabled, when true, loads once at startup and never re-reads
+	// the store. Mainly an escape hatch for users on a single shell who
+	// edit specs via restart anyway.
 	RefreshDisabled bool
 }
 
@@ -122,7 +122,7 @@ func NewScheduler(store *Store, runtime *Runtime, opts SchedulerOptions) *Schedu
 // these so users notice a typo without an extra round-trip). When live
 // refresh is enabled, Load is also called implicitly by the first
 // refreshOnce tick — calling it manually before Start is harmless and
-// preserves the v0.6.4 ordering for tests / CLI code that read
+// gives deterministic ordering for tests / CLI code that read
 // `Entries()` before launching the cron loop.
 func (s *Scheduler) Load(ctx context.Context) (loaded int, skipped []SkippedAgent, err error) {
 	diff, err := s.refreshOnce(ctx)
@@ -290,10 +290,8 @@ func (s *Scheduler) Entries() []cron.Entry {
 }
 
 // makeJob captures one agent ID into a cron-compatible func(). The closure
-// re-fetches the agent on each tick so spec edits via the CLI (after
-// restart-and-reload) take effect on the next tick — though in v0.3 the
-// Scheduler does not auto-reload between ticks, this still helps when a
-// future live-refresh implementation lands.
+// re-fetches the agent on each tick so spec edits via the CLI take effect
+// on the next tick.
 func (s *Scheduler) makeJob(initial Agent) func() {
 	return func() {
 		// Per-agent "is this agent already running?" guard.
@@ -314,7 +312,7 @@ func (s *Scheduler) makeJob(initial Agent) func() {
 		defer cancel()
 
 		// Re-fetch the agent in case the spec was updated since startup
-		// (future-proofing — v0.3 CLI does not yet support edit).
+		// (future-proofing — the CLI does not yet support edit).
 		current, err := s.store.Get(jobCtx, initial.ID)
 		if errors.Is(err, ErrNotFound) {
 			fmt.Fprintf(s.logger, "scheduler: agent %q vanished — tick dropped\n", initial.ID)

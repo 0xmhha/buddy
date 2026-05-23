@@ -14,7 +14,7 @@ import (
 // newStatsCmd wires the read-only hook_stats report. Output goes to stdout
 // (it's the user-facing report, not log noise). Exit is always 0 unless we
 // fail to open the DB or the user passes a bad --window — both surface as
-// friendError values that main() prints and exits 1 on. See m4-plan §Task 3.
+// friendError values that main() prints and exits 1 on.
 func newStatsCmd() *cobra.Command {
 	var (
 		dbFlag     string

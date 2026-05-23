@@ -7,9 +7,9 @@ import (
 
 // CosineSimilarity returns the cosine of the angle between a and b.
 // Returns 0 when either is empty or any norm is zero. Doesn't allocate.
-// Per ADR-014 §Q2 the embedding dim is whatever the Python embedder
-// produces (sentence-transformers default 384 for all-MiniLM-L6-v2),
-// so the loop body is the hot path on Search calls.
+// Embedding dim is whatever the Python embedder produces
+// (sentence-transformers default 384 for all-MiniLM-L6-v2), so the loop
+// body is the hot path on Search calls.
 func CosineSimilarity(a, b []float32) float64 {
 	if len(a) == 0 || len(b) == 0 || len(a) != len(b) {
 		return 0
@@ -33,8 +33,8 @@ func CosineSimilarity(a, b []float32) float64 {
 // covers them in the hybrid combiner). k<=0 → top 10.
 //
 // Stateless — every call iterates the full chunks slice. For the
-// expected ~10k corpus this is sub-100ms; we'd swap to a flat index
-// or chromem-go past that, per ADR-014 §Trigger to revisit.
+// expected ~10k corpus this is sub-100ms; past that, swap to a flat
+// index or chromem-go.
 func VectorSearch(chunks []Chunk, query []float32, k int) []ScoredChunk {
 	if k <= 0 {
 		k = 10

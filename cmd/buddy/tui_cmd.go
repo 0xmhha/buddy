@@ -76,9 +76,9 @@ func newTuiCmd() *cobra.Command {
 				})
 			}
 
-			// Usage fetcher (ADR-013). Opens its own connection
-			// per call; closes immediately so a stale TUI doesn't leak.
-			// Best-effort: failures yield UsageErrMsg via the loader.
+			// Usage fetcher. Opens its own connection per call; closes
+			// immediately so a stale TUI doesn't leak. Best-effort:
+			// failures yield UsageErrMsg via the loader.
 			model.UsageFetcher = func() (usage.Overview, error) {
 				conn, err := db.Open(db.Options{Path: dbFlag})
 				if err != nil {
@@ -88,10 +88,10 @@ func newTuiCmd() *cobra.Command {
 				return usage.NewService(conn).QueryOverview(context.Background(), usage.TimeWindow{}, 5)
 			}
 
-			// Advisor fetcher (ADR-015). Same fresh-conn pattern.
-			// Run() (not Persist) so the TUI never silently writes —
-			// users explicitly opt in via `buddy advise --persist` or
-			// the daemon's advisorMonitor.
+			// Advisor fetcher. Same fresh-conn pattern. Run() (not
+			// Persist) so the TUI never silently writes — users
+			// explicitly opt in via `buddy advise --persist` or the
+			// daemon's advisorMonitor.
 			model.AdvisorFetcher = func() ([]advisor.Advisory, error) {
 				conn, err := db.Open(db.Options{Path: dbFlag})
 				if err != nil {
@@ -109,10 +109,10 @@ func newTuiCmd() *cobra.Command {
 				return runner.Run(context.Background())
 			}
 
-			// Notify banner fetcher (ADR-016). Pulls the 10
-			// newest notification_log rows from the last 24h. The
-			// renderer filters down to "sent" outcomes and caps the
-			// banner at 3 lines.
+			// Notify banner fetcher. Pulls the 10 newest
+			// notification_log rows from the last 24h. The renderer
+			// filters down to "sent" outcomes and caps the banner at
+			// 3 lines.
 			model.NotifyFetcher = func() ([]notify.LogRow, error) {
 				conn, err := db.Open(db.Options{Path: dbFlag})
 				if err != nil {

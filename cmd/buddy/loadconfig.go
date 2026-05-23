@@ -7,12 +7,12 @@ package main
 // IO. cmd/buddy is the single place that translates "user's config.json"
 // into those typed views.
 //
-// Precedence (matches user intuition + the design note in the T3 brief):
-//   explicit CLI flag > config file value > spec default
+// Precedence (matches user intuition):
+//   explicit CLI flag > config file value > built-in default
 //
-// The "spec default" tier is provided by config.Defaults() — which is itself
+// The "default" tier is provided by config.Defaults() — which is itself
 // the same source of truth as diagnose.DefaultThresholds() and
-// daemon.Config.Defaults(). All three trace back to v0.1-spec §6.2.
+// daemon.Config.Defaults().
 
 import (
 	"errors"
@@ -107,16 +107,16 @@ func resolveDaemonRunConfig(dbFlag, pidFile string, pollFlag time.Duration, batc
 		PIDFile:      pidFile,
 		PollInterval: poll,
 		BatchSize:    batch,
-		// Session monitor (ADR-012) wiring from config. No CLI flag
-		// override yet — config-driven only. Disabled=true skips the
-		// goroutine entirely; defaults wire to 30s / 1h via config.Defaults.
+		// Session monitor wiring from config. No CLI flag override yet —
+		// config-driven only. Disabled=true skips the goroutine entirely;
+		// defaults wire to 30s / 1h via config.Defaults.
 		SessionMonitor: daemon.SessionMonitorConfig{
 			Disabled:       eff.SessionMonitorDisabled,
 			PollInterval:   eff.SessionMonitorPollInterval,
 			EndedThreshold: eff.SessionMonitorEndedThreshold,
 		},
-		// Advisor monitor (ADR-015) wiring. Same config-driven
-		// pattern. Thresholds.PollInterval governs cadence (default 1h).
+		// Advisor monitor wiring. Same config-driven pattern.
+		// Thresholds.PollInterval governs cadence (default 1h).
 		Advisor: daemon.AdvisorMonitorConfig{
 			Disabled: eff.AdvisorDisabled,
 			Thresholds: advisor.Thresholds{

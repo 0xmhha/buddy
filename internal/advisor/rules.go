@@ -30,10 +30,10 @@ type Snapshot struct {
 	DriftItems []SessionDrift
 }
 
-// SessionDrift is one row of goal-vs-activity comparison output
-// (ADR-017). Score is cosine similarity in [0,1] — higher means
-// "current activity still matches the original goal". WorstChunk
-// holds a short preview of the most-distant chunk for Evidence.
+// SessionDrift is one row of goal-vs-activity comparison output.
+// Score is cosine similarity in [0,1] — higher means "current activity
+// still matches the original goal". WorstChunk holds a short preview
+// of the most-distant chunk for Evidence.
 type SessionDrift struct {
 	SessionID    string
 	GoalText     string
@@ -238,10 +238,10 @@ func ruleTokenDailyCap(t Thresholds, snap Snapshot) *Advisory {
 }
 
 // ruleGoalDrift — fires when any active session's goal-vs-activity
-// cosine similarity drops below GoalDriftThreshold (ADR-017).
-// Picks the session with the LOWEST score (most drifted) as the
-// advisory's target; only one drift advisory per Run so the user
-// isn't flooded when multiple sessions drift simultaneously.
+// cosine similarity drops below GoalDriftThreshold. Picks the session
+// with the LOWEST score (most drifted) as the advisory's target; only
+// one drift advisory per Run so the user isn't flooded when multiple
+// sessions drift simultaneously.
 //
 // Returns nil when:
 //   - GoalDriftDisabled is true

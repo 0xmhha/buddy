@@ -9,13 +9,13 @@ import (
 )
 
 // newDoctorCmd wires the read-only health snapshot. Render output goes to
-// stdout (it is the user-facing report, not log noise). Exit code is 0 when
-// the report is healthy, 1 otherwise — matches m4-plan §Task 2.
+// stdout (it is the user-facing report, not log noise). Exit code is 0
+// when the report is healthy, 1 otherwise.
 //
 // Thresholds (HookTimeoutMs, HookSlowMs, HookFailRatePct, OutboxBacklog)
 // are read from ~/.buddy/config.json via loadEffectiveConfig. A missing
-// config file falls back to spec defaults silently. Pass --config <path> to
-// point at a different file.
+// config file falls back to built-in defaults silently. Pass --config
+// <path> to point at a different file.
 func newDoctorCmd() *cobra.Command {
 	var (
 		dbFlag     string

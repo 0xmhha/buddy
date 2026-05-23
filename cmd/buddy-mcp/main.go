@@ -4,9 +4,9 @@
 // Environment:
 //   BUDDY_DB                — path to buddy.db (empty = default).
 //   BUDDY_ANALYTICS_BACKEND — when set, enables the analytics_query_* tools
-//                             against the matching adapter. v0.2.0 ships
-//                             "sql" only (SQLite reference); other values
-//                             register the tools as stubs.
+//                             against the matching adapter. Currently
+//                             "sql" only (SQLite reference) is implemented;
+//                             other values register the tools as stubs.
 //   BUDDY_ANALYTICS_DSN     — required when BUDDY_ANALYTICS_BACKEND=sql.
 //                             Path to a SQLite file (e.g. ~/.buddy/analytics.db).
 //                             Schema is migrated on startup if missing.
@@ -56,29 +56,29 @@ func main() {
 		opts.Usage = svc
 	}
 
-	// Wire the knowledge store + embedder (ADR-014). Store opens
-	// against the same buddy.db; embedder is
-	// always set so the MCP path tries vector first, falling back to
-	// BM25 only when the Python venv is missing — handled inside
-	// knowledge.PythonEmbedder.Embed via ErrEmbedderUnavailable.
+	// Wire the knowledge store + embedder. Store opens against the same
+	// buddy.db; embedder is always set so the MCP path tries vector
+	// first, falling back to BM25 only when the Python venv is missing
+	// — handled inside knowledge.PythonEmbedder.Embed via
+	// ErrEmbedderUnavailable.
 	if kopt, err := configureKnowledge(opts.DBPath); err != nil {
 		log.Printf("buddy-mcp: knowledge tools disabled: %v", err)
 	} else {
 		opts.Knowledge = kopt
 	}
 
-	// Wire the advisor (ADR-015). Builds an
-	// Evaluator over the same buddy.db connection sources. Falls back
-	// silently when DB open fails — usage_advise will report "not
-	// wired" rather than crashing the MCP server boot.
+	// Wire the advisor. Builds an Evaluator over the same buddy.db
+	// connection sources. Falls back silently when DB open fails —
+	// usage_advise will report "not wired" rather than crashing the
+	// MCP server boot.
 	if aopt, err := configureAdvisor(opts.DBPath); err != nil {
 		log.Printf("buddy-mcp: advisor tool disabled: %v", err)
 	} else {
 		opts.Advisor = aopt
 	}
 
-	// Wire the notify tools (ADR-016). Same defensive pattern: failure on
-	// DB open or config load disables only the notify path.
+	// Wire the notify tools. Same defensive pattern: failure on DB
+	// open or config load disables only the notify path.
 	if nopt, err := configureNotify(opts.DBPath); err != nil {
 		log.Printf("buddy-mcp: notify tools disabled: %v", err)
 	} else {
@@ -100,7 +100,7 @@ func configureAnalytics() (analytics.Adapter, error) {
 		return nil, nil
 	}
 	if backend != "sql" {
-		// Recognised but not implemented in v0.2.0 — let the tool registration
+		// Recognised but not implemented yet — let the tool registration
 		// path fall back to the stub response.
 		return nil, nil
 	}
@@ -123,8 +123,8 @@ func configureAnalytics() (analytics.Adapter, error) {
 }
 
 // configureUsage opens buddy.db (sessions table substrate) and returns
-// a usage.Service. Per ADR-013 the service is stateless and read-only,
-// so opening the same DB the rest of the CLI uses is safe.
+// a usage.Service. The service is stateless and read-only, so opening
+// the same DB the rest of the CLI uses is safe.
 func configureUsage(dbPath string) (*usage.Service, error) {
 	conn, err := db.Open(db.Options{Path: dbPath})
 	if err != nil {
@@ -134,9 +134,9 @@ func configureUsage(dbPath string) (*usage.Service, error) {
 }
 
 // configureKnowledge opens buddy.db and returns the knowledge options
-// bundle (ADR-014). Always wires the Python embedder — its Embed method
-// returns ErrEmbedderUnavailable if the script / venv isn't ready, and
-// the knowledge_query handler degrades to BM25-only on that error.
+// bundle. Always wires the Python embedder — its Embed method returns
+// ErrEmbedderUnavailable if the script / venv isn't ready, and the
+// knowledge_query handler degrades to BM25-only on that error.
 func configureKnowledge(dbPath string) (buddymcp.KnowledgeOptions, error) {
 	conn, err := db.Open(db.Options{Path: dbPath})
 	if err != nil {

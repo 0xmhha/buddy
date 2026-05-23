@@ -1,7 +1,7 @@
 // Package purge implements the buddy retention sweep: delete old hook_events
 // and hook_stats rows.
 //
-// CRITICAL invariant (v0.1-spec §4 invariant 1):
+// CRITICAL invariant:
 //
 //	hook_outbox는 절대 건드리지 않는다.
 //

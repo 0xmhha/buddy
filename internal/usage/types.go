@@ -1,6 +1,6 @@
 // Package usage derives AI-usage analytic primitives from the sessions
-// table. ADR-013 — sessions-only data source,
-// live SQL aggregation, no derived table. Consumed by:
+// table. Sessions-only data source, live SQL aggregation, no derived
+// table. Consumed by:
 //
 //   - `buddy usage` CLI subcommand (cmd/buddy/usage_cmd.go)
 //   - 5 `usage_query_*` MCP tools (internal/mcp/usage_tool.go)

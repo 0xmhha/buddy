@@ -13,18 +13,18 @@ import (
 	"github.com/0xmhha/buddy/internal/usage"
 )
 
-// newUsageCmd wires `buddy usage ...` per ADR-013. Reads sessions table
-// (no writes) and renders the 7 metric in friend-tone Korean prose.
+// newUsageCmd wires `buddy usage ...`. Reads the sessions table (no
+// writes) and renders the metrics in friend-tone Korean prose.
 // Surfaces:
 //   - today      → spend + counts for the last 24h
 //   - trend      → spend per N days
 //   - top        → top-N sessions by tokens
-//   - overview   → all 7 metric in one snapshot (used by TUI Usage pane)
+//   - overview   → all metrics in one snapshot (used by TUI Usage pane)
 //   - distribution → hour-of-day usage histogram
 func newUsageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "usage",
-		Short: "AI-usage analytics over the sessions table (ADR-013)",
+		Short: "AI-usage analytics over the sessions table",
 	}
 	cmd.AddCommand(
 		newUsageTodayCmd(),

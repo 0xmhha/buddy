@@ -413,11 +413,10 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, beginCreateCmd()
 
 	case "H":
-		// Hook reliability stats pane (surfaces
-		// the v0.1.0 daemon/aggregator output inside the cli buddy
-		// TUI). Capital H so lowercase `h` stays free for back-nav in
-		// other modes. No-op when no fetcher is wired (e.g., a TUI
-		// invocation without DB-stats access).
+		// Hook reliability stats pane — surfaces the daemon/aggregator
+		// output inside the cli buddy TUI. Capital H so lowercase `h`
+		// stays free for back-nav in other modes. No-op when no fetcher
+		// is wired (e.g., a TUI invocation without DB-stats access).
 		if m.HookStatsFetcher == nil {
 			return m, nil
 		}
@@ -430,8 +429,8 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, loadHookStatsCmd(m.HookStatsFetcher, m.HookStatsWindow)
 
 	case "U":
-		// Usage pane (ADR-013). Capital U so lowercase u
-		// stays free for future use. No-op when fetcher unset.
+		// Usage pane. Capital U so lowercase u stays free for future
+		// use. No-op when fetcher unset.
 		if m.UsageFetcher == nil {
 			return m, nil
 		}

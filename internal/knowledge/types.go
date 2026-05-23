@@ -1,18 +1,15 @@
-// Package knowledge implements the knowledge-retrieval foundation
-// (ADR-014). It feeds the advisor (ADR-015) with chunk-level evidence.
+// Package knowledge implements the knowledge-retrieval foundation that
+// feeds the advisor with chunk-level evidence. Scope is strictly
+// retrieval-only here; advisory generation lives in the advisor package.
 // Components:
 //
 //   - Chunk + Store : SQLite-backed chunk records (migration v6).
 //   - Chunker       : transcript JSONL → chunks (user/assistant pair,
-//                     ~500-token cap).
+//     ~500-token cap).
 //   - BM25          : sparse keyword retrieval over chunk content.
 //   - Vector        : cosine similarity over float32 embedding BLOBs.
 //   - Hybrid        : reciprocal-rank-fusion combiner.
 //   - Embedder      : Python sub-process invoker (sentence-transformers).
-//
-// v0.10.0 ships the primitive; v0.11.0 (Phase 2) builds the advisory
-// generator on top via retrieval + rule. Scope strictly retrieval-only
-// here per ADR-014 §"v0.10.0 (Phase 1) design choices".
 package knowledge
 
 import "time"

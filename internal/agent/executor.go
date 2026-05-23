@@ -16,17 +16,17 @@ import (
 // each line emitted by the child process can be persisted in real time
 // (rather than only after the whole step completes). stream is the literal
 // "stdout" or "stderr". sink == nil means "do not stream" — Run still
-// returns the full captured strings via its return values, so callers that
-// did not opt in keep their v0.6.x behavior byte-identically.
+// returns the full captured strings via its return values, so callers
+// that did not opt in keep bulk-capture behaviour byte-identically.
 type LogSink func(stream, line string)
 
 // Executor abstracts "run one buddy command and return its captured output".
-// Production uses SubprocessExecutor (spawns `claude` CLI per ADR-005's
-// §4.1 option (a) lock-in); tests use MockExecutor.
+// Production uses SubprocessExecutor (spawns `claude` CLI); tests use
+// MockExecutor.
 //
-// The interface deliberately mirrors what cli-buddy-spec §4.2 describes
-// inside `agent.run()` step (a)..(d): spawn → send → capture → parse. Parsing
-// is the Runtime's job; the Executor only owns the spawn+capture half.
+// The interface mirrors `agent.run()`'s steps: spawn → send → capture →
+// parse. Parsing is the Runtime's job; the Executor only owns the
+// spawn+capture half.
 type Executor interface {
 	// Run executes `<command> "<args>"` against the embedding layer (Claude
 	// Code subprocess for SubprocessExecutor) and returns captured stdout +
@@ -35,20 +35,21 @@ type Executor interface {
 	// sink, when non-nil, is invoked once per output line (newline-trimmed)
 	// as the child process emits it — enabling `buddy agent log <id>` to
 	// surface mid-progress on long-running steps. Passing nil disables
-	// streaming and matches the v0.6.x behavior exactly.
+	// streaming and uses bulk-capture.
 	Run(ctx context.Context, command, args string, sink LogSink) (stdout string, stderr string, exitCode int, err error)
 }
 
-// SubprocessExecutor implements Executor by spawning `claude` once per step
-// and piping `/buddy:<command> "<args>"` to its stdin. This is the canonical
-// path per ADR-005 §2.2.
+// SubprocessExecutor implements Executor by spawning `claude` once per
+// step and piping `/buddy:<command> "<args>"` to its stdin. This is the
+// canonical production path.
 //
 // Caveats:
 //   - assumes `claude` is on PATH; surfaces a clear error if missing
 //   - does not yet stream incremental output to AgentLog — only captures
 //     the final stdout/stderr buffers
-//   - does not yet parse PROCEDURE §6 self-check inside the captured stdout;
-//     callers receive raw output and treat exit_code as success signal
+//   - does not yet parse the PROCEDURE self-check inside the captured
+//     stdout; callers receive raw output and treat exit_code as success
+//     signal
 type SubprocessExecutor struct {
 	// ClaudeBinary is the path/name used in exec.LookPath. Defaults to "claude".
 	ClaudeBinary string
@@ -77,14 +78,13 @@ func NewSubprocessExecutor() *SubprocessExecutor {
 // install Claude Code, or set BUDDY_CLAUDE_BIN.
 var ErrClaudeMissing = errors.New("agent: claude CLI not found on PATH (install Claude Code or set ClaudeBinary)")
 
-// Run spawns the claude subprocess. The dispatch payload is sent on stdin —
-// matching cli-buddy-spec §4.2 step (b).
+// Run spawns the claude subprocess. The dispatch payload is sent on stdin.
 //
 // When sink != nil, stdout / stderr are scanned line-by-line as the child
 // emits them: each line is forwarded to sink immediately and also collected
 // into the returned buffers (so callers that read the full strings get the
 // same content they always did). When sink == nil, the implementation falls
-// back to bulk buffer capture — byte-identical to the v0.6.x behavior.
+// back to bulk buffer capture.
 func (e *SubprocessExecutor) Run(ctx context.Context, command, args string, sink LogSink) (string, string, int, error) {
 	bin := e.ClaudeBinary
 	if bin == "" {
@@ -99,8 +99,7 @@ func (e *SubprocessExecutor) Run(ctx context.Context, command, args string, sink
 	cmd.Stdin = bytes.NewReader([]byte(payload))
 
 	if sink == nil {
-		// Fast path: no streaming requested. Keep the previous bulk-buffer
-		// behavior exactly so v0.6.x callers see no change.
+		// Fast path: no streaming requested. Use bulk-buffer capture.
 		var stdout, stderr bytes.Buffer
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
@@ -142,7 +141,7 @@ func (e *SubprocessExecutor) Run(ctx context.Context, command, args string, sink
 // streamLines runs in a goroutine, reading newline-delimited lines from r,
 // invoking sink for each, and appending the line (with its trailing newline
 // re-attached so the buffer round-trips the original byte content) to buf.
-// Scanner uses a 1 MiB max line size so JSON-formatted PROCEDURE outputs
+// Scanner uses a 1 MiB max line size so JSON-formatted procedure outputs
 // with embedded artefacts are not split mid-record; longer lines fall back
 // to multi-chunk emission.
 //
@@ -152,7 +151,7 @@ func (e *SubprocessExecutor) Run(ctx context.Context, command, args string, sink
 func streamLines(r io.ReadCloser, buf *bytes.Buffer, sink LogSink, stream string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	scanner := bufio.NewScanner(r)
-	// Use a large-ish max line size so a JSON-formatted PROCEDURE output
+	// Use a large-ish max line size so a JSON-formatted procedure output
 	// (could easily exceed 64KB with embedded artefacts) is not split mid-
 	// record. 1 MiB matches the limit applied to log retention elsewhere.
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)

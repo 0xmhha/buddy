@@ -10,12 +10,11 @@ import (
 	"github.com/0xmhha/buddy/internal/notify"
 )
 
-// notify_tool.go wires the notify MCP surface (ADR-016). Two
-// tools:
+// notify_tool.go wires the notify MCP surface. Two tools:
 //
 //   - notify_status : read notification_log (visibility + dedup debug)
 //   - notify_test   : dispatch a synthetic notification through one
-//                     channel (smoke test before going live)
+//     channel (smoke test before going live)
 //
 // Dispatch through the daemon is the production path; these tools are
 // for inspection and provisioning.

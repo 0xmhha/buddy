@@ -16,17 +16,14 @@ import (
 	"github.com/0xmhha/buddy/internal/purge"
 )
 
-// newAgentCmd assembles the `buddy agent ...` subtree. Per cli-buddy-spec §6.2
-// (locked in by ADR-005), the initial release ships create / list / show /
-// run / delete; the TUI, edit, log, and schedule-list surfaces land in
-// follow-on releases.
+// newAgentCmd assembles the `buddy agent ...` subtree.
 func newAgentCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "agent",
 		Short: "Manage cli buddy automation agents",
 		Long: "Manage automation agents that drive plugin buddy command chains.\n" +
-			"Per cli-buddy-spec §3 + ADR-005, agents = static YAML spec + on-demand or\n" +
-			"scheduled Run(). On-demand ships first; the cron-driven scheduler follows.",
+			"Agents = static YAML spec + on-demand or scheduled Run(). On-demand\n" +
+			"ships first; the cron-driven scheduler follows.",
 	}
 	c.AddCommand(
 		newAgentCreateCmd(),
@@ -275,9 +272,8 @@ func newAgentLogCmd() *cobra.Command {
 		Short: "Tail logs from the agent's most recent run",
 		Long: "Reads agent_logs for the latest run of <agent-id>, oldest first.\n" +
 			"Surfaces the per-step info / warn / error lines the runtime writes,\n" +
-			"including the v0.5.0+ self-check verdict line and the v0.6.0+\n" +
-			"next-phase branch lines. Use --limit to cap rows when a run\n" +
-			"produced many lines.",
+			"including the self-check verdict line and the next-phase branch lines.\n" +
+			"Use --limit to cap rows when a run produced many lines.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -345,9 +341,7 @@ func newAgentPurgeCmd() *cobra.Command {
 			"--before accepts the same shapes as `buddy purge`: a relative\n" +
 			"duration like '30d', a date '2026-04-01', or an RFC 3339 timestamp.\n\n" +
 			"Default mode is dry-run: the count of runs that *would* be\n" +
-			"deleted is printed. Pass --apply to actually perform the delete.\n\n" +
-			"Closes the v0.6.4 verify-quality F5 medium finding (DB write\n" +
-			"per-line + no retention path).",
+			"deleted is printed. Pass --apply to actually perform the delete.",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
@@ -403,9 +397,9 @@ func newAgentRunCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "run <agent-id>",
 		Short: "Execute the agent's chain synchronously and stream the result",
-		Long: "Spawns `claude` once per chain step (cli-buddy-spec §4.1 option (a)\n" +
-			"lock-in via ADR-005). Output is the JSON-marshalled RunResult.\n" +
-			"Errors that come from a missing claude binary include an install hint.",
+		Long: "Spawns `claude` once per chain step. Output is the JSON-marshalled\n" +
+			"RunResult. Errors that come from a missing claude binary include an\n" +
+			"install hint.",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -484,7 +478,7 @@ func newAgentSchedulerStartCmd() *cobra.Command {
 			"the scheduler polls the store every --refresh duration (1m default)\n" +
 			"to pick up agents added / deleted / re-scheduled by another shell\n" +
 			"without requiring a restart. Pass --no-refresh to disable polling\n" +
-			"and revert to the v0.6.4 behavior (load once at startup).",
+			"(load once at startup and never re-read the store).",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()

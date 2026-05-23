@@ -13,14 +13,14 @@ import (
 	"github.com/0xmhha/buddy/internal/analytics"
 )
 
-// analytics_tool.go wires the 7 analytics_query_* MCP tools (spec §4) to a
+// analytics_tool.go wires the 7 analytics_query_* MCP tools to a
 // pluggable analytics.Adapter. Friend-tone stub behaviour is the
 // fallback: if Options.Analytics is nil (no adapter configured), every
 // handler returns guidance text. With an adapter, the handler delegates
 // to it and renders the typed result.
 //
 // Args carry MCP-side jsonschema annotations; results reuse analytics
-// package types directly so JSON shapes track spec §4 verbatim.
+// package types directly.
 
 // ─── shared MCP-side args ─────────────────────────────────────────────────
 

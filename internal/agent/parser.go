@@ -6,23 +6,22 @@ import (
 	"unicode/utf8"
 )
 
-// parser.go implements the cli-buddy-spec output parser: extract structured
+// parser.go implements the procedure-output parser: extract structured
 // signals from a Claude subprocess's stdout after a buddy command runs.
 //
-// Two signals matter for v0.3:
-//   - §self-check verdict — the boolean checklist that PROCEDURE.md §6 /
-//     §11 (Form A / C) asks Claude to mark with `- [x]` once each item is
-//     verified. We compute pass / fail / pending / unknown from the box
-//     state, plus per-item detail.
-//   - §next-phase skill names — the cascade hint PROCEDURE.md §7 / §8
-//     emits as backtick-wrapped skill identifiers. The Scheduler /
-//     `buddy agent run` surface these so the user (or a future cascade
-//     runtime) can pick what to invoke next.
+// Two signals matter:
+//   - §self-check verdict — the boolean checklist Claude marks with
+//     `- [x]` once each item is verified. We compute pass / fail /
+//     pending / unknown from the box state, plus per-item detail.
+//   - §next-phase skill names — the cascade hint emitted as
+//     backtick-wrapped skill identifiers. The Scheduler / `buddy agent
+//     run` surface these so the user (or a future cascade runtime) can
+//     pick what to invoke next.
 //
-// Important non-goal: the parser does NOT change retry / fail semantics
-// in v0.3. A failed self-check is surfaced as metadata in StepResult;
-// the run's exit_code still comes from the executor. Tightening the
-// loop (auto-retry on fail, abort-on-fail, etc.) is a follow-on cycle
+// Important non-goal: the parser does NOT change retry / fail semantics.
+// A failed self-check is surfaced as metadata in StepResult; the run's
+// exit_code still comes from the executor. Tightening the loop
+// (auto-retry on fail, abort-on-fail, etc.) is a follow-on change
 // because the LLM may consistently echo `- [ ]` without genuinely
 // completing self-check, and surprise auto-retry would burn token cost.
 

@@ -96,11 +96,10 @@ var migrations = []migration{
 		`,
 	},
 	{
-		// v4 — agent runtime tables. Per cli-buddy-spec §3.3
-		// + ADR-005 lock-in. agents = static definition, agent_runs = one
-		// row per Run(agent) invocation, agent_logs = streaming log events
-		// (line-level) so the TUI / future buddy:status can tail without
-		// touching the filesystem.
+		// v4 — agent runtime tables. agents = static definition,
+		// agent_runs = one row per Run(agent) invocation, agent_logs =
+		// streaming log events (line-level) so the TUI / future
+		// buddy:status can tail without touching the filesystem.
 		version: 4,
 		sql: `
 			CREATE TABLE agents (
@@ -140,13 +139,12 @@ var migrations = []migration{
 		`,
 	},
 	{
-		// v5 — Session Monitor — ADR-012 lock-in. Additive
-		// columns on the v3 sessions table:
+		// v5 — Session Monitor additive columns on the v3 sessions table:
 		//   - ended_at  : NULL while session may be active. Daemon sets it
 		//                 when last_active is older than EndedThreshold
 		//                 (default 1h). Cleared on resume — no row split.
-		//   - goal_text : first user message extracted by fsLister. Drift
-		//                 Detection (ADR-017) compares against this.
+		//   - goal_text : first user message extracted by fsLister. The
+		//                 drift detector compares against this.
 		//   - metadata  : JSON escape hatch for future per-session fields.
 		// All three are backward-compat: existing rows get NULL / "" / "{}".
 		version: 5,
@@ -158,8 +156,8 @@ var migrations = []migration{
 		`,
 	},
 	{
-		// v6 — Advisory foundation — ADR-014. The chunks
-		// table holds knowledge data extracted from sessions transcripts:
+		// v6 — Advisory foundation. The chunks table holds knowledge
+		// data extracted from sessions transcripts:
 		//   - session_id     : FK back to sessions(id) — cascade delete.
 		//   - content        : raw chunk text (user+assistant pair, max
 		//                      ~500 tokens). Used as BM25 source.
@@ -186,9 +184,8 @@ var migrations = []migration{
 		`,
 	},
 	{
-		// v7 — Advisor — ADR-015. The advisories table
-		// holds advisor output records for dedup + history + future mute
-		// UX. Columns:
+		// v7 — Advisor. The advisories table holds advisor output records
+		// for dedup + history + future mute UX. Columns:
 		//   - kind          : rule identifier (e.g., "token-spike-day").
 		//                     Indexed for dedup-window lookups.
 		//   - severity      : "info" | "warn" | "high" (free text — Go
@@ -218,11 +215,11 @@ var migrations = []migration{
 		`,
 	},
 	{
-		// v8 — Notification — ADR-016. The notification_log
-		// table records every dispatch attempt (sent + skipped). Used
-		// by the dispatcher for per-channel dedup, by `buddy notify
-		// status` for visibility, and by `notification_log_*` indices
-		// to keep the dedup-window query cheap.
+		// v8 — Notification. The notification_log table records every
+		// dispatch attempt (sent + skipped). Used by the dispatcher for
+		// per-channel dedup, by `buddy notify status` for visibility,
+		// and by `notification_log_*` indices to keep the dedup-window
+		// query cheap.
 		//
 		// outcome values: "sent" | "skipped-severity" | "skipped-dedup" | "error"
 		version: 8,

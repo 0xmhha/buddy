@@ -29,9 +29,9 @@ type EmbedResult struct {
 // "Python venv 가 안 보여..." message so the user knows where to go next.
 var ErrEmbedderUnavailable = errors.New("knowledge: embedder unavailable (python or sentence-transformers missing)")
 
-// Embedder is the abstract embed pipeline. v0.10.0 ships a single
-// implementation (PythonEmbedder); tests can inject MockEmbedder
-// without touching subprocess machinery.
+// Embedder is the abstract embed pipeline. PythonEmbedder is the only
+// production implementation; tests can inject MockEmbedder without
+// touching subprocess machinery.
 type Embedder interface {
 	Embed(ctx context.Context, reqs []EmbedRequest) ([]EmbedResult, error)
 }
@@ -73,8 +73,8 @@ func (e *PythonEmbedder) scriptPath() (string, error) {
 		return env, nil
 	}
 	// Fall back to scripts/embed.py relative to cwd. The CLI caller is
-	// expected to be run from the repo root for now; v0.10.x will move
-	// the script under buddy's install dir for general-use deployments.
+	// expected to be run from the repo root for now; a future change will
+	// move the script under buddy's install dir for general-use deployments.
 	abs, err := filepath.Abs("scripts/embed.py")
 	if err != nil {
 		return "", err

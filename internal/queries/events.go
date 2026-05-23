@@ -1,8 +1,8 @@
 // events.go produces `buddy events`: a tail of the hook_events table for
-// debugging, optionally followed in real time. Output is structured (one line
-// per event, space-separated columns) — this surface is debug-style, not
-// friend-tone (per v0.1-spec §6.3 and m4-plan Task 4). The only friend-tone
-// touches are the start/end markers Follow writes to stderr.
+// debugging, optionally followed in real time. Output is structured (one
+// line per event, space-separated columns) — this surface is debug-style,
+// not friend-tone. The only friend-tone touches are the start/end markers
+// Follow writes to stderr.
 //
 // Like stats.go, every function here is pure: open DB read-only, query, shape
 // rows. The CLI layer (cmd/buddy) owns process exit codes and IO routing.
@@ -36,9 +36,9 @@ const defaultPollInterval = time.Second
 // followMaxConsecutiveErrors caps how many back-to-back poll errors Follow
 // will tolerate before surfacing the error and aborting. Without a cap, a
 // permanently broken DB (file deleted/corrupted/permissions revoked) spins
-// forever at 1Hz spamming stderr — see m4-plan §Task 4 review fix.
-// Five gives transient blips (daemon restart, brief lock contention) room to
-// recover while still failing fast on permanent breakage.
+// forever at 1Hz spamming stderr. Five gives transient blips (daemon
+// restart, brief lock contention) room to recover while still failing
+// fast on permanent breakage.
 const followMaxConsecutiveErrors = 5
 
 // ErrInvalidLimit is the sentinel returned when EventsOptions.Limit is

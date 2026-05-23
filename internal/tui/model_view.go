@@ -67,10 +67,10 @@ func (m Model) constrainWidth(s string) string {
 func (m Model) renderList() string {
 	var b strings.Builder
 
-	// Notify banner (ADR-016) — top-of-screen advisory teaser.
-	// Suppressed when no fetcher wired, no rows loaded, or rows are
-	// all dedup/severity skips. Shows up to 3 most recent "sent"
-	// outcomes so a fresh daemon dispatch surfaces immediately.
+	// Notify banner — top-of-screen advisory teaser. Suppressed when
+	// no fetcher wired, no rows loaded, or rows are all dedup/severity
+	// skips. Shows up to 3 most recent "sent" outcomes so a fresh
+	// daemon dispatch surfaces immediately.
 	if m.NotifyFetcher != nil && m.NotifyLoaded && m.NotifyErr == nil {
 		shown := 0
 		for _, r := range m.NotifyRows {
@@ -475,9 +475,9 @@ func (m Model) renderUsage() string {
 		b.WriteString("\n")
 	}
 
-	// Advisor section (ADR-015) — co-rendered when fetcher
-	// is wired. Skipping entirely when no fetcher keeps the pane
-	// clean for installs that haven't enabled the advisor.
+	// Advisor section — co-rendered when fetcher is wired. Skipping
+	// entirely when no fetcher keeps the pane clean for installs that
+	// haven't enabled the advisor.
 	if m.AdvisorFetcher != nil {
 		b.WriteString("  조언\n")
 		switch {

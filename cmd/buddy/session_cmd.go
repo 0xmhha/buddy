@@ -12,13 +12,13 @@ import (
 	"github.com/0xmhha/buddy/internal/sessions"
 )
 
-// newSessionCmd wires `buddy session ...` per ADR-012. Surfaces the
-// session monitor read API to the shell. Mirrors `buddy agent` 의
-// list/show/purge shape.
+// newSessionCmd wires `buddy session ...`. Surfaces the session
+// monitor read API to the shell. Mirrors `buddy agent` 의 list/show/
+// purge shape.
 func newSessionCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "session",
-		Short: "Claude Code session observability (ADR-012)",
+		Short: "Claude Code session observability",
 	}
 	cmd.AddCommand(
 		newSessionListCmd(),

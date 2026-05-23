@@ -13,13 +13,12 @@ import (
 )
 
 // Evaluator runs the rule set against live data and emits advisories.
-// Combines the four substrates ADR-015 calls out:
+// Combines four substrates:
 //
 //   - Usage      : token / session metrics.
 //   - Sessions   : active-session list for ruleLongSession.
-//   - Knowledge  : retrieval enrichment per advisory. Optional —
-//                  nil store skips evidence enrichment; nil embedder
-//                  forces BM25-only.
+//   - Knowledge  : retrieval enrichment per advisory. Optional — nil
+//     store skips evidence enrichment; nil embedder forces BM25-only.
 //   - Advisories : dedup window lookup (this package's Store).
 //
 // All fields except Advisories are read-only; Advisories.Insert is
@@ -110,7 +109,7 @@ func (e *Evaluator) Persist(ctx context.Context) ([]Advisory, error) {
 // buildSnapshot fetches everything the rules need in a single pass.
 // Ordering of fetches doesn't matter (they're independent reads); we
 // don't parallelise because the cost is ms-level on the expected
-// corpus (~1500 sessions / 30d per ADR-013).
+// corpus (~1500 sessions / 30d).
 func (e *Evaluator) buildSnapshot(ctx context.Context, t Thresholds) (Snapshot, error) {
 	now := e.now()
 	w24 := usage.TimeWindow{Since: now.Add(-24 * time.Hour), Until: now}
@@ -148,8 +147,8 @@ func (e *Evaluator) buildSnapshot(ctx context.Context, t Thresholds) (Snapshot, 
 		Spend7d:        spend7,
 		ActiveSessions: active,
 	}
-	// ADR-017 — populate per-session goal-drift scores when the
-	// substrate (Knowledge store + Embedder) is wired.
+	// Populate per-session goal-drift scores when the substrate
+	// (Knowledge store + Embedder) is wired.
 	if !t.GoalDriftDisabled && e.Knowledge != nil && e.Embedder != nil {
 		snap.DriftItems = e.computeDriftItems(ctx, active, t.GoalDriftSampleChunks)
 	}

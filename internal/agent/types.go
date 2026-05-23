@@ -1,18 +1,13 @@
 // Package agent implements the cli buddy automation-agent runtime.
 //
-// Per cli-buddy-spec §3 / §4 (locked in by ADR-005), an agent is a static
-// definition (id + name + chain of buddy commands + schedule) whose runtime
-// shape is:
+// An agent is a static definition (id + name + chain of buddy commands +
+// schedule) whose runtime shape is:
 //
-//   agent.Run() = for each step in spec.Chain:
-//                  spawn `claude` subprocess
-//                  send "/buddy:<command> <args>"
-//                  capture stdout, parse the PROCEDURE output
-//                  record run/log rows in SQLite
-//
-// v0.3.x ships the storage + runtime + Subprocess/Mock executor + on-demand
-// `buddy agent run` CLI. Background scheduler, TUI
-//, and the reference webtoon agent are subsequent phases.
+//	agent.Run() = for each step in spec.Chain:
+//	               spawn `claude` subprocess
+//	               send "/buddy:<command> <args>"
+//	               capture stdout, parse the procedure output
+//	               record run/log rows in SQLite
 package agent
 
 import "time"
@@ -40,16 +35,16 @@ type Agent struct {
 	LastRunAt  *time.Time `json:"last_run_at,omitempty"`
 }
 
-// AgentSpec is the parsed YAML form. See cli-buddy-spec §2.2 for the canonical
-// "webtoon agent" example. v0.3 supports a subset:
+// AgentSpec is the parsed YAML form. Supported fields:
 //   - id / name        — required
-//   - schedule         — optional cron expression (currently informational; the
-//                        on-demand `buddy agent run` ignores it). Background
-//                        ticking is implemented separately by the scheduler.
+//   - schedule         — optional cron expression (currently informational
+//     for the on-demand `buddy agent run`). Background ticking is
+//     implemented separately by the scheduler.
 //   - chain            — ordered list of buddy commands to dispatch
-//   - retry            — optional retry policy applied uniformly to every step
-//   - output           — optional terminal destination (stdout / file). v0.3
-//                        writes the JSON result to stdout when omitted.
+//   - retry            — optional retry policy applied uniformly to every
+//     step
+//   - output           — optional terminal destination (stdout / file /
+//     webhook). When omitted the JSON result is written to stdout.
 type AgentSpec struct {
 	ID          string              `yaml:"id"`
 	Name        string              `yaml:"name"`
@@ -107,20 +102,19 @@ type ChainStep struct {
 	// notification steps (e.g. "post-completion webhook" that should
 	// not block downstream "release-tag" if it fails).
 	//
-	// Default (false) preserves the v0.6.x behaviour: first non-zero
-	// step after retries stops the chain. The final RunResult.ExitCode
-	// is the *last* non-zero step's exit when any step failed (so a
-	// single failed cleanup step at the end still surfaces failure),
-	// or 0 when every step (including continue_on_fail ones) succeeded.
+	// Default (false): first non-zero step after retries stops the
+	// chain. The final RunResult.ExitCode is the *last* non-zero
+	// step's exit when any step failed (so a single failed cleanup
+	// step at the end still surfaces failure), or 0 when every step
+	// (including continue_on_fail ones) succeeded.
 	ContinueOnFail bool `yaml:"continue_on_fail,omitempty"`
 	// OnSelfCheckFail is the policy knob for what the runtime does
 	// when the step's parsed §self-check section reports a fail verdict
 	// (any unchecked `- [ ]` in the section body). Allowed values:
 	//
-	//   - "" (default, equivalent to "continue"): runtime preserves the
-	//     v0.5.0+ behaviour — the verdict lands in the per-step log line
-	//     but the chain continues. RunResult.Steps still records the
-	//     verdict for downstream consumers.
+	//   - "" (default, equivalent to "continue"): the verdict lands in
+	//     the per-step log line but the chain continues. RunResult.Steps
+	//     still records the verdict for downstream consumers.
 	//   - "continue": same as the empty-string default; explicit form.
 	//   - "abort": the cascade short-circuits as if the step itself had
 	//     failed. RunResult.ExitCode reflects the failure, the cascade
@@ -132,8 +126,7 @@ type ChainStep struct {
 	//     failures, so a deterministic self-check failure cannot loop
 	//     forever.
 	//
-	// Default ("") preserves the prior behaviour; opt-in is the
-	// discipline.
+	// Default ("") is equivalent to "continue"; opt-in is the discipline.
 	OnSelfCheckFail string `yaml:"on_self_check_fail,omitempty"`
 }
 
@@ -146,13 +139,13 @@ const (
 	SelfCheckFailRetry    = "retry"
 )
 
-// RetryPolicy is a uniform retry config for every step. v0.3 shipped a
-// fixed-delay capped retry; v0.6.x adds exponential backoff with an
-// optional cap (BackoffMax).
+// RetryPolicy is a uniform retry config for every step. Supports both
+// fixed-delay capped retry and exponential backoff with an optional cap
+// (BackoffMax).
 type RetryPolicy struct {
 	MaxAttempts int `yaml:"max_attempts"`
 	// BackoffDelay is the *base* sleep between retry attempts. With
-	// BackoffStrategy="fixed" (or unset, for v0.6.x backward compat)
+	// BackoffStrategy="fixed" (or unset, for backward compatibility)
 	// every retry waits exactly this duration. With
 	// BackoffStrategy="exponential" it is the delay after the *first*
 	// failure (attempt 1 fail → wait BackoffDelay → retry as attempt 2);
@@ -160,7 +153,7 @@ type RetryPolicy struct {
 	BackoffDelay time.Duration `yaml:"backoff_delay,omitempty"`
 	// BackoffStrategy selects how BackoffDelay grows across retries.
 	// Empty string is treated as "fixed" so existing specs keep their
-	// v0.3+ behavior verbatim. Valid values: "fixed" | "exponential".
+	// behavior verbatim. Valid values: "fixed" | "exponential".
 	BackoffStrategy string `yaml:"backoff_strategy,omitempty"`
 	// BackoffMax caps the exponential growth. Zero means uncapped (the
 	// growth still terminates when MaxAttempts is reached). Has no
@@ -169,7 +162,7 @@ type RetryPolicy struct {
 }
 
 const (
-	// BackoffStrategyFixed makes every retry wait BackoffDelay (the v0.3+
+	// BackoffStrategyFixed makes every retry wait BackoffDelay (the
 	// default — explicit constant so callers can name it).
 	BackoffStrategyFixed = "fixed"
 	// BackoffStrategyExponential doubles the wait each failed attempt,
@@ -177,9 +170,8 @@ const (
 	BackoffStrategyExponential = "exponential"
 )
 
-// OutputTarget describes where the final aggregated result goes. The
-// initial release ships stdout, file, and webhook destinations (the spec
-// §2.2 webtoon example is the canonical webhook case).
+// OutputTarget describes where the final aggregated result goes. Three
+// types are supported: stdout, file, and webhook.
 type OutputTarget struct {
 	Type string `yaml:"type"`           // "stdout" | "file" | "webhook"
 	Path string `yaml:"path,omitempty"` // file path when Type=="file"

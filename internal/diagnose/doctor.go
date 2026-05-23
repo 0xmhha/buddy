@@ -2,8 +2,8 @@
 //
 // Doctor never blocks the daemon: it opens the SQLite store read-only and
 // inspects existing state (outbox backlog, recent hook_stats) plus the
-// daemon PID file. All policy thresholds live in DefaultThresholds (Decision 2,
-// v0.1-spec §6.2). Output language is friend-tone Korean (Decision 3, §6.3).
+// daemon PID file. All policy thresholds live in DefaultThresholds.
+// Output language is friend-tone Korean.
 //
 // All functions in this package are pure: no os.Exit, no cobra, no globals.
 // The CLI layer (cmd/buddy) owns process exit codes and IO routing.
@@ -47,15 +47,14 @@ type Report struct {
 }
 
 // Thresholds are the per-check policy knobs. Zero values mean "use defaults".
-// Defaults are locked in by Decision 2 (v0.1-spec §6.2).
 type Thresholds struct {
-	HookTimeoutMs   int64 // 30000 — informational only here; M3 measurement
+	HookTimeoutMs   int64 // 30000 — informational only here
 	HookSlowMs      int64 // 5000  — p95 over this in last 5min triggers
 	HookFailRatePct int   // 20    — failure rate over this in last 5min triggers
 	OutboxBacklog   int   // 1000  — pending outbox rows over this triggers
 }
 
-// DefaultThresholds returns the spec-locked defaults.
+// DefaultThresholds returns the hard-coded defaults.
 func DefaultThresholds() Thresholds {
 	return Thresholds{
 		HookTimeoutMs:   30_000,
