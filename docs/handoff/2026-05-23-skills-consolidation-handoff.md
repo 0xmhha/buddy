@@ -138,7 +138,8 @@
 
 ### 5.1 분석 마스터
 
-- `/Users/wm-it-22-00661/Work/github/study/ai/skill/SKILLS_ANALYSIS.md` — 전체 분석 + 진행 상태 (non-git)
+- `buddy/docs/SKILLS_ANALYSIS.md` — 전체 분석 + 진행 상태 (git tracked — 2026-05-23 sync 위해 이동, 이 commit 이후 *원본 위치는 buddy 안*)
+- `/Users/wm-it-22-00661/Work/github/study/ai/skill/SKILLS_ANALYSIS.md` — 원본 분석 작업용 위치 (non-git, 다른 머신 sync 불필요. buddy 안 사본이 master)
 
 ### 5.2 Cross-skill SSoT (router/references/)
 
@@ -374,12 +375,15 @@ ps -ef | grep "git" | grep -v grep | grep -i "study/ai/buddy"
 
 ## 10. 알려진 위험 / 함정
 
-### 10.1 SKILLS_ANALYSIS.md 가 non-git
+### 10.1 SKILLS_ANALYSIS.md 위치 (2026-05-23 변경)
 
-`/Users/wm-it-22-00661/Work/github/study/ai/skill/SKILLS_ANALYSIS.md` 는 git tracked 아님. 다른 머신에서 작업하려면:
-- 해당 파일을 별도 sync 메커니즘 (iCloud / Dropbox / scp / rsync) 필요
-- 또는 *이 핸드오프 문서의 §3.3 진행 상태* 만 보고 작업 후, 완료 시 새 머신에서 같은 파일 갱신
-- 또는 SKILLS_ANALYSIS.md 자체를 git tracked 위치로 이동 (사용자 결정 사항)
+이전: `/Users/wm-it-22-00661/Work/github/study/ai/skill/SKILLS_ANALYSIS.md` (non-git)
+**현재**: `buddy/docs/SKILLS_ANALYSIS.md` (git tracked — 이 핸드오프 commit 에 포함)
+
+다른 머신에서:
+1. `git pull` (buddy repo) → 최신 SKILLS_ANALYSIS.md 자동 sync
+2. 작업 진행 후 같은 파일 *buddy 안 사본* 갱신 (master 는 buddy 안)
+3. 원본 위치 `skill/SKILLS_ANALYSIS.md` 는 *이번 머신의 작업 흔적* — 다른 머신에서는 무시 가능
 
 ### 10.2 buddy daemon background 실행
 
