@@ -162,6 +162,99 @@ func (r *Runtime) Run(ctx context.Context, agent Agent) (RunResult, error) {
 	return result, stepErr
 }
 
+// selfCheckAction is the outcome of evaluating a successful step's
+// self-check verdict against the spec's OnSelfCheckFail policy.
+type selfCheckAction int
+
+const (
+	selfCheckSuccess selfCheckAction = iota // policy = continue (default) — surface verdict, treat step as success
+	selfCheckAbort                          // policy = abort — short-circuit the chain
+	selfCheckRetry                          // policy = retry — drive another attempt via the retry loop
+)
+
+// logParsedOutput emits the self-check verdict + next-phase candidate
+// log lines for a successful step. Each line lands as its own
+// agent_logs row so a downstream tail / grep can scan them
+// individually rather than parsing a multi-field summary.
+func (r *Runtime) logParsedOutput(ctx context.Context, runID int64, idx int, command string, parsed ParsedOutput) {
+	if parsed.SelfCheck.Verdict != SelfCheckUnknown {
+		_ = r.store.AppendLog(ctx, runID, "info",
+			fmt.Sprintf("step[%d] %s self-check=%s (%d/%d passed)",
+				idx, command, parsed.SelfCheck.Verdict,
+				parsed.SelfCheck.Passed, parsed.SelfCheck.Total))
+	}
+	if len(parsed.NextPhase.Skills) > 0 {
+		_ = r.store.AppendLog(ctx, runID, "info",
+			fmt.Sprintf("step[%d] %s next-phase candidates: %s",
+				idx, command, strings.Join(parsed.NextPhase.Skills, ", ")))
+	}
+	// One log line per branch keeps each conditional rule on its own
+	// grep-able row, which the cascade engine relies on when it picks
+	// one branch based on the run's BranchHints rather than fanning
+	// out to the Skills union.
+	for _, b := range parsed.NextPhase.Branches {
+		rhs := strings.Join(b.Skills, ", ")
+		if rhs == "" {
+			rhs = "(no skill)"
+		}
+		_ = r.store.AppendLog(ctx, runID, "info",
+			fmt.Sprintf("step[%d] %s next-phase branch: %q → %s",
+				idx, command, b.Condition, rhs))
+	}
+}
+
+// handleSelfCheck resolves the verdict policy for a successful step.
+// Mutates last.ExitCode / last.Error when the spec opts into abort or
+// retry; the return value tells runOneStep how to continue the loop.
+//
+// Self-check failure surfaces through last.ExitCode = 1 rather than a
+// non-nil error so the cascade loop's stepFailed detector treats it
+// uniformly with exit-code failures, and Run() keeps its
+// (result, nil) success-on-soft-failure invariant.
+func (r *Runtime) handleSelfCheck(ctx context.Context, runID int64, idx, attempt int, step ChainStep, last *StepResult) selfCheckAction {
+	if last.Parsed.SelfCheck.Verdict != SelfCheckFail {
+		return selfCheckSuccess
+	}
+	switch step.OnSelfCheckFail {
+	case SelfCheckFailAbort:
+		last.ExitCode = 1
+		last.Error = "self-check failed (on_self_check_fail=abort)"
+		_ = r.store.AppendLog(ctx, runID, "error",
+			fmt.Sprintf("step[%d] %s self-check fail → abort", idx, step.Command))
+		return selfCheckAbort
+	case SelfCheckFailRetry:
+		last.ExitCode = 1
+		last.Error = "self-check failed (on_self_check_fail=retry)"
+		_ = r.store.AppendLog(ctx, runID, "warn",
+			fmt.Sprintf("step[%d] %s self-check fail → retry (attempt=%d)",
+				idx, step.Command, attempt))
+		return selfCheckRetry
+	default:
+		// "" / "continue" — preserve the prior behaviour: log and succeed.
+		return selfCheckSuccess
+	}
+}
+
+// backoffSleep waits between attempts according to the retry policy
+// or returns the context error if cancellation arrived first. A zero
+// or non-positive sleep is treated as "no wait" and returns nil
+// immediately.
+func (r *Runtime) backoffSleep(ctx context.Context, retry *RetryPolicy, attempt int, runID int64, idx int, command string) error {
+	sleep := computeBackoff(retry, attempt)
+	if sleep <= 0 {
+		return nil
+	}
+	_ = r.store.AppendLog(ctx, runID, "info",
+		fmt.Sprintf("step[%d] %s backoff %s before attempt %d",
+			idx, command, sleep, attempt+1))
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(sleep):
+		return nil
+	}
+}
+
 // runOneStep handles the retry loop for a single chain step. It records every
 // attempt as its own log line so post-hoc analysis sees the full picture.
 // The retry argument may be nil — that's interpreted as "no retry" (one
@@ -206,91 +299,27 @@ func (r *Runtime) runOneStep(ctx context.Context, runID int64, idx int, step Cha
 			_ = r.store.AppendLog(ctx, runID, "warn",
 				fmt.Sprintf("step[%d] %s attempt=%d exit=%d", idx, step.Command, attempt, code))
 		} else {
-			// Surface the parsed §self-check verdict in the run log so
-			// `buddy agent log <id>` (future) and live tail show the
-			// quality signal alongside the exit code. v0.3 does NOT
-			// flip step success to "failure" based on the verdict —
-			// that's a follow-on once we have dogfood signal that the
-			// LLM consistently fills the checkboxes.
-			if last.Parsed.SelfCheck.Verdict != SelfCheckUnknown {
-				_ = r.store.AppendLog(ctx, runID, "info",
-					fmt.Sprintf("step[%d] %s self-check=%s (%d/%d passed)",
-						idx, step.Command, last.Parsed.SelfCheck.Verdict,
-						last.Parsed.SelfCheck.Passed, last.Parsed.SelfCheck.Total))
-			}
-			if len(last.Parsed.NextPhase.Skills) > 0 {
-				_ = r.store.AppendLog(ctx, runID, "info",
-					fmt.Sprintf("step[%d] %s next-phase candidates: %s",
-						idx, step.Command, strings.Join(last.Parsed.NextPhase.Skills, ", ")))
-			}
-			if len(last.Parsed.NextPhase.Branches) > 0 {
-				// One log line per branch keeps each conditional rule on
-				// its own grep-able line — important for the future
-				// cascade engine, which will pick *one* branch based on
-				// the run's environment / inputs rather than fanning out
-				// to the Skills union.
-				for _, b := range last.Parsed.NextPhase.Branches {
-					rhs := strings.Join(b.Skills, ", ")
-					if rhs == "" {
-						rhs = "(no skill)"
-					}
-					_ = r.store.AppendLog(ctx, runID, "info",
-						fmt.Sprintf("step[%d] %s next-phase branch: %q → %s",
-							idx, step.Command, b.Condition, rhs))
-				}
-			}
-			// Self-check verdict policy. The verdict is already logged
-			// above; the runtime acts on it only when the spec opts in
-			// via OnSelfCheckFail. SelfCheckFailContinue (and the
-			// empty default) preserves the prior behaviour: log the
-			// verdict, return the step as success.
-			//
-			// Failure surfaces through last.ExitCode (=1) rather than a
-			// non-nil error return — same contract as exit-code-fail so
-			// the cascade loop's stepFailed detector picks it up
-			// uniformly, and Run() keeps its (result, nil) success-on-
-			// soft-failure invariant.
-			if last.Parsed.SelfCheck.Verdict == SelfCheckFail {
-				switch step.OnSelfCheckFail {
-				case SelfCheckFailAbort:
-					last.ExitCode = 1
-					last.Error = "self-check failed (on_self_check_fail=abort)"
-					_ = r.store.AppendLog(ctx, runID, "error",
-						fmt.Sprintf("step[%d] %s self-check fail → abort", idx, step.Command))
-					return last, nil
-				case SelfCheckFailRetry:
-					last.ExitCode = 1
-					last.Error = "self-check failed (on_self_check_fail=retry)"
-					_ = r.store.AppendLog(ctx, runID, "warn",
-						fmt.Sprintf("step[%d] %s self-check fail → retry (attempt=%d)",
-							idx, step.Command, attempt))
-					// Skip the success-return path; fall through to the
-					// retry-backoff block below for the next attempt.
-				default:
-					// "" / "continue" — keep v0.5.0+ behaviour: success.
-					_ = r.store.AppendLog(ctx, runID, "info",
-						fmt.Sprintf("step[%d] %s ok", idx, step.Command))
-					return last, nil
-				}
-			} else {
+			// Step ran cleanly. Surface the parsed signals (self-check
+			// verdict, next-phase candidates) first, then apply the
+			// verdict policy. Default policy returns success; abort
+			// short-circuits; retry falls through to the backoff loop.
+			r.logParsedOutput(ctx, runID, idx, step.Command, last.Parsed)
+			action := r.handleSelfCheck(ctx, runID, idx, attempt, step, &last)
+			switch action {
+			case selfCheckSuccess:
 				_ = r.store.AppendLog(ctx, runID, "info",
 					fmt.Sprintf("step[%d] %s ok", idx, step.Command))
 				return last, nil
+			case selfCheckAbort:
+				return last, nil
+			case selfCheckRetry:
+				// Fall through to the backoff block below.
 			}
 		}
 
 		if attempt < maxAttempts {
-			sleep := computeBackoff(retry, attempt)
-			if sleep <= 0 {
-				continue
-			}
-			_ = r.store.AppendLog(ctx, runID, "info",
-				fmt.Sprintf("step[%d] %s backoff %s before attempt %d",
-					idx, step.Command, sleep, attempt+1))
-			select {
-			case <-ctx.Done():
-				return last, ctx.Err()
-			case <-time.After(sleep):
+			if err := r.backoffSleep(ctx, retry, attempt, runID, idx, step.Command); err != nil {
+				return last, err
 			}
 		}
 	}
