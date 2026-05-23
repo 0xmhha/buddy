@@ -1,6 +1,53 @@
 # 세션 핸드오프 — 2026-05-23 A 카테고리 cleanup 완료
 
 > **다음 세션의 진입 지점**. 이 문서 + `git status` + `git log -5 --oneline` + `docs/BACKLOG.md` 만 보면 이 세션의 모든 결정·작업·잔여 사항을 완벽히 이어받을 수 있다.
+>
+> **표기 약속**: 이 문서 안의 `<REPO_ROOT>` 는 buddy 레포의 working tree 루트, `<HOME>` 은 OS 사용자의 홈 디렉토리. 본 머신에서는 각각 `/Users/wm-it-22-00661/Work/github/study/ai/buddy` 와 `/Users/wm-it-22-00661` 이지만, *다른 머신의 reader 는 자신의 경로로 substitution* 하면 된다.
+
+---
+
+## 0. 다른 머신 / 새 환경에서 시작하는 경우 (전제 조건)
+
+같은 머신·같은 세션이면 §1 로 직진해도 된다. *다른 머신* 이거나 *clone 된 신선한 working tree* 라면 아래 항목을 먼저 확인.
+
+| 도구 / 자원 | 필요성 | 부재 시 대응 |
+|------------|--------|--------------|
+| `git` + remote 접근 | 필수 — 본 세션의 모든 commit 이 `origin/main` 에 push 됨 (HEAD `1758d7a` 이후). `git pull --ff-only origin main` 으로 동기 | 다른 방법 없음 |
+| Go toolchain (1.25) | 필수 — §10 의 무결성 검증 (`go vet` / `go build`) + 모든 후속 작업 | brew/asdf/공식 설치 |
+| `ripgrep` (`rg`) | 권장 — §8 의 ADR ref 잔여 검증, B 카테고리 grep | 부재 시 `grep -rn` 로 대체 |
+| `gh` (GitHub CLI) | 선택 — E2 release / PR 작업 시 | 부재 시 web UI |
+| GPG key (commit signing) | 조건부 — 본 레포가 GPG signed commit 강제하면 필수. memory `gpg-signing-setup.md` 참고 | key 동기 또는 임시 `git -c commit.gpgsign=false commit ...` |
+| buddy plugin | 조건부 — `/buddy:*` slash command 사용 시 필수. 설치 위치 예: `<HOME>/.claude/plugins/cache/buddy/buddy/<version>/` | 부재 시 `/buddy:*` 사용 옵션 모두 *수동 절차* 로 대체 |
+| `~/.claude/CLAUDE.md` 글로벌 룰 | 권장 — 한국어 응답 / commit attribution 금지 / 개발단계 용어 금지 등. 본 문서 §7.1 에 핵심 재명시 | dotfiles 동기 또는 §7.1 만 신뢰 |
+| 본 머신 한정 자원 (다른 머신엔 *없음*, 참조 안 됨) | — | jsonl transcript (`<HOME>/.claude/projects/.../*.jsonl`), 본 세션 added memory file (§ 부록 B). 다른 머신에서는 §5 Step 3 의 *jsonl 일괄 리뷰* 옵션 불가 — *재실행* 또는 *단일 axis* 만 사용 |
+
+### 0.1 다른 머신에서 첫 5분 권장 sequence
+
+```bash
+# 1. clone 또는 pull
+git clone <remote-url> <REPO_ROOT>     # 처음이면
+cd <REPO_ROOT>
+git fetch --all
+git pull --ff-only origin main         # 본 세션 5 commit 포함된 상태로 동기
+
+# 2. 핸드오프 + SSoT 읽기
+cat docs/notes/2026-05-23-session-handoff-a-cleanup.md
+cat docs/BACKLOG.md | head -120
+
+# 3. 무결성 검증 (이전 세션의 cleanup 이 깨지지 않았는지)
+go vet ./...
+go build ./...
+
+# 4. 본 세션의 cleanup 결과 spot check
+rg --type go -g '!*_test.go' 'ADR-[0-9]' | wc -l   # = 0 이어야 함
+```
+
+### 0.2 Memory 동기 (선택)
+
+본 세션이 *이 머신의 user-global memory* 에 한 항목 추가 (`feedback-background-task-emoji.md` + `MEMORY.md` index 갱신). **이 memory 는 git 으로 sync 되지 않음** — 다른 머신은 *별도 복사* 또는 *해당 규칙 모르고 진행*.
+
+- (a) 복사 원할 때: 부록 B 의 두 파일 내용을 다른 머신의 `<HOME>/.claude/projects/-Users-XXX-...-ai-buddy/memory/` 에 동일 구조로 복사
+- (b) Skip: 다른 머신에서는 🔄 emoji 규칙 없이 진행해도 무방 (cosmetic 표기 규칙 한 건)
 
 ---
 
@@ -14,16 +61,18 @@
 
 | 항목 | 값 |
 |------|---|
-| 작업 디렉토리 | `/Users/wm-it-22-00661/Work/github/study/ai/buddy` |
+| 작업 디렉토리 | `<REPO_ROOT>` (본 머신 예시: `/Users/wm-it-22-00661/Work/github/study/ai/buddy`) |
 | Branch | `main` |
 | Last pushed commit | `f2fe583` — `refactor(agent): extract self-check, parsed-output log, and backoff helpers from runOneStep` |
 | Remote sync | origin/main 과 동기 (last push) |
 | Uncommitted modified files | 약 38개 (A2 cleanup 28 + 외부 작업물 9 + docs/BACKLOG.md + 본 핸드오프 문서) |
 | Untracked files | 3개 (외부 작업물) |
 
-확인 명령:
+> *이 §2 의 "Uncommitted modified files" / "Untracked files" 카운트는 handoff 작성 시점의 snapshot. 이후 본 세션의 commit + 외부 사용자 commit 으로 모두 처리됨 — §14 Addendum 참고.*
+
+확인 명령 (`<REPO_ROOT>` 는 자신의 buddy 레포 root 로 치환):
 ```bash
-cd /Users/wm-it-22-00661/Work/github/study/ai/buddy
+cd <REPO_ROOT>
 git status
 git log -5 --oneline
 git diff --stat
@@ -287,9 +336,9 @@ B 카테고리 = 이전 세션 (W3-W5 refactor 이전) 의 `/buddy:parallel meas
 
 B1-B5 각 axis 별 잔여 finding 검토 필요. 다음 세션에서 사용자에게 옵션 제시:
 
-- **B 일괄 리뷰**: 이전 5-skill review 결과 (이전 세션의 jsonl 에 있음, 경로: `/Users/wm-it-22-00661/.claude/projects/-Users-wm-it-22-00661-Work-github-study-ai-buddy/a5ed3598-c0b5-404d-a62c-80a2c36f2de1.jsonl`) 를 다시 읽어 정리
-- **B 재실행**: `/buddy:parallel measure-code-health,review-architecture,review-engineering,audit-test-coverage-meaningful,classify-review-risks -- "..."` — W3-W5 + A2 cleanup 후의 새 baseline 으로 delta 측정. Token 비용 큼.
-- **B 단일 axis**: 사용자가 가장 신경 쓰는 한 axis 만 (예: `/buddy:run review-engineering`)
+- **B 일괄 리뷰** *(본 머신 한정)*: 이전 5-skill review 결과 (이전 세션의 jsonl 에 있음, 경로 예: `<HOME>/.claude/projects/-Users-<HOME-USERNAME>-Work-github-study-ai-buddy/a5ed3598-c0b5-404d-a62c-80a2c36f2de1.jsonl`) 를 다시 읽어 정리. **다른 머신에서는 jsonl 이 없으므로 이 옵션 불가** — 아래 두 옵션 중 택일.
+- **B 재실행**: `/buddy:parallel measure-code-health,review-architecture,review-engineering,audit-test-coverage-meaningful,classify-review-risks -- "..."` — W3-W5 + A2 cleanup 후의 새 baseline 으로 delta 측정. Token 비용 큼. *모든 머신에서 가능*.
+- **B 단일 axis**: 사용자가 가장 신경 쓰는 한 axis 만 (예: `/buddy:run review-engineering`). *모든 머신에서 가능*.
 
 ---
 
@@ -401,9 +450,11 @@ A 카테고리 진행 중 결정:
 
 ## 8. 다음 세션 시작 방법 (구체 명령)
 
+> *모든 명령에서 `<REPO_ROOT>` 는 자신의 buddy 레포 root 로 치환. 본 머신 예시: `/Users/wm-it-22-00661/Work/github/study/ai/buddy`. 다른 머신은 자신의 경로.*
+
 ```bash
-# 1. 작업 디렉토리 진입
-cd /Users/wm-it-22-00661/Work/github/study/ai/buddy
+# 1. 작업 디렉토리 진입 (다른 머신이면 §0.1 의 clone/pull 선행)
+cd <REPO_ROOT>
 
 # 2. 현재 상태 확인
 git status
@@ -416,10 +467,10 @@ cat docs/notes/2026-05-23-session-handoff-a-cleanup.md
 # 4. SSoT 확인
 cat docs/BACKLOG.md | head -120
 
-# 5. 변경된 핵심 파일 sample diff
-git diff internal/mcp/server.go | head -50
-git diff internal/sessions/sessions.go | head -50
-git diff docs/BACKLOG.md
+# 5. 변경된 핵심 파일 sample diff (본 세션 commit 이후엔 git show 로 봄)
+git show 96c989f -- internal/mcp/server.go | head -50
+git show 96c989f -- internal/sessions/sessions.go | head -50
+git show 85c2745 -- docs/BACKLOG.md
 
 # 6. 검증 (현 상태가 깨지지 않았는지)
 go vet ./...
@@ -520,12 +571,44 @@ cc5dd68 perf(advisor): batch drift goal-text Embed calls into one spawn
 
 ## 부록 B — Memory 추가 항목 (cross-session 적용)
 
-본 세션에서 추가된 memory 파일:
+본 세션에서 추가된 memory 파일 (본 머신 한정):
 
-- `/Users/wm-it-22-00661/.claude/projects/-Users-wm-it-22-00661-Work-github-study-ai-buddy/memory/feedback-background-task-emoji.md`
-- index 항목: `MEMORY.md` 에 `- [Background task emoji](feedback-background-task-emoji.md) — 진행 중 background 작업은 status 표에서 🔄 이모지 prefix/suffix 로 표기`
+- 경로: `<HOME>/.claude/projects/-Users-<HOME-USERNAME>-Work-github-study-ai-buddy/memory/feedback-background-task-emoji.md` (본 머신 예시 `<HOME>` = `/Users/wm-it-22-00661`)
+- index 항목 (같은 디렉토리의 `MEMORY.md` 끝줄):
+  ```
+  - [Background task emoji](feedback-background-task-emoji.md) — 진행 중 background 작업은 status 표에서 🔄 이모지 prefix/suffix 로 표기
+  ```
 
-다음 세션이 시작될 때 *MEMORY.md 가 자동 로드* 되므로 자동 적용됨. 별도 조치 불필요.
+### B.1 적용 범위
+
+| 시나리오 | 자동 적용 여부 | 조치 |
+|---------|--------------|------|
+| 같은 머신, 다음 세션 | ✅ 자동 — Claude Code 가 user-global memory 를 세션 시작 시 자동 로드 | 없음 |
+| 다른 머신, 새 세션 | ❌ **자동 안 됨** — memory 파일이 git sync 대상이 아니라 *각 머신 한정*. 해당 머신에는 파일 자체가 없음 | (a) 위 두 파일 내용을 다른 머신의 동일 위치에 복사하거나, (b) 규칙 자체를 skip — cosmetic 표기 한 건이므로 진행에 본질적 영향 없음 |
+
+### B.2 Memory 파일의 본문 (다른 머신에서 수동 복사할 때 그대로 붙여넣기 가능)
+
+`feedback-background-task-emoji.md`:
+
+````markdown
+---
+name: feedback-background-task-emoji
+description: Background 작업(주로 Agent run_in_background=true) 이 진행 중인 task 는 status 표/리스트 표기 시 task 내용 옆에 🔄 이모지를 prefix 또는 suffix 로 붙인다. Foreground in_progress 와 시각적으로 구분 가능하게 한다.
+metadata:
+  type: feedback
+---
+
+Background 작업(주로 `Agent(run_in_background=true)` 또는 `Bash(run_in_background=true)`) 이 진행 중인 task 항목은 사용자에게 status 보고 시 **task 내용 옆에 🔄 이모지** 를 붙인다 (prefix 또는 suffix 둘 다 가능, table 의 경우 status 열 또는 subject 열 옆).
+
+**Why:** 사용자가 "특정 이모지를 지정해서, 작업 리스트에서 작업 내용 옆에 이모지를 붙여주도록해" 라고 명시. Foreground in_progress (사용자 turn 안에서 동기 진행) 와 background (parent agent 가 다른 작업 동시 가능) 가 시각적으로 구분 안 되면 사용자가 *지금 어떤 작업이 동시에 도는지* 파악 불가.
+
+**How to apply:**
+- Background 시작 직후 status 표를 그릴 때, 그 task 행의 subject 또는 status 컬럼에 `🔄` 표시.
+- 예: `| A2 — comment cleanup | 🔄 in_progress (background) |`
+- Background 완료(또는 사용자가 결과 review 후 종료) 시점에 🔄 제거 + 일반 표기 (✅ / ❌) 로 전환.
+- Foreground in_progress 에는 🔄 안 붙임 — 그건 단순 `in_progress` 로 충분.
+- TaskCreate 의 subject 자체에 영구로 넣는 게 아니라, *내가 사용자에게 보여주는 markdown 표* 안에서만 사용. Task tool 데이터에는 cleaner subject 유지.
+````
 
 ---
 
