@@ -43,6 +43,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | Skill name | Command | When to use (1줄) |
 |------------|---------|------------------|
 | `autoplan` | `/buddy:autoplan` | 기존 plan/PRD/ADR/task plan을 4-mode review (review-scope/engineering/design/devex 순차) |
+| `finish-development-branch` | `/buddy:finish-development-branch` | §5 build-feature 후 PR 생성까지의 5-stage sub-orchestrator (pre-flight sync + quality-gate + changelog + docs-sync + PR + mergeable verify). git 안전 정책 (force 금지 / safe merge only / STOP 우선) 적용. Iron Law mergeable=CLEAN 검증. |
 
 ### §1 Stage Skills — Idea & Business Validation
 
@@ -270,6 +271,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 
 - 라우팅 결정이 모호하거나 skill 간 충돌이 있을 때 → [`routing-rules.md`](./routing-rules.md)
 - **완료 발화 직전 evidence 게이트 (cross-skill SSoT)** → [`verification-discipline.md`](./verification-discipline.md). build-with-tdd / iterate-fix-verify / verify-quality / build-feature / review-engineering / diagnose-bug / agent dispatch 후 모두 lazy-load.
+- **자동화 git 안전 원칙 (cross-skill SSoT)** → [`git-safety-rules.md`](./git-safety-rules.md). force / rewrite-pushed / 자동 복구 시도 금지. finish-development-branch / auto-create-pr / dispatch-parallel-agents / guard-destructive-commands / compose-safety-mode lazy-load. design-time 지침 — runtime hook 차단은 guard-destructive-commands 가 담당.
 - 9-phase 라이프사이클 아키텍처 설계 → [`docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](../../../../docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md)
 - Plugin manifest → [`.claude-plugin/plugin.json`](../../../.claude-plugin/plugin.json)
 - Archive 스킬 → [`_archive/`](../../../_archive/)

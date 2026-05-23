@@ -186,7 +186,8 @@ actor track별로 최소 task 1개 완료 시 1 commit.
 
 ## 다음 phase
 
-- `/buddy:verify-quality` — 6단계 Quality (권장)
+- `/buddy:finish-development-branch` — 개발 브랜치 종료 (Pre-flight sync + quality-gate + changelog + docs-sync + PR + mergeable verify). 안전 git 정책 (force 금지) 적용. PR review 대기.
+- `/buddy:verify-quality` — 6단계 Quality (PR review 완료 후 또는 큰 release 의 경우)
 
 ---
 

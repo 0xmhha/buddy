@@ -95,11 +95,14 @@ worker 완료 후:
 3. FAIL → retry (1회) 또는 escalate (Opus reconcile)
 
 ### Phase 7. Branch Reconcile
+
+> 본 phase 의 git 명령은 [`router/references/git-safety-rules.md`](../router/references/git-safety-rules.md) §2 / §4 준수. rebase pushed branch / force push 자동 금지. conflict 시 STOP + 사용자 처리 (orchestrator 가 *추측 resolve* 금지).
+
 모든 worker 완료 후:
-1. main 또는 integration branch에 merge
-2. 충돌 발생 시 Opus가 reconcile
-3. linear history (rebase) vs merge commit 정책 결정
-4. 통합 test 실행
+1. main 또는 integration branch 에 `git merge <worker-branch>` (merge only, rebase 금지)
+2. 충돌 발생 시 STOP — git-safety-rules §4.3 절차 (충돌 파일 + ours/theirs/base hunk 정보 제공 후 사용자 처리)
+3. linear history 정책은 사용자가 *명시적 의도* 표명 시에만 수동 수행 (push 된 commit rewrite 는 destructive cascade — 자동 금지)
+4. 통합 test 실행 (merge 후 base 변경이 test 깰 수 있음)
 
 ### Phase 8. Cleanup
 - worktree 제거 (`git worktree remove`)

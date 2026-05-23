@@ -53,11 +53,14 @@ feature/task 구현 완료 후 **commit → branch push → PR 생성**을 자�
 ## 5. 단계 (Phases)
 
 ### Phase 1. Pre-Push 검증
+
+> 본 phase 의 git 명령은 [`router/references/git-safety-rules.md`](../router/references/git-safety-rules.md) §2 금지 / §3 안전 / §4 절차 준수. force-류 / rewrite-pushed / 자동 복구 시도 금지. base sync 는 *merge only* — rebase pushed branch 자동 금지. `finish-development-branch` orchestrator 호출 시 Stage 0 에서 sync 선행됨.
+
 1. branch가 base와 diverged 했는지 (`git diff base...HEAD --stat`)
 2. 미커밋 변경 사항 (`git status --porcelain`) 0건 확인
 3. local test 통과 (`npm test` / `pytest`)
 4. lint / format 통과
-5. branch up-to-date with base (rebase 권장)
+5. branch up-to-date with base — `git merge origin/<base>` (rebase 자동 금지). conflict 시 STOP + 사용자 처리
 
 ### Phase 2. Commit 정리
 - atomic commit (한 commit = 한 logical change)
@@ -66,11 +69,14 @@ feature/task 구현 완료 후 **commit → branch push → PR 생성**을 자�
 - 필요시 commit squash / interactive rebase
 
 ### Phase 3. Branch Push
+
 ```bash
-git push -u origin <branch>
+git push -u origin <branch>     # force / force-with-lease 자동 사용 금지
 ```
+
 - 첫 push면 `-u` (upstream 설정)
-- existing branch면 `--force-with-lease` (다른 사람 변경 보호)
+- existing branch 면 force 옵션 없는 push. reject 시 [`router/references/git-safety-rules.md`](../router/references/git-safety-rules.md) §4.2 절차 — STOP + 사용자 정보 제공만
+- `--force-with-lease` 도 자동화에서 금지 (race window 내 silent 손실 가능). 사용자 명시 승인 + solo branch 시에만 *수동 실행 안내*
 
 ### Phase 4. PR Title 작성
 형식: `<type>(<scope>): <description>`

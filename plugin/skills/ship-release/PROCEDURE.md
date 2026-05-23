@@ -70,6 +70,8 @@ ship-release (7단계 phase orchestrator)
 
 ### 7-1 단계 Release Preparation
 
+> *권장 옵션*: 본 §7-1 단계 4 stage (Quality Gate / Changelog / Docs Sync / PR 생성) 는 [`finish-development-branch`](../finish-development-branch/PROCEDURE.md) sub-orchestrator 로 일괄 호출 가능 — Pre-flight remote sync (Stage 0) + mergeable 검증 (Stage 5, Iron Law) 추가됨. 안전 git 정책 ([`router/references/git-safety-rules.md`](../router/references/git-safety-rules.md)) 자동 적용. 호출 형태: `/buddy:finish-development-branch "<변경 요약>"`. 개별 stage 호출도 유지.
+
 **Stage 1: Quality Gate 확인**
 
 `setup-quality-gates` skill 호출 — 5 단계에서 이미 설정했으면 통과 여부만 확인:

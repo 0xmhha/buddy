@@ -36,11 +36,12 @@
 - **위험 이유**: 테이블의 모든 row를 per-row 트리거 발화 없이 삭제, 종종 WAL 엔트리 없이, 종종 애플리케이션 레이어 audit 로그로 catch 불가. 많은 엔진에서 `DELETE`보다 빠르고 *덜* 복구 가능.
 - **흔한 safe context**: 격리된 DB에 대한 integration test run 사이 fixture 리셋.
 
-### 4. `git push --force` / `git push -f`
+### 4. `git push --force` / `git push -f` / `git push --force-with-lease`
 
-- **Pattern**: `git\s+push\s+.*(-f\b|--force)`. Push 명령 어디든 short/long form 모두 catch (예: `--set-upstream` 뒤).
+- **Pattern**: `git\s+push\s+.*(-f\b|--force(\b|-with-lease))`. Push 명령 어디든 short/long form + `--force-with-lease` 도 모두 catch.
 - **위험 이유**: 리모트 히스토리 재작성. 구 히스토리 pull하고 위에 commit한 동료는 그들의 작업이 브랜치에서 사라진 것을 본다. 공유 브랜치(`main`, `develop`, 릴리스 브랜치)에서 이는 outage.
-- **흔한 safe context**: 소유한 solo feature 브랜치, rebase나 squash 후. 그때도 `--force-with-lease`가 더 안전, 자체 collision 체크를 갖고 있어 여기서 플래그 안 됨.
+- **`--force-with-lease` 도 자동화에서 금지** ([`router/references/git-safety-rules.md`](../router/references/git-safety-rules.md) §2 정합): expected-sha 검사는 *덜 위험* 일 뿐 *안전* 아님. sub-second race window 내 다른 fetch 후 push 시 silent 손실 가능. AI 자동화에선 reflog 의존 복구 사실상 불가능. 사용자가 *명시적 의도 + 결과 이해* 표명 시에만 *수동 실행* 안내.
+- **흔한 safe context**: 소유한 solo feature 브랜치 + 사용자 명시 승인. 그 외 모든 경우 STOP.
 
 ### 5. `git reset --hard`
 
@@ -173,7 +174,7 @@ check() { [ -z "$WARN" ] && printf '%s' "$2" | grep -qE "$1" && WARN="$3"; }
 check 'rm\s+(-[a-zA-Z]*r|--recursive)'        "$CMD"       'recursive delete (rm -r) — permanent removal.'
 check 'drop\s+(table|database)'                "$CMD_LOWER" 'SQL DROP — permanently deletes database objects.'
 check '\btruncate\b'                           "$CMD_LOWER" 'SQL TRUNCATE — deletes all rows from a table.'
-check 'git\s+push\s+.*(-f\b|--force)'          "$CMD"       'git force-push — rewrites remote history.'
+check 'git\s+push\s+.*(-f\b|--force(\b|-with-lease))'  "$CMD"  'git force-push (including --force-with-lease) — rewrites remote history.'
 check 'git\s+reset\s+--hard'                   "$CMD"       'git reset --hard — discards uncommitted work.'
 check 'git\s+(checkout|restore)\s+\.'          "$CMD"       'discards all uncommitted changes in working tree.'
 check 'kubectl\s+delete'                       "$CMD"       'kubectl delete — removes Kubernetes resources.'
