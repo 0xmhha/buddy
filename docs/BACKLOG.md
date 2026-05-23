@@ -179,6 +179,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 ✅ **9/9 close
 | W6-6 | D-5 v1.0 plugin 권한 경계 (DB 직접 vs IPC) | trigger 미발생 |
 | W6-7 | A-5.1 Quick Win C — commands/*.md body slim (~600 → ~200 byte/file) | 멀티-invoke trace 측정 가능 시 |
 | W6-8 | A-5.2 CONTRIBUTING.md + lint enforcement (`disable-model-invocation: true`) | 첫 contributor PR 직전까지 |
+| W6-9 | `internal/config.Config` namespace grouping — 60-field flat struct → Hook/Session/Advisor/Notify embedded substructs. JSON shape 변동 없음 (encoding/json 가 embedded struct 를 flatten). | 50+ test struct literal 일괄 갱신 부담 — 두 차례 attempt + revert 했음. *별도 test-refactor 예산 확보 시* 재진입 (예: code-coverage 작업 phase 와 묶음). 시각적 grouping 외 production caller 영향 0 — cosmetic 우선순위 낮음. |
 
 ### Wave 7 — cli buddy F2 vision impl (ADR-009, v1.0.0 entry C-1~C-5)
 
