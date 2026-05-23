@@ -526,3 +526,52 @@ cc5dd68 perf(advisor): batch drift goal-text Embed calls into one spawn
 - index 항목: `MEMORY.md` 에 `- [Background task emoji](feedback-background-task-emoji.md) — 진행 중 background 작업은 status 표에서 🔄 이모지 prefix/suffix 로 표기`
 
 다음 세션이 시작될 때 *MEMORY.md 가 자동 로드* 되므로 자동 적용됨. 별도 조치 불필요.
+
+---
+
+## 14. Addendum (handoff 작성 직후 발생한 사실)
+
+본 문서가 commit 된 직후, 본 세션 외부에서 일어난 두 변화를 기록한다. **§2 / §4 / §5 / §10 / §11 의 일부 기술은 *handoff 작성 시점의 snapshot* 이며 아래 사실이 이를 무효화 / 보완한다**.
+
+### 14.1 외부 작업물이 사용자 직접 commit 으로 흡수됨
+
+- Commit: `54efc0f` — `feat(finish-development-branch): add safe-only PR-flow orchestrator + git-safety-rules SSoT`
+- Author: `mhha <mhha@wemade.com>` (= 사용자 본인, 본 세션 외부)
+- Timestamp: 2026-05-23 20:03:06 KST
+- 흡수된 파일: §4 의 modified 7 + untracked 3 (총 10 파일 + `plugin/skills/finish-development-branch/PROCEDURE.md` 등 신규)
+
+**영향**:
+- §4 ("Working tree 의 *외부 작업물*") — 더 이상 working tree 에 *남아있지 않음*. 다음 세션이 *추가 처리할 필요 없음*.
+- §5 **Step 2 ("외부 작업물 결정")** — *완료된 상태*. skip 가능. Step 1 (본 세션 commit 분리) → Step 3 (B 카테고리 진입) 로 직진.
+- §10 의 "외부 작업물 unchanged" 보장은 *handoff 작성 시점* 까지만 유효 — 이후 사용자가 *직접* commit 함.
+- §11 의 commit 명단에 **`54efc0f` 추가**. 다음 세션이 `git log f2fe583..HEAD` 또는 `git log -5 --oneline` 으로 직접 확인 가능.
+
+### 14.2 본 세션의 3 commit + 외부 1 commit 모두 local 상태 (push 안 됨)
+
+본 세션 commit 3건이 추가로 만들어진 상태:
+
+```
+d2fb08f docs(notes): session handoff for 2026-05-23 cleanup work
+85c2745 docs(backlog): register config namespace grouping as indefinite defer
+96c989f docs: paraphrase stale dev-tracker references out of Go comments
+54efc0f feat(finish-development-branch): add safe-only PR-flow orchestrator + git-safety-rules SSoT  ← 사용자 직접
+f2fe583 (origin/main) refactor(agent): extract self-check, parsed-output log, and backoff helpers from runOneStep
+```
+
+→ `main` 은 `origin/main` 보다 **4 commit ahead**. **Push 는 본 세션에서 진행하지 않음** (사용자 결정). 다음 세션이 `git push` 결정.
+
+### 14.3 다음 세션이 실제로 봐야 할 §5 Step 순서 (Addendum 반영)
+
+- ~~Step 1: 본 세션 작업물 commit 분리~~ ✅ **이미 완료** (`96c989f` / `85c2745` / `d2fb08f`).
+- ~~Step 2: 외부 작업물 결정~~ ✅ **사용자 직접 commit 으로 처리됨** (`54efc0f`).
+- **Step 3 (실질 첫 행동)**: 사용자에게 *push 여부* 확인 → push 진행 또는 skip → 그 후 **B 카테고리 진입** (5-skill review 잔여 findings).
+
+### 14.4 Working tree 현 상태 (handoff 작성 후 + 본 addendum 작성 전 시점)
+
+```
+git status            → 작업 폴더 깨끗함 (untracked 0건, modified 0건)
+git log origin/main..HEAD  → 4 commit (위 14.2 의 4건)
+```
+
+본 addendum 까지 commit 하면 5 commit ahead 가 된다.
+
