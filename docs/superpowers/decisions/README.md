@@ -28,6 +28,7 @@
 | [ADR-016](./2026-05-19-f2e-notification.md) | 2026-05-19 | F2.E Notification design (W7-5, v1.0 entry C-5): 4-channel ship (desktop osascript/notify-send + webhook + TUI banner + shell prompt); daemon auto-dispatch via advisorMonitor; config-driven destinations; per-channel severity floor + dedup window; notification_log table (migration v8). **Closes C-5.** | Accepted | notification, f2e, w7-5, c-5, desktop, webhook, tui-banner, shell-prompt, dispatcher |
 | [ADR-017](./2026-05-20-f2d-drift-detection.md) | 2026-05-20 | F2.D Drift Detection design (W7-4, v1.0 entry C-4 — final C-x): embedding cosine over goal_text vs recent N chunks; new advisor rule `KindGoalDrift` reusing W7-3a embedder + W7-3b pipeline; 3 new config keys; no new table / migration / CLI / MCP / TUI surface — strict scope discipline. **Closes C-4.** | Accepted | drift-detection, f2d, w7-4, c-4, goal-drift, cosine-similarity, advisor-rule, final-c-x |
 | [ADR-018](./2026-05-21-verify-best-alternative-and-bias-prevention.md) | 2026-05-21 | `explore-design-variants` → `verify-best-alternative` rename (intent-forward) + AI-bias prevention forced gate wired into 7 §3 leaf design skills + new `decompose-blocker` skill (Cross-cutting, authored through `write-a-skill` dogfooding). Plugin track engineering-process cluster audit follow-up. | Accepted | plugin-skills, ai-bias, naming-intent, forced-gate, decompose-blocker, write-a-skill-dogfood, engineering-process |
+| [ADR-019](./2026-05-26-plugin-mcp-exposure-layer.md) | 2026-05-26 | Plugin MCP exposure layer: hybrid distribution model (PATH-first + bundled fallback). Closes the H1/C1 charter §2.4 four-asset gap by wiring `internal/mcp/` (25+ tools) into the plugin manifest via a POSIX shell launcher that prefers PATH `buddy` and falls back to bundled platform-specific binaries (darwin/linux × arm64/amd64). | Accepted | mcp-exposure, plugin-track, charter-asset-promise, distribution-model, hybrid-fallback, claude-plugin-spec, four-asset-completion |
 
 ---
 
@@ -137,7 +138,7 @@ charter §6.2 의 cli buddy 진화 시 예상 ADR 후보:
 | ADR-{N} AGENTS.md naming collision (P3 from ADR-002) | v1.0 plugin model 결정 시 |
 | ~~ADR-{N} PROCEDURE skeleton enforcement (B6 follow-up)~~ | **Closed by ADR-006 (2026-05-19)** — bulk allowlist + `--strict` CI gate |
 | ~~ADR-{N} router smart-skip session state (B7)~~ | **Closed by ADR-007 (2026-05-19)** — supersede, not router responsibility |
-| ADR-{N} skill MCP exposure | cli buddy 의 §4.1 option (b)/(d) 재검토 시 |
+| ~~ADR-{N} skill MCP exposure~~ | **Closed by ADR-019 (2026-05-26)** — hybrid distribution model (PATH-first + bundled fallback), closes charter §2.4 four-asset gap |
 | ADR-{N} cli buddy agent sandbox security (Q-6) | W3-3 agent runtime 의 *임의 명령 실행* 위험 surface 시 |
 | ~~ADR-{N} F2.A Session Monitor design~~ | **Closed by ADR-012 (2026-05-19)** — Hybrid hook+fsLister + schema v5 + CLI list/show/purge + daemon poll |
 | ~~ADR-{N} F2.B Usage Analysis schema~~ | **Closed by ADR-013 (2026-05-19)** — sessions-only live aggregation + CLI/MCP/TUI 3-way surface + 7 metric |
