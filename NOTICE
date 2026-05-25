@@ -133,3 +133,21 @@ concept (SKILL.md + scripts/ + references/ + assets/). No code, prompt
 text, or asset was adopted; the buddy implementation is independently
 authored and adapts the concept to buddy's PROCEDURE.md + router
 catalog architecture.
+
+---
+
+Domain-Driven Design (inspired-by per ADR-003 §2.4)
+Source 1: Eric Evans, "Domain-Driven Design: Tackling Complexity in the
+          Heart of Software" (Addison-Wesley, 2003)
+Source 2: Vaughn Vernon, "Implementing Domain-Driven Design"
+          (Addison-Wesley, 2013)
+
+The ubiquitous-language concept (a shared vocabulary across code,
+documentation, and domain experts) is referenced by
+plugin/skills/audit-ubiquitous-language/PROCEDURE.md. The skill draws
+the 3-source consistency frame (code identifier / PRD vocabulary /
+domain business term) from these works and adapts the analysis primitives
+(mismatch_type taxonomy: synonym/typo/abbreviation/translation/stale_legacy,
+severity classification, bounded-context-scoped audit) to buddy's
+PROCEDURE.md format. No verbatim text, code, or example was adopted;
+the implementation is independently authored in buddy voice.

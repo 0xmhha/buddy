@@ -180,6 +180,10 @@ feature-C || feature-D (병렬 진행 가능)
 - `/buddy:design-system` — 3단계 Technical Design (권장)
 - `/buddy:plan-build` — feature backlog가 크고 명확하면 3단계를 건너뛰고 4단계로 (소규모 프로젝트)
 
+### 옵션: 어휘 baseline 검증
+
+신규 feature spec 의 어휘 (actor / use case / entity 명칭) 가 기존 코드 식별자 / 도메인 어휘와 *drift* 가 없는지 확인하려면 [`audit-ubiquitous-language`](../audit-ubiquitous-language/PROCEDURE.md) 호출. multi-bounded-context 코드베이스 또는 *legacy + 신규* 어휘 혼재 시점에 권장. 결과 high-severity drift 발견 시 `refactor-with-rename-trace` cascade.
+
 ---
 
 ## 참조

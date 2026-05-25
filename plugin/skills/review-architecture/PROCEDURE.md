@@ -32,3 +32,4 @@
 
 - **구현 시작:** 설계 검토가 승인되었다면 `iterate-fix-verify`를 통해 실제 코드를 작성하십시오.
 - **기술적 정합성 리뷰:** 코드 레벨의 상세 리뷰가 필요하다면 `review-engineering`을 호출하십시오.
+- **어휘 일관성 검토:** architecture review 가 모듈 / 추상화 경계를 다룬다면, *어휘 (식별자 / PRD / 도메인)* 일관성은 직교 차원. `audit-ubiquitous-language` 를 cascade 호출하여 코드 ↔ PRD ↔ 도메인 어휘 drift 확인.

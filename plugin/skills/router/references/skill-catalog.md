@@ -162,6 +162,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `audit-i18n-coverage` | command + dispatch | locale 별 번역 누락 + fallback rate (>5% fail) + ICU MessageFormat 정합 + format / RTL 검증. coverage matrix + priority fix |
 | `chaos-test` | command + dispatch | failure injection (network / pod / CPU / dependency / DB / time) + 4 원칙 + blast radius 5 단계 + hypothesis-driven + game day |
 | `audit-test-coverage-meaningful` | command + dispatch | line coverage 0.2 + mutation score 0.4 + behavior ratio 0.2 + edge case 0.2 → trust score. Stryker / mutmut / go-mutesting |
+| `audit-ubiquitous-language` | command + dispatch | 코드 식별자 / PRD 어휘 / 도메인 어휘 3자 일관성 audit — drift mismatch pair + severity 분류 + remediation 제안 (rename/PRD update/glossary). refactor 직전 / PR review / 신규 feature 정의 / 주기적 호출. inspired-by DDD (Evans 2003) |
 | `run-browser-qa` | dispatch | [패턴 라이브러리] browser automation QA 패턴 — snapshot diff, form testing, responsive check, dialog, accessibility |
 | `monitor-regressions` | dispatch | [패턴 라이브러리] delta-based threshold + transient tolerance + per-page isolation으로 monitoring + regression detect |
 | `audit-security` | command + dispatch | CSO-mode security audit을 수행한다 |

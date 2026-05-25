@@ -137,6 +137,10 @@ export const getCustomer = getUser;
 - `build-with-tdd` — refactor 후 새 cycle 진입
 - `monitor-regressions` — production 영향 추적
 
+## 7.1 선행 권장 (어휘 결정 단계)
+
+- `audit-ubiquitous-language` — rename 대상이 *진짜 drift 인지 / 의도된 별칭인지* 결정. 코드 식별자 / PRD 어휘 / 도메인 어휘 3자 일관성 audit 후 그 결과 (`delegated_to: refactor-with-rename-trace`) 를 본 스킬 입력으로 받음. *어휘 결정 후 실행* 흐름 권장.
+
 ## 8. 참조
 
 - Refactoring (Martin Fowler) — refactor 카탈로그
