@@ -63,7 +63,7 @@ A 카테고리 **13 영역** 중 **9 영역 완료** + **1 영역 부분 완료*
 - **(b) Gap 무시 — buddy 의 9-phase cascade 가 동일 기능 제공, ad-hoc 호출 불필요** ← 권장
 - 권장 근거: buddy 아키텍처가 *의도적으로 phase-gated*. ad-hoc brainstorming 은 사용자 자유 발화로 충분. *9-phase 정체성* 훼손 방지.
 
-**상태 마킹**: `🟡 부분 완료 → 종결 (Gap 무시)` 로 [`SKILLS_ANALYSIS.md`](./SKILLS_ANALYSIS.md) §3 A.1 갱신.
+**상태 마킹**: ✅ **종결 확정 (Gap 무시, 9-phase cascade cover) — 사용자 명시 2026-05-26, Path 1 진입 의지**. [`SKILLS_ANALYSIS.md`](./SKILLS_ANALYSIS.md) §3 A.1 마킹 갱신.
 
 ---
 
@@ -96,7 +96,7 @@ A 카테고리 **13 영역** 중 **9 영역 완료** + **1 영역 부분 완료*
 - **(b) LOW 1 종결 — buddy 가 이미 동등 또는 우월 cover, 흡수 가치 낮음** ← 권장
 - 권장 근거: 4 항목 모두 buddy 가 *동등 또는 우월*. 흡수 시 *문서 비대화* > *실 가치*. *reference-only* 분류는 audit trail 용 한정.
 
-**상태 마킹**: `❌ 미진행 → 종결 (흡수 안 함)` 로 갱신.
+**상태 마킹**: ✅ **종결 확정 (흡수 안 함) — 사용자 명시 2026-05-26, Path 1 진입 의지**. mattpocock `setup-pre-commit` / `git-guardrails` 4 항목 모두 buddy 가 동등 또는 우월 cover. 흡수 시 *문서 비대화 > 실 가치*. SKILLS_ANALYSIS §3 A.1 LOW 1 마킹 갱신.
 
 ---
 
@@ -125,7 +125,7 @@ A 카테고리 **13 영역** 중 **9 영역 완료** + **1 영역 부분 완료*
 
 **권장 근거**: caveman 의 *75% 토큰 압축* 은 *runtime token state* 에 직결. cli buddy 의 *AI-usage coaching* (Wave 7 W7-2 Usage Analysis, ADR-013) 과 자연 매핑. plugin 트랙의 *작업 절차* 와는 분리.
 
-**상태 마킹**: `❌ 미진행 → cli buddy 트랙으로 이동 (trigger: token monitor 작업)` 로 갱신. plugin engineering audit 범주에서 *제외*.
+**상태 마킹**: 🔄 **cli buddy 트랙 이동 확정 — 사용자 명시 2026-05-26, Path 1 진입 의지**. caveman 의 75% 토큰 압축은 *runtime token state* 영역. cli buddy Wave 7 W7-2 (Usage Analysis, ADR-013) 의 trigger 발생 시 검토. plugin engineering audit 범주에서 *제외 확정*. SKILLS_ANALYSIS §3 A.1 LOW 3 마킹 갱신.
 
 ---
 

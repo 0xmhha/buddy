@@ -71,14 +71,14 @@
 
 ### Tier 1 — Doc-only, 즉시 fix 가능 (예상 < 30 분)
 
-> **상태 갱신 (2026-05-26)**: G2 / G3 ✅ **closed** (commit 본 cycle). G1 status 등재만 미진행 (별 cycle 후보). H1 신규 skill `audit-ubiquitous-language` 추가로 catalog unique 153 → 152 (중복 -2 + audit-ubiquitous +1 -1 archive 동일).
+> **상태 갱신 (2026-05-26)**: G1 / G2 / G3 모두 ✅ **closed**. G1 = status skill 을 catalog Cross-cutting Utilities 표에 등재 (사용자 명시 2026-05-26 Path 1 진입). G2/G3 = sibling commit `9831756` 의 catalog 중복 제거. H1 신규 skill `audit-ubiquitous-language` 추가 (commit `cd99818`). **Tier 1 전체 closed**. 다음 진입 = Tier 2 또는 신규 자산 wave (C1 MCP plugin 노출 layer).
 
-#### G1. `status` 스킬이 catalog 미등재
+#### G1. `status` 스킬이 catalog 미등재 — ✅ **closed (사용자 명시 2026-05-26, Path 1)**
 
 - **위치**: `plugin/skills/status/PROCEDURE.md` 존재. `plugin/commands/status.md` 도 존재.
-- **현 상태**: catalog §2 어느 표에도 등장 안 함.
+- **직전 상태**: catalog §2 어느 표에도 등장 안 함.
 - **성격**: artifact-detection 기반 phase 추론 utility (`docs/actor-track-plan.yaml` / `docs/tech-spec.md` / `docs/prd.md` 등 탐지) — Phase 무관 cross-cutting utility.
-- **권장**: catalog `Cross-cutting Utilities` 표에 1 줄 추가 — `| status | command + dispatch | artifact 탐지로 현재 phase 추론 + 다음 권장 command 안내 |`.
+- **종결 작업**: catalog `Cross-cutting Utilities` 표 알파벳 순 (`guide-setup-wizard` 와 `write-a-skill` 사이) 에 1 줄 등재 — `| status | command + dispatch | artifact 탐지 (...) 로 현재 lifecycle phase 추론 + 다음 권장 command 안내. phase 무관 호출 |`.
 
 #### G2. `monitor-regressions` catalog 중복 등재
 
