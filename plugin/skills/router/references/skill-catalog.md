@@ -61,7 +61,6 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `review-legal-regulatory` | command + dispatch | region-agnostic 법률 / 규제 frame (7 sub-domain — privacy / IP / AI 책임 / 약관 / 결제 / 산업 / audit) + region cluster trigger. 기존 review-privacy-data-risk / review-license-and-ip-risk / review-ai-safety-liability cascade |
 | `review-pricing-and-gtm` | dispatch | pricing model 설계와 GTM(Go-To-Market) channel 전략 평가 |
 | `define-product-spec` | command + dispatch | 아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정 |
-| `apply-builder-ethos` | dispatch | Boil the Lake, Search Before Building, User Sovereignty 3 원칙을 주입해 AI collaboration project에 적용 |
 
 ### §2 Stage Skills — Feature Definition & Backlog
 
@@ -164,7 +163,6 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `audit-test-coverage-meaningful` | command + dispatch | line coverage 0.2 + mutation score 0.4 + behavior ratio 0.2 + edge case 0.2 → trust score. Stryker / mutmut / go-mutesting |
 | `audit-ubiquitous-language` | command + dispatch | 코드 식별자 / PRD 어휘 / 도메인 어휘 3자 일관성 audit — drift mismatch pair + severity 분류 + remediation 제안 (rename/PRD update/glossary). refactor 직전 / PR review / 신규 feature 정의 / 주기적 호출. inspired-by DDD (Evans 2003) |
 | `run-browser-qa` | dispatch | [패턴 라이브러리] browser automation QA 패턴 — snapshot diff, form testing, responsive check, dialog, accessibility |
-| `monitor-regressions` | dispatch | [패턴 라이브러리] delta-based threshold + transient tolerance + per-page isolation으로 monitoring + regression detect |
 | `audit-security` | command + dispatch | CSO-mode security audit을 수행한다 |
 | `audit-live-devex` | dispatch | [패턴 라이브러리] 빌드/배포된 live developer product를 실제로 따라 하며 TTHW timing, evidence, literal doc-following으로 DX audit |
 | `measure-code-health` | command + dispatch | project tool을 auto-detect해 typecheck/lint/test/deadcode/shell 결과를 0-10 weighted composite health dashboard로 |

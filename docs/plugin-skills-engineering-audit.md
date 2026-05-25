@@ -12,6 +12,8 @@
 
 A 카테고리 **13 영역** 중 **9 영역 완료** + **1 영역 부분 완료** + **3 영역 잔여 (LOW 1-3)**. 잔여 3건 중 *작업물 직접 영향* 기준 **#11 DDD/도메인 (LOW 2)** 가 최우선. **#9 위생/안전 (LOW 1)** 은 *흡수 가치 낮음* — buddy 이미 동등 cover. **#10 컨텍스트 핸드오프 (LOW 3)** 는 *cli buddy 트랙* 으로 분리 권장.
 
+> **상태 갱신 (2026-05-26)**: **#11 LOW 2 ✅ closed** — commit `cd99818` (`audit-ubiquitous-language` 신규 skill, inspired-by DDD theory). 흡수 분류 변경 = adopt-with-edits → **inspired-by** (mattpocock 본문 cross-machine 부재로 0 read). engineering-flow H1+H3 hole 동시 closed. **현 잔여**: #8 부분완료 종결 결정 + #9 LOW 1 종결 결정 (둘 다 사용자 명시 결정 대기) + #10 LOW 3 cli 트랙 이동 결정.
+
 ---
 
 ## 1. 13 영역 매핑 매트릭스

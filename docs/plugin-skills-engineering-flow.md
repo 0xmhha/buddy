@@ -14,6 +14,12 @@
 
 이론 10 phase × 약 76 fine-grained step 중 **buddy cover ~63 step (83%)** + **부분 cover 8 step (10%)** + **명확한 hole 5 step (7%)**. 책임 충돌 검토 결과 **명확한 중복 2건** (`monitor-regressions` 양쪽 등재 / `apply-builder-ethos` 양쪽 등재 — inventory G2/G3) + **잠재 책임 모호 4건**. Intra-phase cascade hint 가 PROCEDURE.md 본문에 *명시된 비율 추정 ~30%* — 나머지 ~70% 는 router 의 description-based dispatch 의존.
 
+> **상태 갱신 (2026-05-26)**:
+> - **H1 + H3 hole ✅ closed** — commit `cd99818` (`audit-ubiquitous-language` 신규 skill). Phase 2.4 ubiquitous language + Cross-cutting C.10 동시 cover.
+> - **C1 + C2 중복 ✅ closed** — 본 cycle commit (`monitor-regressions` §6 라인 제거, `apply-builder-ethos` §1 라인 제거). catalog unique 153 → 152.
+> - **현 cover 갱신**: hole 5 → 3 (H1/H3 closed, H2 잔여 cli 트랙, H4/H5 잠재 유지). Phase 2 cover 7/10 → 8/10. Cross-cutting cover 7/10 → 8/10.
+> - **Tier 1 (engineering-flow §7) ✅ 모두 closed** (H1 + C1 + C2). 다음 진입점 = Tier 2 (P2/P3 DDD 차원 보강 / M1-M4 책임 매트릭스 / cascade Next 표준화).
+
 ---
 
 ## §1. Methodology

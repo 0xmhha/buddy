@@ -71,6 +71,8 @@
 
 ### Tier 1 — Doc-only, 즉시 fix 가능 (예상 < 30 분)
 
+> **상태 갱신 (2026-05-26)**: G2 / G3 ✅ **closed** (commit 본 cycle). G1 status 등재만 미진행 (별 cycle 후보). H1 신규 skill `audit-ubiquitous-language` 추가로 catalog unique 153 → 152 (중복 -2 + audit-ubiquitous +1 -1 archive 동일).
+
 #### G1. `status` 스킬이 catalog 미등재
 
 - **위치**: `plugin/skills/status/PROCEDURE.md` 존재. `plugin/commands/status.md` 도 존재.
@@ -104,11 +106,11 @@
 #### G5. SKILLS_ANALYSIS.md A.1 잔여 흡수 — LOW 1-3
 
 - **출처**: [`handoff/2026-05-23-skills-consolidation-handoff.md`](./handoff/2026-05-23-skills-consolidation-handoff.md) §6.1.
-- **3 항목**:
-  - **LOW 1**: mattpocock `setup-pre-commit` / `git-guardrails` 자동화 → buddy `compose-safety-mode` / `guard-destructive-commands` 와 보완 검토. 직전 commit `54efc0f` (`git-safety-rules.md` SSoT, design-time policy) 의 runtime automation 보완 후보.
-  - **LOW 2**: mattpocock `ubiquitous-language` → buddy `define-features` 의 actor identification 보완 또는 신규 스킬.
-  - **LOW 3**: mattpocock `caveman` (75% 토큰 압축) → cli buddy token monitor 시너지 또는 router 본문에 lazy-load 가이드.
-- **권장 진입점**: LOW 1 — `git-safety-rules.md` 와 자연 연결 (design-time ↔ runtime 의 짝).
+- **3 항목 (2026-05-26 갱신)**:
+  - **LOW 1**: mattpocock `setup-pre-commit` / `git-guardrails` → engineering-audit §2.2 결정: **종결 권장** (buddy `compose-safety-mode` / `guard-destructive-commands` / `setup-quality-gates` / `git-safety-rules.md` 가 동등 또는 우월 cover). 사용자 명시 결정 대기.
+  - **LOW 2**: mattpocock `ubiquitous-language` → ✅ **closed** (commit `cd99818`, `audit-ubiquitous-language` 신규 skill, inspired-by DDD theory). engineering-audit Tier 1 / engineering-flow H1 동시 closed.
+  - **LOW 3**: mattpocock `caveman` (75% 토큰 압축) → engineering-audit §2.3 결정: **cli buddy 트랙으로 이동** (Wave 7 W7-2 Usage Analysis 시너지). plugin 트랙 종결.
+- **남은 진입점**: LOW 1 종결 확정 (사용자 결정) — 본 cycle 의 doc-sync 에서 *상태 마킹 권장 사항* 으로 기록만, 흡수 작업 자체는 안 함.
 
 #### G6. Parallel-agent 충돌 방지 follow-up — 4 skill 보강
 
