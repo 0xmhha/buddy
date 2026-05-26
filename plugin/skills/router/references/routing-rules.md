@@ -93,14 +93,15 @@
 
 | Phase | Orchestrator | 진입 조건 | Stage skills (보유) | Cross-cutting |
 |-------|-------------|---------|---------------------|---------------|
-| §1 Idea & Business Validation | `concretize-idea` | idea/concept만 존재 | `validate-idea`, `validate-advanced-edge-idea`, `assess-business-viability`, `review-pricing-and-gtm`, `define-product-spec` | `apply-builder-ethos`, `autoplan`(review) |
+| §1 Idea & Business Validation (Mode A) | `concretize-idea` | idea/concept만 존재 (greenfield) | `validate-idea`, `validate-advanced-edge-idea`, `assess-business-viability`, `review-pricing-and-gtm`, `define-product-spec` | `apply-builder-ethos`, `autoplan`(review) |
+| §1 Problem/Change Assessment (Mode B) | `assess-product-change` | 기존 프로덕트에 변경 필요 | — (scope 평가 후 §2/§3/§5로 routing) | — |
 | §2 Feature Definition & Backlog | `define-features` | PRD 확정 | `identify-actors`, `map-actor-use-cases`, `map-use-case-to-system-boundary`, `compose-feature-from-use-cases`, `define-feature-spec`, `score-feature-priority`, `map-feature-dependencies`, `split-work-into-features`, `query-feature-registry`, `triage-work-items` | — |
 | §3 Technical Design | `design-system` | Feature backlog 확정 | `review-architecture`, `review-engineering`, `design-artifact-storage`, `design-billing-system`, `design-claude-hooks`, `design-deploy-strategy`, `design-embedding-search`, `design-mcp-server`, `consult-codex`, `consult-design-system`, `verify-best-alternative` | `autoplan`(review) |
 | §4 Implementation Plan | `plan-build` | Technical design 확정 | — | `autoplan`(review) |
 | §5 Development | `build-feature` | Implementation plan 확정 | `build-with-tdd`, `iterate-fix-verify`, `freeze-edit-scope`, `dispatch-parallel-agents`, `diagnose-bug`, `consult-codex` | — |
 | §6 Quality | `verify-quality` | Code complete | `classify-qa-tiers`, `run-browser-qa`, `monitor-regressions`, `audit-security`, `audit-live-devex`, `measure-code-health`, `classify-review-risks`, `review-ai-safety-liability`, `review-privacy-data-risk`, `review-license-and-ip-risk`, `review-terms-policy-readiness` | — |
 | §7 Release & Beta | `ship-release` | Quality gate pass | `setup-quality-gates`, `auto-create-pr`, `automate-release-tagging`, `sync-release-docs`, `write-changelog`, `guard-destructive-commands`, `compose-safety-mode` | — |
-| §8 Operate & Iterate | `iterate-product` | Production traffic | `design-ab-experiment`, `analyze-ab-experiment`, `analyze-user-funnel`, `generate-improvement-tasks`, `handle-incident`, `conduct-postmortem`, `monitor-regressions`, `save-context`, `restore-context`, `summarize-retro`, `persist-learning-jsonl` | — |
+| §8 Operate & Iterate | `iterate-product` | Production traffic | `design-ab-experiment`, `analyze-ab-experiment`, `analyze-user-funnel`, `generate-improvement-tasks`, `handle-incident`, `conduct-postmortem`, `monitor-regressions`, `summarize-retro` | — |
 | §9 Lifecycle Management | `manage-lifecycle` | Feature/product 노후화 | — | — |
 
 ---

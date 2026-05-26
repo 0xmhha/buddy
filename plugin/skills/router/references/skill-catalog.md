@@ -58,7 +58,6 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `conduct-customer-interview` | command + dispatch | 인터뷰 스크립트 + Mom Test anti-pattern 회피 + 결과 코딩 매트릭스 + 4-라벨 가설 update (confirmed/partial/refuted/new) |
 | `analyze-competition-and-substitutes` | command + dispatch | 4 분류 (direct/indirect/substitute/non-consumption) × 4 차원 매트릭스 + positioning (Moore) + moat (7 Powers) + 선택적 vs page |
 | `decide-target-market` | command + dispatch | target market 결정 (글로벌 / 단일 지역 / 다지역) + region cluster trigger. assess-business-viability 후, region-specific extension 의 활성화 trigger |
-| `review-legal-regulatory` | command + dispatch | region-agnostic 법률 / 규제 frame (7 sub-domain — privacy / IP / AI 책임 / 약관 / 결제 / 산업 / audit) + region cluster trigger. 기존 review-privacy-data-risk / review-license-and-ip-risk / review-ai-safety-liability cascade |
 | `review-pricing-and-gtm` | dispatch | pricing model 설계와 GTM(Go-To-Market) channel 전략 평가 |
 | `define-product-spec` | command + dispatch | 아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정 |
 
@@ -203,9 +202,6 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `conduct-postmortem` | dispatch | 인시던트 종료 후 비난 없는 포스트모템 — 타임라인 재구성 + 5 Whys + 재발 방지 action items |
 | `monitor-regressions` | dispatch | [패턴 라이브러리] delta-based threshold + transient tolerance + per-page isolation으로 monitoring + regression detect |
 | `summarize-retro` | command + dispatch | git history를 evidence-based weekly retrospective로 변환 — work types, hotspots, focus score, AI collaboration |
-| `save-context` | command + dispatch | decisions, remaining work, git status를 checkpoint로 저장해 future session이 branch가 달라도 이어받게 한다 |
-| `restore-context` | command + dispatch | context-save가 저장한 most recent work checkpoint를 cross-branch로 load한다 |
-| `persist-learning-jsonl` | dispatch | [패턴 라이브러리] JSONL append-only learning store data model + 누적/조회 패턴 (pattern/pitfall/preference taxonomy) |
 | `analyze-feature-adoption` | command + dispatch | awareness → trial → habit funnel + power user 5차원 코호트 + abandonment fix hypothesis + A/B test 후보 |
 | `analyze-user-cohort` | command + dispatch | acquisition cohort retention curve (D1/D7/D30/D90) + LTV/CAC 3:1+ + 3 churn 분류 (voluntary/involuntary/implicit) |
 | `analyze-actor-failure-rate` | command + dispatch | 4 actor failure matrix + trust score (reliability/predictability/MTTR/blast) + 6 recovery 패턴 (Release It! Nygard) + cascade |
@@ -240,6 +236,10 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `guide-setup-wizard` | dispatch | [패턴 라이브러리] auto-detect → picker → verify pattern으로 credential/config setup flow 설계 |
 | `status` | command + dispatch | artifact 탐지 (docs/prd.md / docs/feature-spec/ / docs/tech-spec.md / docs/actor-track-plan.yaml 등) 로 현재 lifecycle phase 추론 + 다음 권장 command 안내. phase 무관 호출 |
 | `write-a-skill` | command + dispatch | [META] 신규 buddy 스킬을 PROCEDURE.md + skill-catalog 등재 + 차용 4분류 정책 적용까지 한 사이클로 작성. RED-GREEN-REFACTOR subagent pressure test 강제. 사용자가 "새 스킬 만들자/추가하자/skill 작성" 할 때 호출 |
+| `save-context` | command + dispatch | decisions, remaining work, git status를 checkpoint로 저장해 future session이 branch가 달라도 이어받게 한다. phase 무관 — 어느 단계에서든 세션 전환 시 호출 |
+| `restore-context` | command + dispatch | save-context가 저장한 most recent work checkpoint를 cross-branch로 load한다. phase 무관 — 어느 단계에서든 재개 시 호출 |
+| `persist-learning-jsonl` | dispatch | [패턴 라이브러리] JSONL append-only learning store data model + 누적/조회 패턴 (pattern/pitfall/preference taxonomy). phase 무관 |
+| `review-legal-regulatory` | command + dispatch | region-agnostic 법률 / 규제 frame (7 sub-domain — privacy / IP / AI 책임 / 약관 / 결제 / 산업 / audit) + region cluster trigger. §1 / §7 등 복수 phase에서 호출 |
 
 ---
 
