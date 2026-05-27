@@ -23,18 +23,21 @@
 
 아래 순서대로 artifact 존재 여부를 확인해 현재 phase를 판단:
 
-| 탐지 artifact | 추론 phase |
-|--------------|-----------|
-| `docs/actor-track-plan.yaml` 존재 + 미완료 task | 5단계 build-feature |
-| `docs/actor-track-plan.yaml` 존재 + 모든 task 완료 | 6단계 verify-quality |
-| `docs/tech-spec.md` 또는 `docs/design/` 존재 | 4단계 plan-build |
-| `docs/feature-spec/` 또는 `docs/features.yaml` 존재 | 3단계 design-system |
-| `docs/prd.md` 또는 `docs/PRD.md` 존재 | 2단계 define-features |
-| 위 없음 + idea/concept만 언급 | 1단계 concretize-idea |
-| `dist/` 또는 `CHANGELOG.md` 존재 + release tag | 7단계 이후 |
-| 다수 존재 + production traffic 언급 | 8단계 iterate-product |
+| 탐지 artifact | 추론 phase | Orchestrator |
+|--------------|-----------|-------------|
+| `docs/actor-track-plan.yaml` 존재 + 미완료 task | §5 Development | `build-feature` |
+| `docs/actor-track-plan.yaml` 존재 + 모든 task 완료 | §6 Verification | `verify-quality` |
+| `docs/tech-spec.md` 또는 `docs/design/` 존재 | §4 Implementation Plan | `plan-build` |
+| `docs/feature-spec/` 또는 `docs/features.yaml` 존재 | §3 Technical Design | `design-system` |
+| `docs/prd.md` 또는 `docs/PRD.md` 존재 | §2 Feature Definition | `define-features` |
+| 위 없음 + 코드베이스 존재 (go.mod, package.json 등) | §1 Mode B (기존 프로덕트) | `assess-product-change` |
+| 위 없음 + 코드베이스 없음 | §1 Mode A (신규 프로덕트) | `concretize-idea` |
+| `dist/` 또는 `CHANGELOG.md` 존재 + release tag | §7 Release 이후 | `ship-release` |
+| 다수 존재 + production traffic 언급 | §8 Operations | `iterate-product` |
 
 탐지 불가 시: "현재 phase를 특정할 수 없어. 어느 단계에 있는지 알려줘."
+
+**Phase 1 Mode 판별 기준**: 코드베이스(go.mod, package.json, Cargo.toml, pyproject.toml 등)가 있으면 기존 프로덕트(Mode B → `assess-product-change`), 없으면 신규(Mode A → `concretize-idea`).
 
 ### Step 2. 중단 원인 식별 (선택)
 
@@ -67,8 +70,9 @@ Phase: §N <phase-name>
 ┌─────────────────────────────────────────────────────────────────────┐
 │  Phase  │ 커맨드                  │ 용도                            │
 ├─────────┼─────────────────────────┼─────────────────────────────────┤
-│ 1단계      │ /buddy:concretize-idea  │ Idea → PRD + 사업성 검증        │
-│ 2단계      │ /buddy:define-features  │ Feature backlog + actor 정의    │
+│ 1단계(신규)│ /buddy:concretize-idea       │ Idea → PRD + 사업성 검증        │
+│ 1단계(기존)│ /buddy:assess-product-change │ 변경 평가 → scope → 다음 phase  │
+│ 2단계      │ /buddy:define-features       │ Feature backlog + actor 정의    │
 │ 3단계      │ /buddy:design-system    │ 기술 설계 + API 계약             │
 │ 4단계      │ /buddy:plan-build       │ 구현 계획 (actor-track plan)    │
 │ 5단계      │ /buddy:build-feature    │ TDD 개발 + 병렬 agent dispatch  │
