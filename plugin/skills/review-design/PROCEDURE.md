@@ -12,6 +12,19 @@ generic "design feedback"과 이 skill을 구분하는 load-bearing move는 세 
 
 code를 작성하지 마라. implementation을 시작하지 마라. 지금 당신의 유일한 역할은 최대한 엄격하게 plan의 design decision을 review하고 improve하는 것이다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Design 맥락 (UI/UX 설계 또는 plan) | ✅ | artifact / knowledge | Phase 3 산출물 또는 사용자 설명 | "디자인 검토할 대상을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Design review (차원별 0-10 score + 개선 path) | artifact | structured scores + findings | plan 수정 |
+
 ## 이 스킬을 사용하는 경우
 
 - UI 스크린, 페이지, 컴포넌트, 사용자 대상 상호작용을 명시하는 계획 리뷰
@@ -305,18 +318,4 @@ plan이 reuse해야 할 existing DESIGN.md token, UI pattern, component를 기�
 
 모든 pass가 8+에 도달하면 이렇게 말하라: "Plan is design-complete. Ready for implementation."
 pass 중 하나라도 8 미만이면 무엇이 unresolved인지, 그리고 user가 왜 defer를 선택했는지 명시하라.
-
-
-## Input Requirements
-
-| Input | Required | Type | Source | 미제공 시 |
-|-------|----------|------|--------|----------|
-| Design 맥락 (UI/UX 설계 또는 plan) | ✅ | artifact / knowledge | Phase 3 산출물 또는 사용자 설명 | "디자인 검토할 대상을 알려주세요." |
-
-## Output Contract
-
-| Output | Type | Format | Consumers |
-|--------|------|--------|-----------|
-| Design review (차원별 0-10 score + 개선 path) | artifact | structured scores + findings | plan 수정 |
-
 ---

@@ -3,14 +3,6 @@
 
 > Fix 루프 패턴 — visual design을 넘어 모든 iterative repair에 일반화. Plan-time variant는 `review-design` 스킬에서.
 
-## 이 snippet을 사용하는 경우
-
-- "이슈 발견, 하나씩 수정, 각각 검증, 반복" 형태의 모든 워크플로우.
-- 디자인 polish, 코드 정리, 문서 일관성, 의존성 업그레이드, 접근성 pass, lint 정리.
-- Atomic commit + before/after 증거가 bisectability와 revert를 저렴하게 만드는 모든 곳.
-
-이 루프는 의도적으로 **fix당 느리지만 복구는 빠르다**: 하나의 변경, 하나의 commit, 하나의 검증. 추가 commit 비용은 번들된 회귀를 디버깅하는 비용에 비하면 무시할 수 있다.
-
 
 ## Input Requirements
 
@@ -24,6 +16,13 @@
 |--------|------|--------|-----------|
 | Fixed code (finding별 atomic commit) | artifact | commit history | `verify-quality` |
 
+## 이 snippet을 사용하는 경우
+
+- "이슈 발견, 하나씩 수정, 각각 검증, 반복" 형태의 모든 워크플로우.
+- 디자인 polish, 코드 정리, 문서 일관성, 의존성 업그레이드, 접근성 pass, lint 정리.
+- Atomic commit + before/after 증거가 bisectability와 revert를 저렴하게 만드는 모든 곳.
+
+이 루프는 의도적으로 **fix당 느리지만 복구는 빠르다**: 하나의 변경, 하나의 commit, 하나의 검증. 추가 commit 비용은 번들된 회귀를 디버깅하는 비용에 비하면 무시할 수 있다.
 ---
 
 ## Triage 먼저 (루프 진입 전 게이트)

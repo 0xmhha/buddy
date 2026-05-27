@@ -3,11 +3,6 @@
 
 > Pre-flight + cost transparency 패턴. 실제 벤치마크 실행(Claude / GPT / Gemini 등)은 도구별 구현.
 
-## 이 snippet을 사용하는 경우
-- 하나의 워크플로우에서 여러 LLM 벤더를 호출하는 모든 도구
-- 사전에 사용자가 확인해야 하는 실제 API 비용이 발생하는 모든 연산
-- 벤더마다 별도 로그인 상태를 갖는 multi-CLI 워크플로우의 사전 인증 체크
-
 
 ## Input Requirements
 
@@ -21,6 +16,10 @@
 |--------|------|--------|-----------|
 | Benchmark results (모델별 성능 비교) | artifact | structured report | (의사결정 지원) |
 
+## 이 snippet을 사용하는 경우
+- 하나의 워크플로우에서 여러 LLM 벤더를 호출하는 모든 도구
+- 사전에 사용자가 확인해야 하는 실제 API 비용이 발생하는 모든 연산
+- 벤더마다 별도 로그인 상태를 갖는 multi-CLI 워크플로우의 사전 인증 체크
 ---
 
 ## 패턴 1: Dry-Run 인증 체크

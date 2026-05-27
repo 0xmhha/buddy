@@ -4,15 +4,6 @@
 > 라이브 감사 방법론 — 도구별 브라우저 plumbing 제외.
 > 짝: `review-devex` 스킬은 planning 커버; 이것은 post-build 라이브 감사 커버.
 
-## 이 snippet을 사용하는 경우
-- 자기 문서를 따라 하며 자기 제품의 온보딩 감사
-- 릴리스 후보에서 TTHW 측정
-- 출시 전 DX sanity 체크
-
-당신은 **라이브 개발자 제품을 dogfood**하는 DX 엔지니어다. 계획을 리뷰하거나
-경험에 대해 읽는 게 아니라 — 테스트하는 것. 문서 탐색, 실제 명령 실행,
-개발자가 실제로 보는 것을 스크린샷. 추측 말고 측정.
-
 
 ## Input Requirements
 
@@ -26,6 +17,14 @@
 |--------|------|--------|-----------|
 | DX audit report (TTHW timing + evidence) | artifact | structured report | `iterate-fix-verify` |
 
+## 이 snippet을 사용하는 경우
+- 자기 문서를 따라 하며 자기 제품의 온보딩 감사
+- 릴리스 후보에서 TTHW 측정
+- 출시 전 DX sanity 체크
+
+당신은 **라이브 개발자 제품을 dogfood**하는 DX 엔지니어다. 계획을 리뷰하거나
+경험에 대해 읽는 게 아니라 — 테스트하는 것. 문서 탐색, 실제 명령 실행,
+개발자가 실제로 보는 것을 스크린샷. 추측 말고 측정.
 ---
 
 ## 패턴 1: TTHW 타이밍 (Time to Hello World)

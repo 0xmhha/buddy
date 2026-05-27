@@ -3,6 +3,19 @@
 
 > 구조적 카테고리 taxonomy + diff scan flow. ship 통합, 전문 subagent, adversarial pass, 리포트 작성은 별도 스킬에서.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 코드 diff | ✅ | artifact | git diff 또는 PR diff | (자동 감지) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Risk classification (11 category) | artifact | structured report | `review-engineering` |
+
 ## 이 snippet을 사용하는 경우
 - 자체 pre-merge 리뷰 스킬 구축
 - 수동 코드 리뷰 시 참조 체크리스트
@@ -36,20 +49,6 @@ Post.includes(:author).each { |p| ... }        # eager loaded
 - `where\(["'].*#\{` — `where`의 string interpolation
 - `update_column|update_all|raw\(` — validation 우회
 - `\.each.*\.\w+\.\w+` — 루프의 N+1 가능성
-
-
-## Input Requirements
-
-| Input | Required | Type | Source | 미제공 시 |
-|-------|----------|------|--------|----------|
-| 코드 diff | ✅ | artifact | git diff 또는 PR diff | (자동 감지) |
-
-## Output Contract
-
-| Output | Type | Format | Consumers |
-|--------|------|--------|-----------|
-| Risk classification (11 category) | artifact | structured report | `review-engineering` |
-
 ---
 
 ### 카테고리 2: LLM 출력 신뢰 경계

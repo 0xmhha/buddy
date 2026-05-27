@@ -3,11 +3,6 @@
 
 > 버전 범프 + CHANGELOG 포맷 + voice 규칙. 전체 ship 워크플로우(테스트 실행, diff 리뷰, PR 생성, 배포)는 별도 스킬에서.
 
-## 이 snippet을 사용하는 경우
-- 버전 관리 + CHANGELOG 규율이 필요한 자체 릴리스 워크플로우 구축
-- 팀 간 CHANGELOG 포맷 표준화
-- AI 보조 릴리스 저작 참조 (사람 + 에이전트가 엔트리 작성)
-
 
 ## Input Requirements
 
@@ -21,6 +16,10 @@
 |--------|------|--------|-----------|
 | CHANGELOG entry (release-summary format) | artifact | CHANGELOG.md 갱신 | `sync-release-docs` |
 
+## 이 snippet을 사용하는 경우
+- 버전 관리 + CHANGELOG 규율이 필요한 자체 릴리스 워크플로우 구축
+- 팀 간 CHANGELOG 포맷 표준화
+- AI 보조 릴리스 저작 참조 (사람 + 에이전트가 엔트리 작성)
 ---
 
 ## 버전 범프 로직

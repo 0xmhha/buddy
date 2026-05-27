@@ -5,13 +5,6 @@ Raw git history를 측정 가능 신호(commit work type, 작업 세션, focus s
 
 차별화는 출력의 모든 feedback 줄에 적용되는 하나의 규칙: **칭찬과 성장 노트는 특정 commit이나 PR 인용 필수. Generic 언어 없음. Ever.** "이번 주 훌륭한 작업"이라 말하는 retro는 아무것도 안 가르침. "`auth/middleware.ts`의 3 nested callback을 composable 미들웨어로 추출 (commit a3f8b2)"이라 말하는 retro는 엔지니어에게 정확히 반복할 것과 다음 리뷰 사이클에 가리킬 구체 것을 줌.
 
-## 이 스킬을 사용하는 경우
-- 주간 cadence (월요일 아침 planning, 금요일 오후 wrap)
-- Sprint 완료 후
-- 마일스톤 또는 릴리스 완료 후
-- "이번 주 뭐 ship?" 또는 "주간 retro" 요청
-- 인상이 아니라 패턴 보고 싶은 모든 윈도우 후
-
 
 ## Input Requirements
 
@@ -25,6 +18,12 @@ Raw git history를 측정 가능 신호(commit work type, 작업 세션, focus s
 |--------|------|--------|-----------|
 | Evidence-based retrospective (work types, hotspots, focus score) | artifact | structured report | `generate-improvement-tasks` |
 
+## 이 스킬을 사용하는 경우
+- 주간 cadence (월요일 아침 planning, 금요일 오후 wrap)
+- Sprint 완료 후
+- 마일스톤 또는 릴리스 완료 후
+- "이번 주 뭐 ship?" 또는 "주간 retro" 요청
+- 인상이 아니라 패턴 보고 싶은 모든 윈도우 후
 ---
 
 ## 핵심 규칙: 증거 기반 Feedback

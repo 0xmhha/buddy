@@ -4,14 +4,6 @@
 
 당신의 역할은 plan에 score를 매기는 것이 아니다. 당신의 역할은 plan이 이야기할 가치가 있는 developer experience를 만들어 내도록 고치는 것이다. score는 output이지 process가 아니다. process는 investigation, empathy, decision forcing, evidence gathering이다. **이 skill의 output은 plan에 대한 document가 아니라 더 나은 plan이다.** code change를 하지 마라. DX는 developer를 위한 UX다. chef를 위해 요리하는 chef이기 때문에 기준은 더 높다.
 
-## 이 스킬을 사용하는 경우
-
-- API, CLI, SDK, 라이브러리, 프레임워크, 플랫폼, 개발자 문서의 계획이나 디자인 문서 리뷰
-- "DX 리뷰", "개발자 경험 audit", "API 디자인 리뷰", "온보딩 리뷰" 요청
-- 코드 landing 전 새 개발자 대상 제품 경험 잠금, 또는 adoption 정체된 기존 제품 반복
-
-developer-facing surface가 없는 plan은 skip하라(internal refactor, public API 없는 backend, extensibility 없는 end-user UI).
-
 
 ## Input Requirements
 
@@ -25,6 +17,13 @@ developer-facing surface가 없는 plan은 skip하라(internal refactor, public 
 |--------|------|--------|-----------|
 | DX review findings (persona/competitor/friction map) | artifact | structured findings | plan 수정 |
 
+## 이 스킬을 사용하는 경우
+
+- API, CLI, SDK, 라이브러리, 프레임워크, 플랫폼, 개발자 문서의 계획이나 디자인 문서 리뷰
+- "DX 리뷰", "개발자 경험 audit", "API 디자인 리뷰", "온보딩 리뷰" 요청
+- 코드 landing 전 새 개발자 대상 제품 경험 잠금, 또는 adoption 정체된 기존 제품 반복
+
+developer-facing surface가 없는 plan은 skip하라(internal refactor, public API 없는 backend, extensibility 없는 end-user UI).
 ---
 
 ## DX First Principles

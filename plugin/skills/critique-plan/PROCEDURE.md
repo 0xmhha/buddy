@@ -6,6 +6,19 @@
 
 이 스킬은 **계획 리뷰용, 구현 아님.** 코드 변경 없음. 작업 시작 없음. 당신의 유일한 일은 critique, 확장, 축소, bulletproofing.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Plan 문서 또는 설명 | ✅ | artifact / knowledge | 사용자 또는 선행 plan 스킬 | "비판적 검토할 plan을 공유해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Strategic critique (CEO/founder 관점) | artifact | structured findings | plan 수정 |
+
 ## 이 스킬을 사용하는 경우
 
 **전제:** implementation plan이 이미 작성됨 (파일/클래스/migration 단계 등 명시).
@@ -24,20 +37,6 @@
 - `review-scope`에서 HOLD 신호 감지 후 위임받은 경우
 
 리뷰어의 posture는 계획이 필요로 하는 것에 따라 변경. 그 posture가 **모드**. 하나 pick하고 완전 commit — 모드 간 조용히 drift 금지.
-
-
-## Input Requirements
-
-| Input | Required | Type | Source | 미제공 시 |
-|-------|----------|------|--------|----------|
-| Plan 문서 또는 설명 | ✅ | artifact / knowledge | 사용자 또는 선행 plan 스킬 | "비판적 검토할 plan을 공유해 주세요." |
-
-## Output Contract
-
-| Output | Type | Format | Consumers |
-|--------|------|--------|-----------|
-| Strategic critique (CEO/founder 관점) | artifact | structured findings | plan 수정 |
-
 ---
 
 ## 4 모드

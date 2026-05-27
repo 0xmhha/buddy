@@ -5,6 +5,19 @@
 
 **HARD GATE:** 코드 변경을 구현하지 마라. 이 스킬은 저장된 체크포인트 파일을 읽고 요약만 제시. 코드 변경은 사용자가 방향을 confirm한 *후* 발생.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Checkpoint file | ✅ | artifact | `save-context` 산출물 | (자동 탐색 — 최신 checkpoint 로드) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Restored context summary (작업 항목 + 다음 단계) | artifact | formatted output | (사용자 안내) |
+
 ## 이 스킬을 사용하는 경우
 
 - `/clear` 후 (컨텍스트 윈도우가 wipe됨)
@@ -67,19 +80,6 @@ fi
 선택된 파일을 읽는다. 기대 frontmatter 형태(`context-save`가 쓴):
 
 ```yaml
-
-## Input Requirements
-
-| Input | Required | Type | Source | 미제공 시 |
-|-------|----------|------|--------|----------|
-| Checkpoint file | ✅ | artifact | `save-context` 산출물 | (자동 탐색 — 최신 checkpoint 로드) |
-
-## Output Contract
-
-| Output | Type | Format | Consumers |
-|--------|------|--------|-----------|
-| Restored context summary (작업 항목 + 다음 단계) | artifact | formatted output | (사용자 안내) |
-
 ---
 title: <one-line summary>
 branch: <git branch at save time>
