@@ -103,5 +103,15 @@ func enCatalog() map[Key]string {
 		KeyFeatureNotFound:  "buddy: can't find that feature (%s).",
 		KeyFeatureListEmpty: "buddy: no features registered.",
 		KeyFeatureFailed:    "buddy: feature operation failed (%v).",
+
+		// permissions
+		KeyPermissionsAllPresent:    "All subagent permissions are present.",
+		KeyPermissionsMissing:       "%d permission(s) missing for subagents.\n",
+		KeyPermissionsInjectHint:    "Run 'buddy permissions inject' to add them.",
+		KeyPermissionsInjectPreview: "Adding the following permissions to %s:\n\n",
+		KeyPermissionsInjectScope:   "This applies to all projects.",
+		KeyPermissionsConfirm:       "Continue? [y/N] ",
+		KeyPermissionsCancelled:     "Cancelled.",
+		KeyPermissionsInjected:      "buddy: added %d permission(s).",
 	}
 }

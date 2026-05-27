@@ -134,6 +134,16 @@ const (
 	KeyFeatureNotFound  Key = "feature.not_found"   // %s = feature_id
 	KeyFeatureListEmpty Key = "feature.list_empty"
 	KeyFeatureFailed    Key = "feature.failed" // %v = err
+
+	// permissions
+	KeyPermissionsAllPresent  Key = "permissions.all_present"
+	KeyPermissionsMissing     Key = "permissions.missing"      // %d = count
+	KeyPermissionsInjectHint  Key = "permissions.inject_hint"
+	KeyPermissionsInjectPreview Key = "permissions.inject_preview" // %s = path
+	KeyPermissionsInjectScope Key = "permissions.inject_scope"
+	KeyPermissionsConfirm     Key = "permissions.confirm"
+	KeyPermissionsCancelled   Key = "permissions.cancelled"
+	KeyPermissionsInjected    Key = "permissions.injected" // %d = count
 )
 
 // AllKeys returns every Key constant in declaration order. Used by the
@@ -226,6 +236,16 @@ func AllKeys() []Key {
 		KeyFeatureNotFound,
 		KeyFeatureListEmpty,
 		KeyFeatureFailed,
+
+		// permissions
+		KeyPermissionsAllPresent,
+		KeyPermissionsMissing,
+		KeyPermissionsInjectHint,
+		KeyPermissionsInjectPreview,
+		KeyPermissionsInjectScope,
+		KeyPermissionsConfirm,
+		KeyPermissionsCancelled,
+		KeyPermissionsInjected,
 	}
 }
 

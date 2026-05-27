@@ -99,5 +99,15 @@ func koCatalog() map[Key]string {
 		KeyFeatureNotFound:  "buddy: feature를 못 찾겠어 (%s).",
 		KeyFeatureListEmpty: "buddy: 등록된 feature가 없어.",
 		KeyFeatureFailed:    "buddy: feature 작업 실패 (%v).",
+
+		// permissions
+		KeyPermissionsAllPresent:    "subagent 권한 모두 정상이야.",
+		KeyPermissionsMissing:       "subagent에 필요한 권한 %d개가 빠져있어.\n",
+		KeyPermissionsInjectHint:    "'buddy permissions inject' 로 추가할 수 있어.",
+		KeyPermissionsInjectPreview: "다음 권한을 %s 에 추가할게.\n\n",
+		KeyPermissionsInjectScope:   "이 설정은 모든 프로젝트에 적용돼.",
+		KeyPermissionsConfirm:       "계속할까? [y/N] ",
+		KeyPermissionsCancelled:     "취소했어.",
+		KeyPermissionsInjected:      "buddy: 권한 %d개 추가했어.",
 	}
 }

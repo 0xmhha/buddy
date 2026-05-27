@@ -141,6 +141,7 @@ func newRootCmd() *cobra.Command {
 	root.AddCommand(newFeatureCmd())
 	root.AddCommand(newMcpCmd())
 	root.AddCommand(newAgentCmd())
+	root.AddCommand(newPermissionsCmd())
 	root.AddCommand(newTuiCmd())
 	root.AddCommand(newSessionCmd())
 	root.AddCommand(newUsageCmd())
