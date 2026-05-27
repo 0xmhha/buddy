@@ -78,8 +78,10 @@ const (
 	KeyDoctorBacklog          Key = "doctor.backlog"
 	KeyDoctorSlowHook         Key = "doctor.slow_hook"
 	KeyDoctorFailRate         Key = "doctor.fail_rate"
-	KeyDoctorDBOpenFailed     Key = "doctor.db_open_failed"
-	KeyDoctorDBMissing        Key = "doctor.db_missing"
+	KeyDoctorDBOpenFailed        Key = "doctor.db_open_failed"
+	KeyDoctorDBMissing           Key = "doctor.db_missing"
+	KeyDoctorPermissionsMissing  Key = "doctor.permissions_missing"  // %d = count
+	KeyDoctorPermissionsError    Key = "doctor.permissions_error"    // %v = err
 
 	// db / events / stats common — wording shared between cmd/buddy stats
 	// and events read-only paths so they stay in lockstep.
@@ -187,6 +189,8 @@ func AllKeys() []Key {
 		KeyDoctorFailRate,
 		KeyDoctorDBOpenFailed,
 		KeyDoctorDBMissing,
+		KeyDoctorPermissionsMissing,
+		KeyDoctorPermissionsError,
 
 		// db / events / stats common
 		KeyDBReadFailed,

@@ -51,8 +51,10 @@ func enCatalog() map[Key]string {
 		KeyDoctorBacklog:          "%s items piled up in the outbox. take a look at the daemon (buddy daemon status).",
 		KeyDoctorSlowHook:         "'%s' hook is getting slow. p95 is %s (threshold %s).",
 		KeyDoctorFailRate:         "'%s' hook fail rate is %d%%. %d failures out of the last %d.",
-		KeyDoctorDBOpenFailed:     "couldn't open the DB (%s): %v",
-		KeyDoctorDBMissing:        "DB doesn't exist yet (%s). check that you ran 'buddy install' first.",
+		KeyDoctorDBOpenFailed:        "couldn't open the DB (%s): %v",
+		KeyDoctorDBMissing:           "DB doesn't exist yet (%s). check that you ran 'buddy install' first.",
+		KeyDoctorPermissionsMissing:  "%d subagent permission(s) missing. run 'buddy permissions inject' to fix.",
+		KeyDoctorPermissionsError:    "subagent permission check failed: %v",
 
 		// db / events / stats common
 		KeyDBReadFailed: "buddy: couldn't read the DB. has the daemon ever run? (%v)",

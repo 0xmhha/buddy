@@ -45,8 +45,10 @@ func koCatalog() map[Key]string {
 		KeyDoctorBacklog:          "outbox에 %s개 쌓였어. daemon 한 번 봐줘 (buddy daemon status).",
 		KeyDoctorSlowHook:         "'%s' hook이 좀 느려졌어. p95가 %s (기준 %s).",
 		KeyDoctorFailRate:         "'%s' hook 실패율이 %d%% 야. 최근 %d번 중 %d번 실패.",
-		KeyDoctorDBOpenFailed:     "DB를 못 열었어 (%s): %v",
-		KeyDoctorDBMissing:        "DB가 아직 없어 (%s). 먼저 'buddy install' 했는지 확인해줘.",
+		KeyDoctorDBOpenFailed:        "DB를 못 열었어 (%s): %v",
+		KeyDoctorDBMissing:           "DB가 아직 없어 (%s). 먼저 'buddy install' 했는지 확인해줘.",
+		KeyDoctorPermissionsMissing:  "subagent 권한 %d개 빠져있어. 'buddy permissions inject'로 추가할 수 있어.",
+		KeyDoctorPermissionsError:    "subagent 권한 확인 실패: %v",
 
 		// db / events / stats common — match existing wording exactly so the
 		// stats and events read-only paths produce identical user output.

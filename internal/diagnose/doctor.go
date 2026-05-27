@@ -19,6 +19,7 @@ import (
 	"github.com/0xmhha/buddy/internal/daemon"
 	"github.com/0xmhha/buddy/internal/db"
 	"github.com/0xmhha/buddy/internal/format"
+	"github.com/0xmhha/buddy/internal/permissions"
 	"github.com/0xmhha/buddy/internal/persona"
 )
 
@@ -27,11 +28,12 @@ import (
 type IssueKind string
 
 const (
-	KindDBOpen   IssueKind = "db-open"
-	KindDaemon   IssueKind = "daemon"
-	KindBacklog  IssueKind = "backlog"
-	KindSlow     IssueKind = "slow"
-	KindFailRate IssueKind = "fail-rate"
+	KindPermissions IssueKind = "permissions"
+	KindDBOpen      IssueKind = "db-open"
+	KindDaemon      IssueKind = "daemon"
+	KindBacklog     IssueKind = "backlog"
+	KindSlow        IssueKind = "slow"
+	KindFailRate    IssueKind = "fail-rate"
 )
 
 // Diagnostic is a single issue found by Check.
@@ -115,9 +117,13 @@ func Check(opts Options) (Report, error) {
 
 	rep := Report{}
 
+	rep.Issues = append(rep.Issues, permissionIssues()...)
+
 	conn, err := db.Open(db.Options{Path: dbPath, ReadOnly: true})
 	if err != nil {
-		return dbOpenReport(dbPath, err), nil
+		dbRep := dbOpenReport(dbPath, err)
+		dbRep.Issues = append(rep.Issues, dbRep.Issues...)
+		return dbRep, nil
 	}
 	defer conn.Close()
 
@@ -194,6 +200,23 @@ func (r Report) Render(w io.Writer) {
 }
 
 // --- internals ---
+
+func permissionIssues() []Diagnostic {
+	result, err := permissions.Check()
+	if err != nil {
+		return []Diagnostic{{
+			Kind:    KindPermissions,
+			Message: persona.M(persona.KeyDoctorPermissionsError, err),
+		}}
+	}
+	if result.Healthy() {
+		return nil
+	}
+	return []Diagnostic{{
+		Kind:    KindPermissions,
+		Message: persona.M(persona.KeyDoctorPermissionsMissing, len(result.Missing)),
+	}}
+}
 
 func resolveDBPath(p string) (string, error) {
 	if p != "" {
