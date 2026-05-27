@@ -76,13 +76,13 @@ fi
 # removed without updating tests. Bump this count when new skills land.
 # Excludes the .template/ placeholder.
 procedure_count=$(find "$SKILLS_DIR" -name PROCEDURE.md -not -path "*/.template/*" | wc -l | tr -d ' ')
-# 152 PROCEDURE-based skills + 1 router (SKILL.md, not PROCEDURE) = 153 total skill directories.
-# Last bumped 2026-05-26: +audit-ubiquitous-language (H1 Tier 1, DDD ubiquitous language audit, inspired-by Evans 2003 / Vernon 2013).
-# Prior bumps: 2026-05-23 +finish-development-branch (MID-4); 2026-05-22 +publish-to-tracker (MID-3); 2026-05-21 +write-a-skill +decompose-blocker per ADR-018.
-if [ "$procedure_count" = "152" ]; then
-    pass "PROCEDURE.md count is 152 (+ 1 router SKILL.md = 153 skills total)"
+# 153 PROCEDURE-based skills + 1 router (SKILL.md, not PROCEDURE) = 154 total skill directories.
+# Last bumped 2026-05-27: +assess-product-change (Phase 1 Mode B, existing product change assessment).
+# Prior bumps: 2026-05-26 +audit-ubiquitous-language; 2026-05-23 +finish-development-branch; 2026-05-22 +publish-to-tracker; 2026-05-21 +write-a-skill +decompose-blocker.
+if [ "$procedure_count" = "153" ]; then
+    pass "PROCEDURE.md count is 153 (+ 1 router SKILL.md = 154 skills total)"
 else
-    fail "expected 152 PROCEDURE.md files (153 skills minus router), found $procedure_count"
+    fail "expected 153 PROCEDURE.md files (154 skills minus router), found $procedure_count"
 fi
 
 # --- Check 3: plugin.json must NOT declare a `commands` field ----------------
