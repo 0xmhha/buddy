@@ -8,6 +8,19 @@
 - 팀 간 CHANGELOG 포맷 표준화
 - AI 보조 릴리스 저작 참조 (사람 + 에이전트가 엔트리 작성)
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 버전 정보 + 변경 내역 | ✅ | knowledge / artifact | git log 또는 사용자 설명 | "어떤 버전의 changelog를 작성하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| CHANGELOG entry (release-summary format) | artifact | CHANGELOG.md 갱신 | `sync-release-docs` |
+
 ---
 
 ## 버전 범프 로직

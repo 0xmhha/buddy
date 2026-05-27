@@ -6,6 +6,19 @@
 
 `marketingskills` 의 6 channel sub-skill 통합.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 제품/시장 맥락 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 제품의 마케팅 채널을 계획하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Channel strategy (6 channel fit + LTV/CAC + mix) | artifact | structured YAML | (마케팅 사용) |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 *분기 marketing planning*

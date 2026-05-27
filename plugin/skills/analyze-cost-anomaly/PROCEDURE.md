@@ -6,6 +6,19 @@ cloud / SaaS 비용의 *비정상 증가* 자동 탐지 + root cause 분석 + �
 
 `audit-cost-efficiency` (§6, 구현됨) 와 책임 분리 — efficiency 는 *최적화 일반*, anomaly 는 *spike 사건 대응*.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 비용 데이터 (cloud/SaaS) | ✅ | artifact | billing dashboard 또는 API | "비용 이상 탐지 대상 서비스와 기간을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Cost anomaly report (spike detection + root cause + recovery) | artifact | structured report | `generate-improvement-tasks` |
+
 ## 2. 사용 시점
 
 - 월말 invoice 확인 시 *예상 초과* 발견

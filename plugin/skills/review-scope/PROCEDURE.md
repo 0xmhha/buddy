@@ -4,6 +4,19 @@
 
 이건 계획이 구현 spec으로 굳어지기 *전에* 실행되는 lens. 빌더가 아직 냅킨에 그리는 동안 옆에 앉아 묻는 것: "이게 도대체 빌드할 올바른 것인가? 그리고 맞다면 10-스타 버전은 뭔가?"
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Scope 맥락 (PRD 또는 plan) | ✅ | artifact / knowledge | Phase 1-4 산출물 또는 사용자 설명 | "범위 검토할 대상을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Scope review findings | artifact | structured findings | plan 수정 |
+
+
 계획이 이미 작성됐고 stress-test 중이면 대신 `Skill` tool로 `critique-plan` invoke — 그건 17 strategic 사고 원칙과 11 리뷰 섹션의 late-stage critique 스킬.
 
 ## critique-plan와의 관계

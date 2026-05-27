@@ -6,6 +6,19 @@ API key / DB credential / OAuth token / 인증서 등 *secret* 의 **저장 (whe
 
 `define-tech-stack` (hosting) + `design-observability` (audit log) + `audit-security` 와 cascade.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 시크릿 인벤토리 | ✅ | knowledge | 사용자 도메인 지식 | "관리해야 할 시크릿 종류는? (API key, DB 비밀번호, 인증서 등)" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Secret management 전략 (저장소 + rotation + audit + leak detection) | artifact | structured YAML | `audit-security`, `build-feature` |
+
 ## 2. 사용 시점
 
 - §3 design-system 안에서 tech stack 결정 후

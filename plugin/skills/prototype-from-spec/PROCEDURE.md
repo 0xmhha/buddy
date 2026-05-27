@@ -6,6 +6,19 @@
 
 `apply-design-system` 채택된 system 의 component / token 활용 — 처음부터 *system 정합* prototype.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature spec 또는 설명 | ✅ | artifact / knowledge | `define-feature-spec` 산출물 또는 사용자 설명 | "어떤 기능의 프로토타입을 만드나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| 프로토타입 (탐색용 코드 또는 디자인) | artifact | 코드 / HTML / 디자인 파일 | `review-design` |
+
 ## 2. 사용 시점
 
 - §3 design-system 의 design 적용 stage

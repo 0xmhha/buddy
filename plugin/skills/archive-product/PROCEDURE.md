@@ -6,6 +6,20 @@ product 전체의 *end-of-life* 절차. **EOL 결정 → customer migration → 
 
 `deprecate-feature` 가 *single feature* 면, 본 skill 은 *product 전체*. 가장 큰 lifecycle 결정.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| EOL 결정 | ✅ | decision | 사용자 의사결정 | "제품 EOL을 확정하나요?" |
+| 제품 정보 | ✅ | knowledge | 사용자 도메인 지식 | "아카이브할 제품명과 범위를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| EOL documentation (data export + tombstone + legal + knowledge) | artifact | structured document | (아카이브) |
+
 ## 2. 사용 시점
 
 - §9 manage-lifecycle 의 *product retirement* 결정 후

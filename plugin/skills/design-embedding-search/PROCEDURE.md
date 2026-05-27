@@ -10,6 +10,19 @@ semantic similarity가 필요한 검색 시스템 (feature registry, doc search,
 
 이 스킬은 `feature-management-saas-mcp.md` "Embedding Knowledge DB와 운영비 절감 정책" 섹션을 직접 구현 가능한 수준으로 변환한다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 검색 요구사항 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 데이터를 검색하나요? 예상 규모와 정확도 요구사항은?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Hybrid search 설계 (BM25 + vector + rerank + metadata filter) | artifact | structured YAML | `build-feature` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - `feature-management-saas-mcp` `feature.query` MCP tool 구현 전

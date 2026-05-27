@@ -4,6 +4,20 @@ feature의 완전한 명세서를 작성한다. 2단계 `define-features`의 다
 
 3단계 (infra), 4단계 (implementation), 6단계 (test), 8단계 (metric)의 입력 schema가 되는 핵심 artifact.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature 정의 (이름 + 범위) | ✅ | artifact / knowledge | `compose-feature-from-use-cases` 산출물 또는 사용자 설명 | "어떤 feature의 spec을 작성하나요? feature 이름과 범위를 설명해 주세요." |
+| Actor-use case map | ✅ | artifact | `map-actor-use-cases` 산출물 | "이 feature에 관련된 actor와 use case를 알려주세요." |
+| System boundary map | 선택 | artifact | `map-use-case-to-system-boundary` 산출물 | 없으면 spec에서 boundary 미지정 (3단계에서 결정) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Feature spec (actor/use case/boundary/acceptance criteria/scope) | artifact | structured YAML (`docs/feature-spec/`) | `design-system`, `plan-build`, `define-acceptance-test-plan`, `score-feature-priority` |
+
 ---
 
 ## Feature Spec 포맷 (Q8=(a) 확장)

@@ -6,6 +6,18 @@ feature candidate를 **buddy 로컬 DB(우선) → 외부 MCP(fallback)** 순서
 
 핵심 가치: **0부터 만들지 말고 검색 먼저**. autoplan의 "Search Before Building" ethos를 feature 단위로 강제.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature candidate 설명 | ✅ | knowledge | 사용자 또는 `compose-feature-from-use-cases` 산출물 | "어떤 기능을 검색하나요? feature 설명을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Registry search result (reuse/adapt/inspired-by/new 판단) | artifact | structured YAML | `define-feature-spec` (reuse/adapt 시 기존 spec 참조) |
+
 ## 1a. 로컬 buddy DB 사용법
 
 buddy CLI에 `internal/feature` 패키지가 내장되어 있다. 아래 CLI 명령으로 로컬 DB를 직접 조작한다:

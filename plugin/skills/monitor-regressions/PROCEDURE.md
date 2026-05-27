@@ -3,6 +3,19 @@
 
 > 모니터링/threshold 패턴 — 브라우저 자동화 및 리포팅 인프라는 도구별로 분리.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Baseline metrics | ✅ | artifact | 이전 측정 데이터 또는 최초 측정 | (자동 감지 — baseline에서 delta 비교) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Regression alerts (delta-based threshold 초과 항목) | artifact | structured alerts | `handle-incident` |
+
 ## 이 snippet을 사용하는 경우
 - CI 성능 회귀 detector 구축
 - 배포 후 canary 모니터링 루프 구축

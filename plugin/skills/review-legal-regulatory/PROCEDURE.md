@@ -8,6 +8,20 @@
 
 본 skill 의 *Layer 2* (region-agnostic core) 책임은 [`docs/two-tracks-charter.md`](../../../docs/two-tracks-charter.md) §2.4.2 의 region-cross-cutting framework 정합.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 제품 맥락 (problem statement + 데이터 흐름) | ✅ | knowledge | PRD 또는 사용자 설명 | "어떤 제품의 법률/규제 검토를 하나요?" |
+| Target market 결정 | 선택 | decision | `decide-target-market` 산출물 | 없으면 region-agnostic 검토만 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Legal/regulatory review (7 sub-domain checklist + evidence package) | artifact | structured report | `prepare-launch-checklist` |
+
 ## 2. 사용 시점
 
 - `decide-target-market` 산출 후 *법률 / 규제 영향 검토* 단계

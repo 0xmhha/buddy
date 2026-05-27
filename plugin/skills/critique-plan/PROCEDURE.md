@@ -25,6 +25,19 @@
 
 리뷰어의 posture는 계획이 필요로 하는 것에 따라 변경. 그 posture가 **모드**. 하나 pick하고 완전 commit — 모드 간 조용히 drift 금지.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Plan 문서 또는 설명 | ✅ | artifact / knowledge | 사용자 또는 선행 plan 스킬 | "비판적 검토할 plan을 공유해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Strategic critique (CEO/founder 관점) | artifact | structured findings | plan 수정 |
+
 ---
 
 ## 4 모드

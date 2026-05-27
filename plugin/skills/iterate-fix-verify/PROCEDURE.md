@@ -11,6 +11,19 @@
 
 이 루프는 의도적으로 **fix당 느리지만 복구는 빠르다**: 하나의 변경, 하나의 commit, 하나의 검증. 추가 commit 비용은 번들된 회귀를 디버깅하는 비용에 비하면 무시할 수 있다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Finding 목록 (수정할 항목들) | ✅ | knowledge / artifact | 리뷰 결과 또는 QA report | "수정할 finding 목록을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Fixed code (finding별 atomic commit) | artifact | commit history | `verify-quality` |
+
 ---
 
 ## Triage 먼저 (루프 진입 전 게이트)

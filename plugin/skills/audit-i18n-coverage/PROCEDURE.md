@@ -6,6 +6,19 @@
 
 `audit-accessibility` (§6, 구현됨) 와 같은 *production audit* 영역 — 사전 baseline 이 아니라 *현재 적용 결과* 검증.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| i18n 설정 + locale 파일 | ✅ | artifact | 현재 코드베이스 | (자동 감지 — i18n 설정 파일에서 추출) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| i18n coverage report (locale별 번역 누락 + fallback rate) | artifact | structured report | `iterate-fix-verify` |
+
 ## 2. 사용 시점
 
 - §6 verify-quality 의 release gate 전

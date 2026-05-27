@@ -5,6 +5,19 @@
 **8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 **진행 시점**: 인시던트 해결 후 24-72시간 내. 기억이 생생할 때.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 인시던트 데이터 (timeline, root cause, 영향) | ✅ | artifact / knowledge | `handle-incident` 산출물 또는 사용자 설명 | "포스트모템 대상 인시던트를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Postmortem (blameless, 5 Whys, action items) | artifact | structured document | `generate-improvement-tasks` |
+
 ---
 
 ## 포스트모템 원칙

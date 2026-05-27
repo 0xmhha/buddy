@@ -6,6 +6,19 @@
 
 `decide-target-market` 산출이 *다지역* 일 때 본 skill 우선. 글로벌 default (영어 only) 면 *최소 i18n* — 단 *향후 확장 친화* 양식 채택 권장.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Target market / 지원 언어 | ✅ | knowledge | `decide-target-market` 산출물 또는 사용자 설명 | "지원할 언어와 지역은?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| i18n 전략 (locale 구조 + fallback + RTL + format) | artifact | structured YAML | `audit-i18n-coverage`, `build-feature` |
+
 ## 2. 사용 시점
 
 - §3 design-system 안에서 — `decide-target-market` 산출 *Korea / 다지역* 시

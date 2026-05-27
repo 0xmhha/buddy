@@ -2,6 +2,19 @@
 
 §6 verify-quality phase 의 stage. **prepare-launch-checklist Performance row 의 evidence source**. k6 nightly smoke 만으로는 부족 — production-grade launch 직전 sustained load (1h+) + soak (8h+) + spike + stress 4 시나리오 실행 + breaking point 식별 + capacity headroom 측정. 산출물은 시나리오별 metric report + breaking point + capacity plan + acceptance gate decision.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Target endpoint + SLA 목표 | ✅ | knowledge | 사용자 도메인 지식 | "부하 테스트 대상 endpoint와 SLA 목표(RPS, 응답시간)를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Load test report (sustained/soak/spike/stress 결과) | artifact | structured report | `prepare-launch-checklist` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

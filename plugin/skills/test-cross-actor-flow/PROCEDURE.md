@@ -2,6 +2,19 @@
 
 §6 verify-quality phase 의 stage 3. **per-actor pass 후 (test-per-actor-use-case prerequisite)** multi-actor 협업 flow (signup → email → verify → login → me 같은 chain) 의 full-stack 검증. §4 task DAG 의 cross-actor edge 가 본 skill 의 coverage 의무 source. **Playwright + LocalStack + SES simulator + miniredis + testcontainers 모든 infra 동시 active** 상태에서 real component chain 통과 검증. 산출물은 flow × actor list × test status, integration evidence, cross-actor edge coverage matrix, contract drift detection.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Cross-actor flow 정의 | ✅ | artifact / knowledge | Phase 2 산출물 또는 사용자 설명 | "테스트할 cross-actor flow를 설명해 주세요. (예: signup→email→verify→login)" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| E2E test report (multi-actor chain 검증) | artifact | structured report | `verify-quality` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

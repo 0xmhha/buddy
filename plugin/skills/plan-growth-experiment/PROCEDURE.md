@@ -6,6 +6,19 @@ growth team 의 *실험 backlog 운영* — idea → ICE/RICE score → 실험 �
 
 `design-ab-experiment` (구현됨) 와 cascade — 본 skill 은 *backlog + 우선순위*, ab-experiment 는 *실험 설계 detail*.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Growth 맥락 (현재 지표 + 목표) | ✅ | knowledge | 사용자 도메인 지식 | "현재 성장 지표와 목표를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Growth experiment sprint plan (ICE/RICE 우선순위) | artifact | structured YAML | `design-ab-experiment` |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 growth team 분기 / 월 sprint 시작

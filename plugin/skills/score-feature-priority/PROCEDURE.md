@@ -2,6 +2,19 @@
 
 RICE / ICE / MoSCoW 프레임워크로 feature 우선순위를 결정한다. 2단계 `define-features`의 일곱 번째 stage.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature 목록 | ✅ | artifact / knowledge | `compose-feature-from-use-cases` 또는 `define-feature-spec` 산출물 | "우선순위를 매길 feature 목록을 알려주세요." |
+| 비즈니스 목표 | 선택 | knowledge | 사용자 도메인 지식 | 없으면 RICE 기본 가중치 적용 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Priority-ranked feature backlog | artifact | structured YAML (feature별 score + rank) | `plan-build`, `estimate-build-timeline` |
+
 ---
 
 ## 프레임워크 선택

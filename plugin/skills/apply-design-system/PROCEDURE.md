@@ -6,6 +6,19 @@
 
 `decide-form-factor-app-vs-web` 산출 후 form factor 별 design system 후보 선정 + 채택 + 운영 정합.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Design system 토큰/컴포넌트 | ✅ | artifact / knowledge | `consult-design-system` 산출물 또는 기존 디자인 시스템 | "적용할 디자인 시스템이 있나요? 없으면 생성합니다." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| 적용된 디자인 (토큰 + 컴포넌트 매핑) | artifact | structured YAML + 코드 | `build-feature` |
+
 ## 2. 사용 시점
 
 - §3 design-system 의 form factor 결정 후 design system 채택 직전

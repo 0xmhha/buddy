@@ -6,6 +6,19 @@
 
 `apply-design-system` + `audit-ui-quality` 와 cascade. `audit-accessibility` (§6, 구현됨) 의 입력.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Target 사용자 및 접근성 요구사항 | ✅ | knowledge | 사용자 도메인 지식 | "접근성 목표 수준은? (WCAG 2.1 AA 등) 주요 사용자 특성은?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Accessibility baseline (WCAG 레벨 + 검증 도구 + annotation 가이드) | artifact | structured YAML | `audit-accessibility`, `build-feature` |
+
 ## 2. 사용 시점
 
 - §3 design-system 안에서 디자인 시스템 적용 직전

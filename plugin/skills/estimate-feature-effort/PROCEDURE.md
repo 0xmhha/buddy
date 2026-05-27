@@ -6,6 +6,19 @@
 
 `map-feature-dependencies` + `score-feature-priority` 의 입력. `estimate-build-timeline` (§4) 의 *task 단위 estimation* 보다 *상위 layer* — feature 단위.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature spec 또는 feature 설명 | ✅ | artifact / knowledge | `define-feature-spec` 산출물 또는 사용자 설명 | "effort를 추정할 feature를 설명해 주세요." |
+| 기술 스택 정보 | 선택 | knowledge | 사용자 도메인 지식 또는 `define-tech-stack` 산출물 | 없으면 범용 추정 (기술 보정 없음) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Feature effort estimate (T-shirt + ideal-h + uncertainty range) | artifact | structured YAML | `score-feature-priority`, `map-feature-dependencies`, `estimate-build-timeline` |
+
 ## 2. 사용 시점
 
 - `define-feature-spec` 산출 후 `score-feature-priority` 직전 — RICE 의 effort 항목 입력

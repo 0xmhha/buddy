@@ -12,6 +12,19 @@
 
 따라서 두 스킬은 페어로 동작하지만, build-with-tdd가 먼저 적용되면 fix 루프 진입 빈도 자체가 줄어든다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 구현할 기능 설명 | ✅ | knowledge | 사용자 발화 또는 Phase 4 task | "어떤 기능을 TDD로 구현하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Working code + passing test suite + TDD cycle log | artifact | source files + test files | `verify-quality` |
+
 ## 2. 사용 시점
 
 다음 상황에서 호출하라:

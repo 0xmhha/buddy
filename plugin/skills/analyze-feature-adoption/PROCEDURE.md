@@ -6,6 +6,19 @@
 
 `analyze-user-cohort` (§8) 와 cascade — feature adoption 이 *user cohort* 의 sub-dimension.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Usage 데이터 | ✅ | artifact | analytics 플랫폼 데이터 | "분석할 feature와 usage 데이터를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Adoption report (awareness→trial→habit funnel + abandonment 가설) | artifact | structured report | `generate-improvement-tasks` |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 *feature release 사후 분석*

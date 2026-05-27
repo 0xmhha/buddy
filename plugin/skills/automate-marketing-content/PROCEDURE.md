@@ -6,6 +6,19 @@
 
 `draft-marketing-copy` 가 *콘텐츠 작성* 이라면 본 skill 은 *delivery + automation*.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 콘텐츠 전략 | ✅ | knowledge | 사용자 도메인 지식 | "자동화할 마케팅 콘텐츠 유형과 채널을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Automated content pipeline (email sequence + calendar + metrics) | artifact | structured YAML | (마케팅 사용) |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 *마케팅 운영 cadence*

@@ -22,6 +22,19 @@
 | **비용-정보 매트릭스** | 각 행동 후보에 (수행 비용 × 얻는 정보량)을 점수화. 저비용·고정보 우선. |
 | **행동 단위** | 행동 후보의 종류 — `information-gathering`(로그/grep/실측) / `hypothesis-test`(가설 검증 실험) / `code-modification`(수정). 한 사이클에 한 단위로 통일 권장. |
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Stuck 상태 설명 | ✅ | knowledge | 사용자 발화 또는 자동 trigger (3회 시도 후 미해결) | "무엇에 막혀있나요? 시도한 것과 결과를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Decomposed problem + 행동 후보 1-3개 | artifact | structured analysis | `diagnose-bug`, `build-with-tdd` |
+
 ## 1. 목적
 
 stuck 상태인 사용자(또는 AI 자체)가 *진단·결정·구현* 어느 단계로든 진입할 entry point를 찾도록 돕는다. 본 스킬은 **분해**(문제 공간 정리)와 **행동 후보 도출**(다음 1~3 행동) 두 가지를 산출한다 — *직접 fix 수행은 하지 않는다*.

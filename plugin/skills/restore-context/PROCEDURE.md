@@ -67,6 +67,19 @@ fi
 선택된 파일을 읽는다. 기대 frontmatter 형태(`context-save`가 쓴):
 
 ```yaml
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Checkpoint file | ✅ | artifact | `save-context` 산출물 | (자동 탐색 — 최신 checkpoint 로드) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Restored context summary (작업 항목 + 다음 단계) | artifact | formatted output | (사용자 안내) |
+
 ---
 title: <one-line summary>
 branch: <git branch at save time>

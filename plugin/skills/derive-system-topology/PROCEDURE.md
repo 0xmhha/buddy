@@ -2,6 +2,20 @@
 
 §3 Technical Design phase 의 cascade bridge stage. **Q8=(a) cascade 의 §2→§3 시각화 layer**. `map-use-cases-to-infra` 산출물 (actor × infra matrix + cross-actor shared) 을 입력으로 **시스템 토폴로지 다이어그램** (mermaid + JSON) 자동 도출. 산출물 = service map + data flow + trust boundary + traffic edge — design-system orchestrator 의 후속 stage (design-data-model / design-api-contract) 가 이 토폴로지 위에서 진행.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Use case map + system boundary | ✅ | artifact | `map-use-cases-to-infra` 또는 Phase 2 산출물 | "시스템의 서비스 구성과 데이터 흐름을 알려주세요." |
+| Tech stack 결정 | 선택 | decision | `define-tech-stack` 산출물 | 없으면 범용 topology 도출 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| System topology (service graph + data flow + trust boundary) | artifact | structured YAML + 다이어그램 | `design-deploy-strategy`, `design-observability`, `design-event-schema` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

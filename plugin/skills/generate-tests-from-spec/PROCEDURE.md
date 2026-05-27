@@ -6,6 +6,19 @@
 
 `build-with-tdd` 의 *red 단계* 보조 — failing test 작성을 가속.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Acceptance criteria 또는 test plan | ✅ | artifact / knowledge | `define-acceptance-test-plan` 산출물 또는 feature spec | "테스트를 생성할 acceptance criteria를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Test skeleton (unit/integration/contract/E2E) | artifact | test files + TODO markers | `build-with-tdd` |
+
 ## 2. 사용 시점
 
 - §5 build-feature 안 — feature 구현 전 test skeleton 준비

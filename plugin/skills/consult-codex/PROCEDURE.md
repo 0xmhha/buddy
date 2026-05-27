@@ -5,6 +5,19 @@
 
 **중요 이유:** 코드를 몇 시간 본 뒤에는 약점이 안 보인다. 공유 context 없는 다른 모델이 당신이 합리화한 것을 catch. 아래 패턴은 generic — 어떤 second-opinion CLI (Gemini, 로컬 llama, 다른 wrapper)로 교체해도 세 모드는 적용.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 질문 또는 검토 대상 | ✅ | knowledge | 사용자 발화 | "무엇에 대해 second opinion을 구하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| 외부 LLM second opinion | artifact | structured review / answer | 의사결정 지원 |
+
 ---
 
 ## 사전 요구사항

@@ -6,6 +6,19 @@
 
 `archive-product` 의 *부분 케이스* 또는 *strategic 확장*. 종종 acquisition / 별도 funding 의 trigger.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 분리 대상 feature + 근거 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 기능을 분리하나요? 분리 근거는?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Separated product/repo (코드 분리 + brand/운영 분리 계획) | artifact | structured plan + 코드 | (새 lifecycle) |
+
 ## 2. 사용 시점
 
 - §9 manage-lifecycle 의 *기능 가치 재평가* 결과 spin-off 적합

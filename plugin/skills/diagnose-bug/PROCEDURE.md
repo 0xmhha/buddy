@@ -10,6 +10,19 @@
 - iterate-fix-verify: test가 fail이면 통과시키는 일반 fix-verify 루프. 원인 분석은 부산물.
 - diagnose-bug: 원인 분석이 **목적**. fix는 분석의 결과물. minimize → hypothesize → instrument를 강제.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 버그 설명 (증상, 에러 메시지, 재현 조건) | ✅ | knowledge | 사용자 발화 또는 버그 리포트 | "어떤 버그인가요? 증상과 재현 방법을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Root cause analysis + fix | artifact | 코드 수정 + commit | `iterate-fix-verify` |
+
 ## 2. 사용 시점
 
 - production 버그 리포트 수신

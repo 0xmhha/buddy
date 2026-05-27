@@ -6,6 +6,19 @@
 
 이 결정은 *다년 락인* — 후속 design / build / deploy / maintenance 모두 영향. 잘못 정하면 *재구현 비용 1~2 자릿수* 증가.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 제품 요구사항 및 target 사용자 | ✅ | knowledge | 사용자 도메인 지식 | "제품의 주요 사용 환경은? (모바일/데스크톱/오프라인 등)" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Form factor 결정 (app/web/hybrid/desktop + 근거) | decision | ADR 또는 inline record | `define-tech-stack` |
+
 ## 2. 사용 시점
 
 - §3 design-system 진입 직전 — `assess-business-viability` 통과 후

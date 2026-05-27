@@ -6,6 +6,19 @@
 
 contract = single source of truth. 변경 시 generator 재실행 = 코드 + 클라이언트 동시 동기화.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| API contract (OpenAPI / GraphQL / gRPC) | ✅ | artifact | `design-api-contract` 산출물 | 먼저 `/buddy:design-api-contract` 를 실행하세요 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Generated SDK / stub code (AUTO-GENERATED 헤더) | artifact | source files | `build-with-tdd` |
+
 ## 2. 사용 시점
 
 - §5 build-feature 안 — API 계약 정의 후 첫 코드 생성 시

@@ -6,6 +6,19 @@
 
 `build-with-tdd` 의 red-green-refactor 사이클과 cascade — pair 가 *각 step 의 검토 + 빠른 분기 결정* 강화.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 작업 대상 설명 | ✅ | knowledge | 사용자 발화 | "무엇을 함께 작업할까요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Working code (driver/navigator swap 기록) | artifact | source files + commit | `verify-quality` |
+
 ## 2. 사용 시점
 
 - §5 build-feature 의 *복잡 / 높은 risk feature* 작성 시

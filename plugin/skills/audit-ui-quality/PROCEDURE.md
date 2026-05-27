@@ -6,6 +6,19 @@
 
 `audit-accessibility` (§6, 구현됨) 와 책임 분리 — 본 skill 은 *디자인 품질* (인지된 quality), audit-accessibility 는 *기술적 a11y* 준수.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 기존 UI | ✅ | artifact | 배포된 UI 또는 로컬 dev 서버 | "감사할 UI의 URL 또는 경로를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| UI quality audit report | artifact | structured report | `iterate-fix-verify` |
+
 ## 2. 사용 시점
 
 - feature 구현 후 release 직전 — visual gate

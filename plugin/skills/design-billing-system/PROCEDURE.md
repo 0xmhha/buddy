@@ -6,6 +6,19 @@ SaaS의 **결제 backbone**을 설계한다. payment provider 통합부터 multi
 
 이 스킬은 `feature-management-saas-mcp.md` Billing & Licensing Module을 직접 구현 가능한 수준으로 변환한다. point + subscription 결합 모델 (`feature-management-saas-mcp.md` "Point와 Subscription 결제 모델" 섹션) 우선 지원.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Pricing model 및 결제 요구사항 | ✅ | knowledge | `review-pricing-and-gtm` 산출물 또는 사용자 설명 | "결제 모델은? (구독/종량/일회성) 결제 수단은?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Billing system 설계 (PSP 연동 + subscription + metering + invoice) | artifact | structured YAML | `build-feature` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - 첫 paid tier 출시 (free → paid 전환)

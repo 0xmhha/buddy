@@ -4,6 +4,19 @@
 
 **8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 인시던트 보고 (증상, 영향 범위, 시작 시점) | ✅ | knowledge | 사용자 발화 또는 alert | "어떤 인시던트인가요? 증상과 영향 범위를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Incident response (severity 분류 → 완화 → fix → 통신) | artifact | structured timeline + fix | `conduct-postmortem` |
+
 ---
 
 ## 인시던트 대응 런북

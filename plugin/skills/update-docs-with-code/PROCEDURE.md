@@ -6,6 +6,19 @@
 
 doc drift = *코드와 docs 가 다른 진실* 표현. dogfood 시 *사용자 혼란* + AI agent 의 *잘못된 정보 인용*.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 코드 변경 diff | ✅ | artifact | git diff 또는 최근 commit | (자동 감지 — 현재 코드 변경에서 추출) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Updated docs (README/ADR/CHANGELOG/HANDOFF/skill-catalog) | artifact | docs/ 파일 갱신 | `sync-release-docs` |
+
 ## 2. 사용 시점
 
 - §5 build-feature 의 *각 commit* 후 — local doc 자동 동기화

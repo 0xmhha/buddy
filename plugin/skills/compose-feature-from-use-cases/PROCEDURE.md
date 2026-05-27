@@ -4,6 +4,20 @@ cross-actor use case를 묶어 feature를 정의한다. 2단계 `define-features
 
 feature = 여러 actor의 use case 합성. 이 합성이 3단계 infra 설계와 4단계 구현 track 분리의 기반이 된다.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Actor list | ✅ | artifact | `identify-actors` 산출물 | 먼저 `/buddy:identify-actors` 를 실행하세요 |
+| Actor-use case map | ✅ | artifact | `map-actor-use-cases` 산출물 | 먼저 `/buddy:map-actor-use-cases` 를 실행하세요 |
+| System boundary map | ✅ | artifact | `map-use-case-to-system-boundary` 산출물 | 먼저 `/buddy:map-use-case-to-system-boundary` 를 실행하세요 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Feature list (use case 합성 기반) | artifact | structured YAML | `define-feature-spec`, `score-feature-priority`, `map-feature-dependencies` |
+
 ---
 
 ## Feature 합성 원칙

@@ -6,6 +6,19 @@
 
 `analyze-feature-adoption` 의 power user 분석과 cascade — feature 차원 + cohort 차원 cross.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Cohort 데이터 | ✅ | artifact | analytics 플랫폼 데이터 | "분석할 cohort 기간과 데이터를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Cohort analysis (D1/D7/D30/D90 retention + LTV/CAC) | artifact | structured report | `generate-improvement-tasks` |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 *분기 retention 분석*

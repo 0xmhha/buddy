@@ -6,6 +6,19 @@ product / API / pricing tier / data schema 의 *큰 변경* 시 기존 customer 
 
 `deprecate-feature` 의 *대규모 사용자 영향 케이스* 후속 — single feature 가 아닌 *제품 전체 영향* 시.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Migration 범위 | ✅ | artifact / knowledge | `deprecate-feature` 산출물 또는 사용자 설명 | "마이그레이션 대상과 목적지를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Migration report (tier별 진행률 + rollback + communication) | artifact | structured report | `archive-product` |
+
 ## 2. 사용 시점
 
 - §9 manage-lifecycle 의 *대규모 변경* 결정 후

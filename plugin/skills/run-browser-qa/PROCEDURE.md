@@ -3,6 +3,19 @@
 
 > 브라우저 자동화 워크플로우 패턴 — 도구 무관 (Playwright, Puppeteer, Selenium, browse 등에 적용).
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| UI URL 또는 로컬 서버 경로 | ✅ | knowledge | 사용자 지정 | "QA할 UI의 URL을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Browser QA report (snapshot diff/form/responsive) | artifact | structured report + screenshots | `iterate-fix-verify` |
+
 ## 이 snippet을 사용하는 경우
 - Playwright / Puppeteer / Selenium 등 위에 프로젝트별 QA 스킬 구축
 - "좋은" QA 워크플로우가 어떤 모양인지 참조

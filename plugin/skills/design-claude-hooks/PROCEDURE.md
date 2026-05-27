@@ -10,6 +10,19 @@ Claude Code의 hook 시스템(`PreToolUse`, `PostToolUse`, `Stop`, `SessionStart
 3. **Composition** — 여러 hook 결합 (compose-safety-mode 확장)
 4. **Audit / observability** — hook 동작 로그, false positive/negative 추적
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Hook 요구사항 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 Claude Code 이벤트에 hook을 걸고 싶나요? (PreToolUse, PostToolUse 등)" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Hook 설계 (event + matcher + command + scope) | artifact | structured YAML | `build-feature` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - buddy plugin에 자동화 hook 추가 결정 시

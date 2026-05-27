@@ -120,6 +120,19 @@ Numbered list, 우선순위 순. 각 항목은 다음 세션이 200 파일 재�
 모든 체크포인트 파일은 YAML frontmatter 있는 markdown 문서:
 
 ```markdown
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 현재 세션 상태 | ✅ | artifact | 현재 대화 맥락 + git 상태 | (자동 수집) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Checkpoint file (decisions + remaining work + git status) | artifact | markdown file | `restore-context` |
+
 ---
 project: myapp
 branch: feat/session-cookies

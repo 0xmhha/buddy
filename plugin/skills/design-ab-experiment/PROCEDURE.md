@@ -4,6 +4,19 @@ A/B 실험을 통계적으로 유효하게 설계한다. 가설 → 표본 크�
 
 **8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 가설 | ✅ | knowledge | 사용자 도메인 지식 | "테스트할 가설을 알려주세요. (변수, 측정 지표, 기대 변화)" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| 실험 설계 (표본 크기 + 대조군 + 측정 지표 + 기간) | artifact | structured YAML | `analyze-ab-experiment` |
+
 ---
 
 ## 실험 설계 절차

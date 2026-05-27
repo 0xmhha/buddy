@@ -2,6 +2,19 @@
 
 §7 Release & Beta phase 의 stage. production deploy 직전 / 직후 traffic-level routing 으로 blast radius 를 limit. **단계 비율 + dwell time + metric gate + auto-promote vs auto-rollback policy** 를 hosting platform 별 메커니즘에 매핑. 산출물은 canary plan + implementation hints (platform 별) + metric gate + manual override protocol.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 배포 환경 정보 | ✅ | knowledge | 사용자 도메인 지식 | "canary 배포 환경과 단계별 비율을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Canary deploy 구성 (단계 비율 + metric gate + auto-promote/rollback) | artifact | 설정 파일 | `ship-release` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

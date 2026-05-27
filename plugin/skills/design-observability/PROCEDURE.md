@@ -6,6 +6,20 @@
 
 `design-data-model` / `design-api-contract` 와 cascade — observability 가 schema / API 흐름 추적의 foundation.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 시스템 토폴로지 | 선택 | artifact | `derive-system-topology` 산출물 | 없으면 단일 서비스 가정 |
+| SLO 목표 | ✅ | knowledge | 사용자 도메인 지식 | "핵심 SLO 지표는? (가용성 99.9%, 응답시간 p99 < 500ms 등)" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Observability 전략 (logs/metrics/traces/SLO 구성) | artifact | structured YAML | `setup-incident-paging`, `audit-error-budget` |
+
 ## 2. 사용 시점
 
 - §3 design-system 안에서 tech stack 결정 (`define-tech-stack`) 후

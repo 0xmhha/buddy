@@ -3,6 +3,19 @@
 
 > Composition meta-pattern. 개별 훅(careful, freeze)은 별도 스킬.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| (ambient — 자동 감지) | ✅ | artifact | 현재 세션 상태 | (자동 감지) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Combined safety hooks (max safety mode) | artifact | session state | (ambient) |
+
 ## 이 snippet을 사용하는 경우
 - 여러 PreToolUse 훅 결합 (destructive-command guard + path-scope freeze + rate limit 등)
 - "단일 명령으로 모든 가드 ON" UX

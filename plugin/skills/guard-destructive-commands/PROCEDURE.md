@@ -3,6 +3,19 @@
 
 파괴적 shell 명령을 위한 안전 모드. 모든 Bash 명령은 실행 전에 curated된 8가지 high-risk 패턴 taxonomy에 대해 체크된다. 매치되면 Claude가 멈추고 사용자에게 confirm 요청. 안전 컨텍스트의 작은 allowlist (disposable 빌드 artifact)가 prompt를 우회해 일반 cleanup이 마찰 없이 유지.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| (ambient — 자동 감지) | ✅ | artifact | 실행 예정 bash command | (자동 감지) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Risk warning + safe exception 판단 | decision | inline warning | (ambient) |
+
 스킬은 **세션 스코프**: 프로덕션, 공유 인프라, 신경 쓰는 git 히스토리를 건드리는 세션에 대해 활성화. 세션 종료로 비활성화.
 
 ## 이 스킬을 사용하는 경우

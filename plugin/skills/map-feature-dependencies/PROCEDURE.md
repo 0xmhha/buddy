@@ -4,6 +4,19 @@ feature 간 선후 의존성 그래프를 작성한다. 2단계 `define-features
 
 이 DAG가 4단계 `plan-build`의 병렬 실행 계획 입력이 된다.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature backlog (2개 이상) | ✅ | artifact | `compose-feature-from-use-cases` + `define-feature-spec` 산출물 | "의존성을 매핑할 feature 목록을 알려주세요." |
+| Feature effort estimates | 선택 | artifact | `estimate-feature-effort` 산출물 | 없으면 의존성만 매핑, critical path 비용 추정 생략 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Feature dependency DAG (선후 관계 + critical path) | artifact | structured YAML + 시각화 | `plan-build`, `plan-parallel-execution`, `estimate-build-timeline` |
+
 ---
 
 ## 의존성 분류

@@ -2,6 +2,19 @@
 
 기술 스택 결정 (language / framework / DB / cache / queue / hosting / observability / CI) 은 락인 영향이 매우 큰 다년 단위 의사결정이다. 잘못된 선택의 비용은 마이그레이션·재작성으로 환산되어 수개월~수년의 엔지니어링을 잠식한다. 본 skill 은 **8 차원 분해 + 차원별 alternatives 평가 + cross-차원 호환성 매트릭스 + 5년 lock-in 정량 평가** 를 강제해 의사결정 누수를 차단한다. 산출물은 표 + risk register + ADR draft 로 다음 단계 (`write-adr`) 에 연결된다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature 요구사항 또는 제품 설명 | ✅ | knowledge | 사용자 도메인 지식 또는 Phase 2 산출물 | "어떤 제품/시스템의 기술 스택을 결정하나요? 핵심 요구사항을 설명해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Tech stack decision (8차원 비교 + lock-in 평가) | artifact | structured YAML + ADR draft | `write-adr`, `design-data-model`, `design-api-contract` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지하기 위한 절차다. 산출물에 다음이 발견되면 검증 실패로 간주하고 §5 로 돌아가 보강한다:

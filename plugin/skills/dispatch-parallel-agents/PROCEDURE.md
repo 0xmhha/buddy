@@ -10,6 +10,19 @@ feature/task set을 받아 **worktree 격리 + Sonnet worker agent 병렬 dispat
 
 핵심 가치: **wall time을 N배 압축** (5 feature × 30분 sequential → 30분 parallel).
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Task list (병렬 실행 가능한 독립 작업들) | ✅ | artifact / knowledge | `plan-parallel-execution` 산출물 또는 사용자 지정 | "병렬로 처리할 task 목록을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Aggregated working code (worktree별 결과 통합) | artifact | source files + commits | `verify-quality` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - `split-work-into-features` 출력 feature set이 3개 이상이고 dependency 병렬 가능

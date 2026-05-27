@@ -4,6 +4,19 @@
 
 **8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 분석 결과 (A/B, funnel, postmortem, feedback 등) | ✅ | artifact / knowledge | §8 분석 스킬 산출물 또는 사용자 설명 | "어떤 분석 결과를 task로 변환하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Improvement task list (RICE 기반, §2 재진입 입력) | artifact | structured YAML | `define-features` (§2 재진입) |
+
 ---
 
 ## 변환 절차

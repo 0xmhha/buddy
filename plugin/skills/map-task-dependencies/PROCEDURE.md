@@ -2,6 +2,19 @@
 
 `decompose-track-to-tasks` 의 산출물 (per-track task list + internal dependency edges) 과 `decompose-feature-to-actor-tracks` 의 Cross-Track Contracts 를 통합해 전체 task DAG 를 작성한다. cycle 감지, critical path 계산, parallel-safe 그룹 식별까지 강제. `plan-parallel-execution` 과 `estimate-build-timeline` 의 입력.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Task list | ✅ | artifact | `decompose-track-to-tasks` 산출물 | 먼저 `/buddy:decompose-track-to-tasks` 를 실행하세요 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Task DAG (internal + cross-actor edges, critical path) | artifact | structured YAML | `plan-parallel-execution`, `estimate-build-timeline` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다:

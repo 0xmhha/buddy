@@ -14,6 +14,19 @@
 | Architecture / design       | 2 days    | 4 hours     | ~5x         |
 | Research / exploration      | 1 day     | 3 hours     | ~3x         |
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| (ambient — 자동 적용) | 선택 | knowledge | 프로젝트 맥락 | (자동 적용) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| 3 원칙 주입 (Boil the Lake / Search Before Building / User Sovereignty) | decision | ambient | (ambient) |
+
 ---
 
 ## 원칙 1: Boil the Lake

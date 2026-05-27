@@ -3,6 +3,19 @@
 
 > 강도 분류 + fix 루프 + 스코어링 패턴 — 브라우저 자동화 바이너리는 도구별로 분리.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 변경 설명 또는 diff | ✅ | knowledge / artifact | 사용자 발화 또는 git diff | "어떤 변경에 대한 QA tier를 분류하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| QA tier 분류 (Quick/Standard/Exhaustive) | decision | inline record | test 스킬 선택 근거 |
+
 ## 이 snippet을 사용하는 경우
 - 선호 브라우저 도구(Playwright, Puppeteer, Selenium 등) 위에 프로젝트별 QA 스킬 구축
 - 팀 간 QA 깊이 표준화

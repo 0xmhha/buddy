@@ -2,6 +2,19 @@
 
 §7 Release & Beta phase 의 stage. UAT pass 후 GA 직전, **5-20 명 early adopter cohort** 가 1-4 주 동안 production-like 환경에서 실 사용 → structured feedback 수집 → critical issue triage → GA go/no-go 결정. UAT (designated stakeholder) 와 GA (real production traffic) 사이의 마지막 안전망. 산출물은 cohort table + feedback corpus + GA gating decision + post-beta cleanup plan.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Beta 코호트 정의 | ✅ | knowledge | 사용자 도메인 지식 | "beta 참여자는 몇 명이고 어떻게 선정하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Beta feedback report (structured 피드백 + GA gating 판단) | artifact | structured report | `generate-improvement-tasks` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

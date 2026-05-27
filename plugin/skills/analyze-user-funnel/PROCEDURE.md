@@ -4,6 +4,19 @@
 
 **8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Funnel 정의 + 분석 데이터 | ✅ | knowledge / artifact | 사용자 정의 또는 analytics 데이터 | "분석할 funnel 단계와 데이터를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Funnel drop-off 분석 (단계별 전환율 + 이탈 원인) | artifact | structured report | `generate-improvement-tasks` |
+
 ---
 
 ## Funnel 분석 절차

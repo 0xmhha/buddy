@@ -16,6 +16,19 @@ MCP는 Anthropic이 제안한 LLM ↔ 외부 시스템 표준 프로토콜. 서�
 - error code + retry semantic 표준
 - idempotency key 정책
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| MCP 서버 요구사항 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 도구/리소스를 MCP로 노출하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| MCP server 설계 (tool surface + transport + auth) | artifact | structured YAML | `build-feature` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - `feature-management-saas-mcp` 같은 외부 시스템 LLM 통합

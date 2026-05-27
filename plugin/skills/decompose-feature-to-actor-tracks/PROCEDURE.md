@@ -2,6 +2,19 @@
 
 §4 Implementation Plan 의 첫 단계. §3 design 산출물 (tech stack / data model / API contract) 과 §2 feature spec (actor / use case / system boundary) 을 입력으로, feature 를 actor 별 implementation track (frontend / backend / 3rd-party / data 등) 으로 분해한다. 본 skill 의 산출물은 후속 5 stage (decompose-track-to-tasks / map-task-dependencies / plan-parallel-execution / define-acceptance-test-plan / estimate-build-timeline) 의 입력이고, 궁극적으로 §5 build-feature 의 actor-별 worker 분배 입력이 된다. **Q8=(a) cascade 의 §4 진입점**.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature specs | ✅ | artifact / knowledge | `define-feature-spec` 산출물 또는 사용자 설명 | "분해할 feature를 설명해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Actor-track decomposition (actor별 implementation track) | artifact | structured YAML | `decompose-track-to-tasks`, `dispatch-parallel-agents` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 산출물에 다음이 발견되면 §5 로 돌아가 보강한다:

@@ -6,6 +6,19 @@ acquisition → activation → retention → revenue → referral 의 **Pirate M
 
 `marketingskills` 의 5 CRO sub-skill (onboarding / form / page / paywall-upgrade / popup CRO) 을 buddy 1 skill 로 통합.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Funnel 데이터 | ✅ | artifact | analytics 플랫폼 | "최적화할 funnel과 데이터를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| CRO 추천 (biggest-drop bottleneck + A/B pipeline) | artifact | structured report | `design-ab-experiment` |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 *분기 funnel review*

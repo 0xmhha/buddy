@@ -6,6 +6,19 @@ Production-like 환경에서 *의도적으로 실패 유발* — *blast radius /
 
 `run-load-test` (§6, 구현됨) 와 책임 분리 — load test 는 *부하* 측정, chaos test 는 *실패 회복* 측정.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 대상 시스템 + 실패 가설 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 실패 시나리오를 테스트하나요? 가설을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Chaos test report (가설 검증 결과 + blast radius) | artifact | structured report | `conduct-postmortem` |
+
 ## 2. 사용 시점
 
 - §6 verify-quality 의 *high-availability 영역* skill

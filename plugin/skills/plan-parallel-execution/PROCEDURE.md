@@ -2,6 +2,19 @@
 
 `map-task-dependencies` 의 산출물 (DAG + critical path + parallel-safe levels) 과 가용 worker pool (인간 + AI agent) 을 받아 worker 별 batch 배정 + 동기화 지점 (hand-off / merge gate / integration test) 을 plan 한다. Phase 1 의 `dispatch-parallel-agents` 와 결합 가능. 본 skill 의 산출물은 §5 build-feature 의 worker dispatch 입력.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Task DAG | ✅ | artifact | `map-task-dependencies` 산출물 | 먼저 `/buddy:map-task-dependencies` 를 실행하세요 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Parallel execution plan (worker batch + sync points) | artifact | structured YAML | `dispatch-parallel-agents`, `build-feature` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다:

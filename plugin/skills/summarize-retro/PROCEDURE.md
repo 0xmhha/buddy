@@ -12,6 +12,19 @@ Raw git history를 측정 가능 신호(commit work type, 작업 세션, focus s
 - "이번 주 뭐 ship?" 또는 "주간 retro" 요청
 - 인상이 아니라 패턴 보고 싶은 모든 윈도우 후
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Git history (특정 기간) | ✅ | artifact | git log | (자동 감지 — 최근 1주 기본) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Evidence-based retrospective (work types, hotspots, focus score) | artifact | structured report | `generate-improvement-tasks` |
+
 ---
 
 ## 핵심 규칙: 증거 기반 Feedback

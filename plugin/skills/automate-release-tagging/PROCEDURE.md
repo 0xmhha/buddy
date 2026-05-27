@@ -8,6 +8,19 @@ merged PR set을 분석해 **semver 자동 결정**(breaking → MAJOR / feat �
 
 핵심 가치: **release 작업 시간 30분 → 2분**, 일관된 semver decision, 모든 release가 audit 가능 artifact.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Merged PR set | ✅ | artifact | git history | (자동 감지 — merged PR에서 추출) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Git tag + release notes (semver auto-decision) | artifact | git tag | `sync-release-docs` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - sprint / milestone 종료 후 release 준비

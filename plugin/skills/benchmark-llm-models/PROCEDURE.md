@@ -8,6 +8,19 @@
 - 사전에 사용자가 확인해야 하는 실제 API 비용이 발생하는 모든 연산
 - 벤더마다 별도 로그인 상태를 갖는 multi-CLI 워크플로우의 사전 인증 체크
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 비교 대상 모델 + 평가 기준 | ✅ | knowledge | 사용자 지정 | "어떤 모델을 비교하나요? 평가 기준은?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Benchmark results (모델별 성능 비교) | artifact | structured report | (의사결정 지원) |
+
 ---
 
 ## 패턴 1: Dry-Run 인증 체크

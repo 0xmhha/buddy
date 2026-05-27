@@ -6,6 +6,20 @@
 
 `analyze-actor-failure-rate` + `chaos-test` + `analyze-cost-anomaly` 의 incident burn 통합.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| SLO 정의 | ✅ | artifact / knowledge | `design-observability` 산출물 또는 사용자 정의 | "SLO 지표와 목표를 알려주세요." |
+| 운영 데이터 | ✅ | artifact | 모니터링 시스템 | (자동 수집) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Error budget burn rate report (multi-window + release gate) | artifact | structured report | `ship-release` (gate) |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 *분기 SLO review*

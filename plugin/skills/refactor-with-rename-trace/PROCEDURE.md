@@ -6,6 +6,19 @@
 
 random search-replace 의 *놓친 callsite* / *잘못 매칭* 차단. test-driven refactor 가 baseline.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Rename 대상 식별자 | ✅ | knowledge | 사용자 발화 | "어떤 이름을 변경하나요? (변경 전 → 변경 후)" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Renamed code (LSP + grep 검증 완료) | artifact | 단일 commit | `verify-quality` |
+
 ## 2. 사용 시점
 
 - §5 build-feature 안 — function / class / variable 이름 변경

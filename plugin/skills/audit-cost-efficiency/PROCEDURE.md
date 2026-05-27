@@ -2,6 +2,19 @@
 
 §6 verify-quality phase 의 stage. **prepare-launch-checklist Cost & Business axis 의 evidence**. Infracost 의 monthly est. + per-component 분해 + $/MAU unit economics + idle waste 식별 + savings opportunity 추천. budget vs actual 비교 + scaling cost projection. 산출물은 cost matrix + waste report + savings recommendation + acceptance gate.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 인프라 구성 정보 | ✅ | artifact / knowledge | IaC 파일 또는 사용자 설명 | "비용 분석할 인프라 구성을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Cost efficiency report (per-component + $/MAU + waste detection) | artifact | structured report | `analyze-cost-anomaly` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

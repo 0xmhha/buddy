@@ -2,6 +2,19 @@
 
 §7 Release & Beta phase 의 stage. **code-level toggle 인프라** — release flag (TTL 있는 staged rollout), experiment flag (A/B test), ops flag (kill switch, indefinite), permission flag (long-term entitlement) 4 taxonomy 을 정의 + targeting rule + flag lifecycle (cleanup) 정책 산출. canary deploy (traffic-level) 와 함께 두 layer 의 toggle 인프라 구성. 산출물은 flag inventory schema + targeting model + kill switch protocol + cleanup SLA + governance policy.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature 목록 | ✅ | knowledge | 사용자 도메인 지식 | "feature flag로 관리할 기능 목록을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Feature flag 구성 (kill switch + targeting + lifecycle) | artifact | 설정 파일 | `ship-release` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

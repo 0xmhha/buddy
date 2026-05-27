@@ -2,6 +2,19 @@
 
 ADR (Architecture Decision Record) 는 기술 의사결정을 표준 양식으로 보존해 미래 의 maintainer / 신규 팀원 / 본인 자신이 "왜 이 결정을 했는지" 를 추적 가능하게 만드는 도구다. `define-tech-stack`, `design-data-model`, `design-api-contract` 같은 의사결정 skill 의 산출물을 받아 `docs/adr/NNNN-<slug>.md` 형식으로 영속화한다. 본 skill 은 ADR 의 **표준 7 섹션 강제 + 결정 supersede 체인 관리 + Index 갱신 + Status 라이프사이클** 을 보장한다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 결정 내용 (무엇을, 왜, 어떤 대안을 고려했는지) | ✅ | knowledge | 사용자 또는 선행 design-* 스킬 산출물 | "어떤 결정을 기록하나요? 배경과 선택지를 설명해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| ADR 문서 (Status/Context/Decision/Consequences/Alternatives) | artifact | `docs/decisions/` markdown | 전 phase 참조 |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 산출물에 다음이 발견되면 §5 로 돌아가 보강한다:

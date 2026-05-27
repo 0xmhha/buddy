@@ -12,6 +12,19 @@
 
 developer-facing surface가 없는 plan은 skip하라(internal refactor, public API 없는 backend, extensibility 없는 end-user UI).
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| DX 맥락 (developer-facing 제품 또는 API) | ✅ | artifact / knowledge | Phase 3 산출물 또는 사용자 설명 | "DX 검토할 developer-facing 제품을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| DX review findings (persona/competitor/friction map) | artifact | structured findings | plan 수정 |
+
 ---
 
 ## DX First Principles

@@ -3,6 +3,19 @@
 
 > 이 snippet은 저장소 설계(storage design)에 집중. JSONL append-only 학습 저장소 데이터 모델 + 누적 패턴. CLI 서브커맨드(show/search/prune/export/stats/add)는 별도 스킬에서.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Learning entry | ✅ | knowledge | 스킬 실행 중 발견된 패턴/함정 | (스킬이 자동 호출) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| JSONL record (append-only) | artifact | JSONL line | (cross-session 참조) |
+
 ## 이 snippet을 사용하는 경우
 
 - AI 어시스턴트용 프로젝트 메모리 레이어 구축

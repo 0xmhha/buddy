@@ -4,6 +4,19 @@
 
 **8단계 iterate-product stage skill.** 단독 호출도 가능 (dual-mode).
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 실험 데이터 (control/treatment 결과) | ✅ | artifact | 실험 플랫폼 데이터 | "실험 결과 데이터를 제공해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| 실험 분석 결과 (Ship/Revert/Continue 결정) | decision | structured report | `generate-improvement-tasks` |
+
 ---
 
 ## 분석 절차

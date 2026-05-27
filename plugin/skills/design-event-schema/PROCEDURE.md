@@ -2,6 +2,19 @@
 
 §3 Technical Design phase 의 stage. **design-api-contract 의 sync-only gap 을 채우는 async layer**. SQS / Kafka / Webhook / EventBridge / Pub-Sub 의 event payload schema-first 설계 + producer/consumer contract + versioning + dead-letter handling + idempotency. 산출물은 event inventory + schema registry + delivery guarantee + drift detection 전략.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 시스템 토폴로지 또는 서비스 간 통신 맥락 | ✅ | artifact / knowledge | `derive-system-topology` 산출물 또는 사용자 설명 | "어떤 서비스 간 비동기 통신이 필요한가요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Event schema (event 목록 + payload + routing + DLQ 정책) | artifact | structured YAML | `build-feature` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

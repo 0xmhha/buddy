@@ -12,6 +12,19 @@
 3. **Retention & deletion policy** — 보유 기간 + 자동 삭제 + 권리 행사
 4. **Breach response plan** — 인지 → 통보 → 보고 (GDPR 72시간)
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 데이터 처리 맥락 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 개인정보/민감 데이터를 처리하나요? 데이터 흐름을 설명해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Privacy review (GDPR/PIPA 등 규제 frame) | artifact | structured report | `prepare-launch-checklist` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - `assess-business-viability` 후 EU/CN/KR 사용자 대상 출시 전

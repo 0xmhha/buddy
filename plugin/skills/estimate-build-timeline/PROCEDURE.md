@@ -2,6 +2,19 @@
 
 §4 의 마지막 stage. task DAG (`map-task-dependencies`) + worker batch (`plan-parallel-execution`) + per-task duration 추정 (LoC est 또는 historical) 을 받아 critical path 기반 calendar timeline 을 합성한다. confidence interval (best / expected / worst) + risk buffer + holiday / availability 반영. external commitment / sprint planning 의 input.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Task DAG + effort estimates | ✅ | artifact | `map-task-dependencies` + `estimate-feature-effort` 산출물 | 먼저 task 분해와 effort 추정을 실행하세요 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Calendar timeline (critical path + risk buffer) | artifact | structured YAML | 프로젝트 관리 |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다:

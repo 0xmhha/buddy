@@ -2,6 +2,19 @@
 
 §3 Technical Design phase 의 stage. **define-tech-stack 의 generic auth choice 보다 deeper layer**. authentication (sign-in mechanism) + session (token lifetime + storage) + authorization (RBAC / ABAC / ReBAC) + federation (SSO / SAML / OIDC) + MFA (TOTP / WebAuthn / SMS) 5 axis 의 design decision. 산출물은 auth matrix + token lifetime policy + role hierarchy + MFA enforcement plan + ADR handoff.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Actor list 또는 사용자 유형 설명 | ✅ | artifact / knowledge | `identify-actors` 산출물 또는 사용자 설명 | "시스템의 사용자 유형과 권한 요구사항을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Auth/authz 모델 (인증 방식 + 권한 체계 + 세션 전략) | artifact | structured YAML + ADR | `build-feature`, `audit-security` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

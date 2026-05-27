@@ -8,6 +8,18 @@
 - **Issue lifecycle**: 들어온 work item이 어떤 상태인지
 - **Feature lifecycle**: feature가 spec → 구현 → 검증 → 재사용까지 어느 단계인지
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Work item(s) | ✅ | knowledge | 사용자 발화 (버그 리포트, 알림, 요청 등) | "분류할 작업 항목을 설명해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Triaged work item (priority + severity + lifecycle state + 다음 action) | artifact | structured YAML | `define-feature-spec` (feature인 경우), `diagnose-bug` (bug인 경우) |
+
 핵심 가치: 모든 work item이 명시적 state를 가져 "잊혀진 이슈" 0건. agent / human 분기 명확.
 
 ## 2. 사용 시점 (When to invoke)

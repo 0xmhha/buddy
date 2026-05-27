@@ -6,6 +6,19 @@ feature/task 구현 완료 후 **commit → branch push → PR 생성**을 자�
 
 핵심 가치: **PR 작성 시간 5-10분 → 30초**, 모든 PR이 일관된 품질 (summary / test plan / screenshots / breaking change).
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 현재 branch + commits | ✅ | artifact | git 상태 | (자동 감지) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Pull Request | artifact | PR URL | `review-engineering` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - `build-with-tdd` 또는 `dispatch-parallel-agents` 완료 후 ship 단계

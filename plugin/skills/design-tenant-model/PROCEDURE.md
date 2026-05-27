@@ -2,6 +2,19 @@
 
 §3 Technical Design phase 의 stage. **multi-tenant SaaS 의 핵심 design decision**. shared row (RLS) vs schema-per-tenant vs DB-per-tenant 3 핵심 모델 + tenant identity propagation + cross-tenant query prevention + onboarding/offboarding cost + scaling implication. 산출물은 model selection + isolation matrix + migration plan + ADR handoff.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 멀티테넌트 요구사항 | ✅ | knowledge | 사용자 도메인 지식 | "멀티테넌트가 필요한가요? 테넌트 간 격리 수준은?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Tenant 모델 (RLS / schema-per / DB-per 결정 + 격리 전략) | artifact | structured YAML + ADR | `design-data-model`, `build-feature` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

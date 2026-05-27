@@ -2,6 +2,19 @@
 
 `decompose-feature-to-actor-tracks` 의 산출물 (Track Table) 을 받아 각 track 을 ordered task list 로 분해한다. 각 task 는 atomic unit (single PR scope, verify 가능 acceptance, sized for 1 worker × short period). 너무 큰 task 는 sub-divide, 너무 작은 task 는 합치기. 본 skill 의 산출물은 `map-task-dependencies` 의 입력.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Actor track | ✅ | artifact / knowledge | `decompose-feature-to-actor-tracks` 산출물 또는 사용자 설명 | "분해할 actor track을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Ordered task list (atomic, 1 PR scope, verifiable) | artifact | structured YAML | `map-task-dependencies` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 산출물에 발견되면 §5 로 돌아가 보강:

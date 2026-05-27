@@ -3,6 +3,19 @@
 
 Ship 후 문서 sync. 프로젝트의 모든 문서 파일을 읽고, 브랜치 diff와 cross-reference하며, README / ARCHITECTURE / CONTRIBUTING / 프로젝트 instruction 문서를 실제로 ship된 것과 일치하게 업데이트. CHANGELOG voice를 재작성 없이 polish, 선택적으로 VERSION bump, 파일별 health summary 생성.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 코드 변경 diff | ✅ | artifact | git diff | (자동 감지) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Updated docs (affected 문서 auto-update) | artifact | docs/ 파일 갱신 | `prepare-launch-checklist` |
+
 스킬은 **대부분 자동화**: diff에서 명백히 따르는 factual 업데이트는 직접 적용. 위험하거나 주관적이거나 narrative 결정만 사용자에게 묻는다.
 
 ## 이 스킬을 사용하는 경우

@@ -7,6 +7,19 @@
 - `review-architecture` 가 *구조적 무결성* 검토라면, 본 스킬은 *어휘적 무결성* 검토. 직교 차원.
 - `measure-code-health` 가 *style / lint / coverage 같은 정량 지표* 라면, 본 스킬은 *의미 (어휘) 일관성 — 정성 + 정량 혼합*.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 코드베이스 + PRD/도메인 어휘 | ✅ | artifact | 현재 코드베이스 + 도메인 문서 | (자동 감지) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Vocabulary drift report (mismatch pairs + severity + remediation) | artifact | structured YAML | `refactor-with-rename-trace` |
+
 ---
 
 ## 1. 목적

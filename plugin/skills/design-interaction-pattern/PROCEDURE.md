@@ -6,6 +6,19 @@ UI 의 *동적 layer* — 사용자 action 에 *어떻게 반응* 하는지 설�
 
 `apply-design-system` 의 token + `design-accessibility-baseline` 의 motion 대응 + `audit-ui-quality` 의 polish 검증과 cascade.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| UX 요구사항 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 사용자 인터랙션을 설계하나요? (gesture, motion, feedback 등)" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Interaction pattern 설계 (gesture + motion + feedback 규칙) | artifact | structured YAML | `build-feature`, `apply-design-system` |
+
 ## 2. 사용 시점
 
 - §3 design-system 의 design 적용 stage

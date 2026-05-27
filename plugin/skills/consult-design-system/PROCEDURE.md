@@ -13,6 +13,19 @@
 
 스킬은 form-wizard posture가 아니라 **consultant posture** 채택: 완전 시스템 제안, 작동 이유 설명, pushback 초대. Opinionated이지만 dogmatic 아님.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 제품/브랜드 설명 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 제품의 디자인 시스템을 만들까요? 브랜드 톤을 설명해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Design system 문서 (토큰 + 컴포넌트 + 패턴) | artifact | structured document | `apply-design-system` |
+
 ---
 
 ## 이 스킬을 사용하는 경우

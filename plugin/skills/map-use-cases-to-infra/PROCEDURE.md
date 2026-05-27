@@ -2,6 +2,20 @@
 
 §3 Technical Design phase 의 cascade bridge stage. **Q8=(a) cascade 의 §2 → §3 transition 의 explicit layer**. §2 feature spec 의 actor × use case × system boundary 를 §3 의 actual infra component (compute / DB / cache / queue / CDN / observability / IAM) 로 매핑. silent gap 채움 — 이 layer 없으면 §3 design-system 이 actor model 과 disconnect 된 채 진행. 산출물은 actor → infra component bidirectional 매트릭스 + 책임 분담 + cross-actor infra dependency.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Use case map | ✅ | artifact | `map-actor-use-cases` 산출물 | 먼저 `/buddy:map-actor-use-cases` 를 실행하세요 |
+| System boundary map | ✅ | artifact | `map-use-case-to-system-boundary` 산출물 | 먼저 `/buddy:map-use-case-to-system-boundary` 를 실행하세요 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Infra mapping (use case별 실행 인프라 매핑) | artifact | structured YAML | `derive-system-topology` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

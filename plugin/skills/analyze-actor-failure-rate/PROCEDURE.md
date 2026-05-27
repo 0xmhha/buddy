@@ -6,6 +6,19 @@ system 의 각 *actor* (user / system / 3rd-party / external-tool) 별 **실패�
 
 `audit-error-budget` (§8) 와 cascade — actor 별 budget burn 분포.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 운영 데이터 (actor별 실패율) | ✅ | artifact | 모니터링 시스템 데이터 | "분석할 actor와 기간을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Failure analysis (trust score + 6 recovery 패턴) | artifact | structured report | `generate-improvement-tasks` |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 *production reliability 분석*

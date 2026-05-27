@@ -14,6 +14,19 @@ AI 기반 기능(LLM 응답, 자동 의사결정, content 생성, agent action)�
 
 이 스킬을 통과한 AI 기능은 **liability matrix + disclosure + safeguard + incident response 4세트**를 가진다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| AI 기능 맥락 | ✅ | knowledge | 사용자 도메인 지식 | "검토할 AI 기능의 역할과 자율성 수준을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| AI safety review (hallucination/autonomy/liability) | artifact | structured report | `prepare-launch-checklist` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - LLM API / agent / 자동 의사결정 기능 출시 전

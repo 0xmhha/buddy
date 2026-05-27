@@ -2,6 +2,19 @@
 
 §4 의 acceptance plan stage. feature spec (per-actor acceptance) + task DAG (cross-actor edges) + tech stack (test framework 결정) 을 입력으로 verifiable test plan 을 작성한다. per-actor (unit / integration / contract) + cross-actor (E2E flow) 분류 + test infra (runner / fixture / mock 전략) 결정. §6 verify-quality 의 입력.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature specs + acceptance criteria | ✅ | artifact / knowledge | `define-feature-spec` 산출물 또는 사용자 설명 | "테스트 계획을 세울 feature와 수용 기준을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Acceptance test plan (per-actor + cross-actor) | artifact | structured YAML | `generate-tests-from-spec`, `verify-quality` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다:

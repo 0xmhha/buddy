@@ -3,6 +3,19 @@
 
 > 대화형 설정 wizard 구조 — 도구별 Keychain/CDP plumbing 제외.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 설정 대상 | ✅ | knowledge | 사용자 지정 | "어떤 credential/config를 설정하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| 구성된 환경 (auto-detect → picker → verify) | artifact | 설정 파일 | (설정 완료) |
+
 ## 이 snippet을 사용하는 경우
 
 - API key / OAuth 설정 흐름

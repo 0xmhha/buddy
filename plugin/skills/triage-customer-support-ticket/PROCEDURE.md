@@ -6,6 +6,19 @@ CS (customer support) 티켓을 *분류 + 우선순위 + recurring pattern 식�
 
 `generate-improvement-tasks` (구현됨) + `analyze-customer-feedback-corpus` (§8) 와 cascade.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 티켓 내용 | ✅ | knowledge | 사용자 또는 CS 시스템 | "분류할 티켓 내용을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Triaged ticket (분류 + severity + routing) | artifact | structured record | `diagnose-bug` 또는 `generate-improvement-tasks` |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 *분기 CS 분석*

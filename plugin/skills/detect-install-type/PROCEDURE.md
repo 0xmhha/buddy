@@ -3,6 +3,19 @@
 
 > 설치 방식 감지 알고리즘 + pre/post 변경 요약 기법 — 도구 무관.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| (자동 감지) | 선택 | artifact | 파일 시스템 탐색 | (자동 감지) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Install type 분류 (global-git/local-git/vendored/package-manager/dev-symlink) | decision | inline | `guide-setup-wizard` |
+
 ## 이 snippet을 사용하는 경우
 
 - 자체 업그레이드가 필요한 모든 CLI (git-clone과 package-manager 설치가 경로가 다름)

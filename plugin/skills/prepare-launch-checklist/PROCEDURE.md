@@ -2,6 +2,21 @@
 
 §7 Release & Beta phase 의 stage. **GA 직전 final cross-functional readiness check** — Engineering / Security & Compliance / Operations / Product / Legal & Comms / Cost & Business 6 axis 의 17+ 항목을 evidence + owner + status 로 통합. §6 quality gate (자동) + §7 의 다른 6 stage 산출물을 input 으로 받아 launch go/no-go 권고. 산출물은 launch checklist + blocker 리스트 + 권고 + sign-off 절차.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| QA report | ✅ | artifact | `verify-quality` 산출물 | 먼저 `/buddy:verify-quality` 를 실행하세요 |
+| Security audit | ✅ | artifact | `audit-security` 산출물 | 먼저 `/buddy:audit-security` 를 실행하세요 |
+| Release docs | 선택 | artifact | `sync-release-docs` 산출물 | 없으면 문서 항목 skip |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Launch checklist pass (17+ 항목 cross-functional gate) | artifact | structured checklist | `ship-release` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

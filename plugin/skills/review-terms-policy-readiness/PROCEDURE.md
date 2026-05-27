@@ -15,6 +15,19 @@
 
 각 문서에 대해 readiness 5단계: missing / draft / lawyer-reviewed / published / signed-by-users.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 제품/서비스 맥락 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 제품/서비스의 약관 준비도를 검토하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Policy readiness review (ToS/Privacy/AUP/Refund/DPA) | artifact | structured report | `prepare-launch-checklist` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - 첫 상용 출시 전 (free → paid 전환 포함)

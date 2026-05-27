@@ -6,6 +6,19 @@
 
 `agent-evaluation` (외부 reference, MIT) 의 *input vs output trust scoring* 패턴 차용 — *line coverage = input metric*, *mutation kill rate = output metric*.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 기존 테스트 코드 | ✅ | artifact | 현재 코드베이스 | (자동 감지 — 테스트 파일에서 추출) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Trust score (line 0.2 + mutation 0.4 + behavior 0.2 + edge 0.2) | artifact | structured report | `iterate-fix-verify` |
+
 ## 2. 사용 시점
 
 - §6 verify-quality 의 *test quality 검증* 영역

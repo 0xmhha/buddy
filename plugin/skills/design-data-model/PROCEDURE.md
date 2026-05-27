@@ -2,6 +2,21 @@
 
 데이터 모델 결정은 production 운영 시 변경 비용이 매우 큰 영역이다. 잘못된 스키마 / 인덱스 / migration 전략은 downtime · 데이터 손실 · 재작성 비용으로 환산된다. 본 skill 은 **entity 관계 매핑 + read/write 패턴 분류 + normalization 결정 + 인덱스 전략 + zero-downtime migration 강제** 절차로 production 변경 비용을 사전 평가한다. tech stack 결정 (`define-tech-stack`) 다음 단계로 호출된다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Entity 목록 또는 도메인 설명 | ✅ | artifact / knowledge | Phase 2 `define-feature-spec` 또는 사용자 설명 | "시스템의 핵심 entity(데이터 객체)는 무엇인가요?" |
+| Read/write 패턴 | ✅ | knowledge | 사용자 도메인 지식 | "주요 데이터 접근 패턴은? (OLTP 위주 / 분석 위주 / 혼합)" |
+| Tech stack 결정 | 선택 | decision | `define-tech-stack` 산출물 | 없으면 DB 종류 무관 범용 설계 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Data model (ERD + schema DDL + index 전략 + migration plan) | artifact | structured YAML + DDL | `generate-from-api-contract`, `build-with-tdd` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지하기 위한 절차다. 산출물에 다음이 발견되면 검증 실패로 간주하고 §5 로 돌아가 보강한다:

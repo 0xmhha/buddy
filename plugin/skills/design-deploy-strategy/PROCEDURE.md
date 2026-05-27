@@ -11,6 +11,19 @@ production 배포를 **5 차원**으로 설계한다:
 
 핵심 가치: **deploy를 black-box → reproducible artifact**, 실패 시 5분 내 rollback.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 배포 환경 및 리스크 허용도 | ✅ | knowledge | 사용자 도메인 지식 | "배포 환경은? (클라우드/온프레미스) 허용 가능한 downtime은?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Deploy 전략 (canary/blue-green/rolling + env 분리 + IaC) | artifact | structured YAML + ADR | `setup-canary-deploy`, `setup-rollback-runbook` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - 첫 production 배포 전 strategy 결정

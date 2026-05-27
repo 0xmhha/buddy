@@ -37,6 +37,19 @@ Post.includes(:author).each { |p| ... }        # eager loaded
 - `update_column|update_all|raw\(` — validation 우회
 - `\.each.*\.\w+\.\w+` — 루프의 N+1 가능성
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 코드 diff | ✅ | artifact | git diff 또는 PR diff | (자동 감지) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Risk classification (11 category) | artifact | structured report | `review-engineering` |
+
 ---
 
 ### 카테고리 2: LLM 출력 신뢰 경계

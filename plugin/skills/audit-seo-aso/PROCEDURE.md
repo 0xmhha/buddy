@@ -6,6 +6,19 @@
 
 `decide-form-factor-app-vs-web` 산출에 따라 SEO / ASO / 둘 다 적용.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 사이트/앱 URL | ✅ | knowledge | 사용자 지정 | "SEO/ASO 감사할 URL을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| SEO/ASO audit report (5+6 영역 + keyword + content gap) | artifact | structured report | (마케팅 사용) |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 *분기 organic 분석*

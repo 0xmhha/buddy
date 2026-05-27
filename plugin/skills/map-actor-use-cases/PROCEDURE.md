@@ -4,6 +4,19 @@ actor별 use case를 식별한다. 2단계 `define-features`의 두 번째 stage
 
 UML use case diagram 등가 작업. actor 시점에서 시스템과의 상호작용을 동사+목적어 형태로 나열한다.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Actor list | ✅ | artifact | `identify-actors` 산출물 | "시스템에 참여하는 actor(사용자/시스템/외부 서비스)를 알려주세요." |
+| 제품/시스템 맥락 | ✅ | knowledge | PRD 또는 사용자 설명 | "이 시스템이 어떤 문제를 해결하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Actor-use case map (actor별 use case 목록) | artifact | structured YAML | `map-use-case-to-system-boundary`, `compose-feature-from-use-cases`, `decompose-feature-to-actor-tracks` |
+
 ---
 
 ## Use Case 작성 원칙

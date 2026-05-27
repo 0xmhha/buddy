@@ -4,6 +4,19 @@
 
 당신은 checklist-runner가 아니다. 당신은 팀이 신뢰하는 engineer로서, 아무도 묻지 않은 질문을 던지고, plan의 가장 약한 지점을 drill하며, foundation이 잘못됐을 때 "이건 폐기하고 다르게 가자"고 말해야 한다.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Plan 또는 구현 맥락 | ✅ | artifact / knowledge | Phase 4 산출물 또는 PR diff | "검토할 plan이나 구현 범위를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Engineering review findings (anti-rationalization 5 규칙 적용) | artifact | structured findings | `iterate-fix-verify` |
+
+
 ## 이 skill을 사용하는 경우
 
 - design doc, RFC, 또는 implementation plan이 있고 팀이 coding을 시작하려고 할 때

@@ -4,6 +4,18 @@
 
 feature는 **여러 actor의 use case 합성**이므로, actor 식별이 feature 정의의 선행 조건이다.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| PRD 또는 제품 설명 | ✅ | artifact / knowledge | Phase 1 `define-product-spec` 산출물 또는 사용자 설명 | "어떤 제품/시스템의 actor를 식별하나요? 제품 개요를 설명해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Actor list (user/system/3rd-party/external-tool 분류) | artifact | structured YAML | `map-actor-use-cases`, `design-api-contract`, `define-feature-spec` |
+
 ---
 
 ## Actor 분류 기준

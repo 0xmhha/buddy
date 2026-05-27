@@ -6,6 +6,19 @@ CS ticket / NPS comment / app review / 인터뷰 transcript 같은 *비구조 �
 
 `triage-customer-support-ticket` (§8) 산출 + `conduct-customer-interview` (§1) transcript 입력.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feedback corpus (CS/NPS/review/interview 텍스트) | ✅ | artifact | CS 시스템 또는 사용자 제공 | "분석할 피드백 데이터를 제공해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Topic analysis (토픽 모델링 + sentiment + verbatim quotes) | artifact | structured report | `generate-improvement-tasks` |
+
 ## 2. 사용 시점
 
 - §8 iterate-product 의 *분기 voice-of-customer 분석*

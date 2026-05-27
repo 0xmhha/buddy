@@ -4,6 +4,19 @@
 
 이 매핑이 3단계 `design-system`의 infra topology 설계 입력이 된다.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Actor-use case map | ✅ | artifact | `map-actor-use-cases` 산출물 | "각 actor의 use case 목록을 알려주세요." |
+| 기술 환경 개요 | 선택 | knowledge | 사용자 도메인 지식 | 없으면 일반적인 boundary 분류(frontend/backend/external) 적용 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| System boundary map (use case별 실행 경계) | artifact | structured YAML | `derive-system-topology`, `compose-feature-from-use-cases`, `design-api-contract` |
+
 ---
 
 ## System Boundary 분류

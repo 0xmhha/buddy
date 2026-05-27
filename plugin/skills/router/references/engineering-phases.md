@@ -84,6 +84,22 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 **종료 → 다음**: Phase 2 `define-features` (전체 흐름 진입).
 
+**Mode A 소속 스킬:**
+
+| Skill | 역할 |
+|-------|------|
+| `validate-idea` | 아이디어 stress-test (6 forcing questions) |
+| `validate-advanced-edge-idea` | edge case / hidden assumption grilling |
+| `assess-business-viability` | 7차원 사업성 평가 |
+| `analyze-market-size` | TAM/SAM/SOM 산출 |
+| `map-customer-segments` | 사용자 vs 구매자 분리 + persona |
+| `map-jobs-to-be-done` | JTBD 프레임워크 |
+| `conduct-customer-interview` | 고객 인터뷰 + Mom Test |
+| `analyze-competition-and-substitutes` | 경쟁/대체재 매트릭스 |
+| `decide-target-market` | target market 결정 + region trigger |
+| `review-pricing-and-gtm` | pricing + GTM channel 평가 |
+| `define-product-spec` | PRD 작성 |
+
 #### Mode B — Existing Product (기존 프로덕트 변경)
 
 이미 운영 중인 프로덕트에 대한 모든 변경 작업 — 버그 수정, 신규 기능, 성능 개선, 기술 부채 정리, 의존성 갱신 등 유형 무관. 핵심은 **변경의 scope(범위)를 평가**하여 다음 phase를 결정하는 것.
@@ -145,6 +161,22 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 **종료 조건**: Feature backlog이 priority-ordered 상태로 존재하고, 각 feature에 actor/use case/acceptance criteria가 정의된 상태.
 
+**소속 스킬:**
+
+| Skill | 역할 |
+|-------|------|
+| `identify-actors` | 시스템 참여 actor 열거 (user/system/3rd-party/external-tool) |
+| `map-actor-use-cases` | actor별 use case 식별 |
+| `map-use-case-to-system-boundary` | use case → 시스템 경계 매핑 |
+| `compose-feature-from-use-cases` | cross-actor use case 합성 → feature 정의 |
+| `define-feature-spec` | feature 완전 명세서 작성 |
+| `score-feature-priority` | RICE/ICE/MoSCoW 우선순위 |
+| `estimate-feature-effort` | T-shirt sizing + ideal-h + uncertainty |
+| `map-feature-dependencies` | feature 간 의존성 DAG |
+| `split-work-into-features` | PRD → vertical slice 분해 |
+| `query-feature-registry` | 기존 feature registry 검색 (reuse 판단) |
+| `triage-work-items` | work item 분류 + lifecycle state machine |
+
 ---
 
 ### Phase 3 — Technical Design (Architecture)
@@ -178,6 +210,44 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 **참고**: Phase 3은 가장 많은 stage skill을 보유한 phase. 각 design-* 스킬이 독립적으로도 호출 가능(standalone-with-context)하지만, orchestrator 경유 시 결정 간 일관성 보장.
 
+**소속 스킬:**
+
+| Skill | 역할 |
+|-------|------|
+| `define-tech-stack` | 기술 스택 결정 (8차원 + 5년 lock-in 평가) |
+| `design-data-model` | 데이터 모델 설계 (entity + read/write 패턴 + migration) |
+| `design-api-contract` | API 계약 설계 (REST/GraphQL/gRPC + schema + error) |
+| `design-event-schema` | 이벤트 스키마 설계 (async/pub-sub/DLQ) |
+| `design-auth-model` | 인증/인가 모델 설계 (OAuth2/RBAC/multi-tenant) |
+| `design-tenant-model` | 멀티테넌트 모델 설계 (RLS/schema-per/DB-per) |
+| `design-observability` | 관측성 전략 (logs/metrics/traces/SLO) |
+| `design-secret-management` | 시크릿 관리 전략 (rotation/audit/leak detection) |
+| `design-i18n-strategy` | i18n 전략 (locale/fallback/RTL) |
+| `design-accessibility-baseline` | 접근성 기준선 (WCAG/a11y) |
+| `design-deploy-strategy` | 배포 전략 (canary/blue-green/rolling) |
+| `design-artifact-storage` | artifact 저장/검증/배포 설계 |
+| `design-billing-system` | 결제 시스템 설계 (Stripe/Toss + subscription) |
+| `design-embedding-search` | 하이브리드 검색 설계 (BM25 + vector + rerank) |
+| `design-mcp-server` | MCP 서버 설계 |
+| `design-claude-hooks` | Claude Code hook 설계 |
+| `design-interaction-pattern` | 인터랙션 패턴 설계 (gesture/motion/feedback) |
+| `map-use-cases-to-infra` | use case → infra 매핑 |
+| `derive-system-topology` | 시스템 토폴로지 도출 (service/data flow/trust boundary) |
+| `decide-form-factor-app-vs-web` | 앱 vs 웹 폼팩터 결정 |
+| `apply-design-system` | 디자인 시스템 적용 (token/component/pattern) |
+| `consult-design-system` | 디자인 시스템 생성/참조 |
+| `audit-ui-quality` | UI 품질 감사 |
+| `prototype-from-spec` | spec → 프로토타입 |
+| `write-adr` | ADR 작성 |
+| `consult-codex` | 외부 LLM second opinion |
+| `verify-best-alternative` | 엔지니어링 결정의 다관점 검토 (편향 방지) |
+| `critique-plan` | 전략적 plan critique (CEO/founder 페르소나) |
+| `review-architecture` | 아키텍처 구조 무결성 검토 |
+| `review-engineering` | implementation plan 리뷰 |
+| `review-scope` | scope 형성/결정 리뷰 |
+| `review-design` | 디자인 차원 0-10 score 리뷰 |
+| `review-devex` | DX plan 리뷰 |
+
 ---
 
 ### Phase 4 — Implementation Planning
@@ -206,6 +276,18 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 | Build timeline (estimate) | structured | 프로젝트 관리 |
 
 **종료 조건**: task DAG가 존재하고, critical path가 식별되며, acceptance test plan이 정의된 상태.
+
+**소속 스킬:**
+
+| Skill | 역할 |
+|-------|------|
+| `decompose-feature-to-actor-tracks` | feature → actor별 implementation track 분해 |
+| `decompose-track-to-tasks` | actor track → atomic task list |
+| `map-task-dependencies` | task DAG (내부 + cross-actor 의존성) |
+| `plan-parallel-execution` | worker batch + sync point 계획 |
+| `define-acceptance-test-plan` | per-actor + cross-actor test plan |
+| `estimate-build-timeline` | critical path 기반 calendar timeline |
+| `publish-to-tracker` | task plan → 외부 issue tracker 발행 |
 
 ---
 
@@ -237,6 +319,21 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 **종료 조건**: 모든 task가 완료되고, 테스트가 통과하며, 코드가 commit된 상태.
 
 **특이사항**: Phase 5의 스킬 다수(build-with-tdd, diagnose-bug, iterate-fix-verify)는 full-standalone 등급 — 별도 orchestrator 없이 독립 실행이 자연스러운 영역.
+
+**소속 스킬:**
+
+| Skill | 역할 |
+|-------|------|
+| `build-with-tdd` | red-green-refactor TDD 루프 |
+| `diagnose-bug` | 버그 재현 → 원인 분석 → fix |
+| `iterate-fix-verify` | finding별 fix → atomic commit → re-verify 반복 |
+| `pair-program-loop` | driver/navigator 역할 분리 + 15min swap |
+| `refactor-with-rename-trace` | LSP rename + 호출 그래프 검증 |
+| `dispatch-parallel-agents` | worktree 격리 병렬 agent 분배 |
+| `generate-from-api-contract` | API contract → SDK/stub 자동 생성 |
+| `generate-tests-from-spec` | acceptance criteria → test skeleton |
+| `freeze-edit-scope` | 단일 디렉토리 edit lock |
+| `update-docs-with-code` | 코드 변경 → 5영역 문서 동기화 |
 
 ---
 
@@ -270,6 +367,30 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 **Backtrack trigger**: quality gate 실패 → Phase 5로 복귀 (fix and re-verify).
 
+**소속 스킬:**
+
+| Skill | 역할 |
+|-------|------|
+| `classify-qa-tiers` | QA intensity 3-tier 분류 (Quick/Standard/Exhaustive) |
+| `test-per-actor-use-case` | actor별 use case 단위 통합 테스트 |
+| `test-cross-actor-flow` | cross-actor E2E flow 검증 |
+| `run-load-test` | sustained/soak/spike/stress 4 시나리오 |
+| `chaos-test` | failure injection + hypothesis-driven 검증 |
+| `run-browser-qa` | 브라우저 자동화 QA (snapshot/form/responsive) |
+| `audit-test-coverage-meaningful` | line + mutation + behavior coverage |
+| `measure-code-health` | composite 0-10 code health dashboard |
+| `audit-security` | CSO-mode 보안 감사 |
+| `audit-accessibility` | WCAG 2.1 AA a11y 감사 |
+| `audit-i18n-coverage` | locale별 번역 커버리지 |
+| `audit-cost-efficiency` | per-component 비용 분석 |
+| `audit-live-devex` | 실제 DX audit (TTHW timing) |
+| `audit-ubiquitous-language` | 코드/PRD/도메인 어휘 일관성 감사 |
+| `classify-review-risks` | 11 category 코드 리뷰 리스크 분류 |
+| `review-ai-safety-liability` | AI 기능 책임/안전 검토 |
+| `review-privacy-data-risk` | GDPR/PIPA 등 개인정보 검토 |
+| `review-license-and-ip-risk` | 라이선스/IP 호환성 검토 |
+| `review-terms-policy-readiness` | 약관/정책 준비도 검토 |
+
 ---
 
 ### Phase 7 — Release
@@ -301,6 +422,25 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 **Backtrack trigger**: UAT 실패 → Phase 5 또는 Phase 6로 복귀.
 
+**소속 스킬:**
+
+| Skill | 역할 |
+|-------|------|
+| `setup-quality-gates` | pre-commit/pre-push hook 구성 |
+| `auto-create-pr` | commit → branch → PR 자동화 |
+| `automate-release-tagging` | semver auto-decision + git tag |
+| `sync-release-docs` | diff 기반 문서 auto-update |
+| `write-changelog` | CHANGELOG release-summary |
+| `guard-destructive-commands` | 위험 명령 실행 전 경고 |
+| `compose-safety-mode` | 복수 safety hook 합성 |
+| `run-uat` | UAT 시나리오 실행 + go/no-go |
+| `run-beta-program` | 클로즈드 beta 코호트 운영 |
+| `setup-canary-deploy` | canary 단계 + metric gate |
+| `setup-feature-flags` | feature flag 시스템 설계 |
+| `setup-rollback-runbook` | rollback decision tree + 실행 절차 |
+| `prepare-launch-checklist` | 17+ 항목 cross-functional launch gate |
+| `setup-incident-paging` | on-call + escalation + alert 구조 |
+
 ---
 
 ### Phase 8 — Operations (Operate & Iterate)
@@ -328,6 +468,42 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 | Operational metrics (SLO, error budget, cost) | dashboard / report | Phase 8 자체 loop |
 
 **종료 조건**: 자연적 종료 없음 — 지속적 loop. Phase 2 재진입(개선 기능) 또는 Phase 9 진입(폐기 결정) 시 해당 cycle 종료.
+
+**소속 스킬 (Engineering):**
+
+| Skill | 역할 |
+|-------|------|
+| `handle-incident` | 인시던트 대응 (severity 분류 → 완화 → fix) |
+| `conduct-postmortem` | 비난 없는 포스트모템 (5 Whys + action items) |
+| `monitor-regressions` | delta-based regression 감지 |
+| `analyze-actor-failure-rate` | actor failure matrix + trust score |
+| `analyze-cost-anomaly` | cloud/SaaS spike 감지 + recovery |
+| `audit-error-budget` | SLO burn rate multi-window 감사 |
+| `summarize-retro` | git history → evidence-based 주간 회고 |
+| `generate-improvement-tasks` | 분석 결과 → improvement task 변환 (§2 재진입 bridge) |
+
+**소속 스킬 (Product/Analytics):**
+
+| Skill | 역할 |
+|-------|------|
+| `design-ab-experiment` | A/B 실험 설계 |
+| `analyze-ab-experiment` | A/B 실험 결과 분석 |
+| `analyze-user-funnel` | funnel 전환/이탈 분석 |
+| `analyze-feature-adoption` | feature adoption funnel |
+| `analyze-user-cohort` | cohort retention + LTV/CAC |
+| `triage-customer-support-ticket` | 지원 티켓 분류 |
+| `analyze-customer-feedback-corpus` | 피드백 토픽 모델링 |
+| `optimize-conversion-funnel` | AARRR funnel CRO |
+| `plan-growth-experiment` | growth 실험 sprint |
+
+**소속 스킬 (Marketing):**
+
+| Skill | 역할 |
+|-------|------|
+| `draft-marketing-copy` | 마케팅 카피 작성 |
+| `plan-marketing-channel` | 마케팅 채널 전략 |
+| `audit-seo-aso` | SEO/ASO 감사 |
+| `automate-marketing-content` | 마케팅 콘텐츠 자동화 |
 
 ---
 
@@ -357,21 +533,36 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 **종료 조건**: feature/product가 sunset 되고, 사용자 migration이 완료되며, 코드 cleanup이 끝난 상태.
 
+**소속 스킬:**
+
+| Skill | 역할 |
+|-------|------|
+| `deprecate-feature` | feature sunset (timeline + notice + telemetry) |
+| `migrate-customers` | 대규모 고객 마이그레이션 (Strangler Fig) |
+| `archive-product` | product EOL (data export + tombstone + legal) |
+| `spin-off-feature` | 기능 → 별도 product/repo 분리 |
+
 ---
 
 ### Cross-cutting (Phase 소속 없음)
 
 어느 phase에서든 호출 가능한 스킬. phase 정체성이 아닌 **적용 맥락**으로 정의된다.
 
-| 범주 | 스킬 예시 | 적용 시점 |
-|------|----------|----------|
-| 편향 방지 | `verify-best-alternative` | 의사결정 직전 (주로 Phase 3) |
-| 문맥 보존 | `save-context`, `restore-context` | 세션 전환 시 |
-| 메타-스킬 | `write-a-skill`, `status` | 스킬 개발, 현재 위치 파악 |
-| 안전장치 | `guard-destructive-commands`, `compose-safety-mode`, `freeze-edit-scope` | 위험 명령 실행 시 |
-| 패턴 라이브러리 | `classify-qa-tiers`, `classify-review-risks`, `monitor-regressions` | 다른 스킬 내부에서 ambient 적용 |
-| Blocker 분해 | `decompose-blocker` | 작업 stuck 상태 (주로 Phase 5) |
-| 어휘 일관성 | `audit-ubiquitous-language` | 리팩토링 전, PR 리뷰, 신규 feature 정의 시 |
+**소속 스킬:**
+
+| Skill | 범주 | 적용 시점 |
+|-------|------|----------|
+| `decompose-blocker` | Blocker 분해 | 작업 stuck 상태 (자동 trigger: 3회 시도 후 미해결) |
+| `status` | 현재 위치 파악 | artifact 탐지로 현재 phase 추론 |
+| `write-a-skill` | 메타-스킬 | 신규 스킬 작성 |
+| `apply-builder-ethos` | 철학 주입 | Boil the Lake / Search Before Building / User Sovereignty |
+| `benchmark-llm-models` | LLM 도구 | multi-provider LLM 성능 비교 |
+| `detect-install-type` | 설치 감지 | tool install type 자동 감지 |
+| `guide-setup-wizard` | 설정 가이드 | credential/config setup flow |
+| `save-context` | 문맥 보존 | 세션 전환 시 상태 저장 |
+| `restore-context` | 문맥 복원 | 저장된 checkpoint 로드 |
+| `persist-learning-jsonl` | 학습 저장 | JSONL append-only learning store |
+| `review-legal-regulatory` | 법률/규제 검토 | §1/§7 등 복수 phase에서 호출 |
 
 ---
 

@@ -2,6 +2,19 @@
 
 §7 Release & Beta phase 의 stage. **production incident 의 first response 구조** — on-call rotation schedule + severity 분류 + escalation policy + alert routing matrix + runbook 인덱스 + drill cadence 산출. paging tool (PagerDuty / Opsgenie / Splunk OnCall / 자체) 결정 + 운영 정책. 산출물은 rotation table + escalation policy + alert→runbook 매트릭스 + drill plan.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 팀 구조 + 인프라 정보 | ✅ | knowledge | 사용자 도메인 지식 | "on-call 팀 구성과 alert 대상 서비스를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Incident paging 구성 (rotation + escalation + alert + runbook index) | artifact | structured document | `handle-incident` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

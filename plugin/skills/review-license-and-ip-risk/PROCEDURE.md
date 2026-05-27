@@ -8,6 +8,19 @@ audit-security가 보안 취약점을 본다면, 이 스킬은 **라이선스 �
 
 핵심 가치 제안: **법무팀 없이도 상업 출시 전 IP/라이선스 위험을 자체 진단**할 수 있는 게이트. 단, 이 스킬은 법률 자문이 아니다. 고위험 항목은 변호사 검토 권장.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 의존성 목록 | ✅ | artifact | package.json / go.mod / requirements.txt 등 | (자동 감지 — 의존성 파일에서 추출) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| License review (호환성 + IP 리스크 + remediation) | artifact | structured report | `prepare-launch-checklist` |
+
 ## 2. 사용 시점
 
 - assess-business-viability에서 commercial use 결정 후 (수익 모델 확정 시점)

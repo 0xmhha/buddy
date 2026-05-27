@@ -6,6 +6,20 @@
 
 deprecation 은 *trust 손상* 위험 영역 — *명시 + 충분 기간 + alternative 제공* 이 핵심.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Feature + usage 데이터 | ✅ | artifact / knowledge | Phase 8 산출물 또는 사용자 설명 | "폐기할 feature와 현재 사용량을 알려주세요." |
+| Sunset 결정 | ✅ | decision | 사용자 의사결정 | "폐기를 확정하나요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Deprecation plan (timeline + notice 5 layer + migration path) | artifact | structured document | `migrate-customers` |
+
 ## 2. 사용 시점
 
 - §9 manage-lifecycle 의 *기능 노후화* 결정 후

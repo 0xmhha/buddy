@@ -12,6 +12,19 @@
 
 이 스킬을 통과한 storage는 patch download 전 hash + signature + security scan + license 4단계 검증을 강제한다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Artifact 유형 및 요구사항 | ✅ | knowledge | 사용자 도메인 지식 | "저장/배포할 artifact 종류는? (binary, container, template 등)" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Artifact storage 설계 (저장소 + 버전관리 + 검증 + 배포) | artifact | structured YAML | `ship-release` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - `feature-management-saas-mcp` patch artifact module 구현 전

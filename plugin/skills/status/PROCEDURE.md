@@ -2,6 +2,19 @@
 
 사용자에게 **"지금 어디 있는지"**와 **"다음에 어떤 커맨드를 쓸지"**를 알려준다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| (없음 — 자동 감지) | 선택 | artifact | 현재 디렉토리의 artifact 존재 여부 | (자동 감지) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| 현재 phase + 다음 권장 command | artifact | formatted output | (사용자 안내) |
+
 ---
 
 ## 실행 절차

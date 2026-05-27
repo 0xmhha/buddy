@@ -2,6 +2,19 @@
 
 §7 Release & Beta phase 의 stage. canary auto-rollback 이 1차 escape, 본 runbook 이 **complex case (data corruption, schema migration, multi-service hop)** 를 cover 하는 2차 escape. **decision tree (언제 rollback / 언제 forward fix), step-by-step 실행 (platform 별), verification protocol, data integrity 처리, post-rollback post-mortem trigger** 산출. incident 발생 시 의사결정 시간을 < 5 min 으로 압축하기 위해 사전 author.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 배포 환경 맥락 | ✅ | knowledge | 사용자 도메인 지식 | "rollback 대상 환경과 서비스를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Rollback runbook (decision tree + 실행 절차 + verification) | artifact | structured document | `handle-incident` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

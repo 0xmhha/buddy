@@ -13,6 +13,19 @@
 경험에 대해 읽는 게 아니라 — 테스트하는 것. 문서 탐색, 실제 명령 실행,
 개발자가 실제로 보는 것을 스크린샷. 추측 말고 측정.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 배포된 developer product | ✅ | artifact | 배포된 제품 URL 또는 문서 | "DX audit할 제품의 접근 경로를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| DX audit report (TTHW timing + evidence) | artifact | structured report | `iterate-fix-verify` |
+
 ---
 
 ## 패턴 1: TTHW 타이밍 (Time to Hello World)

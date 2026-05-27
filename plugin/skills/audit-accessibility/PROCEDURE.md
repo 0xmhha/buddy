@@ -2,6 +2,19 @@
 
 §6 verify-quality phase 의 stage. **prepare-launch-checklist Engineering / Legal axis 의 evidence**. public 제품 의 a11y compliance (WCAG 2.1 AA) 가 의무에 가까움 (ADA / EAA / EU Accessibility Act, 산업별 차이). axe (rule-based) + Lighthouse (perceived) + manual screen reader pass 통합. 산출물은 violation matrix + fix priority + WCAG conformance level + acceptance gate.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| UI (배포 또는 로컬) | ✅ | artifact | 배포된 UI 또는 로컬 dev 서버 | "감사할 UI의 URL을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Accessibility audit report (WCAG 2.1 AA + axe) | artifact | structured report | `iterate-fix-verify` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

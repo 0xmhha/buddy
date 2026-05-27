@@ -2,6 +2,20 @@
 
 API 계약은 actor 간 / system 간 경계를 명시화한 산출물이다. 잘못된 contract 는 client 영향 + versioning 부담 + 호환성 문제로 운영 비용을 증폭시킨다. 본 skill 은 **API style 선택 (REST/GraphQL/gRPC) + resource ↔ use case 매핑 + schema 정의 + error taxonomy + versioning 정책 + contract test 전략** 을 강제해 contract-first 를 보장한다. tech stack + data model 결정 후 호출된다.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Actor-use case map 또는 API 대상 설명 | ✅ | artifact / knowledge | `map-actor-use-cases` 산출물 또는 사용자 설명 | "API를 사용하는 actor와 use case를 알려주세요." |
+| Tech stack 결정 | 선택 | decision | `define-tech-stack` 산출물 | 없으면 REST 기본 가정 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| API contract (style + resource + schema + error taxonomy + versioning) | artifact | OpenAPI spec 또는 structured YAML | `generate-from-api-contract`, `test-per-actor-use-case`, `design-event-schema` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지하기 위한 절차다. 산출물에 다음이 발견되면 검증 실패로 §5 로 돌아가 보강한다:

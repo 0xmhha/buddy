@@ -6,6 +6,18 @@ PRD 전체 계획을 **feature 단위로 분해**한다. feature는 **단순 tas
 
 핵심 차별: feature = (DB schema + API + UI + test)를 관통하는 vertical slice. horizontal layer로 분할 금지.
 
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| PRD 또는 큰 scope 설명 | ✅ | artifact / knowledge | Phase 1 `define-product-spec` 산출물 또는 사용자 설명 | "분해할 제품/프로젝트의 전체 범위를 설명해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Feature candidate list (vertical slice 기반) | artifact | structured YAML | `define-feature-spec`, `score-feature-priority`, `estimate-feature-effort` |
+
 이 스킬은 PRD의 "feature_candidates"를 받아 다음 두 보장을 가진 feature spec set으로 변환:
 1. 각 feature는 patch / cherry-pick으로 다른 제품에 이식 가능한 응집도
 2. 각 feature는 acceptance criteria로 완료 판단 가능

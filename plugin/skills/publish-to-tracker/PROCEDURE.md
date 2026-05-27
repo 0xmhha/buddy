@@ -10,6 +10,19 @@ buddy 내부의 *feature spec* (§2 `define-features` 산출물) 또는 *task pl
 
 > 흡수 출처: mattpocock-skill `to-prd` + `to-issues` 의 PRD template + tracer-bullet vertical-slice rule + HITL/AFK 구분을 *adopt-with-edits* (ADR-003 §2.1). multi-tracker 추상화는 *inspired-by* — buddy 자체 발명 (mattpocock 은 단일 tracker 가정).
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Task plan 또는 PRD | ✅ | artifact | Phase 4 산출물 또는 Phase 1 PRD | 먼저 구현 계획을 수립하세요 |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| 외부 tracker issues (GitHub/Linear/Jira) | artifact | issue links | 프로젝트 관리, `dispatch-parallel-agents` |
+
 ## 2. 사용 시점
 
 ### `prd` 모드

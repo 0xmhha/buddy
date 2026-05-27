@@ -16,6 +16,19 @@
 | **차용 4분류** | 외부 스킬 차용 방식 4단계: `verbatim`(금지) / `adopt-with-edits` / `reference-only` / `inspired-by` | 정책 원문 = `docs/superpowers/decisions/2026-05-10-superpowers-attribution.md` = **ADR-003** (셋 다 동일 문서). 4분류 정의 §2.4, 절차적 enforcement §2.3. 4분류 의미·경계 상세 — [`references/attribution-classification.md`](./references/attribution-classification.md) |
 | **§N (본 문서 내 참조)** | 별도 lifecycle 표시 없으면 본 PROCEDURE.md의 *섹션 N* | 예: "§7 자매 스킬" = 본 문서 7번 섹션. "§5 Development" 같이 lifecycle 컨텍스트와 함께 쓰면 buddy lifecycle stage |
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 스킬 개념 설명 | ✅ | knowledge | 사용자 발화 | "어떤 스킬을 만드나요? 스킬의 목적을 설명해 주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| PROCEDURE.md + skill-catalog 등재 | artifact | markdown files | (메타) |
+
 ## 1. 목적
 
 신규 스킬을 다음 4 layer로 영속화한다:

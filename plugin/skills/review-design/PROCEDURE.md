@@ -306,4 +306,17 @@ plan이 reuse해야 할 existing DESIGN.md token, UI pattern, component를 기�
 모든 pass가 8+에 도달하면 이렇게 말하라: "Plan is design-complete. Ready for implementation."
 pass 중 하나라도 8 미만이면 무엇이 unresolved인지, 그리고 user가 왜 defer를 선택했는지 명시하라.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Design 맥락 (UI/UX 설계 또는 plan) | ✅ | artifact / knowledge | Phase 3 산출물 또는 사용자 설명 | "디자인 검토할 대상을 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Design review (차원별 0-10 score + 개선 path) | artifact | structured scores + findings | plan 수정 |
+
 ---

@@ -16,6 +16,19 @@
 
 각 단계에 자동화 도구 + pre-commit / pre-push / CI 어디서 실행할지 정함.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 프로젝트 환경 | ✅ | artifact | 현재 코드베이스 | (자동 감지 — 프로젝트 구조에서 추출) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Quality gate 구성 (pre-commit/pre-push hooks) | artifact | 설정 파일 | `build-with-tdd` |
+
 ## 2. 사용 시점 (When to invoke)
 
 - 신규 프로젝트 setup (define-product-spec 완료 직후)

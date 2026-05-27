@@ -2,6 +2,20 @@
 
 §6 verify-quality phase 의 stage 2. §2 feature spec 의 actor × use case 매트릭스를 기준으로 actor 단위 통합 test 를 실행. **frontend (Playwright E2E), backend (Vitest + testcontainers integration), 3rd-party (Pact contract)** 가 actor 별 적합 layer. coverage gap = use case 가 test 없는 row → 0 maintain. Q8=(a) cascade 의 §6 entry. 산출물은 actor × use case × test status 매트릭스 + gap report + acceptance gate decision.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Actor-use case map | ✅ | artifact | `map-actor-use-cases` 산출물 | "테스트할 actor와 use case를 알려주세요." |
+| Working code | ✅ | artifact | Phase 5 산출물 | (현재 코드베이스에서 자동 감지) |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Per-actor test report (coverage gap 0 유지) | artifact | structured report | `verify-quality` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 발견 시 §5 회귀:

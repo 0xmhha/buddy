@@ -6,6 +6,19 @@
 
 `map-customer-segments` (§1) 의 buyer voice + `analyze-competition-and-substitutes` (§1) 의 positioning + `analyze-customer-feedback-corpus` (§8) 의 verbatim quote 입력.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| 제품/타겟 맥락 | ✅ | knowledge | 사용자 도메인 지식 | "어떤 제품의 마케팅 카피를 작성하나요? target audience는?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Marketing copy variants (headline + body + CTA) | artifact | structured text | (마케팅 사용) |
+
 ## 2. 사용 시점
 
 - 신규 feature launch 직전 — landing page / email / ad

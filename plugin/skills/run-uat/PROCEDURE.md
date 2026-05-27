@@ -2,6 +2,20 @@
 
 §7 Release & Beta phase 의 stage. §6 quality gate (automated) 와 GA release 사이에 designated stakeholder (PM / Tenant Admin / 1~3 user) 가 acceptance test plan 의 critical flow 를 직접 verify 하는 단계. **automated CI 만으로 검증 불가능한 도메인 정합성 / UX 적정성 / business rule 정확성** 을 잡아내는 마지막 인간 gate. 산출물은 GA decision (go / no-go / conditional go) + critical bug triage + acceptance evidence corpus.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| UAT 시나리오 | ✅ | artifact / knowledge | Phase 4 `define-acceptance-test-plan` 또는 사용자 정의 | "UAT 시나리오를 알려주세요." |
+| 이해관계자 정보 | ✅ | knowledge | 사용자 도메인 지식 | "sign-off할 이해관계자는 누구인가요?" |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| UAT sign-off (go/no-go + evidence) | artifact | structured report | `prepare-launch-checklist` |
+
 ## 0. STOP — 시작 전 읽기
 
 이 skill 은 다음 anti-pattern 들을 방지한다. 산출물에 발견되면 §5 로 회귀해 보강:

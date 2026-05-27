@@ -3,6 +3,19 @@
 
 파일 변경을 세션의 나머지 기간 동안 한 디렉토리로 제한. 잠긴 디렉토리 밖 경로를 타깃팅하는 `Edit`이나 `Write`는 **PreToolUse hook에 의해 차단**된다 — 단순 경고가 아니다. Read-only 도구는 계속 동작.
 
+
+## Input Requirements
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| Lock 대상 디렉토리 | ✅ | knowledge | 사용자 지정 | "edit을 제한할 디렉토리 경로를 알려주세요." |
+
+## Output Contract
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| Scope lock (세션 동안 유지) | artifact | session state | (ambient) |
+
 ## 이 스킬을 사용하는 경우
 
 - **디버깅** — 10개 파일을 살펴보되 버그 있는 파일 하나만 수정하고 싶을 때. 버그 디렉토리를 freeze하고 나머지는 자유롭게 read.
