@@ -237,7 +237,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `decompose-blocker` | command + dispatch | [엔지니어링·언어독립] 코드 작업 stuck 상태에서 문제 분해 + 비용-정보 매트릭스 행동 후보 도출. **자동 trigger: AI가 동일 문제 3회 시도 후 미해결 (token escalation 차단 + 문제 세분화)** 또는 사용자 명시 호출. fact/추측/모름 3분류 + 분해 축(4D/5-Whys/fishbone) + 가설 압축. *fix 수행 X*, 다음 스킬로 dispatch 준비 |
 | `detect-install-type` | dispatch | [패턴 라이브러리] tool install type(global-git/local-git/vendored/package-manager/dev-symlink) detect + upgrade path |
 | `guide-setup-wizard` | dispatch | [패턴 라이브러리] auto-detect → picker → verify pattern으로 credential/config setup flow 설계 |
-| `start` | command + dispatch | 사용자 의도 기반 진입 라우터 — 자연어 발화면 의도 분류 후 자동 dispatch (concretize-idea / assess-product-change / status), 입력 없으면 메뉴 제시. command 이름을 모를 때 첫 entry |
+| `start` | command + dispatch | 사용자 의도 기반 진입 라우터 — 자연어 발화에서 컨텍스트 추출 + 자연스러운 질문(프로젝트 경로 / 작업 유형 / 상업성)으로 누락 정보 수집 후 확인 → 적절한 orchestrator(concretize-idea / assess-product-change)로 dispatch. command 이름 모를 때 첫 entry |
 | `status` | command + dispatch | artifact 탐지 (docs/prd.md / docs/feature-spec/ / docs/tech-spec.md / docs/actor-track-plan.yaml 등) 로 현재 lifecycle phase 추론 + 다음 권장 command 안내. phase 무관 호출 |
 | `write-a-skill` | command + dispatch | [META] 신규 buddy 스킬을 PROCEDURE.md + skill-catalog 등재 + 차용 4분류 정책 적용까지 한 사이클로 작성. RED-GREEN-REFACTOR subagent pressure test 강제. 사용자가 "새 스킬 만들자/추가하자/skill 작성" 할 때 호출 |
 | `save-context` | command + dispatch | decisions, remaining work, git status를 checkpoint로 저장해 future session이 branch가 달라도 이어받게 한다. phase 무관 — 어느 단계에서든 세션 전환 시 호출 |
