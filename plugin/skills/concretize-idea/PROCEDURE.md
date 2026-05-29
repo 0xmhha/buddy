@@ -1,10 +1,12 @@
-# concretize-idea — 1단계 Idea & Business Validation Orchestrator
+# concretize-idea — Phase 1 Mode A (Greenfield) Orchestrator
 
-1단계 라이프사이클 단계의 진입점. idea/concept → PRD draft + business viability report 를 생성하는 멀티-stage 파이프라인.
+Phase 1 Mode A의 진입점. idea/concept → PRD + HLD를 생성하는 멀티-stage 파이프라인.
 
-**진입 조건**: idea 또는 concept만 존재. 코드베이스 미존재 또는 상용 빌딩 시작 전.
-**산출물**: PRD draft, business viability report, market position summary.
-**다음 phase**: PRD 확정 후 → `define-features` (2단계).
+**진입 조건**: 코드베이스 미존재 + 아이디어 단계에서 시작 (Mode A — Greenfield). 기존 프로덕트 변경은 `assess-product-change` (Mode B) 사용.
+**산출물**: PRD (actors + use cases 포함), HLD (product 구성 + tech stack + use case → product mapping), PRD + HLD review report.
+**다음 phase**: PRD + HLD review 통과 후 → `define-features` (Phase 2).
+
+**참고**: 상업/비상업 구분은 Mode 결정과 무관 — 각 stage 내부에서 분기(예: stage 5 사업성 평가는 비상업 프로젝트의 경우 skip 가능).
 
 ---
 
@@ -120,34 +122,54 @@ HLD 필수 포함 항목 (9 섹션):
 ## 산출물 형식
 
 ```markdown
-## 1단계 산출물 — {idea 이름}
+## Phase 1 Mode A 산출물 — {idea 이름}
 
 ### Idea Validation Summary
 - Core hypothesis: ...
 - Validated assumptions: ...
 - Open questions: ...
 
-### Business Viability
+### Customer Segmentation (stage 3)
+- Primary user: ...
+- Buyer (B2B인 경우): ...
+- Early adopter persona: ...
+
+### Business Viability (stage 5, 상업 프로젝트만)
 - Market: TAM $X / SAM $X / SOM $X (추정 근거 포함)
-- Customer: [Primary user] vs [Buyer]
 - WTP: $X/month 또는 $X/feature (evidence)
 - GTM: [channel 1], [channel 2]
 - Key risks: ...
+- (비상업 프로젝트면 "skip — 사용자 명시" 한 줄)
 
-### PRD Draft
-[define-product-spec 산출물]
+### PRD (define-product-spec 산출물)
+- Actors + Use Cases (logical, with data flow)
+- User Stories
+- Functional / Non-Functional Requirements
+- Out of scope
+- ...
 
-### autoplan Review Summary
-[autoplan 4-mode review 결과]
+### HLD (write-hld 산출물)
+- Product Decomposition
+- Per-product Tech Stack
+- Inter-product Communication
+- Use Case → Product Mapping
+- ...
+
+### PRD + HLD Review Summary (autoplan 4-mode 결과)
+- review-scope findings
+- review-design findings
+- review-devex findings (해당 시)
+- review-engineering findings
 ```
 
 ---
 
 ## User Gate
 
-이 orchestrator는 2개 gate에서 사용자 확인을 요구한다:
+이 orchestrator는 3개 gate에서 사용자 확인을 요구한다:
 1. **Stage 1 gate**: idea 명확성 부족 시 — 계속 여부
-2. **Stage 3 gate**: 사업성 치명 결함 발견 시 — 피벗 여부
+2. **Stage 5 entry gate**: 상업/비상업 결정 — 사업성 평가(stage 5) 및 pricing/GTM(stage 6) 실행 여부 (비상업 프로젝트는 skip)
+3. **Stage 5 결과 gate**: 사업성 평가 후 치명 결함 발견 시 — 피벗 여부 (상업 프로젝트만)
 
 Gate 없이 자동 진행하지 않는다.
 
@@ -155,9 +177,10 @@ Gate 없이 자동 진행하지 않는다.
 
 ## 다음 phase
 
-PRD 확정 후:
-- `/buddy:define-features` — 2단계 Feature Definition & Backlog (권장)
-- `/buddy:autoplan` — PRD 재검토가 필요하면 standalone으로 추가 review
+PRD + HLD 작성 + review 통과 후:
+- `/buddy:define-features` — Phase 2 Feature Definition & Backlog (권장 정상 흐름)
+- `/buddy:autoplan` — PRD/HLD 재검토가 필요하면 standalone으로 추가 review
+- `/buddy:write-hld` — HLD를 수정해야 하면 standalone 재호출
 
 ---
 
