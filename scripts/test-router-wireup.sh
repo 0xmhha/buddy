@@ -76,13 +76,13 @@ fi
 # removed without updating tests. Bump this count when new skills land.
 # Excludes the .template/ placeholder.
 procedure_count=$(find "$SKILLS_DIR" -name PROCEDURE.md -not -path "*/.template/*" | wc -l | tr -d ' ')
-# 155 PROCEDURE-based skills + 1 router (SKILL.md, not PROCEDURE) = 156 total skill directories.
-# Last bumped 2026-05-29: +start (Cross-cutting, intent-based entry router for Phase 1).
-# Prior bumps: 2026-05-29 +write-hld; 2026-05-27 +assess-product-change; 2026-05-26 +audit-ubiquitous-language; 2026-05-23 +finish-development-branch; 2026-05-22 +publish-to-tracker.
-if [ "$procedure_count" = "155" ]; then
-    pass "PROCEDURE.md count is 155 (+ 1 router SKILL.md = 156 skills total)"
+# 156 PROCEDURE-based skills + 1 router (SKILL.md, not PROCEDURE) = 157 total skill directories.
+# Last bumped 2026-05-29: +evaluate-skill (Cross-cutting, skill quality auditor with 21-item checklist).
+# Prior bumps: 2026-05-29 +start, +write-hld; 2026-05-27 +assess-product-change; 2026-05-26 +audit-ubiquitous-language.
+if [ "$procedure_count" = "156" ]; then
+    pass "PROCEDURE.md count is 156 (+ 1 router SKILL.md = 157 skills total)"
 else
-    fail "expected 155 PROCEDURE.md files (156 skills minus router), found $procedure_count"
+    fail "expected 156 PROCEDURE.md files (157 skills minus router), found $procedure_count"
 fi
 
 # --- Check 3: plugin.json must NOT declare a `commands` field ----------------
