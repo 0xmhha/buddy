@@ -157,7 +157,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `classify-qa-tiers` | dispatch | [패턴 라이브러리] QA intensity를 Quick/Standard/Exhaustive 3 tiers로 분류 + fix→commit→re-verify loop |
 | `test-per-actor-use-case` | command + dispatch | actor 의 use case 단위 통합 테스트 — frontend(E2E), backend(integration), 3rd-party(contract). per-actor coverage gap 0 maintain |
 | `test-cross-actor-flow` | command + dispatch | cross-actor flow E2E — multi-actor chain (signup→email→verify→login 등) full-stack 검증. edge coverage + contract drift detection |
-| `run-load-test` | command + dispatch | sustained + soak + spike + stress 4 시나리오 + breaking point + capacity headroom — launch 직전 SLA 근거 |
+| `run-load-test` | dispatch (via `verify-quality` orchestrator 또는 `/buddy:run run-load-test`) | sustained + soak + spike + stress 4 시나리오 + breaking point + capacity headroom — launch 직전 SLA 근거 |
 | `audit-accessibility` | command + dispatch | WCAG 2.1 AA + axe + Lighthouse + manual screen reader 통합 a11y 감사 — ADA / EAA / KR 장애인차별금지법 compliance |
 | `audit-cost-efficiency` | command + dispatch | Infracost + per-component breakdown + unit economics ($/MAU) + waste detection + RI/SP savings recommendation |
 | `audit-i18n-coverage` | command + dispatch | locale 별 번역 누락 + fallback rate (>5% fail) + ICU MessageFormat 정합 + format / RTL 검증. coverage matrix + priority fix |
@@ -185,8 +185,8 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `write-changelog` | dispatch | [패턴 라이브러리] version bump + CHANGELOG release-summary format + voice rules + user-facing change summary |
 | `guard-destructive-commands` | dispatch | [패턴 라이브러리] rm -rf, DROP TABLE, force push 등 destructive bash command 전 risk taxonomy + safe exception |
 | `compose-safety-mode` | dispatch | [패턴 라이브러리 / META] guard-destructive-commands + freeze-edit-scope 같은 multiple safety hooks를 max safety mode로 합성 |
-| `run-uat` | command + dispatch | UAT scenario 실행 + go/no-go 판단 — designated stakeholder 가 critical flow 를 verify, evidence + sign-off 수집 |
-| `run-beta-program` | command + dispatch | 클로즈드 beta cohort (5-20 early adopter) 운영 + structured 피드백 + GA gating |
+| `run-uat` | dispatch (via `ship-release` orchestrator 또는 `/buddy:run run-uat`) | UAT scenario 실행 + go/no-go 판단 — designated stakeholder 가 critical flow 를 verify, evidence + sign-off 수집 |
+| `run-beta-program` | dispatch (via `ship-release` orchestrator 또는 `/buddy:run run-beta-program`) | 클로즈드 beta cohort (5-20 early adopter) 운영 + structured 피드백 + GA gating |
 | `setup-canary-deploy` | command + dispatch | canary deploy 단계 비율 + metric gate + auto-promote / rollback 정책 — staged rollout 으로 blast radius 제한 |
 | `setup-feature-flags` | command + dispatch | feature flag system 설계 + kill switch + targeting rule + flag lifecycle (cleanup) 정책 |
 | `setup-rollback-runbook` | command + dispatch | rollback decision tree (언제 rollback / 언제 forward fix) + 실행 절차 + verification — incident response 의 핵심 도구 |
