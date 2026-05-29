@@ -70,8 +70,7 @@ Phase: §N <phase-name>
 ┌─────────────────────────────────────────────────────────────────────┐
 │  Phase  │ 커맨드                  │ 용도                            │
 ├─────────┼─────────────────────────┼─────────────────────────────────┤
-│ 1단계(신규)│ /buddy:concretize-idea       │ Idea → PRD + 사업성 검증        │
-│ 1단계(기존)│ /buddy:assess-product-change │ 변경 평가 → scope → 다음 phase  │
+│ 1단계      │ /buddy:start                 │ 신규 아이디어 / 기존 프로젝트 변경 자동 라우팅  │
 │ 2단계      │ /buddy:define-features       │ Feature backlog + actor 정의    │
 │ 3단계      │ /buddy:design-system    │ 기술 설계 + API 계약             │
 │ 4단계      │ /buddy:plan-build       │ 구현 계획 (actor-track plan)    │

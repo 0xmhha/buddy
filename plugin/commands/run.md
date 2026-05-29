@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # /buddy:run
 
-`/buddy:run <target> <args...>` 형태로 buddy skill 카탈로그의 임의 skill 을 직접 호출한다. 전용 슬래시 커맨드(`/buddy:concretize-idea` 등)가 없는 stage / pattern skill 을 명시적으로 실행할 때 사용한다.
+`/buddy:run <target> <args...>` 형태로 buddy skill 카탈로그의 임의 skill 을 직접 호출한다. 전용 슬래시 커맨드(`/buddy:start`, `/buddy:status` 등)가 없는 stage / pattern skill, 또는 슬래시 커맨드가 제거된 내부 orchestrator(`concretize-idea`, `assess-product-change` 등)를 명시적으로 실행할 때 사용한다.
 
 ## 실행 지시
 

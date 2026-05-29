@@ -123,8 +123,9 @@
 
 ## 이 스킬을 사용하지 않는 경우
 
-- 이미 어떤 작업인지 명확함 → 직접 해당 command 호출 (예: `/buddy:concretize-idea`)
-- 진행 중인 작업 이어가기 → `/buddy:restore-context` 또는 직접 작업 command
+- 진행 중인 작업 이어가기 → `/buddy:restore-context`
+- 현재 phase 확인만 필요 → `/buddy:status`
+- (참고) Mode A/B orchestrator(`concretize-idea`, `assess-product-change`)는 슬래시 직접 호출이 없음 — `/buddy:start`가 라우팅
 - 현재 phase가 궁금함 → `/buddy:status`
 
 ---

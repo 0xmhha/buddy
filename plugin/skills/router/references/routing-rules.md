@@ -127,7 +127,7 @@
 
 | 커맨드 | 단계 | 용도 |
 |--------|------|------|
-| `/buddy:concretize-idea` | 1. 아이디어 구체화 | 검증 → 사업성 평가 → PRD 작성 |
+| `/buddy:start` | 1. 진입 라우터 | 신규 아이디어 → `concretize-idea` / 기존 프로덕트 변경 → `assess-product-change` 자동 dispatch |
 | `/buddy:define-features` | 2. Feature 정의 | PRD → actor / use case → feature backlog |
 | `/buddy:design-system` | 3. 기술 설계 | 기술 스택 / API 계약 / infra / 데이터 모델 |
 | `/buddy:plan-build` | 4. 구현 계획 | actor 별 task 분해 + 의존성 그래프 |

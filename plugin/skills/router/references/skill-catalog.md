@@ -28,8 +28,8 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 
 | Skill name | Command | When to use (1줄) |
 |------------|---------|------------------|
-| `concretize-idea` | `/buddy:concretize-idea` | idea/concept → PRD + business viability. 신규 프로덕트(greenfield)일 때 시작 |
-| `assess-product-change` | `/buddy:assess-product-change` | 기존 프로덕트 변경 → 영향 평가 + scope 분류 + 다음 phase routing |
+| `concretize-idea` | (직접 호출 불가, `/buddy:start` 경유) | idea/concept → PRD + HLD + review. 신규 프로덕트(greenfield)일 때 — `/buddy:start`로 진입 → 라우팅 |
+| `assess-product-change` | (직접 호출 불가, `/buddy:start` 경유) | 기존 프로덕트 변경 → 영향 평가 + scope 분류 + 다음 phase routing — `/buddy:start`로 진입 → 라우팅 |
 | `define-features` | `/buddy:define-features` | PRD → feature backlog (actor/use case/system boundary 포함) |
 | `design-system` | `/buddy:design-system` | feature backlog → tech stack ADR + infra + API + data model |
 | `plan-build` | `/buddy:plan-build` | technical design → actor별 task graph + parallel execution plan |
@@ -50,7 +50,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
-| `assess-product-change` | command + dispatch | 기존 프로덕트 변경 평가 — 버그/기능/개선 무관하게 change trigger 접수 → 영향 평가 → scope 분류(small/medium/large) → 다음 phase routing. `concretize-idea`가 "없는 것을 만든다"면 이 스킬은 "있는 것을 바꾼다" |
+| `assess-product-change` | dispatch only (via `/buddy:start`) | 기존 프로덕트 변경 평가 — 버그/기능/개선 무관하게 change trigger 접수 → 영향 평가 → scope 분류(small/medium/large) → 다음 phase routing. `concretize-idea`가 "없는 것을 만든다"면 이 스킬은 "있는 것을 바꾼다" |
 | `validate-idea` | command + dispatch | YC 스타일 아이디어 검증 인터뷰 — 6 forcing question으로 product idea를 stress-test |
 | `validate-advanced-edge-idea` | command + dispatch | validate-idea 통과 후 edge case, hidden assumption, second-order effect를 압박 인터뷰(grilling)로 박멸 |
 | `assess-business-viability` | command + dispatch | 아이디어가 사업으로 성립하는지 7차원(TAM/SAM/SOM, 고객-구매자, willingness-to-pay, GTM, 경쟁, unit economics, 규제)으로 평가 |
