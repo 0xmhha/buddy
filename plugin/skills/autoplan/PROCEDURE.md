@@ -17,14 +17,19 @@ One Command. Rough 계획을 입력하면 완전 리뷰된 계획이 출력된�
 
 이 스킬은 **Claude Code의 리뷰 스킬을 순차 orchestrate**. 각 phase는 해당 스킬을 `Skill` tool로 invoke:
 
-| 스킬 | 목적 |
-|------|------|
-| `review-scope` | 전략, scope, 전제 — "이게 올바른 문제인가" |
-| `review-engineering` | 아키텍처, edge case, 테스트 coverage, performance |
-| `review-design` | 정보 hierarchy, 상호작용 상태, 접근성 (UI scope만) |
-| `review-devex` | API/CLI 인체공학, TTHW, 에러 메시지, 문서 (DX scope만) |
+| 스킬 | 검증 대상 산출물 | 검증 가능 시점 |
+|------|---------------|-------------|
+| `review-scope` | PRD (`define-product-spec` 산출물의 problem/use cases/scope) | PRD 완료 후 |
+| `review-design` | HLD (`write-hld` §1~§5: product decomposition + use case → product mapping) | HLD 완료 후 |
+| `review-devex` | HLD (`write-hld` §3, §9: SDK/CLI/API surface가 있을 때) | HLD 완료 후 (DX scope) |
+| `review-engineering` | HLD (`write-hld` §3, §4: per-product tech stack + inter-product communication) + Phase 4 implementation plan (있으면) | HLD 완료 후 |
 
-해당 스킬이 환경에 없으면 그 phase auto-skip (한 줄 노트).
+해당 스킬이 환경에 없으면 그 phase auto-skip (한 줄 노트). 산출물(PRD/HLD)이 없으면 해당 review 한 줄 노트 후 skip.
+
+**호출 시점**: 본 스킬은 다음 시점에 호출 가능 —
+- Phase 1 끝 (PRD + HLD 완료 시) — 가장 큰 가치, 구현 전 검증
+- Phase 3 끝 (detailed design 완료 시) — HLD가 detailed로 확장된 후 재검증
+- Phase 4 끝 (implementation plan 완료 시) — review-engineering의 plan 검증
 
 선택: **외부 voice** (두 번째 의견 — 독립 컨텍스트의 서브 에이전트, 또는 외부 LLM CLI). 구성되면 각 phase가 **dual voice** 합의 pass 실행; 사용 불가면 single-voice 리뷰로 degrade하고 계속.
 

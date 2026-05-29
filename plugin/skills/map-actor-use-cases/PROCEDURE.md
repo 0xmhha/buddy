@@ -25,6 +25,8 @@ UML use case diagram 등가 작업. actor 시점에서 시스템과의 상호작
 2. **독립성**: 각 use case는 actor 단독으로 식별 가능한 상호작용
 3. **측정 가능**: use case는 6단계 QA에서 테스트 가능해야 함
 4. **현재 scope**: 8단계의 iteration에서 발견된 use case는 2단계 재진입 시 추가
+5. **LOGICAL 수준**: 어느 product가 처리하는지는 명시 X — 그건 HLD(`write-hld`) §5에서 매핑. 본 스킬은 "누가/무엇/데이터"만 담당
+6. **데이터 흐름 명시**: 각 use case는 actors 간 데이터 in/out을 포함 — service 제공 내용과 함께
 
 ---
 
@@ -34,9 +36,9 @@ UML use case diagram 등가 작업. actor 시점에서 시스템과의 상호작
 
 `identify-actors`의 출력(actor 목록)을 입력으로 받는다.
 
-### 2. Actor별 Use Case 열거
+### 2. Actor별 Use Case 열거 (LOGICAL — 데이터 흐름 포함)
 
-각 actor에 대해 시스템과의 상호작용을 나열한다.
+각 actor에 대해 시스템과의 상호작용 + 데이터 흐름을 나열한다.
 
 ```yaml
 actor_use_cases:
@@ -45,19 +47,41 @@ actor_use_cases:
       - id: uv-001
         title: "회원가입 페이지에 접근한다"
         trigger: "landing page CTA 클릭"
+        actors_involved: [anonymous-visitor, system]
+        interactions:
+          - from: anonymous-visitor
+            to: system
+            data: "URL navigation"
+          - from: system
+            to: anonymous-visitor
+            data: "회원가입 폼 HTML/UI"
+        service_provided: "회원가입 진입점 제공"
         outcome: "회원가입 폼 표시"
-        
-      - id: uv-002
-        title: "로그인 페이지에 접근한다"
-        trigger: "login 링크 클릭"
-        outcome: "로그인 폼 표시"
-        
+
   - actor_id: authenticated-user
     use_cases:
       - id: au-001
         title: "이메일/비밀번호로 회원가입한다"
         trigger: "회원가입 폼 제출"
-        outcome: "계정 생성 + verification email 수신"
+        actors_involved: [authenticated-user, system, sendgrid]
+        interactions:
+          - from: authenticated-user
+            to: system
+            data: "email, password, (optional) profile fields"
+          - from: system
+            to: sendgrid
+            data: "verification email request (recipient, link)"
+          - from: sendgrid
+            to: authenticated-user
+            data: "verification email"
+          - from: authenticated-user
+            to: system
+            data: "verification link click (token)"
+          - from: system
+            to: authenticated-user
+            data: "계정 활성화 확인 + JWT 발급"
+        service_provided: "신규 계정 생성 + 이메일 검증 + 첫 인증 토큰 발급"
+        outcome: "계정 생성 + verification email 수신 + 활성화 완료"
         
       - id: au-002
         title: "이메일/비밀번호로 로그인한다"
@@ -108,7 +132,7 @@ actor_use_cases:
 
 ---
 
-## 출력 형식
+## 출력 형식 (LOGICAL — physical product 매핑은 HLD §5에서)
 
 ```yaml
 actor_use_cases:
@@ -118,10 +142,18 @@ actor_use_cases:
       - id: {actor_prefix}-{N}
         title: "{동사 + 목적어}"
         trigger: "{무엇이 이 use case를 시작하는가}"
+        actors_involved: [{actor_ids}]              # 이 use case에 등장하는 모든 actor
+        interactions:                                # actor 간 데이터 흐름 (logical)
+          - from: {actor_id}
+            to: {actor_id}
+            data: "{전달 데이터의 의미적 설명}"
+        service_provided: "{이 use case가 제공하는 서비스 한 문장}"
         outcome: "{성공 시 결과}"
-        
+
 total_use_cases: {N}
 ```
+
+**참고**: `interactions`의 data는 의미적 설명(예: "credentials") 수준. 실제 형식(JSON/protobuf/SQL)과 product 매핑은 `write-hld` §5 (Use Case → Product Mapping)에서 명시.
 
 ---
 

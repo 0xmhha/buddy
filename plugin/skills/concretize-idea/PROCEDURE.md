@@ -8,20 +8,28 @@
 
 ---
 
-## Stage 흐름
+## Stage 흐름 (재구조화 2026-05-29 — customer/use case 위치 정정 + HLD 추가)
 
 ```
 concretize-idea (1단계 phase orchestrator)
 ├── stage 1: validate-idea          (idea stress-test — 6 forcing questions)
 ├── stage 2: validate-advanced-edge-idea  (edge case / hidden assumption grilling)
-├── stage 3: assess-business-viability  (7차원 사업성 평가)
-├── stage 4: analyze-competition-and-substitutes  (경쟁/대체재 매트릭스)
-├── stage 5: review-pricing-and-gtm  (pricing model + GTM channel 평가)
-├── stage 6: map-customer-segments  (Primary user vs Buyer + early adopter)
-├── stage 7: define-product-spec    (PRD draft 생성)
-└── stage 8: autoplan               (PRD 4-mode review — cross-phase sub-orchestrator)
-        └── invokes review-scope / review-engineering / review-design / review-devex
+├── stage 3: map-customer-segments  (사용자/구매자 분리 — 후속 단계의 입력)
+├── stage 4: analyze-competition-and-substitutes  (경쟁/대체재 — target customer 기준)
+├── stage 5: assess-business-viability  (TAM/SAM/SOM — customer 정의 기반)
+├── stage 6: review-pricing-and-gtm  (pricing/GTM — customer의 WTP/채널 기반)
+├── stage 7: define-product-spec    (PRD draft — actors + use cases(logical) 포함)
+│       └── invokes identify-actors + map-actor-use-cases (logical)
+├── stage 8: write-hld              (High Level Design — product 구성 + tech stack + use case → product mapping)
+└── stage 9: autoplan               (PRD + HLD 통합 4-mode review)
+        └── invokes review-scope / review-design / review-devex / review-engineering
 ```
+
+**중요 변경 (2026-05-29)**:
+- `map-customer-segments`를 stage 6 → stage 3으로 이동 (후속 3개 단계가 customer 정의를 입력으로 요구)
+- `assess-business-viability` 위치를 stage 3 → stage 5로 이동 (customer + 경쟁 분석 후 사업성 평가)
+- `write-hld` 신규 stage 8 추가 — review-design / review-devex / review-engineering의 검증 대상 산출물 생산
+- stage 7 `define-product-spec` 내부에서 `identify-actors` + `map-actor-use-cases` 호출 (logical 수준)
 
 ---
 
@@ -40,44 +48,72 @@ concretize-idea (1단계 phase orchestrator)
 
 **Stage 1 gate**: idea가 충분히 명확하지 않으면 stage 3으로 이동하지 않는다. 사용자와 함께 모호성을 해소한 뒤 진행.
 
-### Stage 3-5: Business Validation
-
-`assess-business-viability` skill을 invoke해 TAM/SAM/SOM, 고객-구매자 분리, willingness-to-pay, GTM, 경쟁, unit economics, 규제 7차원을 평가한다.
-
-`analyze-competition-and-substitutes` skill을 invoke해 경쟁/대체재 매트릭스를 작성한다:
-- Direct competitors, indirect competitors, substitutes 3분류
-- 각 항목별 price, target user, key differentiator, market share(추정) 표
-
-`review-pricing-and-gtm` skill을 invoke해 pricing model 설계와 GTM channel 전략을 평가한다.
-
-**Stage 3 gate**: 사업성 평가 결과 치명적 결함(willingness-to-pay 없음, regulatory block 등)이 발견되면 사용자에게 보고하고 계속 여부를 묻는다.
-
-### Stage 6: Customer Segmentation
+### Stage 3: Customer Segmentation (먼저)
 
 `map-customer-segments` skill을 invoke해 고객 세그먼트를 식별한다:
 - Primary user vs Buyer 분리 (B2B의 경우 특히 중요)
 - Early adopter 프로필 (demographics, pain intensity, current solution)
 - Secondary segment 2-3개
 
-### Stage 7: PRD Generation
+**왜 먼저인가**: stage 4-6 (경쟁/사업성/pricing)이 모두 "고객이 누구"인지를 입력으로 요구한다.
 
-`define-product-spec` skill을 invoke해 공식 PRD를 생성한다.
+### Stage 4: Competition Analysis
+
+`analyze-competition-and-substitutes` skill을 invoke해 stage 3에서 정의된 target customer 기준으로 경쟁/대체재 매트릭스를 작성한다:
+- Direct competitors, indirect competitors, substitutes 3분류
+- 각 항목별 price, target user, key differentiator, market share(추정) 표
+
+### Stage 5: Business Viability
+
+`assess-business-viability` skill을 invoke해 TAM/SAM/SOM, willingness-to-pay, GTM, unit economics, 규제 7차원을 평가한다.
+
+**Stage 5 gate**: 사업성 평가 결과 치명적 결함(willingness-to-pay 없음, regulatory block 등)이 발견되면 사용자에게 보고하고 계속 여부를 묻는다. **비상업 프로젝트(학습/해커톤/OSS/hobby)는 본 stage skip 가능** — 사용자가 명시.
+
+### Stage 6: Pricing + GTM (상업 프로젝트만)
+
+`review-pricing-and-gtm` skill을 invoke해 pricing model 설계와 GTM channel 전략을 평가한다.
+
+비상업 프로젝트는 skip.
+
+### Stage 7: PRD Generation (Actors + Use Cases 포함)
+
+`define-product-spec` skill을 invoke해 공식 PRD를 생성한다. 내부에서 `identify-actors` + `map-actor-use-cases`(logical)를 호출하여 actors와 use cases를 PRD에 명시.
 
 PRD 필수 포함 항목:
 - Problem Statement + Solution
-- Target user + Buyer (stage 6 결과 반영)
+- Target user + Buyer (stage 3 결과 반영)
+- **Actors** (identify-actors 산출)
+- **Use Cases (logical, with data flow)** (map-actor-use-cases 산출 — actors_involved + interactions + service_provided)
+- User Stories (use case의 narrative 버전)
 - Core features (3-5개, MoSCoW 분류)
 - Out of scope
 - Success metrics (user behavior + business + quality + operations)
 - Risk register (technical / business / legal)
 
-### Stage 8: PRD Review
+### Stage 8: High Level Design (HLD)
 
-`autoplan` (cross-phase review sub-orchestrator)을 invoke해 PRD draft를 4-mode review한다:
-- `review-scope` — 범위 형성 / 결정
-- `review-engineering` — 기술 구현 가능성
-- `review-design` — 디자인 차원 (0-10 score)
-- `review-devex` — developer-facing product이면 DX 검토
+`write-hld` skill을 invoke해 PRD를 받아 High Level Design 문서를 작성한다.
+
+HLD 필수 포함 항목 (9 섹션):
+1. Product Decomposition (frontend/app/backend/DB/infra/SDK)
+2. Per-product Role
+3. Per-product Tech Stack (language + framework + key library)
+4. Inter-product Communication (REST/gRPC/IPC/event 등)
+5. **Use Case → Product Mapping** (PRD의 use case 데이터 흐름을 product에 매핑)
+6. External Integration
+7. Deployment Topology
+8. Licensing
+9. Distribution Model
+
+**왜 필요한가**: stage 9의 review-design / review-devex / review-engineering이 검증할 산출물.
+
+### Stage 9: PRD + HLD Review
+
+`autoplan` (cross-phase review sub-orchestrator)을 invoke해 PRD + HLD를 통합 4-mode review한다:
+- `review-scope` — PRD의 problem/use cases/scope 검증
+- `review-design` — HLD의 product 구성 + use case → product mapping 검증
+- `review-devex` — HLD의 SDK/CLI/API surface가 있으면 그 surface 검증
+- `review-engineering` — HLD의 per-product tech stack + communication patterns 검증
 
 ---
 

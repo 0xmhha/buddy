@@ -61,7 +61,8 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `analyze-competition-and-substitutes` | command + dispatch | 4 분류 (direct/indirect/substitute/non-consumption) × 4 차원 매트릭스 + positioning (Moore) + moat (7 Powers) + 선택적 vs page |
 | `decide-target-market` | command + dispatch | target market 결정 (글로벌 / 단일 지역 / 다지역) + region cluster trigger. assess-business-viability 후, region-specific extension 의 활성화 trigger |
 | `review-pricing-and-gtm` | dispatch | pricing model 설계와 GTM(Go-To-Market) channel 전략 평가 |
-| `define-product-spec` | command + dispatch | 아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정 |
+| `define-product-spec` | command + dispatch | 아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정. write-spec 역할 — actors + use cases(logical) 포함 |
+| `write-hld` | command + dispatch | PRD 완료 후 High Level Design 작성 — product decomposition + tech stack + inter-product communication + use case→product mapping. autoplan(validate-spec)의 review-design / review-devex / review-engineering 검증 대상 생산 |
 
 ### §2 Stage Skills — Feature Definition & Backlog
 

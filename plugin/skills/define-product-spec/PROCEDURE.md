@@ -65,12 +65,26 @@
 2. 핵심 user flow 3-5개 (text 또는 diagram)
 3. 핵심 차별점 (vs 경쟁사 / status quo)
 
+### Phase 2.5. Actors + Use Cases (LOGICAL)
+
+PRD에 actors와 use cases를 명시적으로 포함한다. 이는 후속 `write-hld`의 §5 Use Case → Product Mapping의 입력이 되고, `autoplan`(validate-spec)의 review-scope가 검증하는 핵심 대상이다.
+
+**호출 sub-skill**:
+1. `identify-actors` — actor 식별 (user/system/3rd-party/external-tool 4분류)
+2. `map-actor-use-cases` — actor별 use case + 데이터 흐름 정의 (LOGICAL 수준)
+
+**중요**: 이 단계에서 use case는 **logical 수준** — "사용자 → 시스템: credentials" 같은 의미적 데이터 흐름까지만. 어느 product가 처리하는지(physical mapping)는 HLD §5의 책임.
+
+산출물 형식은 각 sub-skill의 PROCEDURE.md 참조.
+
 ### Phase 3. User Stories
 "As a <persona>, I want <action>, so that <value>" 형식.
 각 story에:
 - acceptance criteria 2-5개
 - priority (P0 / P1 / P2)
 - dependencies (다른 story 또는 기술 prerequisite)
+
+User Story는 use case의 narrative 버전 — 같은 정보를 stakeholder 친화적으로 표현. 둘 다 PRD에 포함.
 
 ### Phase 4. Success Criteria (KPI)
 4 카테고리로:
@@ -122,7 +136,26 @@ PRD를 vertical slice 가능한 feature 후보로 변환 (다음 스킬 입력).
 ## 3. Target User & Buyer
 - **User**: <persona>
 - **Buyer**: <persona, user와 다르면>
-- **Use Cases**: 3-5개
+
+## 3.5. Actors & Use Cases (LOGICAL)
+`identify-actors` + `map-actor-use-cases` 산출물 인용.
+
+### Actors
+- (user) anonymous-visitor: 로그인 없이 접근하는 사용자
+- (user) authenticated-user: 로그인된 사용자
+- (system) auth-service: 인증/인가 담당
+- (3rd-party) sendgrid: 이메일 발송 SaaS
+
+### Use Cases (logical, with data flow)
+- **uc-001 "이메일 로그인"**
+  - actors_involved: [authenticated-user, auth-service]
+  - interactions:
+    - authenticated-user → auth-service: credentials (email, password)
+    - auth-service → authenticated-user: JWT (24h expiry)
+  - service_provided: 사용자 인증 + 세션 토큰 발급
+- ...
+
+→ HLD(`write-hld`) §5에서 각 use case가 어느 product를 거치는지 physical mapping.
 
 ## 4. Success Criteria
 | Category | KPI | Baseline | Target | Measurement |
@@ -177,8 +210,11 @@ PRD를 vertical slice 가능한 feature 후보로 변환 (다음 스킬 입력).
 ## 7. 자매 스킬 (Sibling Skills)
 
 - 앞 단계: `validate-idea`, `assess-business-viability`, `review-scope` — `Skill` tool로 invoke
+- 내부 호출 (Phase 2.5): `identify-actors`, `map-actor-use-cases` — actor / use case 정의
+- 다음 단계: `write-hld` — High Level Design (product 구성 + tech stack + use case → product mapping)
 - 페어: `critique-plan` — PRD 작성 후 비평 받기
-- 다음 단계: `split-work-into-features` — feature candidate를 vertical slice feature로 분해
+- 통합 검증: `autoplan` (validate-spec) — PRD + HLD 4-mode review (scope/design/devex/engineering)
+- 후속: `split-work-into-features`, `define-features` (Phase 2) — feature 변환
 - 후속 검증: `review-license-and-ip-risk`, `audit-security` — 상용 출시 전
 
 ## 8. Anti-patterns

@@ -77,12 +77,14 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 | Artifact | 형식 | 소비자 |
 |----------|------|--------|
-| PRD (Product Requirements Document) | `docs/prd.md` | Phase 2 `define-features` |
+| PRD (Product Requirements Document) | `docs/prd.md` — actors + use cases(logical) 포함 | Phase 2 `define-features`, Phase 1 `write-hld` |
+| HLD (High Level Design) | `docs/hld.md` — 9 섹션 (product 구성 + tech stack + use case → product mapping) | Phase 1 `autoplan`(validate-spec), Phase 3 `design-system` |
 | Business viability report | PRD 내 섹션 또는 별도 문서 | Phase 1 내부 결정 근거 |
 | Market/competitor analysis | PRD 내 섹션 | Phase 1 내부 결정 근거 |
-| Customer segment map | PRD 내 섹션 | Phase 2 `identify-actors` |
+| Customer segment map | PRD 내 섹션 | Phase 2 `identify-actors` 미사용 (Phase 1로 이관) |
+| PRD + HLD review report (autoplan) | structured findings | Phase 2 `define-features`로 forward 또는 PRD/HLD 수정 |
 
-**종료 → 다음**: Phase 2 `define-features` (전체 흐름 진입).
+**종료 → 다음**: Phase 2 `define-features` (전체 흐름 진입). PRD + HLD가 review 통과 후.
 
 **Mode A 소속 스킬:**
 
@@ -97,6 +99,7 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 | `conduct-customer-interview` | 고객 인터뷰 + Mom Test |
 | `analyze-competition-and-substitutes` | 경쟁/대체재 매트릭스 |
 | `decide-target-market` | target market 결정 + region trigger |
+| `write-hld` | High Level Design 작성 — product 구성 + tech stack + use case → product mapping (PRD 완료 후) |
 | `review-pricing-and-gtm` | pricing + GTM channel 평가 |
 | `define-product-spec` | PRD 작성 |
 
