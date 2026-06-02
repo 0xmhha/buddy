@@ -92,7 +92,7 @@ Trigger: command md 가 `mode: parallel` 과 `targets: name1, name2, name3` 을 
 
 ## Skill index
 
-Buddy 는 78 개 skill 을 **artifact 의존성 그래프(DAG)** 로 조직한다. 아래 §1~§9 는 그래프를 사람이 읽기 쉽게 묶은 **클러스터 라벨**이며 강제 실행 순서가 아니다 — 진입점은 "지금 존재하는 artifact 의 frontier" 로 결정된다. 각 클러스터는 진입점 orchestrator 와 그 안의 stage skill 집합을 가진다.
+Buddy 는 모든 skill 을 **artifact 의존성 그래프(DAG)** 로 조직한다. 아래 §1~§9 는 그래프를 사람이 읽기 쉽게 묶은 **클러스터 라벨**이며 강제 실행 순서가 아니다 — 진입점은 "지금 존재하는 artifact 의 frontier" 로 결정된다. 각 클러스터는 진입점 orchestrator 와 그 안의 stage skill 집합을 가진다. (전체 skill 목록·개수의 SSoT 는 [`references/skill-catalog.md`](./references/skill-catalog.md) — 본 표는 orchestrator entry 만.)
 
 라이프사이클 정의·노드 명사·DoR/DoD 계약의 SSoT 는 [`references/se-lifecycle-naming.md`](./references/se-lifecycle-naming.md) (phase 정체성은 [`references/engineering-phases.md`](./references/engineering-phases.md)) 다.
 
@@ -122,7 +122,8 @@ Cross-phase 보조:
 2. **매칭 없으면 frontier 로 진입 노드 결정**: 현재 존재하는 artifact 를 보고(필요 시 `status`) 어느 노드까지 DoD 가 채워졌는지 판단해 그 다음 노드를 진입점으로 둔다.
 3. **DoR 충족 검사 (prerequisite gate)**: 진입하려는 노드의 DoR(required input artifact)이 없으면, 그것을 생산하는 **upstream 노드로 자동 선행**한다 (예: Software Design 요청인데 SRS 부재 → 먼저 §2). 이는 backtrack·skip·scope-routing 을 아우르는 단일 규칙이다.
 4. **stage 단독 명시 존중**: 사용자가 stage skill 명을 직접 지정하면 orchestrator 로 escalate 하지 않는다 (User Sovereignty).
-5. **lazy-load 트리거**:
-   - 위 인라인 표로 노드가 정해지면 추가 Read 불필요.
-   - 노드 내 stage·domain·pattern skill 이 필요하거나 entry-point 가 아닌 target 이면 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/skill-catalog.md` 로 전체 카탈로그 확인.
-   - 2개 이상 skill 사이에서 모호하면 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/routing-rules.md` §3 케이스별 결정 참조.
+5. **lazy-load 트리거** (노드가 정해진 뒤에만, 필요한 것만):
+   - 위 인라인 표(orchestrator entry)로 노드가 정해지면 추가 Read 불필요.
+   - 노드 §N 내 **stage·domain skill** 이 필요하면 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/catalog/phase-N-*.md` (**해당 노드 shard 1개만** — 전체 카탈로그 로드 금지, 토큰 절약). orchestrator·cross-cutting 목록·노드별 shard 맵은 `skills/router/references/skill-catalog.md` 인덱스.
+   - **노드 *내*** 2개+ 모호 → 그 shard 의 `Not when`(anti-trigger)/disambiguation 으로 해소.
+   - **노드 *간*** 모호 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/routing-rules.md` §3 케이스별 결정.

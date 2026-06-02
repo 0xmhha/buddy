@@ -98,111 +98,39 @@
 
 ---
 
-## 4. 9-Phase 라이프사이클 라우팅 표
+## 4. 노드 → orchestrator 매핑 (SSoT 포인터)
 
-> 사용자 발화나 상황이 어느 phase에 속하는지 먼저 식별하고, 그 phase의 skill만 후보로 둔다.
-
-| Phase | Orchestrator | 진입 조건 | Stage skills (보유) | Cross-cutting |
-|-------|-------------|---------|---------------------|---------------|
-| §1 Discovery / Inception (Mode A) | `concretize-idea` | idea/concept만 존재 (greenfield) | `validate-idea`, `validate-advanced-edge-idea`, `assess-business-viability`, `review-pricing-and-gtm`, `define-product-spec` | `apply-builder-ethos`, `autoplan`(review) |
-| §1 Impact Analysis (Mode B) | `assess-product-change` | 기존 프로덕트에 변경 필요 | — (scope 평가 후 §2/§3/§5로 routing) | — |
-| §2 Requirements Specification | `define-features` | PRD 확정 | `identify-actors`, `map-actor-use-cases`, `map-use-case-to-system-boundary`, `compose-feature-from-use-cases`, `define-feature-spec`, `score-feature-priority`, `map-feature-dependencies`, `split-work-into-features`, `query-feature-registry`, `triage-work-items` | — |
-| §3 Software Design | `design-system` | Feature backlog 확정 | `review-architecture`, `review-engineering`, `design-artifact-storage`, `design-billing-system`, `design-claude-hooks`, `design-deploy-strategy`, `design-embedding-search`, `design-mcp-server`, `consult-codex`, `consult-design-system`, `verify-best-alternative` | `autoplan`(review) |
-| §4 Iteration Planning | `plan-build` | Technical design 확정 | — | `autoplan`(review) |
-| §5 Construction | `build-feature` | Implementation plan 확정 | `build-with-tdd`, `iterate-fix-verify`, `freeze-edit-scope`, `dispatch-parallel-agents`, `diagnose-bug`, `consult-codex` | — |
-| §6 Verification & Validation | `verify-quality` | Code complete | `classify-qa-tiers`, `run-browser-qa`, `monitor-regressions`, `audit-security`, `audit-live-devex`, `measure-code-health`, `classify-review-risks`, `review-ai-safety-liability`, `review-privacy-data-risk`, `review-license-and-ip-risk`, `review-terms-policy-readiness` | — |
-| §7 Release & Deployment | `ship-release` | Quality gate pass | `setup-quality-gates`, `auto-create-pr`, `automate-release-tagging`, `sync-release-docs`, `write-changelog`, `guard-destructive-commands`, `compose-safety-mode` | — |
-| §8 Operation & Maintenance | `iterate-product` | Production traffic | `design-ab-experiment`, `analyze-ab-experiment`, `analyze-user-funnel`, `generate-improvement-tasks`, `handle-incident`, `conduct-postmortem`, `monitor-regressions`, `summarize-retro` | — |
-| §9 Retirement / Decommissioning | `manage-lifecycle` | Feature/product 노후화 | — | — |
+> 이 표는 노드→orchestrator 매핑의 3중복(SKILL.md·skill-catalog·본 문서)을 제거하기 위해 다음으로 이관되었다:
+> - **노드 진입점·orchestrator + stage skill shard 맵** → [`skill-catalog.md`](./skill-catalog.md) §2
+> - **노드의 진입 조건(DoR)·산출물(DoD)·전이 규칙** → [`engineering-phases.md`](./engineering-phases.md) §2·§3
+> - **노드 *내* stage skill 선택** → 각 [`catalog/phase-N-*.md`](./catalog/) shard (`When to use` + `Not when` anti-trigger)
+>
+> 본 문서(routing-rules)는 **노드 *간* 충돌·모호 해소**(§1 우선순위 / §2 도메인 표 / §3 케이스)에만 집중한다.
 
 ---
 
-## 5. 노출된 커맨드 목록 (plugin.json commands)
+## 5. 노출 커맨드 목록 (SSoT 포인터)
 
-> 사용자가 `/buddy:<name>`으로 직접 호출할 수 있는 29개 커맨드.
-> 9개 단계 진입점 + 1개 다각도 리뷰 + 5개 공통 도구 + 13개 단계별 세부 작업 + 1개 상태 확인 = 29.
-> 패턴 라이브러리와 보관 스킬은 manifest 에 노출하지 않는다.
+> 사용자가 `/buddy:<name>`으로 직접 호출 가능한 command **전체 목록의 SSoT는 [`.claude-plugin/plugin.json`](../../../.claude-plugin/plugin.json) `commands`** (개수 하드코딩 금지 — drift 방지). 이전의 인라인 command 목록은 인벤토리이므로 본 문서(모호 규칙)의 역할이 아니라 제거했다.
+>
+> - 각 command가 dispatch하는 skill·노드 → [`skill-catalog.md`](./skill-catalog.md) §2 + 해당 [`catalog/phase-N-*.md`](./catalog/) shard
+> - 노드별 사용자 대면 한국어 명사 → [`se-lifecycle-naming.md`](./se-lifecycle-naming.md) §1
+> - 패턴 라이브러리·보관 스킬은 manifest 에 노출하지 않는다.
 
-> **9-phase 라이프사이클 단계 약칭** (이하 표에서 사용 — `se-lifecycle-naming.md` SSoT):
-> 1) 문제·기회 검증 / 2) 기능 정의 / 3) 기술 설계 / 4) 구현 계획 / 5) 개발 / 6) 검증·확인 / 7) 출시 / 8) 운영·개선 / 9) 폐기·종료.
-
-### 5.1 상태 확인 (1)
-
-| 커맨드 | 단계 | 용도 |
-|--------|------|------|
-| `/buddy:status` | 공통 | 현재 작업 단계 확인 + 다음에 실행할 명령 안내 |
-
-### 5.2 단계 진입점 (9)
-
-> 각 라이프사이클 단계의 시작 게이트. 진입 조건이 맞으면 해당 단계의 모든 작업을 자동 진행.
-
-| 커맨드 | 단계 | 용도 |
-|--------|------|------|
-| `/buddy:start` | 1. 진입 라우터 | 신규 아이디어 → `concretize-idea` / 기존 프로덕트 변경 → `assess-product-change` 자동 dispatch |
-| `/buddy:define-features` | 2. 기능 정의 | PRD → actor / use case → feature backlog |
-| `/buddy:design-system` | 3. 기술 설계 | 기술 스택 / API 계약 / infra / 데이터 모델 |
-| `/buddy:plan-build` | 4. 구현 계획 | actor 별 task 분해 + 의존성 그래프 |
-| `/buddy:build-feature` | 5. 개발 | TDD 루프 + 병렬 worker agent |
-| `/buddy:verify-quality` | 6. 검증·확인 | 테스트 + 보안 + 컴플라이언스 |
-| `/buddy:ship-release` | 7. 출시 | PR + 태깅 + canary + UAT |
-| `/buddy:iterate-product` | 8. 운영·개선 | A/B 분석 + 인시던트 + funnel |
-| `/buddy:manage-lifecycle` | 9. 폐기·종료 | deprecation + 마이그레이션 + EOL |
-
-### 5.3 다각도 리뷰 (1)
-
-> 어느 단계든 plan / PRD / 설계 산출물이 생기면 호출 가능. 단일 단계 종속 없음.
-
-| 커맨드 | 단계 | 용도 |
-|--------|------|------|
-| `/buddy:autoplan` | 공통 (리뷰) | 산출물을 scope / design / engineering / DX 4개 관점으로 자동 리뷰 |
-
-### 5.4 공통 도구 (5)
-
-> 단계 종속 없음. 어디서든 호출 가능.
-
-| 커맨드 | 단계 | 용도 |
-|--------|------|------|
-| `/buddy:consult-codex` | 공통 | 외부 LLM (codex 등) 으로 second opinion |
-| `/buddy:save-context` | 공통 | 체크포인트 저장 (브랜치 무관 이어받기) |
-| `/buddy:restore-context` | 공통 | 체크포인트 복원 |
-| `/buddy:write-a-skill` | 공통 / 메타 | 신규 buddy 스킬 작성 + catalog 등재 + 차용 4분류 정책 적용 + RED-GREEN-REFACTOR subagent pressure test (한 사이클) |
-| `/buddy:decompose-blocker` | 공통 | 코드 작업 중 stuck 상태에서 문제 분해 + 비용-정보 매트릭스 기반 행동 후보 도출 (다음 스킬로 dispatch 준비) |
-
-### 5.5 단계별 세부 작업 (13)
-
-> 단계 진입점 안에서 자동 호출되거나, 사용자가 단독 호출 가능 (dual-mode).
-
-| 커맨드 | 단계 | 용도 |
-|--------|------|------|
-| `/buddy:validate-idea` | 1. 문제·기회 검증 | YC 스타일 검증 인터뷰 |
-| `/buddy:validate-advanced-edge-idea` | 1. 문제·기회 검증 | 엣지 케이스 / 숨은 가정 박멸 |
-| `/buddy:assess-business-viability` | 1. 문제·기회 검증 | 사업성 7차원 평가 |
-| `/buddy:define-product-spec` | 1. 문제·기회 검증 | PRD 고정 |
-| `/buddy:verify-best-alternative` | 3. 기술 설계 | AI 편향 방지 강제 다관점 검토 |
-| `/buddy:build-with-tdd` | 5. 개발 | TDD 루프 단독 실행 |
-| `/buddy:diagnose-bug` | 5. 개발 | 버그 재현 → 원인 → fix |
-| `/buddy:dispatch-parallel-agents` | 5. 개발 | worktree 격리 + worker 분배 |
-| `/buddy:audit-security` | 6. 검증·확인 | OWASP / secrets / JWT 점검 |
-| `/buddy:measure-code-health` | 6. 검증·확인 | 0-10 가중 점수 대시보드 |
-| `/buddy:auto-create-pr` | 7. 출시 | PR 자동 생성 |
-| `/buddy:setup-quality-gates` | 7. 출시 | pre-commit / pre-push 게이트 설치 |
-| `/buddy:summarize-retro` | 8. 운영·개선 | git history → 주간 회고 |
-
-> 단계 2 / 4 / 9 의 세부 작업 커맨드는 현재 0개 — 단계 진입점 안의 기존 stage skill 만 활성. 신규 작업은 [`docs/archive/tasks.md`](../../../../docs/archive/tasks.md) A-1 참조 (잔여 작업 SSoT 는 [`docs/BACKLOG.md`](../../../../docs/BACKLOG.md)).
-
-**규칙**: plugin.json `commands` 에 새 항목을 추가하려면 §2 의 도메인 우선순위 표에서 1~4 등급에 속해야 하고, 이 §5 의 적절한 sub-section 에 먼저 등재해야 한다. 패턴 라이브러리와 보관 스킬은 영구 비공개.
+**규칙**: plugin.json `commands` 에 새 항목을 추가하려면 §2 의 도메인 우선순위 표에서 1~4 등급에 속해야 하고, skill-catalog 인덱스(orchestrator·cross-cutting) 또는 해당 노드 shard 에 먼저 등재해야 한다. 패턴 라이브러리와 보관 스킬은 영구 비공개.
 
 ---
 
 ## 6. 새 skill 추가 시 router 검토 체크리스트
 
-새 skill을 `skill-catalog.md`에 등재한 직후 다음을 확인 — 위반하면 이 문서에 항목 추가:
+새 skill을 skill-catalog 인덱스(orchestrator·cross-cutting) 또는 해당 노드 shard(`catalog/phase-N-*.md`)에 등재한 직후 다음을 확인 — 위반하면 이 문서에 항목 추가:
 
 - [ ] 동일 command 이름이 이미 등재되어 있지 않다 (`/buddy:<name>` 충돌 X)
 - [ ] Description이 다른 skill의 description과 의미상 90% 이상 겹치지 않는다
+- [ ] **`Not when`(anti-trigger) 컬럼으로 같은 노드 형제 스킬과 경계가 그어졌다** (노드 내 라우팅 결정성)
 - [ ] 같은 hook event(PreToolUse 등)에 매핑된 skill이 이미 있을 때, 실행 순서가 명시되었다
 - [ ] 사용자 발화 패턴 1~2개로 이 skill이 dispatch되는지 mental sim 통과
-- [ ] Phase 소속이 명확히 정의되었다 (§4 Phase 표에 항목 추가)
+- [ ] 노드 소속이 명확히 정의되었다 (`engineering-phases.md` + 해당 `catalog/phase-N-*.md` shard 에 반영)
 
 ---
 

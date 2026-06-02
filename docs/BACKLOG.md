@@ -5,7 +5,7 @@
 > **Baseline**: v0.7.5 (2026-05-19) + ADR-006~011. **ADR-009 (cli buddy vision expansion) + ADR-010 (whole-product v1.0.0 scope) + ADR-011 (release policy) 가 본 문서의 진척률 framing 을 재정의함 — §1 / §2 / §4 모두 재산정.**
 >
 > **Identity / direction 문서 (변경 X 였으나 ADR-009 로 cli-buddy-spec §1.3 / §9 확장)**:
-> [`two-tracks-charter.md`](./two-tracks-charter.md) · [`archive/v0.1-spec.md`](./archive/v0.1-spec.md) · [`archive/cli-buddy-spec.md`](./archive/cli-buddy-spec.md) (§1.3 ADR-009 으로 9 책임 확장 / §9 W4~W8 추가) · [`archive/decision-1-schema-fields.md`](./archive/decision-1-schema-fields.md) · [`archive/skill-map.md`](./archive/skill-map.md) · [`dogfood-guide.md`](./dogfood-guide.md) · [`superpowers/decisions/README.md`](./superpowers/decisions/README.md) · [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md)
+> [`two-tracks-charter.md`](./two-tracks-charter.md) · [`archive/v0.1-spec.md`](./archive/v0.1-spec.md) · [`archive/cli-buddy-spec.md`](./archive/cli-buddy-spec.md) (§1.3 ADR-009 으로 9 책임 확장 / §9 W4~W8 추가) · [`archive/decision-1-schema-fields.md`](./archive/decision-1-schema-fields.md) · [`archive/skill-map.md`](./archive/skill-map.md) · [`superpowers/decisions/README.md`](./superpowers/decisions/README.md) · [`superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md`](./superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md)
 >
 > **이 SSoT 의 redirect (slimmed)**: [`HANDOFF.md`](./HANDOFF.md) §1 · [`archive/roadmap.md`](./archive/roadmap.md) · [`archive/tasks.md`](./archive/tasks.md)
 
@@ -90,13 +90,11 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 ✅ **9/9 close
 | `cli-buddy-spec.md` | cli buddy spec (Accepted, ADR-005) | minor — §9 W3-2 의 "deferred follow-on-of-follow-on (scheduler live indicator, log-tail scrollback)" 와 §9 W3-4 의 "branch-aware selection / self-check fail 의미" 가 *코드 미반영* (= Wave 4 항목). 이건 spec 자체가 *명시적으로 deferred 로 표기* 했으므로 진짜 drift 아님 | 변경 X (spec 이 정직) |
 | `decision-1-schema-fields.md` | 옵션 A schema 결정 근거 | NO GAP | 변경 X |
 | `skill-map.md` | 11-stage → 9-phase 매핑 reference | NO GAP (현행 SSoT 는 superpowers/specs/.../architecture.md) | 변경 X (역사적 보존) |
-| `dogfood-guide.md` | v0.7.x dogfood 실행 절차 | NO GAP (사용자 페이스 진행 중) | 변경 X |
-| `dogfood-feedback-template.md` | finding 양식 | NO GAP | 변경 X |
 | `response-format-guide.md` | response 양식 | NO GAP (코드와 직접 매핑 X) | 변경 X |
 | `superpowers/decisions/*` | ADR 8 건 모두 Accepted | NO GAP | 변경 X |
 | `superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` | plugin 9-phase 아키텍처 SSoT | NO GAP (100% cover) | 변경 X |
 | `superpowers/specs/2026-05-10-analytics-mcp-spec.md` | analytics-mcp spec | NO GAP (W4-2.1~2.6 Done) | 변경 X |
-| **`HANDOFF.md`** | 세션 인계 가이드 (operational) | §1 표는 v0.7.2 baseline (현재 v0.7.5) — 한 줄 갱신 필요 | **§1 patch** |
+| `HANDOFF.md` | 세션 인계 가이드 (operational) | 2026-06-02 갱신 — v0.13.0 baseline + 9/9 closed + ADR-018/019/020 lock-in 반영 + dogfood 가이드 dead reference 정정 | NO GAP |
 | **`roadmap.md`** | M1~M6 milestone log (역사) + v0.2/v0.3/v1.0 outline (cur. superseded) | §4 v0.2 / §5 v0.3 / §6 v1.0 outline 이 ADR-002/005 로 *부분 supersede* + 본 문서로 위임 | **§4~§6 redirect 로 슬림화** |
 | **`tasks.md`** | cross-track 작업 인벤토리 (v0.4.1 frozen, 대부분 완료) | 거의 전체가 완료된 항목 — 본 문서가 SSoT | **본 문서 redirect stub 로 슬림화** |
 
@@ -237,7 +235,6 @@ Wave 1 (B-2 dogfood, user-paced)  ║  Wave 7 (C-1~C-5, AI 단독, 병행 가능
 | `roadmap.md` | M1~M6 *historical milestone log* (역사적 보존). v0.2/v0.3/v1.0 outline 부분은 본 문서로 위임 |
 | `tasks.md` | 본 문서 redirect stub (v0.4.1 인벤토리는 git history 참조) |
 | `two-tracks-charter.md` / `cli-buddy-spec.md` / `v0.1-spec.md` / 기타 identity 문서 | **변경 X** — 정체성 + 방향성 SSoT |
-| `dogfood-guide.md` / `dogfood-feedback-template.md` | dogfood 실행 절차 + 양식 — *변경 X* |
 | `superpowers/decisions/*` / `superpowers/specs/*` | ADR + spec — *변경 X* (역사적 결정 + 아키텍처 SSoT) |
 | `notes/{date}-*.md` | dated handoff / dogfood result — *역사적 보존* (date-stamped) |
 
@@ -247,9 +244,8 @@ Wave 1 (B-2 dogfood, user-paced)  ║  Wave 7 (C-1~C-5, AI 단독, 병행 가능
 
 ## §8. References
 
-- [`docs/HANDOFF.md`](./HANDOFF.md) — 세션 인계 (§1 patched to v0.7.5)
+- [`docs/HANDOFF.md`](./HANDOFF.md) — 세션 인계 (v0.13.0 baseline, 2026-06-02 갱신)
 - [`docs/archive/cli-buddy-spec.md`](./archive/cli-buddy-spec.md) §9 phase table — W3 cascade 100%
 - [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md) — 이전 cycle close baseline
 - [`docs/notes/2026-05-19-dogfood-result-cycle-2.md`](./notes/2026-05-19-dogfood-result-cycle-2.md) — 진행 중 cycle (Wave 1 의 실행 매뉴얼)
 - [`docs/superpowers/decisions/README.md`](./superpowers/decisions/README.md) — ADR Index (8건 모두 Accepted)
-- [`docs/dogfood-guide.md`](./dogfood-guide.md) — v0.7.x dogfood 실행 절차

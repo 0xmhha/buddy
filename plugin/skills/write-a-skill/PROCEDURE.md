@@ -130,7 +130,7 @@ description 1줄을 쓰는 것부터 시작한다. 못 쓰겠으면 stop — `cr
 체크:
 - name이 kebab-case + 동사 시작인가? (패턴 라이브러리만 명사형 허용 — N1)
 - description이 *트리거 키워드* + *목적*을 한 문장에 담는가? (가이드 §1.2.1 — `description` + `when_to_use` 합산 ≤1,536자, 첫 문장에 "Use when" 포함, 한국어/영어 자연어 trigger 키워드 3+)
-- 기존 catalog grep → 중복 후보 0건? (예: `grep -iE "<keyword>" plugin/skills/router/references/skill-catalog.md`. 1개라도 hit이면 차별점 §1에 명시 의무)
+- 기존 catalog grep → 중복 후보 0건? (인덱스 + shard 전체: `grep -riE "<keyword>" plugin/skills/router/references/skill-catalog.md plugin/skills/router/references/catalog/`. 1개라도 hit이면 차별점 §1에 명시 + `Not when` anti-trigger로 경계 의무)
 - skill type 4분류 중 하나 결정? (discipline-enforcing / technique / pattern / reference)
 - 라이프사이클 phase 배정 (`plugin/skills/router/references/se-lifecycle-naming.md` §1의 9 phase 또는 Cross-cutting)?
 - **Persona 적용성 결정** (가이드 §3.5.1 매트릭스):
@@ -238,7 +238,11 @@ next_steps:
 
 ### Step 7. Catalog 등재
 
-`skill-catalog.md` §2 의 해당 lifecycle stage 표에 1줄 추가. 추가 위치는 *기존 표 항목들의 정렬 규칙을 따름* — 대부분 표가 호출 흐름 순(`concretize-idea` → `define-features` → …) 또는 의미 그룹 순으로 정렬되어 있으므로, 새 스킬이 *기존 어디에 끼는지*는 의미적 인접성으로 판단. 알파벳·삽입 시점 순서는 *피한다*. Cross-cutting Utilities 표만 알파벳 순.
+등재 위치는 skill 종류로 갈린다:
+- **stage skill** → 해당 노드 shard `plugin/skills/router/references/catalog/phase-N-*.md` 의 표에 1줄 추가 (`name` / `trigger` / `When to use` / **`Not when`** anti-trigger 4컬럼 모두).
+- **orchestrator · cross-phase · cross-cutting** → `skill-catalog.md` 인덱스 §2 의 해당 표.
+
+추가 위치는 *기존 표 정렬 규칙을 따름* — 표가 호출 흐름 순(`concretize-idea` → `define-features` → …) 또는 의미 그룹 순으로 정렬되어 있으므로 의미적 인접성으로 판단. 알파벳·삽입 시점 순서는 *피한다*. Cross-cutting Utilities 표만 알파벳 순.
 
 ```
 | `<name>` | command + dispatch | <1줄 when-to-use> |

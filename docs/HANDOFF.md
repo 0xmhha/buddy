@@ -2,7 +2,7 @@
 
 > 다른 세션에서 이 프로젝트를 이어 받는 사람(또는 미래의 자기 자신)이 *처음 5분 안에* 어디까지 와있는지 파악하고, *다음 한 시간 안에* 일을 재개할 수 있도록 만든 문서.
 
-**Baseline**: v0.13.0 (2026-05-20). **남은 작업**: v1.0.0 entry condition B-2 (production dogfood, user-paced) + cli buddy W4 follow-on 일부 + trigger-bound Wave 5 / W3-4.
+**Baseline**: v0.13.0 (2026-05-20) — 가장 최근 release 태그. **v1.0.0 출시 조건 9/9 모두 충족** (외부 SaaS 1건 처음~끝까지 적용 검증 [B-2] 2026-05-21 완료 commit `14d2f83`). **남은 작업**: v1.0.0 publish (release engineering, 별 세션) + post-v1.0 polish + 4-Layer lazy-load 스킬 마이그레이션 (ADR-020) + trigger-bound Wave 5 / W3-4.
 
 ## 트랙 상태
 
@@ -10,10 +10,10 @@
 
 | 트랙 | 잔여 작업 |
 |------|----------|
-| **plugin buddy** — Claude Code plugin (skill / MCP / agent / hook 카탈로그). 9-phase orchestrator, single-router dispatch | **B-2 production dogfood** (cycle-3 active) + Korea cluster (Wave 5, trigger-bound) |
-| **cli buddy** — TUI 자동화 agent 관리 + AI-usage coaching (ADR-009/010) | **W4 follow-on**: W4-1 branch-aware skill selection / W4-2 self-check fail semantics / W4-4 scheduler live indicator / W4-5 log-tail scrollback. W3-4 macOS notarization (Apple Dev ID trigger-bound). |
+| **plugin buddy** — Claude Code plugin (skill / MCP / agent / hook 카탈로그). 9-phase orchestrator, single-router dispatch | 4-Layer lazy-load 스킬 마이그레이션 (ADR-020, Phase 1부터 사용자 주도) + Korea cluster (Wave 5, trigger-bound) |
+| **cli buddy** — TUI 자동화 agent 관리 + AI-usage coaching (ADR-009/010) | **W4 follow-on (post-v1.0 polish)**: W4-1 branch-aware skill selection / W4-2 self-check fail semantics / W4-4 scheduler live indicator / W4-5 log-tail scrollback. W3-4 macOS notarization (Apple Dev ID trigger-bound). |
 
-**Dogfood guide (B-2 실행 절차)**: [`docs/dogfood-guide.md`](./dogfood-guide.md) — 3 surface (plugin / cli buddy / hook monitor) 통합 실행. **현 active cycle**: [`docs/notes/2026-05-20-dogfood-result-cycle-3.md`](./notes/2026-05-20-dogfood-result-cycle-3.md).
+**외부 SaaS 적용 검증 (dogfood) 종료 기록**: [`docs/notes/2026-05-20-dogfood-result-cycle-3.md`](./notes/2026-05-20-dogfood-result-cycle-3.md) — cycle-3 4/4 조건 충족으로 종료 (2026-05-21). 절차 가이드(`dogfood-guide.md`, `b2-dogfood-playbook.md`, `dogfood-feedback-template.md`)는 효력 종료로 2026-06-02 삭제 (git history 참조).
 
 ---
 
@@ -35,17 +35,22 @@
 
 | 영역 | 상태 |
 |------|------|
-| **Plugin v1.0.0 entry (ADR-010, 9 조건)** | **8/9 closed.** 잔여: B-2 production dogfood (user-paced — cycle-3 active) |
-| cli buddy W4 follow-on (TUI / runtime UX) | dogfood signal 대기 — W4-1 / W4-2 / W4-4 / W4-5 |
-| Wave 5 Korea cluster (consult-korea-legal-context / draft-korea-patent-application / audit-korea-cii-vulnerability) | trigger-bound (target market = Korea) |
+| **Plugin v1.0.0 출시 조건 (ADR-010, 9 조건)** | ✅ **9/9 closed** — publish gate 차단 해제 (2026-05-21 외부 SaaS 적용 검증 [B-2] 종료) |
+| **v1.0.0 publish** (release engineering) | 별 세션 권장 — `make set-version VERSION=1.0.0` + CHANGELOG + tag + binary publish |
+| **4-Layer lazy-load 스킬 마이그레이션** (ADR-020) | Phase 1 (Problem/Opportunity Validation)부터 사용자 주도 점진 진행. catalog 10 파일 분할 + 14 skill frontmatter 추가 + paired evaluation |
+| cli buddy W4 follow-on (post-v1.0 polish) | W4-1 branch-aware skill selection / W4-2 self-check fail semantics / W4-4 scheduler live indicator / W4-5 log-tail scrollback |
+| Wave 5 Korea cluster | trigger-bound (target market = Korea) |
 | macOS notarization (W3-4) | trigger-bound (Apple Dev ID 발급 필요) |
 | Post-v1.0: W7-3c F2.C skill autogen | ADR-014 Phase 3, deferred |
 
 **Latest release:** v0.13.0 (2026-05-20). milestone-driven per ADR-011.
 **테스트:** `go test -race -count=1 ./...` 전체 race-clean.
 
-**다음 액션** — v1.0.0 ship gating 은 단 한 조건:
-- **B-2 production dogfood**: 사용자 페이스 — [`docs/dogfood-guide.md`](./dogfood-guide.md). 완료 시 v1.0.0 release 가능.
+**다음 액션** — v1.0.0 publish:
+1. `make set-version VERSION=1.0.0`
+2. CHANGELOG 작성 (9/9 close-out + W7 5개 surface ship [F2.A~F2.E] 강조)
+3. release tag + binary publish
+4. 후속: 4-Layer lazy-load 스킬 마이그레이션 (ADR-020) Phase 1부터 사용자 주도
 
 ---
 
@@ -69,11 +74,11 @@ cat docs/BACKLOG.md       # 잔여 작업 SSoT
 
 ## 3. 다음 작업 — 시나리오별
 
-### A — dogfood 후 feedback 가져옴
+### A — 사용 후 feedback 가져옴
 
-**Trigger 발화 예시:** "dogfood 결과 정리했어", "feedback 반영해줘", "며칠 써보니 X가 불편하더라"
+**Trigger 발화 예시:** "feedback 반영해줘", "며칠 써보니 X가 불편하더라", "사용감 회고"
 
-1. `docs/dogfood-feedback-template.md` 채운 버전(또는 자유 형식) 받기
+1. 사용자가 작성한 자유 형식 feedback 받기 (사용감, 마찰점, 버그, 페르소나 어색함, 부족한 명령어 등)
 2. feedback 항목을 분류:
    - **버그/회귀** → 시나리오 C 처리. patch release 가 필요하면 별도 branch.
    - **새 명령/플래그/UX** → `BACKLOG.md` W4 또는 신규 Wave 후보로 매핑
@@ -98,7 +103,7 @@ cat docs/BACKLOG.md       # 잔여 작업 SSoT
 
 ### D — 사용자 본인용 install / usage 질문
 
-`DOGFOOD.md` 와 `docs/dogfood-guide.md` 안내.
+`DOGFOOD.md` 안내 (v0.1 시절 hook 모니터 가이드, install 절차만 유효).
 
 ---
 
@@ -131,6 +136,9 @@ cat docs/BACKLOG.md       # 잔여 작업 SSoT
 | Plugin / cli buddy 책임 분리 | plugin = skill / MCP / agent / hook 카탈로그. cli = 자동화 agent 관리 + AI-usage coaching. | [`docs/two-tracks-charter.md`](./two-tracks-charter.md). |
 | router cross-invocation state | router 는 maintain 안 함 (각 invocation 독립) | ADR-007. |
 | PROCEDURE form allowlist | bulk allowlist + `--strict` CI | ADR-006. |
+| AI 결정 bias 방지 | `verify-best-alternative` 스킬을 §3 design 결정마다 wired | ADR-018. AI 첫 답 편향 + ground truth 부재 시 대안 검증 의무화 |
+| Plugin MCP server 노출 방식 | plugin이 MCP server를 직접 노출 (intermediary 분리 없음) | ADR-019. plugin manifest 명시 노출 + Claude Code 자동 디스커버리 |
+| 스킬 로딩 아키텍처 | 4-Layer lazy-load (Layer 0 router 자동 / Layer 1 catalog-`<phase>`.md 지연 로드 / Layer 2 PROCEDURE.md frontmatter 라인 지연 로드 / Layer 3 PROCEDURE.md 본문 완전 로드) | ADR-020. 스킬 비대화 + lost-in-middle 방어 + 유사 skill 충돌 방지 |
 
 ---
 
@@ -184,8 +192,8 @@ cat docs/BACKLOG.md       # 잔여 작업 SSoT
 | `docs/HANDOFF.md` | **현재 문서.** 다른 세션 인계 |
 | `docs/BACKLOG.md` | **잔여 작업 + 진행률 SSoT** |
 | `docs/two-tracks-charter.md` | plugin vs cli buddy 책임 경계 SSoT |
-| `docs/dogfood-guide.md` | B-2 dogfood 실행 절차 |
-| `docs/dogfood-feedback-template.md` | 사용 후 회고 템플릿 |
+| `docs/plugin-skills-authoring-guide.md` | 스킬 작성·평가·개선 기준 SSoT (~150 skill 작업 baseline) |
+| `docs/plugin-skills-classification-matrix.md` | 스킬 phase별 분류 + 영역(engineering/product/marketing) + standalone 등급 |
 | `docs/response-format-guide.md` | 응답 포맷 스타일 가이드 |
 | `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` | plugin 9-phase 아키텍처 현행 SSoT |
 | `docs/superpowers/decisions/` | ADR Index — 결정의 "왜" |

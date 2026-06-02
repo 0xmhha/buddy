@@ -102,6 +102,5 @@ v0.1.0 release 이후 본 cycle 까지의 publish:
 - [`cli-buddy-spec.md`](./cli-buddy-spec.md) — cli buddy spec (Accepted, ADR-005)
 - [`two-tracks-charter.md`](../two-tracks-charter.md) — 두 트랙 책임 경계 SSoT
 - [`HANDOFF.md`](../HANDOFF.md) — 세션 인계 가이드
-- [`dogfood-guide.md`](../dogfood-guide.md) — v0.7.x dogfood 실행 절차
 - [`superpowers/decisions/README.md`](../superpowers/decisions/README.md) — ADR Index (8 건 Accepted)
 - [`decision-1-schema-fields.md`](./decision-1-schema-fields.md) — 옵션 A schema 결정 근거
