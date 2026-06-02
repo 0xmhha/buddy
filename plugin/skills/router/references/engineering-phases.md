@@ -22,13 +22,13 @@
 | `## §1. 정의 원칙` | Artifact-based 채택 근거 + Phase 간 흐름 다이어그램 |
 | `## §2. Phase 정의` | 각 Phase의 정체성·핵심 질문·orchestrator·Input/Output·소속 스킬 |
 | └ `### Phase 1 — ...` (Mode A, Mode B 2 sub-block) | concretize-idea + Stage 매핑 / assess-product-change + scope·routing |
-| └ `### Phase 2 — Feature Definition & Backlog` | define-features + actor/use case |
-| └ `### Phase 3 — Technical Design (Architecture)` | design-system + 9 카테고리 (3-A~3-I) |
+| └ `### Phase 2 — Feature Definition` | define-features + actor/use case |
+| └ `### Phase 3 — Technical Design` | design-system + 9 카테고리 (3-A~3-I) |
 | └ `### Phase 4 — Implementation Planning` | plan-build + Task DAG |
-| └ `### Phase 5 — Development (Implementation)` | build-feature + developer-authored tests **(Phase 6과 책임 경계)** |
-| └ `### Phase 6 — Verification (Quality)` | verify-quality + 상용 quality bar **(Phase 5와 책임 경계)** |
+| └ `### Phase 5 — Development` | build-feature + developer-authored tests **(Phase 6과 책임 경계)** |
+| └ `### Phase 6 — Verification & Quality` | verify-quality + 상용 quality bar **(Phase 5와 책임 경계)** |
 | └ `### Phase 7 — Release` | ship-release + launch readiness **(UAT 위치 + Phase 6 경계)** |
-| └ `### Phase 8 — Operations (Operate & Iterate)` | iterate-product + Engineering/Product/Marketing |
+| └ `### Phase 8 — Operations & Iteration` | iterate-product + Engineering/Product/Marketing |
 | └ `### Phase 9 — Lifecycle Management` | manage-lifecycle + deprecation **(Mode B와 분류 정책)** |
 | └ `### Cross-cutting (Phase 소속 없음)` | phase 무관 스킬 (decompose-blocker, status 등) |
 | `## §3. Phase 전이 규칙` | 정상 흐름 / Backtrack / Skip vs Routing / 전이 판단 기준 |
@@ -73,7 +73,7 @@ phase 간 기본 흐름은 순차적이지만, 조건에 따라 backtrack(이전
 
 ## §2. Phase 정의
 
-### Phase 1 — Problem/Opportunity Identification & Validation
+### Phase 1 — Problem/Opportunity Validation
 
 | 항목 | 내용 |
 |------|------|
@@ -173,7 +173,7 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 2 — Feature Definition & Backlog
+### Phase 2 — Feature Definition
 
 | 항목 | 내용 |
 |------|------|
@@ -217,7 +217,7 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 3 — Technical Design (Architecture)
+### Phase 3 — Technical Design
 
 | 항목 | 내용 |
 |------|------|
@@ -371,7 +371,7 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 5 — Development (Implementation)
+### Phase 5 — Development
 
 | 항목 | 내용 |
 |------|------|
@@ -426,7 +426,7 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 6 — Verification (Quality)
+### Phase 6 — Verification & Quality
 
 | 항목 | 내용 |
 |------|------|
@@ -543,7 +543,7 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 8 — Operations (Operate & Iterate)
+### Phase 8 — Operations & Iteration
 
 | 항목 | 내용 |
 |------|------|

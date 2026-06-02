@@ -48,7 +48,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `autoplan` | `/buddy:autoplan` | 기존 plan/PRD/ADR/task plan을 4-mode review (review-scope/engineering/design/devex 순차) |
 | `finish-development-branch` | `/buddy:finish-development-branch` | §5 build-feature 후 PR 생성까지의 5-stage sub-orchestrator (pre-flight sync + quality-gate + changelog + docs-sync + PR + mergeable verify). git 안전 정책 (force 금지 / safe merge only / STOP 우선) 적용. Iron Law mergeable=CLEAN 검증. |
 
-### §1 Stage Skills — Problem/Opportunity Identification & Validation
+### §1 Stage Skills — Problem/Opportunity Validation
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -66,7 +66,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `define-product-spec` | command + dispatch | 아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정. write-spec 역할 — actors + use cases(logical) 포함 |
 | `write-hld` | command + dispatch | PRD 완료 후 High Level Design 작성 — product decomposition + tech stack + inter-product communication + use case→product mapping. autoplan(validate-spec)의 review-design / review-devex / review-engineering 검증 대상 생산 |
 
-### §2 Stage Skills — Feature Definition & Backlog
+### §2 Stage Skills — Feature Definition
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -125,7 +125,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `verify-best-alternative` | command + dispatch | [AI 편향 방지 — 엔지니어링 한정] 아키텍처·데이터모델·알고리즘·API·인증·스택·코드네이밍·prompt 등 *엔지니어링 결정*의 첫 답 commit 직전 강제 다관점 검토 (orthogonal N개 대안 발산 + rubric 비교). §3 design-* 스킬들에서 sub-step 의무 호출. **scope: 엔지니어링만 — 그래픽 디자인·브랜드·마케팅·사업기획은 별도 스킬(미래)** |
 | `critique-plan` | dispatch | Implementation plan에 대한 strategic critique (CEO/founder 페르소나) |
 
-### §4 Stage Skills — Implementation Plan
+### §4 Stage Skills — Implementation Planning
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -152,7 +152,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `refactor-with-rename-trace` | command + dispatch | LSP rename + 호출 그래프 cross-check + grep 누락 검증 + test baseline. pure rename = 단일 commit |
 | `update-docs-with-code` | command + dispatch | 코드 변경 → README / ADR / CHANGELOG / HANDOFF / skill-catalog 5 영역 동기화 매트릭스 + automation hook |
 
-### §6 Stage Skills — Quality
+### §6 Stage Skills — Verification & Quality
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -176,7 +176,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `review-license-and-ip-risk` | dispatch | 의존성/asset/AI 생성 코드의 라이선스 호환성, IP 출처, 상업 사용 가능성 검토 + risk register & remediation |
 | `review-terms-policy-readiness` | dispatch | 상용 출시 전 ToS / Privacy Policy / AUP / Refund Policy / Cookie Policy / DPA 준비도 검토 |
 
-### §7 Stage Skills — Release & Beta
+### §7 Stage Skills — Release
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -195,7 +195,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `prepare-launch-checklist` | command + dispatch | launch readiness 17+ 항목 gate (engineering/security/ops/product/legal/cost) — GA 직전 cross-functional final check |
 | `setup-incident-paging` | command + dispatch | on-call rotation + escalation policy + alert wiring + runbook 인덱스 — production incident first response 구조 |
 
-### §8 Stage Skills — Operate & Iterate
+### §8 Stage Skills — Operations & Iteration
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|

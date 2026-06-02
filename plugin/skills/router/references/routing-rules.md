@@ -123,8 +123,8 @@
 > 9개 단계 진입점 + 1개 다각도 리뷰 + 5개 공통 도구 + 13개 단계별 세부 작업 + 1개 상태 확인 = 29.
 > 패턴 라이브러리와 보관 스킬은 manifest 에 노출하지 않는다.
 
-> **9-phase 라이프사이클 단계 약칭** (이하 표에서 사용):
-> 1) 아이디어 구체화 / 2) Feature 정의 / 3) 기술 설계 / 4) 구현 계획 / 5) 개발 / 6) 품질 검증 / 7) 릴리즈 / 8) 운영·개선 / 9) 수명주기 관리.
+> **9-phase 라이프사이클 단계 약칭** (이하 표에서 사용 — `docs/se-lifecycle-naming.md` SSoT):
+> 1) 문제·기회 검증 / 2) 기능 정의 / 3) 기술 설계 / 4) 구현 계획 / 5) 개발 / 6) 품질 검증 / 7) 출시 / 8) 운영·개선 / 9) 수명주기 관리.
 
 ### 5.1 상태 확인 (1)
 
@@ -139,12 +139,12 @@
 | 커맨드 | 단계 | 용도 |
 |--------|------|------|
 | `/buddy:start` | 1. 진입 라우터 | 신규 아이디어 → `concretize-idea` / 기존 프로덕트 변경 → `assess-product-change` 자동 dispatch |
-| `/buddy:define-features` | 2. Feature 정의 | PRD → actor / use case → feature backlog |
+| `/buddy:define-features` | 2. 기능 정의 | PRD → actor / use case → feature backlog |
 | `/buddy:design-system` | 3. 기술 설계 | 기술 스택 / API 계약 / infra / 데이터 모델 |
 | `/buddy:plan-build` | 4. 구현 계획 | actor 별 task 분해 + 의존성 그래프 |
 | `/buddy:build-feature` | 5. 개발 | TDD 루프 + 병렬 worker agent |
 | `/buddy:verify-quality` | 6. 품질 검증 | 테스트 + 보안 + 컴플라이언스 |
-| `/buddy:ship-release` | 7. 릴리즈 | PR + 태깅 + canary + UAT |
+| `/buddy:ship-release` | 7. 출시 | PR + 태깅 + canary + UAT |
 | `/buddy:iterate-product` | 8. 운영·개선 | A/B 분석 + 인시던트 + funnel |
 | `/buddy:manage-lifecycle` | 9. 수명주기 관리 | deprecation + 마이그레이션 + EOL |
 
@@ -174,18 +174,18 @@
 
 | 커맨드 | 단계 | 용도 |
 |--------|------|------|
-| `/buddy:validate-idea` | 1. 아이디어 구체화 | YC 스타일 검증 인터뷰 |
-| `/buddy:validate-advanced-edge-idea` | 1. 아이디어 구체화 | 엣지 케이스 / 숨은 가정 박멸 |
-| `/buddy:assess-business-viability` | 1. 아이디어 구체화 | 사업성 7차원 평가 |
-| `/buddy:define-product-spec` | 1. 아이디어 구체화 | PRD 고정 |
+| `/buddy:validate-idea` | 1. 문제·기회 검증 | YC 스타일 검증 인터뷰 |
+| `/buddy:validate-advanced-edge-idea` | 1. 문제·기회 검증 | 엣지 케이스 / 숨은 가정 박멸 |
+| `/buddy:assess-business-viability` | 1. 문제·기회 검증 | 사업성 7차원 평가 |
+| `/buddy:define-product-spec` | 1. 문제·기회 검증 | PRD 고정 |
 | `/buddy:verify-best-alternative` | 3. 기술 설계 | AI 편향 방지 강제 다관점 검토 |
 | `/buddy:build-with-tdd` | 5. 개발 | TDD 루프 단독 실행 |
 | `/buddy:diagnose-bug` | 5. 개발 | 버그 재현 → 원인 → fix |
 | `/buddy:dispatch-parallel-agents` | 5. 개발 | worktree 격리 + worker 분배 |
 | `/buddy:audit-security` | 6. 품질 검증 | OWASP / secrets / JWT 점검 |
 | `/buddy:measure-code-health` | 6. 품질 검증 | 0-10 가중 점수 대시보드 |
-| `/buddy:auto-create-pr` | 7. 릴리즈 | PR 자동 생성 |
-| `/buddy:setup-quality-gates` | 7. 릴리즈 | pre-commit / pre-push 게이트 설치 |
+| `/buddy:auto-create-pr` | 7. 출시 | PR 자동 생성 |
+| `/buddy:setup-quality-gates` | 7. 출시 | pre-commit / pre-push 게이트 설치 |
 | `/buddy:summarize-retro` | 8. 운영·개선 | git history → 주간 회고 |
 
 > 단계 2 / 4 / 9 의 세부 작업 커맨드는 현재 0개 — 단계 진입점 안의 기존 stage skill 만 활성. 신규 작업은 [`docs/archive/tasks.md`](../../../../docs/archive/tasks.md) A-1 참조 (잔여 작업 SSoT 는 [`docs/BACKLOG.md`](../../../../docs/BACKLOG.md)).

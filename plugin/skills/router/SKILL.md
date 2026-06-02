@@ -96,14 +96,14 @@ Buddy 는 9-phase 라이프사이클로 78 개 skill 을 조직한다. 각 phase
 
 | Phase | Orchestrator (entry) | 1줄 설명 |
 |-------|----------------------|---------|
-| §1 Idea & Business Validation | `concretize-idea` | idea/concept → PRD + 사업성 검증 |
-| §2 Feature Definition & Backlog | `define-features` | PRD → actor / use case / system boundary → feature backlog |
-| §3 Technical Design | `design-system` | feature backlog → tech stack ADR + infra + API + data model |
-| §4 Implementation Plan | `plan-build` | technical design → actor 별 task graph + 병렬 실행 plan |
+| §1 Problem/Opportunity Validation | `concretize-idea` | idea/concept → PRD + 사업성 검증 (idea & business 검증 포함) |
+| §2 Feature Definition | `define-features` | PRD → actor / use case / system boundary → feature backlog |
+| §3 Technical Design | `design-system` | feature backlog → tech stack ADR + infra + API + data model (architecture 결정) |
+| §4 Implementation Planning | `plan-build` | technical design → actor 별 task graph + 병렬 실행 plan |
 | §5 Development | `build-feature` | implementation plan → working code + tests (TDD + parallel agents) |
-| §6 Quality | `verify-quality` | code complete → QA + security + compliance sign-off |
-| §7 Release & Beta | `ship-release` | quality gate pass → tagged release + UAT + GA |
-| §8 Operate & Iterate | `iterate-product` | production traffic → A/B + funnel + improvement backlog |
+| §6 Verification & Quality | `verify-quality` | code complete → QA + security + compliance sign-off |
+| §7 Release | `ship-release` | quality gate pass → tagged release + UAT + GA (beta 포함) |
+| §8 Operations & Iteration | `iterate-product` | production traffic → A/B + funnel + improvement backlog |
 | §9 Lifecycle Management | `manage-lifecycle` | feature/product 노후화 → deprecation + migration + EOL |
 
 Cross-phase 보조:

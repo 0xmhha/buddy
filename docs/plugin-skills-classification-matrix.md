@@ -45,7 +45,7 @@
 
 ---
 
-## §2. Phase 1 — Problem/Opportunity Identification & Validation
+## §2. Phase 1 — Problem/Opportunity Validation
 
 ### Mode A (Greenfield) Stage Skills
 
@@ -75,7 +75,7 @@
 
 ---
 
-## §3. Phase 2 — Feature Definition & Backlog
+## §3. Phase 2 — Feature Definition
 
 | Skill | 영역 | Standalone | 비고 |
 |-------|------|-----------|------|
@@ -95,7 +95,7 @@
 
 ---
 
-## §4. Phase 3 — Technical Design (Architecture)
+## §4. Phase 3 — Technical Design
 
 | Skill | 영역 | Standalone | 비고 |
 |-------|------|-----------|------|
@@ -172,7 +172,7 @@
 
 ---
 
-## §7. Phase 6 — Verification (Quality)
+## §7. Phase 6 — Verification & Quality
 
 | Skill | 영역 | Standalone | 비고 |
 |-------|------|-----------|------|
@@ -223,7 +223,7 @@
 
 ---
 
-## §9. Phase 8 — Operations (Operate & Iterate)
+## §9. Phase 8 — Operations & Iteration
 
 | Skill | 영역 | Standalone | 비고 |
 |-------|------|-----------|------|

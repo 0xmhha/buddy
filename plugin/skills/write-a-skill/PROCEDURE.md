@@ -48,7 +48,7 @@
 - 외부 스킬(superpowers, mattpocock-skill, designer-skills, marketingskills 등) 흡수 결정 후 buddy화
 - 패턴 라이브러리(`[패턴 라이브러리]` 마커가 붙은 reusable pattern) 항목 신규 도입
 - 기존 orchestrator(`build-feature`, `verify-quality` 등) 내부에서 반복되는 sub-step의 독립 스킬화
-- 새 라이프사이클 phase 추가 시(드물지만 §9 manage-lifecycle 같은 확장)
+- 새 라이프사이클 phase 추가 시(드물지만 수명주기 관리 단계(§9) `manage-lifecycle` 같은 확장)
 - ADR로 채택된 새 메서드의 절차화
 
 다음 상황에서는 **호출하지 마라**:
@@ -87,7 +87,7 @@
 - "이 스킬의 description 1줄을 지금 쓸 수 있어? 못 쓰면 범위가 모호한 거야."
 - "기존 148개 중 어떤 스킬과 가장 가까워? 차별점은 한 문장으로 뭐야?"
 - "discipline-enforcing이야 technique이야? (규율 강제 vs 절차 가이드 — 본문 강도가 갈림)"
-- "라이프사이클 phase 어디? §5 Development? §6 Quality? Cross-cutting?"
+- "라이프사이클 phase 어디? 개발 단계(§5)? 품질 검증 단계(§6)? Cross-cutting?"
 - "외부 자산 영감 받았어? 어디서? 차용 4분류 중 뭘로 할 거야?"
 - "이 스킬을 호출하는 *상위 호출자*가 있어, 아니면 사용자가 직접 호출해? (command 트리거 여부)"
 

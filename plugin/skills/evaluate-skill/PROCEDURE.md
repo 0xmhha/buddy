@@ -43,7 +43,7 @@
 
 - 신규 skill 작성 후 품질 점검
 - 기존 skill 개선 작업의 우선순위 결정
-- skill batch 평가 (Phase 1 모든 skill 평가 등)
+- skill batch 평가 (문제·기회 검증 단계(Phase 1) 모든 skill 평가 등)
 - Authoring guide 변경 후 영향 받는 skill 재평가
 - skill quality dashboard 데이터 수집
 
@@ -171,7 +171,7 @@ single mode (--single 플래그 또는 단일 파일 경로 입력):
 `skill-catalog.md`에서 `` `<name>` `` grep으로 entry 행 찾고 평가:
 
 #### CE1: 정확한 phase 표에 위치
-- **Pass 기준**: entry가 `engineering-phases.md` §2 phase 정의와 일치하는 phase의 표에 위치 (예: Phase 1 Mode A 스킬은 §1 Idea & Business Validation 표에)
+- **Pass 기준**: entry가 `engineering-phases.md` §2 phase 정의와 일치하는 phase의 표에 위치 (예: 문제·기회 검증 단계(Phase 1) Mode A 스킬은 §1 Problem/Opportunity Validation 표에)
 - **Fail 시 제안**: "현재 <phase A> 표에 있으나 engineering-phases.md §2 정의상 <phase B>에 속함. 표 이동."
 
 #### CE2: 호출 방법 컬럼 + 실제 command 파일 일치
@@ -270,7 +270,7 @@ single mode (--single 플래그 또는 단일 파일 경로 입력):
 - review-* / audit-* / analyze-* / critique-* → persona 권장
 - design-* (특정 도메인) → persona 권장
 - build-with-* / iterate-* (discipline 강제) → persona 권장
-- deprecate-* / archive-* / migrate-* / spin-off-* (Phase 9 lifecycle) → persona 권장 — Senior PM (sunset 전문, 사용자 영향·소통·timeline 중심)
+- deprecate-* / archive-* / migrate-* / spin-off-* (수명주기 관리 단계(Phase 9) lifecycle) → persona 권장 — Senior PM (sunset 전문, 사용자 영향·소통·timeline 중심)
 - update-* / sync-* (데이터 변환) → persona 비권장
 - status / save-context / restore-context / start / router → persona 비권장
 - freeze-* / compose-* (패턴 라이브러리) → persona 비권장
@@ -558,7 +558,7 @@ Batch 평가:
   - §2.1 3-Tier 분류 + §2.2 핵심 원칙 (B1-B12 평가 근거)
   - §2.2.1 long-context 5전략 (B2 fail 시 제안)
   - §2.4 XML / §2.5 CoT / §2.6 한·영 정책 (모두 **optional bonus** — 본 평가에 미반영, 가이드 정책과 일관)
-  - §3.5.1 persona 권장 매트릭스 (Step 6 근거 — Phase 1-9 + Cross-cutting 전체)
+  - §3.5.1 persona 권장 매트릭스 (Step 6 근거 — 9개 phase(Phase 1-9) + Cross-cutting 전체)
   - §4 통합 평가 체크리스트 (F1-F5, B1-B12, P1-P4 정의)
   - §4.4 케이스별 분모 (C1-C4) — Step 7과 1:1 동기
 - `plugin/skills/router/references/engineering-phases.md` §4 — I/O Contract 표준 형식 (B3/B4 평가 근거)

@@ -747,6 +747,8 @@ Anthropic CoT 가이드는 복잡한 추론이 필요한 단계에서 명시적 
 
 #### 3.5.1 페르소나 추가가 권장되는 skill 유형
 
+> **Phase 약어 매핑**: §1 (문제·기회 검증 단계) · §2 (기능 정의 단계) · §3 (기술 설계 단계) · §4 (구현 계획 단계) · §5 (개발 단계) · §6 (품질 검증 단계) · §7 (출시 단계) · §8 (운영·개선 단계) · §9 (수명주기 관리 단계). SSoT: `docs/se-lifecycle-naming.md` §1.
+
 | Phase | 권장 skill 예시 | 페르소나 |
 |-------|--------------|---------|
 | §1 | `validate-idea`, `assess-business-viability` | YC partner / VC analyst |
