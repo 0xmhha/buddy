@@ -42,12 +42,23 @@
 
 > Skill 카탈로그가 자라면서 발견된 구체 충돌 사례. 각 사례는 *조건 → 선택* 형태.
 
-### 케이스 A: idea/concept 단계 → §1 concretize-idea
+### 케이스 A1: §1 Mode A — idea/concept (Greenfield) → `concretize-idea`
 
-- 조건: idea/concept만 존재, 코드베이스 미존재 또는 상용 빌딩 시작 전
+- 조건: idea/concept만 존재, **코드베이스 미존재** (start Step 2.2에서 경로 '없음' 또는 path-missing 확인)
 - 후보: `concretize-idea` vs `validate-idea` / `assess-business-viability` 단독
-- 선택: **`concretize-idea`** — 이유: §1 안의 stage가 8단계 (idea → business validation → competition → customer segments → PRD → review) 라 단독 호출 시 결정 분기를 빠뜨림.
+- 선택: **`concretize-idea`** — 이유: §1 안의 stage가 9단계 (idea → validation → customer → competition → business → pricing → PRD → HLD → review) 라 단독 호출 시 결정 분기를 빠뜨림.
 - 다음 단계: PRD 확정 후 `define-features` (§2) → `design-system` (§3)으로 이관.
+
+### 케이스 A2: §1 Mode B — 기존 프로덕트 변경 → `assess-product-change`
+
+- 조건: **기존 코드베이스 존재** (start Step 2.2에서 경로 EXISTS 확인). 변경 유형 무관 (버그/기능/리팩토링/의존성 갱신)
+- 후보: `assess-product-change` 단일 (Mode B orchestrator)
+- 선택: **`assess-product-change`** — 영향 평가 + scope 분류(small/medium/large) + 다음 phase routing
+- 다음 단계 (scope별 routing):
+  - Small → §5 `build-feature` 직접 진입 (버그 수정, 설정 변경)
+  - Medium → §3 `design-system` (설계 검토 후 구현)
+  - Large → §2 `define-features` (feature 정의부터)
+  - Defer/Reject → backlog 기록, cycle 종료
 
 ### 케이스 B: PRD 확정, feature 정의 필요 → §2 define-features
 

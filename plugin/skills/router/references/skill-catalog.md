@@ -14,7 +14,9 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 |------|------|----------|
 | **사용자 명시 트리거 (command)** | `/buddy:<command-name> [args]` | 사용자가 의도적으로 호출 |
 | **Plugin auto-trigger (hook)** | `~/.claude/settings.json`의 `hooks` 항목 | 특정 이벤트(PreToolUse 등)에 자동 |
-| **Skill description-based dispatch** | `plugin/skills/<name>/PROCEDURE.md` frontmatter `description` 매칭 | Claude가 상황 판단으로 자율 호출 |
+| **Router 내부 dispatch** | 본 catalog의 entry (각 행) — router가 사용자 발화·상황과 매칭하여 dispatch | start/evaluate-skill가 진입 후 후속 phase로 진행할 때 |
+
+> **중요 — frontmatter 부재**: buddy의 PROCEDURE.md는 frontmatter 없음 (router 경유 lazy-load — `docs/plugin-skills-authoring-guide.md` §0.1 SSoT). 본 catalog의 entry가 PROCEDURE.md frontmatter description의 역할을 대신한다. router는 이 catalog 행으로 dispatch 결정을 내림.
 
 ---
 
@@ -237,8 +239,8 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `decompose-blocker` | command + dispatch | [엔지니어링·언어독립] 코드 작업 stuck 상태에서 문제 분해 + 비용-정보 매트릭스 행동 후보 도출. **자동 trigger: AI가 동일 문제 3회 시도 후 미해결 (token escalation 차단 + 문제 세분화)** 또는 사용자 명시 호출. fact/추측/모름 3분류 + 분해 축(4D/5-Whys/fishbone) + 가설 압축. *fix 수행 X*, 다음 스킬로 dispatch 준비 |
 | `detect-install-type` | dispatch | [패턴 라이브러리] tool install type(global-git/local-git/vendored/package-manager/dev-symlink) detect + upgrade path |
 | `guide-setup-wizard` | dispatch | [패턴 라이브러리] auto-detect → picker → verify pattern으로 credential/config setup flow 설계 |
-| `start` | command + dispatch | 사용자 의도 기반 진입 라우터 — 자연어 발화에서 컨텍스트 추출 + 자연스러운 질문(프로젝트 경로 / 작업 유형 / 상업성)으로 누락 정보 수집 후 확인 → 적절한 orchestrator(concretize-idea / assess-product-change)로 dispatch. command 이름 모를 때 첫 entry |
-| `evaluate-skill` | command + dispatch | 지정한 PROCEDURE.md / SKILL.md / command 파일을 21-항목 체크리스트(authoring-guide §4)로 평가 — frontmatter 5 + body 12 + persona 4. 가중치 점수(0-100) + 항목별 actionable 개선 제안 + priority 정렬 출력. skill 품질 평가 / 개선 우선순위 결정 시점 |
+| `start` | command + dispatch | 사용자 의도 기반 진입 라우터 — 자연어 발화에서 컨텍스트 추출 + 3 질문(프로젝트 경로 / 작업 유형 / 상업성)으로 누락 정보 수집 후 확인 → 경로 유무 기준으로 dispatch (경로 있음 → assess-product-change, 경로 없음 → concretize-idea). command 이름 모를 때 첫 entry |
+| `evaluate-skill` | command + dispatch | 지정한 PROCEDURE.md / SKILL.md / command 파일을 26-항목 체크리스트(authoring-guide §4)로 평가 — frontmatter 5 + catalog entry 5 + body 12 + persona 4. paired 자동 확장 (skill name 입력 시 PROCEDURE + command + catalog 동시 평가). 가중치 점수(0-100) + 항목별 actionable 개선 제안 + priority 정렬 출력 |
 | `status` | command + dispatch | artifact 탐지 (docs/prd.md / docs/feature-spec/ / docs/tech-spec.md / docs/actor-track-plan.yaml 등) 로 현재 lifecycle phase 추론 + 다음 권장 command 안내. phase 무관 호출 |
 | `write-a-skill` | command + dispatch | [META] 신규 buddy 스킬을 PROCEDURE.md + skill-catalog 등재 + 차용 4분류 정책 적용까지 한 사이클로 작성. RED-GREEN-REFACTOR subagent pressure test 강제. 사용자가 "새 스킬 만들자/추가하자/skill 작성" 할 때 호출 |
 | `save-context` | command + dispatch | decisions, remaining work, git status를 checkpoint로 저장해 future session이 branch가 달라도 이어받게 한다. phase 무관 — 어느 단계에서든 세션 전환 시 호출 |
@@ -252,10 +254,10 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 
 새 skill을 카탈로그에 등재할 때:
 
-1. `plugin/skills/<name>/PROCEDURE.md` 생성 (frontmatter `name`, `description` 필수).
+1. `plugin/skills/<name>/PROCEDURE.md` 생성 (현재 PROCEDURE.md는 frontmatter 미사용 — dispatch description은 본 catalog §2 표의 "When to use" 컬럼에 작성. frontmatter 도입은 별도 마이그레이션 계획에 따라 점진 적용 예정).
 2. 위 §2 표에 한 줄 추가 — `name` / phase 섹션 / `trigger` / `when to use(1줄)`.
 3. **라우팅이 다른 skill과 겹치거나 우선순위가 필요한 경우에만** `routing-rules.md`에 항목 추가.
-4. command 트리거를 추가하면 `plugin/commands/buddy/<name>.md` 도 함께 등재.
+4. command 트리거를 추가하면 `plugin/commands/<name>.md` 도 함께 등재 (subdir 금지 — 단일 파일, `test-router-wireup.sh` Check 5 enforcement).
 5. 속하는 phase를 명시 (`routing-rules.md` §4 표 업데이트).
 
 ---

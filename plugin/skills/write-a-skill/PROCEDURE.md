@@ -97,7 +97,7 @@ description 1줄을 못 쓰면 본 스킬을 시작하지 말고 `critique-plan`
 
 1. **Description-driven dispatch** — agent는 본문이 아니라 description만 보고 호출 결정. description이 약하면 본문이 아무리 좋아도 dead skill. description을 본문보다 먼저 확정한다.
 2. **Iron law: description 먼저** — 본문 한 줄도 쓰기 전에 description부터. description이 안 써지면 범위가 모호한 것 — 본 스킬을 중단하고 범위 재정의.
-3. **Progressive disclosure** — 본문 < 400줄 유지. 깊은 내용·예시·테이블은 `references/`로 분리. 본문은 *언제·어떻게·왜*만, references는 *상세 표·코드·체크리스트*.
+3. **Progressive disclosure** — 본문 **< 400줄 권장** (가이드 §2.2.1 cap 500줄보다 보수적으로 잡음 — write-a-skill로 만드는 신규 skill은 처음부터 lean하게). 깊은 내용·예시·테이블은 `references/`로 분리. 본문은 *언제·어떻게·왜*만, references는 *상세 표·코드·체크리스트*. long-context 전략 5종: 가이드 §2.2.1 참조 (보조 파일 lazy-load / 본문 압축 / 핵심을 위·아래 / skill 분할 / forking subagent).
 4. **Skill type 명시** — 4분류 중 하나 명시. 본문 강도가 갈린다:
    - **discipline-enforcing** (예: `build-with-tdd`): "반드시", "금지", "모든" 등 강한 표현. 회피할 수 없는 체크리스트.
    - **technique** (예: `dispatch-parallel-agents`): "이렇게 한다" 절차. 단계별 가이드.
@@ -110,18 +110,33 @@ description 1줄을 못 쓰면 본 스킬을 시작하지 말고 `critique-plan`
 9. **Test before declare done** — RED-GREEN-REFACTOR 루프 강제. RED 단계에서 subagent에게 description만 주고 작업 시키면 실패해야 한다(스킬이 실제 가치를 줄 여지가 있다는 증거). GREEN으로 본문 작성 후 다시 subagent에게 시키면 성공해야 한다.
 10. **Anti-rationalization 본문 포함** — discipline-enforcing skill은 §8 anti-patterns에 사용자/agent가 회피할 빌미를 명시적으로 차단해야 한다("어차피 X니까 skip해도 됨" 같은 합리화 패턴 → 교정 방법). superpowers writing-skills의 핵심 통찰.
 
+11. **PROCEDURE.md는 시스템 프롬프트** (가이드 §2.0) — PROCEDURE.md 본문은 router 호출 직후 Claude의 세션 컨텍스트에 시스템 프롬프트 영역으로 주입된다 (사용자 메시지 X). 따라서 작성 톤은 명령형 instruction, 호출자 데이터·질의는 본문에 하드코딩하지 말고 사용자 메시지·`$ARGUMENTS`로 받는다. 영속성: 세션 끝까지 컨텍스트에 남으므로 토큰 비용 절약을 위해서라도 < 400줄 lean하게.
+
+12. **모델 중립 작성** (가이드 §1.4) — PROCEDURE.md는 어느 Claude 모델(Opus 4.7/4.8, Sonnet 4.6, Haiku 4.5)이 호출하더라도 동일 결과를 내도록 작성. 모델별 가정에 의존하는 본문 금지(예: "Opus가 알아서 처리할 것"). 절차·schema·분기를 명시화. `model` / `effort` 키 frontmatter 명시는 router/command에만, PROCEDURE.md는 적용 불가 — 모델 지정이 필요하면 해당 command 파일(`plugin/commands/<name>.md`)의 frontmatter에 설정.
+
+13. **선택 패턴은 optional bonus** (가이드 §2.4/§2.5/§2.6) — XML 태그(`<context>/<example>/<output>`), Chain-of-Thought(`<thinking>`), 한·영 혼용 정책은 모두 **선택 사항**. 미사용 시 evaluate-skill 평가에서 감점 없음. 다음 조건에만 사용 고려:
+   - **XML 태그**: 마크다운 헤더 nesting이 4단계 초과거나 같은 종류 정보가 여러 번 반복 등장할 때
+   - **Chain-of-Thought**: step에서 여러 가능성을 비교·검토하거나 self-verification이 필요한 좁은 경우만. 남발 시 lost-in-the-middle 위험 증가
+   - **한·영 정책**: 신규 작성 시만 가이드 §2.6 매트릭스 적용 (description=영어+한국어 키워드, 본문=한국어, code=영어)
+
 ## 5. 실행 단계 (Steps)
 
 ### Step 1. Scope Clarification
 
 description 1줄을 쓰는 것부터 시작한다. 못 쓰겠으면 stop — `critique-plan`으로 회귀(또는 사용자 Q&A).
 
+> **명명 규칙 준수 필수**: 본 Step의 모든 명명 결정(name, description, frontmatter 필드, phase 명사 등)은 [`references/naming-convention.md`](./references/naming-convention.md) SSoT를 따른다. phase 명사는 `docs/se-lifecycle-naming.md` §1 참조.
+
 체크:
-- name이 kebab-case + 동사 시작인가? (패턴 라이브러리만 명사형 허용)
-- description이 *트리거 키워드* + *목적*을 한 문장에 담는가?
+- name이 kebab-case + 동사 시작인가? (패턴 라이브러리만 명사형 허용 — N1)
+- description이 *트리거 키워드* + *목적*을 한 문장에 담는가? (가이드 §1.2.1 — `description` + `when_to_use` 합산 ≤1,536자, 첫 문장에 "Use when" 포함, 한국어/영어 자연어 trigger 키워드 3+)
 - 기존 catalog grep → 중복 후보 0건? (예: `grep -iE "<keyword>" plugin/skills/router/references/skill-catalog.md`. 1개라도 hit이면 차별점 §1에 명시 의무)
-- skill type 4분류 중 하나 결정?
-- 라이프사이클 phase 배정 (§1~§9 또는 Cross-cutting)?
+- skill type 4분류 중 하나 결정? (discipline-enforcing / technique / pattern / reference)
+- 라이프사이클 phase 배정 (`docs/se-lifecycle-naming.md` §1의 9 phase 또는 Cross-cutting)?
+- **Persona 적용성 결정** (가이드 §3.5.1 매트릭스):
+  - **권장**: review-* / audit-* / analyze-* / critique-* / design-* / build-with-* / iterate-* / deprecate-* / archive-* / migrate-* / spin-off-*
+  - **비권장**: update-* / sync-* / status / save-context / restore-context / start / router / freeze-* / compose-*
+  - 수명주기 관리 단계(Phase 9 — deprecate/archive/migrate/spin-off)는 **Senior PM (sunset 전문)** 페르소나 적용 — 사용자 영향·소통·timeline 중심
 
 ### Step 2. RED — Adversarial Baseline
 
@@ -141,24 +156,39 @@ subagent의 실패 모드를 수집한다. 이 실패가 본문이 막아야 할
 
 ### Step 3. GREEN — Minimal Skeleton
 
-buddy 표준 섹션 골격 작성. 각 섹션 최소 1단락:
+buddy 표준 섹션 골격 작성. 각 섹션 최소 1단락. **`docs/plugin-skills-authoring-guide.md` §2.1 3-Tier 분류(필수 4 + 권장 4 + 선택 4)와 정합**되며, write-a-skill은 그 superset (자매 스킬·anti-pattern·체크리스트·종료 조건을 별도 분리):
 
-```
+```markdown
 # <Name> — <One-line subtitle>
 
-[Persona intro 1단락 + 핵심 차별점 1단락]
+[Persona intro 1단락 (가이드 §3.5.1 권장 매트릭스 확인 — review-*/audit-*/design-*/build-with-*/iterate-*/deprecate-*/archive-*/migrate-*/spin-off-* → persona 권장. update-*/sync-*/router/status → 비권장)
+ + 핵심 차별점 1단락]
+
+## Input Requirements             ← 가이드 §4.2 B3 필수 (engineering-phases.md §4 표준)
+
+| Input | Required | Type | Source | 미제공 시 |
+|-------|----------|------|--------|----------|
+| <name> | ✅ | artifact/knowledge/decision | <Phase N 산출물 / 특정 스킬 output / 사용자 발화> | "<질의문>" |
+
+## Output Contract                ← 가이드 §4.2 B4 필수 (engineering-phases.md §4 표준)
+
+| Output | Type | Format | Consumers |
+|--------|------|--------|-----------|
+| <name> | artifact/decision | <structured YAML / prose / file path> | <소비 스킬 목록> |
 
 ## 1. 목적
-## 2. 사용 시점     (호출하라 / 호출하지 마라 분리)
-## 3. 입력          (필수 / 선택 / forcing question)
+## 2. 사용 시점     (호출하라 / 호출하지 마라 분리 — 가이드 §4.2 B5/B6)
+## 3. 입력 상세      (필수 / 선택 / forcing question — Input Requirements 표를 풀어 설명)
 ## 4. 핵심 원칙
-## 5. 실행 단계 (Steps)
-## 6. 출력 템플릿   (structured YAML/JSON 권장, free-form 비권장)
-## 7. 자매 스킬     (선행 / 페어 / 후속 + 호출 흐름 예시)
-## 8. Anti-patterns (5~10개, 각 1문장 교정)
-## 9. 체크리스트    (선택, discipline-enforcing은 필수)
+## 5. 실행 단계 (Steps)   ← imperative 명령형 (가이드 §4.2 B7) + 분기 명시 (B8)
+## 6. 출력 템플릿   (structured YAML/JSON 권장, free-form 비권장 — Output Contract 표를 풀어 설명)
+## 7. 자매 스킬     (선행 / 페어 / 후속 + 호출 흐름 예시 — 가이드 §4.2 B12)
+## 8. Anti-patterns (5~10개, 각 1문장 교정 — 가이드 §4.2 B11)
+## 9. 체크리스트    (선택, discipline-enforcing은 필수 — 가이드 §4.2 B11)
 ## 10. 종료 조건    (선택, discipline-enforcing은 필수)
 ```
+
+**Input Requirements / Output Contract 표는 반드시 포함** — 본 문서의 §2-§3 위치에. 누락 시 `evaluate-skill`이 B3/B4 즉시 fail 처리 (필수 항목).
 
 discipline-enforcing이면 §9·§10 필수. technique/pattern은 §1~§8로 충분. reference는 §5·§6를 분류표로 대체 가능.
 
@@ -217,7 +247,7 @@ next_steps:
 다음 중 하나라도 해당하면 추가 작업:
 - 트리거 충돌 존재 → `routing-rules.md`에 우선순위 항목 추가
 - command 트리거 등록 → `plugin/commands/<name>.md` (단일 파일, 서브디렉토리 없음). `/buddy:` 프리픽스는 `plugin.json`의 `name` 필드에서 자동 도출
-- 패턴 라이브러리 항목 → description 앞에 `[패턴 라이브러리]` 마커
+- 패턴 라이브러리 항목 → description 앞에 `[패턴 라이브러리]` 마커. **command 파일 생성 금지** (`plugin/commands/<name>.md` 부재로 사용자 직접 호출 차단 — 가이드 §1.2.3 buddy 등가 매핑. PROCEDURE.md는 frontmatter가 없어 `user-invocable: false`를 직접 적용 불가하므로 command 부재로 동등 효과 구현)
 
 ### Step 8. Attribution
 
@@ -248,12 +278,13 @@ REFACTOR 반복 상한: 3회. 3회 안에 pass 못 하면 description 또는 sco
 
 ### Step 10. 등록 검증
 
-다음 4 확인:
+다음 5 확인:
 
 - `skill-catalog.md` grep으로 새 스킬 hit
 - subagent 호출 시 본문대로 절차 수행 (Step 9 pass)
 - NOTICE attribution 검증 (외부 자산 흡수한 경우)
 - `make test-routing` 통과 — buddy 루트의 `Makefile`이 정의한 routing 검증 타깃. router의 description 매핑·트리거 충돌·dispatch 무한 루프 등을 정적 분석. 본문 추가 후 `cd <buddy-repo> && make test-routing` 실행 → exit 0이면 통과. 상세는 buddy README §Contributing. *yaml schema 검증*(yamllint·yq)을 보조로 권장 — [`references/yaml-output-spec.md`](./references/yaml-output-spec.md) §5.
+- **`evaluate-skill` self-check 권장** — 새로 작성한 PROCEDURE.md를 `evaluate-skill`에 통과시켜 21항목 체크리스트(F1-F5 / B1-B12 / P1-P4) + 가중치 점수(C1-C4 케이스별) 확인. 80점 이상(합격) 또는 90점 이상(우수)을 목표로. 호출: `/buddy:evaluate-skill <name>`. 결과 grade가 "보강 필요"(70-79) 또는 "재작성 권장"(<70)이면 Step 1로 회귀.
 
 ## 6. 출력 템플릿
 
@@ -280,7 +311,7 @@ artifacts_created:
 
 description_meta:
   text: "<1-line description>"
-  length_chars: <count, ≤1024>
+  length_chars: <count, description + when_to_use 합산 ≤1,536>   # 가이드 §1.2.1 — Anthropic skill listing truncation cap
   triggers_explicit: true | false
 
 attribution:
@@ -379,7 +410,7 @@ critique-plan (범위 모호 시 또는 큰 스킬일 때)
 
 각 Step 종료 시:
 
-- [ ] description 1024자 이하, *트리거 키워드 + 목적*이 한 문장에 있음
+- [ ] `description` + `when_to_use` 합산 1,536자 이하 (가이드 §1.2.1 SSoT), *트리거 키워드 + 목적*이 한 문장에 있음
 - [ ] skill type 4분류 중 하나 명시 (discipline/technique/pattern/reference)
 - [ ] 본문 < 400줄 (초과 시 references/로 분리)
 - [ ] sister skill 선행·페어·후속 중 최소 *선행 1 + 후속 1* 작성
@@ -391,9 +422,12 @@ critique-plan (범위 모호 시 또는 큰 스킬일 때)
 - [ ] discipline-enforcing 타입이면 *새 스킬의* §9·§10 섹션 작성 (본 문서의 §9·§10 아님 — 작성 산출물 안에 동명 섹션)
 - [ ] `make test-routing` 통과 (router 충돌 없음 — §10에도 동일 항목 존재)
 - [ ] command 트리거 등록한 경우 `plugin/commands/<name>.md` 존재 (subdir 없음)
+- [ ] 패턴 라이브러리 타입이면 `plugin/commands/<name>.md` **부재** 확인 (가이드 §1.2.3 buddy 등가 매핑 — user-invocable: false 효과)
+- [ ] Input Requirements + Output Contract 표가 본문에 존재 (가이드 §4.2 B3/B4 필수 — engineering-phases.md §4 표준 형식)
 - [ ] Step 6 출력 yaml을 호출자에게 반환 (§10에도 동일 항목 존재 — 누락 시 다음 스킬이 결과 소비 불가)
+- [ ] `evaluate-skill` 통과 — 점수 ≥ 80 (합격) 권장. `/buddy:evaluate-skill <name>` 실행 결과 grade가 "보강 필요"(<80)면 Step 1로 회귀
 
-13개 중 하나라도 No이면 종료 선언 금지.
+16개 중 하나라도 No이면 종료 선언 금지.
 
 ## 10. 종료 조건
 

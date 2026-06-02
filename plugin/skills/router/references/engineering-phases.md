@@ -15,6 +15,30 @@
 
 ---
 
+## 목차 (Table of Contents) — B-M4 부분 참조 효율 보강
+
+| 섹션 / 헤더 | 내용 |
+|------|------|
+| `## §1. 정의 원칙` | Artifact-based 채택 근거 + Phase 간 흐름 다이어그램 |
+| `## §2. Phase 정의` | 각 Phase의 정체성·핵심 질문·orchestrator·Input/Output·소속 스킬 |
+| └ `### Phase 1 — ...` (Mode A, Mode B 2 sub-block) | concretize-idea + Stage 매핑 / assess-product-change + scope·routing |
+| └ `### Phase 2 — Feature Definition & Backlog` | define-features + actor/use case |
+| └ `### Phase 3 — Technical Design (Architecture)` | design-system + 9 카테고리 (3-A~3-I) |
+| └ `### Phase 4 — Implementation Planning` | plan-build + Task DAG |
+| └ `### Phase 5 — Development (Implementation)` | build-feature + developer-authored tests **(Phase 6과 책임 경계)** |
+| └ `### Phase 6 — Verification (Quality)` | verify-quality + 상용 quality bar **(Phase 5와 책임 경계)** |
+| └ `### Phase 7 — Release` | ship-release + launch readiness **(UAT 위치 + Phase 6 경계)** |
+| └ `### Phase 8 — Operations (Operate & Iterate)` | iterate-product + Engineering/Product/Marketing |
+| └ `### Phase 9 — Lifecycle Management` | manage-lifecycle + deprecation **(Mode B와 분류 정책)** |
+| └ `### Cross-cutting (Phase 소속 없음)` | phase 무관 스킬 (decompose-blocker, status 등) |
+| `## §3. Phase 전이 규칙` | 정상 흐름 / Backtrack / Skip vs Routing / 전이 판단 기준 |
+| `## §4. Input/Output Contract 표준 형식` | Input Requirements 표 / Output Contract 표 / Type 분류 / 미제공 시 처리 |
+| `## §5. 본 문서의 범위와 한계` | 범위 / 범위 외 / 변경 trigger |
+
+> **부분 참조 가이드**: LLM이 본 문서를 부분 참조할 때, 위 TOC로 필요한 헤더 텍스트를 먼저 식별하고 해당 헤더로 jump하라. 본 문서는 800+ 줄이지만 phase별 sub-section은 60-100줄 단위로 독립적이므로 필요한 phase만 로드 가능.
+
+---
+
 ## §1. 정의 원칙
 
 ### 왜 Artifact-based인가
@@ -81,27 +105,35 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 | HLD (High Level Design) | `docs/hld.md` — 9 섹션 (product 구성 + tech stack + use case → product mapping) | Phase 1 `autoplan`(validate-spec), Phase 3 `design-system` |
 | Business viability report | PRD 내 섹션 또는 별도 문서 | Phase 1 내부 결정 근거 |
 | Market/competitor analysis | PRD 내 섹션 | Phase 1 내부 결정 근거 |
-| Customer segment map | PRD 내 섹션 | Phase 2 `identify-actors` 미사용 (Phase 1로 이관) |
+| Customer segment map | PRD 내 섹션 | Phase 1 내부 (Stage 4-6 입력). Phase 2 actor 정의의 입력으로도 사용. **이관 결정 근거**: 2026-05-29 `concretize-idea` 재구조화 — 경쟁/사업성/pricing(Stage 4-6)이 customer 정의를 입력으로 요구하므로 Phase 1 내부 Stage 3에 배치 (`plugin/skills/concretize-idea/PROCEDURE.md` "중요 변경 (2026-05-29)" 노트 참조) |
 | PRD + HLD review report (autoplan) | structured findings | Phase 2 `define-features`로 forward 또는 PRD/HLD 수정 |
 
 **종료 → 다음**: Phase 2 `define-features` (전체 흐름 진입). PRD + HLD가 review 통과 후.
 
-**Mode A 소속 스킬:**
+**Mode A 소속 스킬 + concretize-idea Stage 매핑:**
 
-| Skill | 역할 |
-|-------|------|
-| `validate-idea` | 아이디어 stress-test (6 forcing questions) |
-| `validate-advanced-edge-idea` | edge case / hidden assumption grilling |
-| `assess-business-viability` | 7차원 사업성 평가 |
-| `analyze-market-size` | TAM/SAM/SOM 산출 |
-| `map-customer-segments` | 사용자 vs 구매자 분리 + persona |
-| `map-jobs-to-be-done` | JTBD 프레임워크 |
-| `conduct-customer-interview` | 고객 인터뷰 + Mom Test |
-| `analyze-competition-and-substitutes` | 경쟁/대체재 매트릭스 |
-| `decide-target-market` | target market 결정 + region trigger |
-| `write-hld` | High Level Design 작성 — product 구성 + tech stack + use case → product mapping (PRD 완료 후) |
-| `review-pricing-and-gtm` | pricing + GTM channel 평가 |
-| `define-product-spec` | PRD 작성 |
+| Skill | concretize-idea Stage | 역할 |
+|-------|---------------------|------|
+| `validate-idea` | Stage 1 | 아이디어 stress-test (6 forcing questions) |
+| `validate-advanced-edge-idea` | Stage 2 | edge case / hidden assumption grilling |
+| `map-customer-segments` | Stage 3 | 사용자 vs 구매자 분리 + persona — 후속 stage 입력 |
+| `analyze-competition-and-substitutes` | Stage 4 | 경쟁/대체재 매트릭스 |
+| `assess-business-viability` | Stage 5 | 7차원 사업성 평가 (gate: 치명적 결함 시 사용자 확인) |
+| `review-pricing-and-gtm` | Stage 6 | pricing + GTM channel 평가 (상업 프로젝트만, 비상업은 skip) |
+| `define-product-spec` | Stage 7 | PRD 작성 (내부에서 `identify-actors` + `map-actor-use-cases` 호출) |
+| `write-hld` | Stage 8 | High Level Design — product 구성 + tech stack + use case → product mapping |
+| (autoplan) | Stage 9 | PRD + HLD 통합 4-mode review (review-scope / design / devex / engineering) |
+
+**Mode A supporting skills (concretize-idea 직접 stage 매핑 없음 — 옵션/심층 분석용):**
+
+| Skill | 호출 패턴 | 역할 |
+|-------|---------|------|
+| `analyze-market-size` | `assess-business-viability` 내부 또는 사용자 직접 호출 | TAM/SAM/SOM 산출 — Stage 5의 입력 보강 |
+| `map-jobs-to-be-done` | `map-customer-segments` 내부 또는 사용자 직접 호출 | JTBD 프레임워크 — Stage 3 customer 정의 심화 |
+| `conduct-customer-interview` | 사용자 직접 호출 (Stage 3-5 사이 데이터 수집 시) | 고객 인터뷰 + Mom Test |
+| `decide-target-market` | 사용자 직접 호출 또는 `assess-business-viability` 후 region 결정 시 | target market 결정 + region trigger |
+
+> 매핑 SSoT: `plugin/skills/concretize-idea/PROCEDURE.md` "Stage 흐름" 섹션. 본 표는 그것의 reverse index.
 
 #### Mode B — Existing Product (기존 프로덕트 변경)
 
@@ -125,16 +157,19 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 |----------|------|--------|
 | Validated work item | structured (문제/기회 설명 + 재현/근거 + 수용 기준) | 다음 phase 진입 스킬 |
 | Impact assessment | 영향 범위 + severity/priority + 기존 시스템 호환성 | 다음 phase 결정 근거 |
-| Scope classification + routing decision | small / medium / large + 다음 phase 번호 | Phase 전이 |
+| Scope classification | decision — **3종**: small / medium / large | Routing decision의 입력 |
+| Routing decision | decision — **4종 옵션**: §2 / §3 / §5 / defer (scope 3종 + Defer/Reject) | Phase 전이 |
 
 **종료 → scope별 routing:**
 
-| Scope | 다음 경로 | 예시 |
-|-------|----------|------|
-| **Small** | → Phase 5 직접 진입 | 버그 수정, 설정 변경, 작은 UI 수정 |
-| **Medium** | → Phase 3 (설계 검토 후 구현) | 새 API endpoint, 컴포넌트 리팩토링, 스키마 변경 |
-| **Large** | → Phase 2 (feature 정의부터) | 신규 기능, 대규모 재설계, 아키텍처 변경 |
-| **Defer/Reject** | → backlog 기록, 현재 cycle 종료 | 우선순위 낮음, ROI 부족 |
+| Scope | 다음 경로 | 분류 기준 (`assess-product-change` Step 4) | 예시 |
+|-------|----------|----------------------------------------|------|
+| **Small** | → Phase 5 직접 진입 | 1-3 파일 변경, non-breaking, 기존 테스트 유지, 설계 변경 없음 | 버그 수정, 설정 변경, 작은 UI 수정 |
+| **Medium** | → Phase 3 (설계 검토 후 구현) | 4-15 파일 변경, 또는 새 모듈/API 추가, 또는 스키마 변경, 설계 검토 필요 | 새 API endpoint, 컴포넌트 리팩토링, 스키마 변경 |
+| **Large** | → Phase 2 (feature 정의부터) | 15+ 파일 변경, 또는 아키텍처 변경, 또는 새 actor/use case 도입, feature 정의 필요 | 신규 기능, 대규모 재설계, 아키텍처 변경 |
+| **Defer/Reject** | → backlog 기록, 현재 cycle 종료 | scope 분류 자체가 아닌 routing 결정의 4번째 옵션 (우선순위/ROI 평가 결과) | 우선순위 낮음, ROI 부족 |
+
+> 상세 기준은 `plugin/skills/assess-product-change/PROCEDURE.md` Step 4 (Scope 분류) 참조.
 
 ---
 
@@ -211,45 +246,87 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 **종료 조건**: 핵심 기술 결정(tech stack, API, data model)이 ADR로 기록되고, 리뷰(autoplan 4-mode)를 통과한 상태.
 
-**참고**: Phase 3은 가장 많은 stage skill을 보유한 phase. 각 design-* 스킬이 독립적으로도 호출 가능(standalone-with-context)하지만, orchestrator 경유 시 결정 간 일관성 보장.
+**호출 패턴**: 각 design-* 스킬은 독립 호출 가능(standalone-with-context). orchestrator(`design-system`) 경유 시 결정 간 일관성 보장 (예: tech stack 결정과 data model 설계가 모순되지 않도록).
 
-**소속 스킬:**
+**소속 스킬** (Phase 3은 design 스킬이 가장 많은 phase. 카테고리별 그룹화로 정리):
+
+**3-A. Architecture Foundation (5)** — 핵심 기술 결정
 
 | Skill | 역할 |
 |-------|------|
 | `define-tech-stack` | 기술 스택 결정 (8차원 + 5년 lock-in 평가) |
+| `derive-system-topology` | 시스템 토폴로지 도출 (service/data flow/trust boundary) |
+| `decide-form-factor-app-vs-web` | 앱 vs 웹 폼팩터 결정 |
+| `map-use-cases-to-infra` | use case → infra 매핑 |
+| `write-adr` | ADR 작성 |
+
+**3-B. Data & Contract Design (4)** — 인터페이스/스키마
+
+| Skill | 역할 |
+|-------|------|
 | `design-data-model` | 데이터 모델 설계 (entity + read/write 패턴 + migration) |
 | `design-api-contract` | API 계약 설계 (REST/GraphQL/gRPC + schema + error) |
 | `design-event-schema` | 이벤트 스키마 설계 (async/pub-sub/DLQ) |
+| `design-embedding-search` | 하이브리드 검색 설계 (BM25 + vector + rerank) |
+
+**3-C. Security & Tenancy (3)** — 보안/멀티테넌시/시크릿
+
+| Skill | 역할 |
+|-------|------|
 | `design-auth-model` | 인증/인가 모델 설계 (OAuth2/RBAC/multi-tenant) |
 | `design-tenant-model` | 멀티테넌트 모델 설계 (RLS/schema-per/DB-per) |
-| `design-observability` | 관측성 전략 (logs/metrics/traces/SLO) |
 | `design-secret-management` | 시크릿 관리 전략 (rotation/audit/leak detection) |
-| `design-i18n-strategy` | i18n 전략 (locale/fallback/RTL) |
-| `design-accessibility-baseline` | 접근성 기준선 (WCAG/a11y) |
+
+**3-D. Operations Strategy (3)** — 관측성/배포/저장
+
+| Skill | 역할 |
+|-------|------|
+| `design-observability` | 관측성 전략 (logs/metrics/traces/SLO) |
 | `design-deploy-strategy` | 배포 전략 (canary/blue-green/rolling) |
 | `design-artifact-storage` | artifact 저장/검증/배포 설계 |
-| `design-billing-system` | 결제 시스템 설계 (Stripe/Toss + subscription) |
-| `design-embedding-search` | 하이브리드 검색 설계 (BM25 + vector + rerank) |
-| `design-mcp-server` | MCP 서버 설계 |
-| `design-claude-hooks` | Claude Code hook 설계 |
-| `design-interaction-pattern` | 인터랙션 패턴 설계 (gesture/motion/feedback) |
-| `map-use-cases-to-infra` | use case → infra 매핑 |
-| `derive-system-topology` | 시스템 토폴로지 도출 (service/data flow/trust boundary) |
-| `decide-form-factor-app-vs-web` | 앱 vs 웹 폼팩터 결정 |
+
+**3-E. Quality Baseline (2)** — i18n/접근성
+
+| Skill | 역할 |
+|-------|------|
+| `design-i18n-strategy` | i18n 전략 (locale/fallback/RTL) |
+| `design-accessibility-baseline` | 접근성 기준선 (WCAG/a11y) |
+
+**3-F. UX/UI Design (4)** — 디자인 시스템·인터랙션·프로토타입
+
+| Skill | 역할 |
+|-------|------|
 | `apply-design-system` | 디자인 시스템 적용 (token/component/pattern) |
 | `consult-design-system` | 디자인 시스템 생성/참조 |
-| `audit-ui-quality` | UI 품질 감사 |
+| `design-interaction-pattern` | 인터랙션 패턴 설계 (gesture/motion/feedback) |
 | `prototype-from-spec` | spec → 프로토타입 |
-| `write-adr` | ADR 작성 |
-| `consult-codex` | 외부 LLM second opinion |
-| `verify-best-alternative` | 엔지니어링 결정의 다관점 검토 (편향 방지) |
-| `critique-plan` | 전략적 plan critique (CEO/founder 페르소나) |
+
+**3-G. Domain-Specific Design (3)** — 결제·MCP·Claude hook
+
+| Skill | 역할 |
+|-------|------|
+| `design-billing-system` | 결제 시스템 설계 (Stripe/Toss + subscription) |
+| `design-mcp-server` | MCP 서버 설계 |
+| `design-claude-hooks` | Claude Code hook 설계 |
+
+**3-H. Design Reviews (6)** — autoplan 4-mode + 기타
+
+| Skill | 역할 |
+|-------|------|
 | `review-architecture` | 아키텍처 구조 무결성 검토 |
 | `review-engineering` | implementation plan 리뷰 |
 | `review-scope` | scope 형성/결정 리뷰 |
 | `review-design` | 디자인 차원 0-10 score 리뷰 |
 | `review-devex` | DX plan 리뷰 |
+| `audit-ui-quality` | UI 품질 감사 |
+
+**3-I. Decision Support (3)** — 검토 도구·외부 의견
+
+| Skill | 역할 |
+|-------|------|
+| `consult-codex` | 외부 LLM second opinion |
+| `verify-best-alternative` | 엔지니어링 결정의 다관점 검토 (편향 방지) |
+| `critique-plan` | 전략적 plan critique (CEO/founder 페르소나) |
 
 ---
 
@@ -298,9 +375,18 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 | 항목 | 내용 |
 |------|------|
-| **정체성** | 계획된 task를 코드로 구현한다 |
-| **핵심 질문** | "만든다" |
+| **정체성** | 계획된 task를 **코드 + 자체 테스트(developer-authored)**로 구현하고, 해당 자체 테스트가 통과하는 상태까지 만든다 |
+| **핵심 질문** | "구현했고, 자체 테스트는 통과하는가?" |
 | **Orchestrator** | `build-feature` |
+
+**Phase 6과의 책임 경계** (B-L8 명확화, 2026-06-01):
+
+| Phase | 책임 테스트 종류 | 평가 기준 |
+|-------|---------------|---------|
+| **Phase 5** | 개발자가 코드와 함께 작성한 unit / integration / contract test | green/red (작성된 테스트가 통과하는가) |
+| **Phase 6** | 상용 quality gate — coverage(line/mutation/behavior), security audit, a11y, i18n, compliance, code health, load/chaos, cross-actor E2E | quality bar 통과 여부 (단순 green이 아닌 의미 있는 coverage·취약점 제로 등) |
+
+요약: Phase 5는 "내가 만든 테스트가 green"이면 종료. Phase 6은 "이 코드가 **상용 출시 가능 수준의 품질**인가"를 별도 차원에서 평가.
 
 **Input Artifacts:**
 
@@ -316,10 +402,10 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 | Artifact | 형식 | 소비자 |
 |----------|------|--------|
 | Working code | source files + commit history | Phase 6 검증 대상 |
-| Tests (unit / integration / contract) | test files | Phase 6 `verify-quality` |
+| Developer-authored tests (unit / integration / contract) | test files | Phase 6 `audit-test-coverage-meaningful` (의미 있는 coverage 평가의 입력) |
 | Updated docs (코드 변경 동기화) | docs/ 갱신 | Phase 7 release docs |
 
-**종료 조건**: 모든 task가 완료되고, 테스트가 통과하며, 코드가 commit된 상태.
+**종료 조건**: 모든 task가 완료되고, **개발자가 작성한 자체 테스트(unit/integration/contract)가 green**이며, 코드가 commit된 상태. (상용 quality bar 통과 여부는 Phase 6의 책임 — 본 phase 종료 조건에 포함되지 않음.)
 
 **특이사항**: Phase 5의 스킬 다수(build-with-tdd, diagnose-bug, iterate-fix-verify)는 full-standalone 등급 — 별도 orchestrator 없이 독립 실행이 자연스러운 영역.
 
@@ -344,15 +430,17 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 | 항목 | 내용 |
 |------|------|
-| **정체성** | 구현된 코드가 요구사항을 만족하고 상용 품질 기준을 통과하는지 검증한다 |
-| **핵심 질문** | "제대로 작동하는가?" |
+| **정체성** | Phase 5 산출물(코드 + 자체 테스트)이 **상용 출시 가능한 quality bar**(meaningful coverage, security, a11y, i18n, compliance, code health, performance)에 도달했는지 별도 차원에서 평가한다 |
+| **핵심 질문** | "단순히 작동하는 것을 넘어 출시할 수 있는 품질인가?" |
 | **Orchestrator** | `verify-quality` |
+
+**Phase 5와의 책임 경계** (B-L8 명확화, 2026-06-01): Phase 5는 "내가 작성한 테스트가 green"으로 충분. Phase 6은 그 위에 **별도 quality 차원**을 평가 — 작성된 테스트의 의미·취약점·접근성·법규 등.
 
 **Input Artifacts:**
 
 | Artifact | Required | 설명 |
 |----------|----------|------|
-| Working code + tests | ✅ | Phase 5 산출물 |
+| Working code + developer-authored tests | ✅ | Phase 5 산출물 (자체 테스트 green 상태로 인계) |
 | Acceptance criteria / test plan | ✅ | Phase 4 산출물 또는 feature spec |
 | API contracts / data model | 선택 | Phase 3 산출물 (contract test 기준) |
 
@@ -400,9 +488,18 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 | 항목 | 내용 |
 |------|------|
-| **정체성** | 검증된 코드를 사용자에게 전달한다 |
-| **핵심 질문** | "내보낸다" |
+| **정체성** | 검증된 코드를 사용자에게 전달한다 (패키징/태깅/배포/공지/launch readiness 확인 포함). **UAT는 본 phase의 launch readiness 일환**으로 분류 (Phase 6 quality bar와 별개로, 실사용자 acceptance 관점 검증) |
+| **핵심 질문** | "사용자에게 안전하게 전달할 준비가 되었고, 전달했는가?" |
 | **Orchestrator** | `ship-release` |
+
+**Phase 6 vs Phase 7 UAT 경계** (B-L9 명확화 2026-06-01):
+
+| Phase | 검증 관점 | 책임 스킬 |
+|-------|---------|---------|
+| Phase 6 (Verification) | 코드의 **상용 품질 bar** (coverage / security / a11y / compliance / code health) | `verify-quality`, `audit-*`, `review-*` |
+| Phase 7 (Release) | **실사용자 acceptance**: UAT, beta program, canary, rollback runbook | `run-uat`, `run-beta-program`, `setup-canary-deploy` |
+
+즉 Phase 6은 "코드 자체"의 품질, Phase 7은 "사용자가 만났을 때"의 품질을 본다. UAT를 Phase 7로 두는 이유: 실사용자 시나리오는 deploy/canary 환경과 결합되어 평가되므로 launch readiness의 일부.
 
 **Input Artifacts:**
 
@@ -416,7 +513,7 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 | Artifact | 형식 | 소비자 |
 |----------|------|--------|
-| Tagged release (semver) | git tag + release notes | 사용자, Phase 8 운영 기준 |
+| Tagged release (semver) | git tag + release notes. 버전 결정 정책: breaking change 시 major, 신규 feature 시 minor, 버그 fix/내부 개선 시 patch (semver 2.0.0 준수, `automate-release-tagging`이 변경 셋 분석 후 자동 제안) | 사용자, Phase 8 운영 기준 |
 | Deployed artifact | 배포된 binary / container / package | Phase 8 모니터링 대상 |
 | Launch checklist pass | structured checklist | 감사 증적 |
 | Updated docs (CHANGELOG, README, ADR) | docs/ 갱신 | 사용자, 다음 cycle |
@@ -518,6 +615,19 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 | **핵심 질문** | "유지할 것인가, 끝낼 것인가?" |
 | **Orchestrator** | `manage-lifecycle` |
 
+**Phase 9 vs Mode B 분류 정책** (B-N11 명확화 2026-06-01): deprecation 작업은 외부 사용자 영향 유무로 분류한다.
+
+| 작업 유형 | 처리 phase | 근거 |
+|---------|----------|------|
+| **외부 사용자 영향 있음** (API consumer, end user에게 마이그레이션 안내 필요) | Phase 9 `deprecate-feature` | sunset 소통·timeline·migration plan이 필요 — Phase 9의 정체성에 부합 |
+| **내부만 영향** (dead code 제거, 사용 안 하는 helper 삭제, 내부 helper 통합) | Phase 1 Mode B (scope에 따라 small/medium) | 외부 announce 불필요 — 일반 변경 작업으로 처리. `assess-product-change`가 scope 평가 후 routing |
+
+**판단 기준 예시**:
+- 공개 API endpoint 삭제 → Phase 9 (API consumer 알림 + 대체 endpoint 안내)
+- 내부 helper 함수 인라인화 → Mode B small (외부 영향 X, 내부 정리)
+- DB 컬럼 deprecation (API 응답에서 사라짐) → Phase 9 (consumer 영향)
+- 미사용 내부 util 모듈 삭제 → Mode B small
+
 **Input Artifacts:**
 
 | Artifact | Required | 설명 |
@@ -588,30 +698,43 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 | §8 Operations | §5 Development | hotfix 필요 (인시던트) |
 | §8 Operations | §3 Design | 구조적 문제 발견 (design 재검토) |
 
-### Skip (phase 건너뛰기)
+### 분기 — Skip vs Routing
 
-**Greenfield (Mode A) skip:**
+phase 정상 흐름을 벗어나는 경로는 두 종류로 명확히 구분한다 (용어 정정 2026-06-01):
 
-| 상황 | 경로 | 근거 |
-|------|------|------|
-| Prototype / POC | §1 → §2 → §3 → **§5** (§4 skip) | 형식적 task 분해 불필요 |
-| Design-only 작업 | §1 → §2 → §3 → 종료 (§4-§9 skip) | 구현 없이 설계 문서만 산출 |
+- **Skip**: 특정 phase를 **건너뛰는** 경우. 그 phase에 진입하지 않음.
+- **Routing**: phase 내부 orchestrator의 판단에 따라 **다음 phase를 선택**하는 경우. 해당 phase에는 정상 진입함.
 
-**Existing Product (Mode B) scope-based routing:**
+#### Skip (Mode A — Greenfield)
 
-Mode B에서는 skip이 아니라 `assess-product-change`의 **scope 판단 결과에 따른 routing**으로 처리된다:
+| 상황 | 경로 | 건너뛰는 phase | 근거 |
+|------|------|---------------|------|
+| Prototype / POC | §1 → §2 → §3 → §5 | §4 | 형식적 task 분해 불필요 |
+| Design-only 작업 | §1 → §2 → §3 → 종료 | §4-§9 | 구현 없이 설계 문서만 산출 |
 
-| Scope | 경로 | 예시 |
-|-------|------|------|
-| Small | §1 → **§5** | 버그 수정, 설정 변경, 작은 UI 수정 |
-| Medium | §1 → **§3** → §5 → ... | 새 API endpoint, 스키마 변경, 컴포넌트 리팩토링 |
-| Large | §1 → **§2** → §3 → §4 → §5 → ... | 신규 기능, 대규모 재설계 |
+#### Routing (Mode B — Existing Product, scope-based)
 
-**공통 skip:**
+`assess-product-change`(Phase 1 Mode B orchestrator)의 scope 판단 결과에 따라 다음 phase를 선택. **§1은 실행되며, 건너뛰지 않음**.
 
-| 상황 | 경로 | 근거 |
-|------|------|------|
-| Hotfix (긴급) | **§5** 직접 진입 (§1 포함 전부 skip) | 문제가 이미 확인되고 즉시 수정이 필요한 경우에만 |
+| Scope | 경로 | §1 다음 phase | 분류 기준 (`assess-product-change` Step 4) | 예시 |
+|-------|------|--------------|----------------------------------------|------|
+| Small | §1 → §5 | §5 | 1-3 파일, non-breaking, 기존 테스트 유지, 설계 변경 없음 | 버그 수정, 설정 변경, 작은 UI 수정 |
+| Medium | §1 → §3 → §5 → ... | §3 | 4-15 파일, 또는 새 모듈/API 추가, 또는 스키마 변경, 설계 검토 필요 | 새 API endpoint, 스키마 변경, 컴포넌트 리팩토링 |
+| Large | §1 → §2 → §3 → §4 → §5 → ... | §2 | 15+ 파일, 또는 아키텍처 변경, 또는 새 actor/use case 도입, feature 정의 필요 | 신규 기능, 대규모 재설계 |
+| Defer/Reject | §1 종료 | (없음) | scope 분류와 무관 — ROI/우선순위 평가 결과 | 우선순위 낮음, ROI 부족 — backlog 기록 |
+
+**Medium-Large 경계 케이스** (B-N10 명확화 2026-06-01): 다음 중 **하나라도 해당하면 Large**로 분류 (보수적 판단):
+- 새 actor 또는 use case 등장 → Phase 2 feature 정의 필요
+- 아키텍처 결정이 ADR을 요구할 수준 → Phase 3 design 진입만으론 부족
+- cross-team 협업 필요 → Phase 2 backlog 단위 분해 필요
+
+반대로 단순한 파일 수만으로는 Large로 분류하지 않는다 (예: 자동 생성 코드 30 파일 변경은 Medium 유지). 판단 책임은 `assess-product-change` orchestrator + 사용자 확인.
+
+#### Skip — 공통 (긴급)
+
+| 상황 | 경로 | 건너뛰는 phase | 근거 |
+|------|------|---------------|------|
+| Hotfix (긴급) | §5 직접 진입 | §1-§4 전부 | **발동 기준: 24시간 내 fix가 필요한 작업** (사용자/이해관계자의 timeline 요구). severity와 무관하게 시간 압박만으로 결정 — production incident, 외부 demo 직전 발견된 결함, 법적 deadline 등. **Mode B small과의 차이**: Mode B small도 버그 수정이지만 normal cycle(§1 assess → §5)을 따름. hotfix는 §1 자체를 건너뛰어 즉시 §5 진입, **사후 24시간 내 incident report/postmortem으로 §1을 보상**해야 함 |
 
 ### 전이 판단 기준
 
