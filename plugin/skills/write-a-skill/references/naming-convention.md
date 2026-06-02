@@ -7,7 +7,7 @@
 > **사용 시점**: 신규 스킬 작성 시 (`write-a-skill` Step 1) + 기존 스킬 검토 시 + `evaluate-skill` 평가 시 명명 일관성 검증 항목으로 활용.
 >
 > **상위 참조**:
-> - `docs/se-lifecycle-naming.md` — 9 phase 명사 SSoT (본 문서 N8 참조)
+> - `plugin/skills/router/references/se-lifecycle-naming.md` — 9 phase 명사 SSoT (본 문서 N8 참조)
 > - `docs/plugin-skills-authoring-guide.md` — skill 작성·평가 기준 SSoT (본 문서가 그 안의 명명 규칙 부분을 상세화)
 
 ---
@@ -139,7 +139,7 @@ PROCEDURE.md에 frontmatter 도입 시 (향후 마이그레이션), Anthropic �
 | Persona | P1, P2, ..., P4 | `P1: 최상단 페르소나 정의` |
 | 평가 케이스 | C1-C4 (single) / PC1-PC5 (paired) | `C3 케이스: PROCEDURE.md 단독, persona 권장` |
 
-**약어 정의는 `docs/se-lifecycle-naming.md` §3에 SSoT.**
+**약어 정의는 `plugin/skills/router/references/se-lifecycle-naming.md` §3에 SSoT.**
 
 ---
 
@@ -159,7 +159,7 @@ Anthropic 공식 정의 용어는 그대로 사용 + 첫 등장 시 출처/의�
 
 ## N8. SE Lifecycle 단계 명명
 
-9 phase 명명은 `docs/se-lifecycle-naming.md` §1 SSoT를 따른다. 본 문서는 그 매핑을 다시 정의하지 않고 참조만.
+9 phase 명명은 `plugin/skills/router/references/se-lifecycle-naming.md` §1 SSoT를 따른다. 본 문서는 그 매핑을 다시 정의하지 않고 참조만.
 
 요약:
 - 내부 작업: `Phase 1` ~ `Phase 9`
@@ -167,7 +167,7 @@ Anthropic 공식 정의 용어는 그대로 사용 + 첫 등장 시 출처/의�
 - 영문 문서: 영문 일반 명사 (예: "Problem/Opportunity Validation")
 - 첫 등장 시 약어 부기 ("문제·기회 검증 단계(이하 Phase 1)")
 
-상세는 `docs/se-lifecycle-naming.md` §1 + §2 (Mode A/B) + §3 (평가 약어) + §4 (용어 사용 규칙) 참조.
+상세는 `plugin/skills/router/references/se-lifecycle-naming.md` §1 + §2 (Mode A/B) + §3 (평가 약어) + §4 (용어 사용 규칙) 참조.
 
 ---
 
@@ -219,7 +219,7 @@ Anthropic 공식 정의 용어는 그대로 사용 + 첫 등장 시 출처/의�
 
 ## 참조
 
-- `docs/se-lifecycle-naming.md` — SE Lifecycle 명사 SSoT
+- `plugin/skills/router/references/se-lifecycle-naming.md` — SE Lifecycle 명사 SSoT
 - `docs/plugin-skills-authoring-guide.md` — 스킬 작성·평가 기준 SSoT
 - `plugin/skills/router/references/engineering-phases.md` §4 — I/O Contract 표 표준
 - `plugin/skills/write-a-skill/PROCEDURE.md` — 본 references를 참조하는 메타 스킬

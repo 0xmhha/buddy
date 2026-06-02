@@ -68,7 +68,7 @@ phase는 **시간순 단계가 아니라 산출물 의존성 그래프의 노드
 - **사이클**은 trigger(인시던트·실험 결과·변경 요청)가 새 source를 주입하면 downstream 노드만 증분 재평가되는 것이다 (Make/Bazel의 stale-rebuild 의미론).
 - "Phase 1~9" 번호는 그래프를 사람이 읽기 쉽게 묶은 **클러스터 라벨**이며 강제 실행 순서가 아니다. 아래 표기는 *위상 정렬(topological order)의 한 예시*일 뿐이다.
 
-노드 표준 용어(SE/Agile) + DoR/DoD 매핑 SSoT는 [`docs/se-lifecycle-naming.md §1`](../../../../docs/se-lifecycle-naming.md)을 따른다.
+노드 표준 용어(SE/Agile) + DoR/DoD 매핑 SSoT는 [`se-lifecycle-naming.md §1`](./se-lifecycle-naming.md)을 따른다.
 
 ```
 trigger: idea | change request | incident | metric

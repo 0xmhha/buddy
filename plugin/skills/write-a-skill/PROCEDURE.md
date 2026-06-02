@@ -125,14 +125,14 @@ description 1줄을 못 쓰면 본 스킬을 시작하지 말고 `critique-plan`
 
 description 1줄을 쓰는 것부터 시작한다. 못 쓰겠으면 stop — `critique-plan`으로 회귀(또는 사용자 Q&A).
 
-> **명명 규칙 준수 필수**: 본 Step의 모든 명명 결정(name, description, frontmatter 필드, phase 명사 등)은 [`references/naming-convention.md`](./references/naming-convention.md) SSoT를 따른다. phase 명사는 `docs/se-lifecycle-naming.md` §1 참조.
+> **명명 규칙 준수 필수**: 본 Step의 모든 명명 결정(name, description, frontmatter 필드, phase 명사 등)은 [`references/naming-convention.md`](./references/naming-convention.md) SSoT를 따른다. phase 명사는 `plugin/skills/router/references/se-lifecycle-naming.md` §1 참조.
 
 체크:
 - name이 kebab-case + 동사 시작인가? (패턴 라이브러리만 명사형 허용 — N1)
 - description이 *트리거 키워드* + *목적*을 한 문장에 담는가? (가이드 §1.2.1 — `description` + `when_to_use` 합산 ≤1,536자, 첫 문장에 "Use when" 포함, 한국어/영어 자연어 trigger 키워드 3+)
 - 기존 catalog grep → 중복 후보 0건? (예: `grep -iE "<keyword>" plugin/skills/router/references/skill-catalog.md`. 1개라도 hit이면 차별점 §1에 명시 의무)
 - skill type 4분류 중 하나 결정? (discipline-enforcing / technique / pattern / reference)
-- 라이프사이클 phase 배정 (`docs/se-lifecycle-naming.md` §1의 9 phase 또는 Cross-cutting)?
+- 라이프사이클 phase 배정 (`plugin/skills/router/references/se-lifecycle-naming.md` §1의 9 phase 또는 Cross-cutting)?
 - **Persona 적용성 결정** (가이드 §3.5.1 매트릭스):
   - **권장**: review-* / audit-* / analyze-* / critique-* / design-* / build-with-* / iterate-* / deprecate-* / archive-* / migrate-* / spin-off-*
   - **비권장**: update-* / sync-* / status / save-context / restore-context / start / router / freeze-* / compose-*

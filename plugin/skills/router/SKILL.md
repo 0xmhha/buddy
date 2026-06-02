@@ -92,30 +92,37 @@ Trigger: command md 가 `mode: parallel` 과 `targets: name1, name2, name3` 을 
 
 ## Skill index
 
-Buddy 는 9-phase 라이프사이클로 78 개 skill 을 조직한다. 각 phase 는 진입점 orchestrator 와 그 phase 안의 stage skill 집합을 가진다.
+Buddy 는 78 개 skill 을 **artifact 의존성 그래프(DAG)** 로 조직한다. 아래 §1~§9 는 그래프를 사람이 읽기 쉽게 묶은 **클러스터 라벨**이며 강제 실행 순서가 아니다 — 진입점은 "지금 존재하는 artifact 의 frontier" 로 결정된다. 각 클러스터는 진입점 orchestrator 와 그 안의 stage skill 집합을 가진다.
 
-| Phase | Orchestrator (entry) | 1줄 설명 |
+라이프사이클 정의·노드 명사·DoR/DoD 계약의 SSoT 는 [`references/se-lifecycle-naming.md`](./references/se-lifecycle-naming.md) (phase 정체성은 [`references/engineering-phases.md`](./references/engineering-phases.md)) 다.
+
+아래 표의 마지막 컬럼은 **DoR(좌변 input) → DoD(우변 output)** 계약이다. 노드는 자신이 생산하는 산출물(output)로 명명되므로, 진입에 필요한 input 은 그래프 직전 노드의 output 과 같다.
+
+| 클러스터 (DAG 노드) | Orchestrator (entry) | DoR (input) → DoD (output) |
 |-------|----------------------|---------|
-| §1 Discovery / Impact Analysis | `concretize-idea` / `assess-product-change` | idea/concept → PRD + 사업성 검증 (Mode A) · 기존 제품 변경 영향 분석 (Mode B) |
+| §1 Discovery / Impact Analysis | `concretize-idea` / `assess-product-change` | idea/concept → PRD + 사업성 검증 (Mode A) · change request + codebase → 영향 평가 + scope (Mode B) |
 | §2 Requirements Specification | `define-features` | PRD → actor / use case / system boundary → feature backlog (SRS) |
-| §3 Software Design | `design-system` | feature backlog → tech stack ADR + infra + API + data model (SDD) |
-| §4 Iteration Planning | `plan-build` | software design → actor 별 task graph + 병렬 실행 plan |
+| §3 Software Design | `design-system` | feature backlog (SRS) → tech stack ADR + infra + API + data model (SDD) |
+| §4 Iteration Planning | `plan-build` | software design (SDD) → actor 별 task graph + 병렬 실행 plan |
 | §5 Construction | `build-feature` | iteration plan → working code + tests (TDD + parallel agents) |
-| §6 Verification & Validation | `verify-quality` | code complete → QA + security + compliance sign-off (V&V) |
+| §6 Verification & Validation | `verify-quality` | code complete → QA + security + compliance sign-off (V&V evidence) |
 | §7 Release & Deployment | `ship-release` | quality gate pass → tagged release + UAT + GA (beta 포함) |
 | §8 Operation & Maintenance | `iterate-product` | production traffic → A/B + funnel + improvement backlog |
-| §9 Retirement / Decommissioning | `manage-lifecycle` | feature/product 노후화 → deprecation + migration + EOL |
+| §9 Retirement / Decommissioning | `manage-lifecycle` | usage data + 폐기 결정 → deprecation + migration + EOL plan |
 
 Cross-phase 보조:
 
-- `autoplan` — 어느 phase 의 산출물(plan/PRD/ADR/task plan)에든 호출 가능한 4-mode review (review-scope → review-engineering → review-design → review-devex 순차).
-- `consult-codex`, `save-context`, `restore-context` — phase 종속 없는 공통 도구.
+- `autoplan` — 어느 노드의 산출물(plan/PRD/ADR/task plan)에든 호출 가능한 4-mode review (review-scope → review-engineering → review-design → review-devex 순차).
+- `consult-codex`, `save-context`, `restore-context` — 노드 종속 없는 공통 도구.
+- `status` — 현재 존재하는 artifact 를 탐지해 진입 노드(frontier)를 추론.
 
-라우팅 결정 워크플로우:
+라우팅 결정 워크플로우 (artifact frontier 기반):
 
-1. 사용자 발화·command 의 진입 조건이 어느 phase 에 속하는지 위 표에서 식별한다.
-2. 그 phase 의 orchestrator 를 기본 dispatch target 으로 둔다 — 사용자가 stage 단독을 명시하지 않은 한 orchestrator 우선.
-3. lazy-load 트리거:
-   - 사용자 발화 또는 command name 이 위 9-phase 표의 entry-point skill 1개와 정확히 매칭되면 그 skill 을 dispatch — 인라인 표만으로 충분.
-   - 정확 매칭이 없거나, 사용자가 stage skill 명을 직접 언급하거나, command 가 9-phase orchestrator 가 아닌 stage·domain·pattern skill 을 target 으로 지정하면 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/skill-catalog.md` 를 호출해 전체 카탈로그 확인.
-   - 라우팅이 2개 이상의 skill 사이에서 모호하면 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/routing-rules.md` 의 §3 케이스별 결정 참조.
+1. **정확 매칭 (fast path)**: command name 또는 사용자 발화가 위 표의 entry-point skill 1개와 정확히 매칭되면 그 노드를 dispatch — 인라인 표만으로 충분.
+2. **매칭 없으면 frontier 로 진입 노드 결정**: 현재 존재하는 artifact 를 보고(필요 시 `status`) 어느 노드까지 DoD 가 채워졌는지 판단해 그 다음 노드를 진입점으로 둔다.
+3. **DoR 충족 검사 (prerequisite gate)**: 진입하려는 노드의 DoR(required input artifact)이 없으면, 그것을 생산하는 **upstream 노드로 자동 선행**한다 (예: Software Design 요청인데 SRS 부재 → 먼저 §2). 이는 backtrack·skip·scope-routing 을 아우르는 단일 규칙이다.
+4. **stage 단독 명시 존중**: 사용자가 stage skill 명을 직접 지정하면 orchestrator 로 escalate 하지 않는다 (User Sovereignty).
+5. **lazy-load 트리거**:
+   - 위 인라인 표로 노드가 정해지면 추가 Read 불필요.
+   - 노드 내 stage·domain·pattern skill 이 필요하거나 entry-point 가 아닌 target 이면 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/skill-catalog.md` 로 전체 카탈로그 확인.
+   - 2개 이상 skill 사이에서 모호하면 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/routing-rules.md` §3 케이스별 결정 참조.

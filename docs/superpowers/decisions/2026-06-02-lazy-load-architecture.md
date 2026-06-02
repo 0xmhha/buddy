@@ -6,7 +6,7 @@
 | **Date** | 2026-06-02 |
 | **Deciders** | project owner |
 | **Tags** | architecture, lazy-load, token-cost, skill-conflict-prevention, frontmatter, catalog-split, lifecycle-isolation |
-| **Related** | [ADR-001](./2026-05-09-buddy-commands-disable-model-invocation.md) (commands disable-model-invocation), [ADR-007](./2026-05-19-router-no-cross-invocation-state.md) (router stateless), [ADR-018](./2026-05-21-verify-best-alternative-and-bias-prevention.md) (write-a-skill dogfood), `docs/se-lifecycle-naming.md`, `plugin/skills/write-a-skill/references/naming-convention.md` |
+| **Related** | [ADR-001](./2026-05-09-buddy-commands-disable-model-invocation.md) (commands disable-model-invocation), [ADR-007](./2026-05-19-router-no-cross-invocation-state.md) (router stateless), [ADR-018](./2026-05-21-verify-best-alternative-and-bias-prevention.md) (write-a-skill dogfood), `plugin/skills/router/references/se-lifecycle-naming.md`, `plugin/skills/write-a-skill/references/naming-convention.md` |
 
 ---
 
@@ -191,7 +191,7 @@ Phase 1부터 마이그레이션 진행 후 `/buddy:evaluate-skill <name>` 호�
 ## References
 
 ### buddy 자체 문서
-- `docs/se-lifecycle-naming.md` — SE Lifecycle 명사 SSoT (Phase 1-9 정의)
+- `plugin/skills/router/references/se-lifecycle-naming.md` — SE Lifecycle 명사 SSoT (Phase 1-9 정의)
 - `docs/plugin-skills-authoring-guide.md` — skill 작성·평가 기준 SSoT
 - `plugin/skills/router/references/engineering-phases.md` — 각 phase 정체성·산출물·전이 규칙
 - `plugin/skills/write-a-skill/references/naming-convention.md` — 스킬 명명 규칙
