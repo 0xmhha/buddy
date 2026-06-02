@@ -26,28 +26,355 @@
 
 ### 0.1 PROCEDURE.md vs SKILL.md
 
-공식 Claude Code는 `SKILL.md` 파일명을 사용하지만, buddy는 의도적으로 **`PROCEDURE.md`**를 사용한다 (router 1개만 auto-discoverable SKILL.md, 나머지 ~154개는 PROCEDURE.md).
+공식 Claude Code는 `SKILL.md` 파일명을 사용하지만, buddy는 의도적으로 **`PROCEDURE.md`**를 사용한다 (router 1개만 `SKILL.md`, 나머지 ~150개는 PROCEDURE.md). 명명 차이는 **자동 listing 제외를 통한 토큰 절약**의 핵심 메커니즘이다 — Claude Code는 `SKILL.md`만 자동 스캔하므로 PROCEDURE.md의 frontmatter는 세션 시작 시 자동 로드되지 않고 router의 명시적 Read로만 로드된다.
 
-| 항목 | 공식 | buddy |
+| 항목 | 공식 Claude Code | buddy |
 |------|------|-------|
-| 파일명 | `SKILL.md` | `PROCEDURE.md` |
-| Frontmatter | 필수 | **PROCEDURE.md에는 없음** (router 경유 lazy-load) |
-| Description-based dispatch | frontmatter | `skill-catalog.md` 중앙 |
-| 토큰 비용 | 모든 skill description 상시 로드 | router 1개만 (99.44% 절감) |
+| 파일명 | `SKILL.md` | `PROCEDURE.md` (router 1개만 `SKILL.md`) |
+| Frontmatter | 필수 (모든 skill) | **필수** (ADR-020 4-Layer 결정 반영). 단 자동 listing 대상이 아니므로 token 부담 없음 |
+| Description-based dispatch | frontmatter 자동 listing 매칭 | **2단계 lazy-load**: catalog phase-scoped Read → 선택된 skill의 frontmatter 라인 범위 Read |
+| 토큰 비용 | 모든 skill description 상시 로드 (~19K자) | router 1개 frontmatter 자동 (~180자) + 작업 시 phase-scoped lazy-load (최대 ~10.7K자) |
+| Lifecycle 격리 | 없음 (모든 skill 동시 컨텍스트 존재) | **있음** (phase별 catalog 분할 + 명시적 lazy-load) — 유사 패턴 skill 충돌 방지 |
+
+→ 본 4-Layer 메커니즘의 상세 결정 근거: [ADR-020 Lazy-Load Architecture](../docs/superpowers/decisions/2026-06-02-lazy-load-architecture.md). 운영 안내는 §0.3, §0.4 참조.
 
 ### 0.2 본 가이드 적용 범위
 
-| 영역 | 적용 파일 | 비적용 파일 |
-|------|---------|-----------|
-| **§1 Frontmatter (전체)** | `plugin/skills/router/SKILL.md`, `plugin/commands/*.md` | `plugin/skills/<name>/PROCEDURE.md` (frontmatter 없음) |
-| **§2 본문 구조** | 모든 `PROCEDURE.md` + `router/SKILL.md` 본문 | command 파일 본문은 짧으므로 일부만 |
-| **§3 Persona** | 모든 `PROCEDURE.md` (선택적이지만 권장) | router/command는 페르소나 무관 |
+| 영역 | 적용 파일 |
+|------|---------|
+| **§1 Frontmatter (전체)** | `plugin/skills/router/SKILL.md`, `plugin/commands/*.md`, **모든 `plugin/skills/<name>/PROCEDURE.md`** (ADR-020 4-Layer 적용 후) |
+| **§2 본문 구조** | 모든 `PROCEDURE.md` + `router/SKILL.md` 본문 (command 파일 본문은 짧으므로 일부만) |
+| **§3 Persona** | 모든 `PROCEDURE.md` (선택적이지만 권장 — router/command는 페르소나 무관) |
 
-**중요**: buddy의 PROCEDURE.md는 frontmatter가 없기 때문에 §1의 `description`, `disable-model-invocation`, `user-invocable`, `allowed-tools` 등은 PROCEDURE.md에 직접 적용할 수 없다. 대신:
+**Frontmatter 적용 정책 변경 (2026-06-02 ADR-020)**:
 
-- PROCEDURE.md의 dispatch trigger 텍스트는 `plugin/skills/router/references/skill-catalog.md`에 중앙 등록 (description 역할)
-- 사용자 호출 가능 여부는 `plugin/commands/<name>.md` 파일의 **존재 여부**로 제어 (있으면 user-invocable, 없으면 router 경유 자동 호출만)
-- 자동 호출 차단은 `plugin/commands/<name>.md`의 `disable-model-invocation: true`로 제어 (§1.3.2 표준)
+기존: PROCEDURE.md는 frontmatter 없음, catalog가 dispatch description 역할
+→ **신규**: 모든 PROCEDURE.md에 frontmatter 추가 (Anthropic 공식 표준 호환). catalog는 phase-scoped 인덱스 + frontmatter 위치(파일 경로 + 라인 범위) 안내 역할로 재정의.
+
+마이그레이션 중 양립 정책:
+- Phase 1부터 점진 진행 (E1-E12 작업)
+- 마이그레이션 미완료 phase는 기존 catalog entry 기반 dispatch 유지
+- 사용자 호출 가능 여부는 여전히 `plugin/commands/<name>.md` 파일 존재 여부로 제어 (변경 없음)
+- 자동 호출 차단은 `plugin/commands/<name>.md`의 `disable-model-invocation: true` (변경 없음, §1.3.2 표준)
+
+### 0.3 PROCEDURE.md Frontmatter 표준
+
+ADR-020 결정에 따라 모든 PROCEDURE.md에 추가되는 frontmatter의 형식·라인 안정성 보장 규칙.
+
+#### 0.3.1 표준 형식 (Anthropic 공식 규격 준수)
+
+```yaml
+---
+name: <skill-name>                                  # 디렉토리명과 일치 (kebab-case)
+description: |
+  Use when <상황 trigger>. <목적·기능 한 줄 요약>.
+  Trigger phrases: "<한국어 자연어 발화 1>", "<2>", "<3>", "<english phrase>".
+when_to_use: |                                      # (선택) description과 합산 1,536자 cap
+  추가 trigger 컨텍스트 — 사용자가 명시적으로 표현할 상황 패턴 / 다른 skill과의 차별점 한 줄
+disable-model-invocation: <true|false>              # (선택) side-effect 작업·민감 작업이면 true
+allowed-tools:                                      # (선택) 사용 도구 제한
+  - Read
+  - Grep
+  - Glob
+---
+```
+
+필드 상세는 §1.2 (description), §1.4 (model/effort), N3 (`plugin/skills/write-a-skill/references/naming-convention.md`) 참조.
+
+#### 0.3.2 라인 안정성 보장 규칙 (catalog 라인 범위 참조 안정성)
+
+ADR-020 Layer 2는 catalog가 안내한 라인 범위로 frontmatter만 정확 Read하므로, **라인 위치가 안정적**이어야 한다.
+
+| 규칙 | 내용 |
+|------|------|
+| **R1. 시작 위치** | `---`는 PROCEDURE.md **첫 줄 (line 1)** 부터 시작. 빈 줄·주석·기타 텍스트가 frontmatter 앞에 오면 안 됨 |
+| **R2. 종료 마커** | 두 번째 `---`로 frontmatter 종료. 종료 마커 다음 줄부터 본문 시작 |
+| **R3. 라인 범위 등재** | `skill-catalog-<phase>.md`의 해당 skill entry는 `frontmatter-lines: 1-N` 형식으로 라인 범위 명시. router는 `Read tool offset=1, limit=N` 으로 정확 로드 |
+| **R4. 본문 라인 변경 허용** | frontmatter 추가/수정으로 본문 라인 번호가 shift되어도 안전 (catalog는 frontmatter 라인 범위만 참조, 본문 라인은 참조 X). 단 frontmatter 자체의 라인 수가 변경되면 catalog 갱신 필수 |
+| **R5. YAML 형식 strict** | 모든 frontmatter 키는 Anthropic 공식 명칭 그대로 (`name`, `description`, `when_to_use`, `disable-model-invocation` 등). 임의 키 추가 금지 (test-router-wireup.sh 검증) |
+
+#### 0.3.3 description / when_to_use 형식 가이드
+
+| 요소 | 규칙 |
+|------|------|
+| 합산 cap | `description` + `when_to_use` 합산 **1,536자** (가이드 §1.2.1 SSoT). 초과분은 listing 시 truncate되어 dispatch 결정에 보이지 않음 |
+| 첫 문장 | "Use when ..." 또는 "사용 시점 ..." 으로 시작 (가장 강한 trigger signal) |
+| Trigger keyword | 한국어 + 영어 자연어 발화 패턴 **3개 이상** |
+| 추상 형용사 금지 | "종합적", "효과적", "다양한", "comprehensive", "effective" 등 사용 X |
+| 핵심 use case 앞쪽 | cap 초과 시 뒷부분 truncate되므로 가장 중요한 trigger를 description 앞쪽에 |
+| 한국어/영어 혼용 | description은 영어 본문 + 한국어 trigger 키워드 동반 권장 (가이드 §2.6) |
+
+#### 0.3.4 마이그레이션 절차
+
+기존 PROCEDURE.md에 frontmatter 추가 시:
+
+1. 첫 줄에 `---` 추가, 표준 형식 작성, 다음 `---` 종료
+2. 기존 본문은 그대로 (라인 번호 shift는 안전 — R4)
+3. `plugin/skills/router/references/catalog-<phase>.md` 에 entry 추가/갱신:
+   ```
+   | <skill-name> | `plugin/skills/<name>/PROCEDURE.md` | 1-N | <1줄 요약> |
+   ```
+4. `evaluate-skill` paired evaluation 실행하여 F1-F5 (frontmatter) + B1-B12 (본문) + (해당 시) P1-P4 (persona) 검증
+5. 80점 이상 목표
+
+기존 catalog entry는 신규 catalog-<phase>.md 분할 작업(C3)이 끝날 때까지 양립.
+
+### 0.4 4-Layer Lazy-Load Architecture 운영 안내
+
+ADR-020 결정의 운영 시점 요약. 결정 근거 상세는 ADR 문서 참조.
+
+| Layer | 파일 | 로드 시점 | 분량 |
+|-------|------|---------|------|
+| **0. Router auto-load** | `plugin/skills/router/SKILL.md` | 세션 시작 시 자동 | frontmatter ~180자 |
+| **1. Phase Catalog** | `plugin/skills/router/references/catalog-<phase>.md` (총 10 파일 — 9 phase + cross-cutting) | router가 사용자 작업의 phase 식별 후 명시적 Read | phase당 ~3K자 |
+| **2. PROCEDURE Frontmatter** | `plugin/skills/<name>/PROCEDURE.md` 첫 N줄 (라인 범위 명시 lazy-load) | catalog가 안내한 후보 skill의 frontmatter만 Read | skill당 ~500-800자 |
+| **3. PROCEDURE Body** | 선택된 skill의 PROCEDURE.md 본문 전체 | 최종 dispatch 후 본문 실행 | skill당 ~5-10K자 |
+
+**작업 시 최대 토큰**: ~10.7K자 (Layer 0 + Layer 1 + Layer 2 후보 2-3개 + Layer 3 1개) ≈ ~2.7K 토큰 — 1M 컨텍스트의 0.27%.
+
+**Phase 격리 효과**:
+- ideation 작업 시 engineering 단계 catalog 미로드 → 유사 패턴 skill (예: ideation 브레인스토밍 vs bug-fix 분석) 충돌 구조적 방지
+- lost-in-the-middle 완화 (각 Layer가 작은 단위로 분할)
+
+**호출 흐름 예시 (사용자가 "버그 수정 하고 싶어" 발화 시)**:
+```
+1. /buddy:start 호출
+2. router (Layer 0 이미 로드) → start PROCEDURE 호출
+3. start가 사용자 발화 + 질문으로 "기존 프로젝트 변경 모드" 식별
+4. router가 catalog-phase-1.md Read (Layer 1)
+5. catalog가 assess-product-change 안내 + 라인 범위 (예: 1-12)
+6. router가 assess-product-change/PROCEDURE.md offset=1 limit=12 로 frontmatter Read (Layer 2)
+7. router가 dispatch 결정 → 본문 full Read (Layer 3)
+8. assess-product-change 실행 → scope 분류 → 다음 phase로 cascade
+```
+
+cascade 메커니즘은 별도 정책 문서 (C4 작업) 참조.
+
+### 0.5 Catalog 분할 정책
+
+ADR-020 Layer 1을 구현하는 catalog 파일 분할 표준.
+
+#### 0.5.1 분할 단위 (10 파일)
+
+| # | 파일명 | 대상 | 비고 |
+|---|--------|------|------|
+| 1 | `catalog-phase-1.md` | 문제·기회 검증 단계 (Phase 1) | **Mode A / Mode B 두 섹션으로 구분** (단일 파일 내) |
+| 2 | `catalog-phase-2.md` | 기능 정의 단계 (Phase 2) | |
+| 3 | `catalog-phase-3.md` | 기술 설계 단계 (Phase 3) | 9 카테고리 (3-A ~ 3-I) 섹션 구분 |
+| 4 | `catalog-phase-4.md` | 구현 계획 단계 (Phase 4) | |
+| 5 | `catalog-phase-5.md` | 개발 단계 (Phase 5) | |
+| 6 | `catalog-phase-6.md` | 품질 검증 단계 (Phase 6) | |
+| 7 | `catalog-phase-7.md` | 출시 단계 (Phase 7) | |
+| 8 | `catalog-phase-8.md` | 운영·개선 단계 (Phase 8) | Engineering / Product·Analytics / Marketing 3 카테고리 섹션 구분 |
+| 9 | `catalog-phase-9.md` | 수명주기 관리 단계 (Phase 9) | |
+| 10 | `catalog-cross-cutting.md` | 모든 phase 활용 가능한 skill (status, save-context, restore-context, evaluate-skill, write-a-skill, decompose-blocker, consult-codex 등) | router 진입점(`start`, `evaluate-skill`)도 본 파일에 포함 |
+
+**위치**: 모두 `plugin/skills/router/references/` 디렉토리.
+
+#### 0.5.2 표준 형식
+
+각 catalog 파일은 동일 형식 따름:
+
+```markdown
+# Catalog — <한국어 phase 명사> (<영문 phase 명사>)
+
+> **목적**: <phase 정체성 1줄 — engineering-phases.md SSoT 참조>
+> **Lazy-load**: ADR-020 Layer 1 — router가 phase 식별 후 명시적 Read.
+
+## (선택) Mode 또는 카테고리 섹션 — 해당 phase에서만
+
+### <섹션명>
+
+| Skill | Frontmatter | 1줄 요약 | Command |
+|-------|------------|--------|---------|
+| `<skill-name>` | `plugin/skills/<name>/PROCEDURE.md:<line-start>-<line-end>` | <1줄 요약 — 트리거 키워드 + 목적> | `/buddy:<name>` 또는 `dispatch only` |
+```
+
+**컬럼 의미**:
+
+| 컬럼 | 내용 | 규칙 |
+|------|------|------|
+| `Skill` | skill name | kebab-case (디렉토리명과 일치) |
+| `Frontmatter` | frontmatter 위치 (라인 범위 명시) | `<file>:<start>-<end>` 형식. router가 Layer 2 lazy-load 시 `Read offset/limit`으로 사용 |
+| `1줄 요약` | dispatch 결정 보조 | 트리거 키워드 + 목적. 추상 형용사 금지 (가이드 §1.2.1 SSoT) |
+| `Command` | 사용자 호출 가능 여부 | command 파일 존재 시 `/buddy:<name>` 명시, 없으면 `dispatch only` |
+
+#### 0.5.3 Phase 1의 Mode A / Mode B 처리
+
+`catalog-phase-1.md` 단일 파일 안에서 두 섹션으로 구분:
+
+```markdown
+# Catalog — 문제·기회 검증 단계 (Phase 1 — Problem/Opportunity Validation)
+
+## Mode A — 신규 제품 기획 모드 (Greenfield)
+
+> 코드베이스가 없는 상태에서 아이디어로부터 시작 → PRD + HLD + 사업성 검증.
+
+| Skill | Frontmatter | 1줄 요약 | Command |
+|-------|------------|--------|---------|
+| `concretize-idea` | `.../concretize-idea/PROCEDURE.md:1-15` | (orchestrator) idea → PRD + HLD + 9-stage cascade | dispatch only |
+| `validate-idea` | `.../validate-idea/PROCEDURE.md:1-12` | YC 6 forcing questions | `/buddy:validate-idea` |
+| ... |
+
+## Mode B — 기존 제품 변경 모드 (Existing Product)
+
+> 기존 코드베이스가 있는 상태에서 변경 요청 → 영향 평가 + scope 분류 → 다음 phase routing.
+
+| Skill | Frontmatter | 1줄 요약 | Command |
+|-------|------------|--------|---------|
+| `assess-product-change` | `.../assess-product-change/PROCEDURE.md:1-14` | (orchestrator) 변경 영향 평가 + scope 분류 + 다음 phase routing | dispatch only |
+```
+
+Mode 격리는 router의 phase 식별 단계에서 처리 (`start` 스킬이 Mode A/B 결정 → router는 해당 섹션만 참조). catalog 파일 자체는 양 Mode를 함께 보유하나, 본문 prose에서 두 섹션이 명확히 분리되어 LLM이 정확히 한 Mode만 참조.
+
+#### 0.5.4 기존 단일 `skill-catalog.md`와의 관계
+
+**현재 상태 (2026-06-02)**:
+- `skill-catalog.md` 단일 파일에 모든 skill 등재 (Phase 1~9 + Cross-cutting 섹션 헤더로 구분, 약 280줄)
+
+**전환 정책**:
+
+| 시점 | 처리 |
+|------|------|
+| **마이그레이션 중** (E1-E12 진행 시) | `skill-catalog.md` 와 신규 `catalog-<phase>.md` 양립. 신규 catalog가 점진 추가되며, 기존은 read-only |
+| **E1-E12 완료 후** | `skill-catalog.md` 상단에 deprecate 안내 + 10개 분할 catalog 링크. 내용은 archive 유지 (history) |
+| **장기 (구조 정착 후)** | `skill-catalog.md` 별도 archive 디렉토리로 이동 (예: `plugin/_archive/skill-catalog-monolithic.md`) — 단 ADR-020처럼 historical record로 유지 |
+
+#### 0.5.5 router/SKILL.md 라우팅 워크플로우 갱신 (E 단계)
+
+ADR-020 4-Layer 구조에 맞춰 router/SKILL.md의 "라우팅 결정 워크플로우"를 다음으로 갱신 (실제 작업은 E0 또는 E1 시점):
+
+```
+1. 사용자 호출 진입 (/buddy:start 또는 /buddy:evaluate-skill)
+2. router → start 또는 evaluate-skill PROCEDURE 호출 (Layer 0 자동 로드 + 본문 Read)
+3. start가 사용자 작업 phase 식별
+4. router가 catalog-<phase>.md Read (Layer 1)
+5. catalog가 후보 skill의 frontmatter 위치 안내
+6. router가 후보 skill의 frontmatter 라인 범위만 Read (Layer 2)
+7. router가 최종 dispatch 결정 → 선택된 skill 본문 Read (Layer 3)
+8. skill 실행 → cascade 필요 시 phase orchestrator의 결과를 input으로 다음 phase 시작
+```
+
+#### 0.5.6 신규 skill 추가 시 catalog 갱신 절차
+
+새 skill을 작성할 때 (`write-a-skill` Step 7):
+
+1. 해당 phase 또는 cross-cutting catalog 파일 선택 (예: `catalog-phase-3.md`)
+2. 적절한 섹션 (필요 시) 내 표에 한 줄 추가
+3. `Frontmatter` 컬럼에 정확한 라인 범위 명시 (PROCEDURE.md frontmatter의 시작·끝 라인 — 가이드 §0.3 R3)
+4. `1줄 요약` 작성 시 동일 phase 다른 entry와 description 키워드 80% 미만 중복 (가이드 §1.5 CE4)
+5. `Command` 컬럼에 dispatch only 또는 `/buddy:<name>` 명시 (가이드 §1.2.3 buddy 등가 매핑)
+
+**Phase 3의 9 카테고리 분류** (3-A ~ 3-I): skill 수가 가장 많은 phase. catalog 안에서 카테고리별 섹션 구분 (engineering-phases.md §2 Phase 3 정의 참조).
+
+### 0.6 Phase Orchestrator Cascade 패턴
+
+phase 전환 시 (예: 기능 정의 단계 → 기술 설계 단계) context 격리 정책. 단순 catalog 추가 lazy-load가 아닌, **이전 phase 결과를 input으로 다음 phase 시작 + context 정리 또는 서브에이전트 분리** 결정 트리.
+
+#### 0.6.1 Cascade 정의
+
+phase orchestrator가 자기 phase 작업 완료 후 결과를 다음 phase에 전달하는 절차. cascade 책임은 **이전 phase orchestrator**가 진다 (다음 phase orchestrator는 input contract만 정의).
+
+#### 0.6.2 2가지 메커니즘
+
+| 메커니즘 | 동작 | 비용 | 격리 강도 |
+|---------|------|------|---------|
+| **(A) Context 정리** | 같은 세션 유지. 이전 phase의 중간 사고·논의 context는 제거하고 결과 schema(Output Contract)만 다음 phase orchestrator로 전달 | Low (모델 재호출 없음) | Medium — 같은 컨텍스트 윈도우 공유, 이전 phase 결과는 보존 |
+| **(B) 서브에이전트 분리** | `Task` tool로 새 subagent dispatch. fresh context, 결과만 부모 컨텍스트로 반환 | High (subagent dispatch 토큰) | High — 완전 격리, 이전 phase의 어떤 prompt·noise도 영향 X |
+
+#### 0.6.3 Phase Pair별 결정 트리
+
+각 phase 전환마다 권장 메커니즘 + 근거. SE lifecycle 정상 흐름 + Mode B short-circuit + cycle 패턴 모두 포함.
+
+| 전환 | 권장 메커니즘 | 근거 |
+|------|-----------|------|
+| **신규 진입** (`/buddy:start`) → 문제·기회 검증 단계 (Phase 1) | Context 정리 | start가 수집한 컨텍스트 (경로/유형/상업성)만 전달 |
+| **Phase 1 Mode A** (PRD + HLD 완료) → **Phase 2** (기능 정의) | **서브에이전트 분리** | ideation 모드 → engineering 모드 큰 context shift. ideation의 발산적 사고 noise를 engineering 결정에서 격리 (사용자 통찰: 두 패턴 동시 로드 시 충돌 risk) |
+| **Phase 1 Mode B small** → **Phase 5** (개발) | Context 정리 | scope 작음 (1-3 파일). 영향 평가 결과를 그대로 input으로 |
+| **Phase 1 Mode B medium** → **Phase 3** (기술 설계) | Context 정리 | scope 4-15 파일, scope 분류 결과 전달 |
+| **Phase 1 Mode B large** → **Phase 2** (기능 정의) | **서브에이전트 분리** | 신규 기능 정의는 engineering 시작점, change trigger context를 깨끗하게 분리 |
+| **Phase 2** → **Phase 3** | Context 정리 | 같은 engineering 컨텍스트, feature backlog → tech design 자연 흐름 |
+| **Phase 3** → **Phase 4** | Context 정리 | tech design → implementation planning, 같은 컨텍스트 |
+| **Phase 4** → **Phase 5** | Context 정리 (병렬 dispatch 시 **서브에이전트**) | 단일 worker는 같은 컨텍스트. `dispatch-parallel-agents`로 actor-track 병렬 분배 시 각 worker는 서브에이전트 |
+| **Phase 5** → **Phase 6** (품질 검증) | **서브에이전트 분리** | verification은 개발 context 없이 객관적 평가가 critical. "내가 만든 코드"의 confirmation bias 회피 |
+| **Phase 6** → **Phase 7** (출시) | Context 정리 | sign-off 결과만 필요. 품질 검증 컨텍스트는 종료 |
+| **Phase 7** → **Phase 8** (운영·개선) | **서브에이전트 또는 새 세션** | production traffic 발생까지 시간차. 사실상 다른 운영 세션 |
+| **Phase 8** → **Phase 2** (improvement cycle) | **서브에이전트 분리** | operations 데이터를 feature 정의 컨텍스트로 분리. monitoring/incident context를 새 feature 정의에서 격리 |
+| **Phase 8** → **Phase 9** (deprecation) | **서브에이전트 분리** | sunset 관점은 운영 관점과 다른 모드. Senior PM 페르소나 활성화 |
+
+> **결정 트리 원칙**:
+> 1. **같은 lifecycle 모드 내 자연 흐름** → Context 정리 (Phase 2→3, 3→4, 6→7)
+> 2. **모드 전환 또는 객관성·격리가 critical** → 서브에이전트 (Phase 1→2 cascade, 5→6, 8→2/9)
+> 3. **시간차 발생** → 서브에이전트 또는 새 세션 (Phase 7→8)
+> 4. **병렬 worker** → 서브에이전트 (Phase 5 내부 parallel agents)
+
+#### 0.6.4 Phase별 서브에이전트 결과 Schema (Output Contract)
+
+서브에이전트 분리 시 결과는 phase별 정의된 schema로 반환. 각 phase orchestrator의 PROCEDURE.md `## Output Contract` 표를 SSoT로 따름.
+
+| Phase | 산출물 schema 요약 |
+|-------|------------------|
+| 1 Mode A | `{ prd_path, hld_path, business_viability, customer_segments, sign_off }` |
+| 1 Mode B | `{ validated_work_item, impact_assessment, scope: "small\|medium\|large\|defer", routing_decision }` |
+| 2 | `{ actors: [...], use_cases: [...], system_boundary, feature_backlog: [{ name, priority, estimate, acceptance_criteria }] }` |
+| 3 | `{ tech_stack_adr_path, api_contract_path, data_model_path, deploy_strategy, observability, auth_model, design_decisions: [...] }` |
+| 4 | `{ actor_tracks: [...], task_dag, parallel_execution_plan, acceptance_test_plan, build_timeline }` |
+| 5 | `{ commits: [...], tests: [...], code_paths: [...], docs_updated: [...] }` |
+| 6 | `{ qa_report, security_audit, compliance_signoff, code_health_score, coverage_report, gate_status: "pass\|fail" }` |
+| 7 | `{ release_tag, deployed_artifact, launch_checklist_pass, changelog }` |
+| 8 | `{ experiment_results, incident_reports, improvement_backlog, operational_metrics }` |
+| 9 | `{ deprecation_plan, migration_plan, eol_documentation, knowledge_preservation }` |
+
+상세 schema는 각 phase orchestrator의 PROCEDURE.md `Output Contract` 섹션 참조. 본 표는 cascade 시 부모 컨텍스트가 받을 결과의 **계층 구조 요약**.
+
+#### 0.6.5 사용자 가시성 — Step별 진행 안내
+
+cascade 진행 중 사용자에게 각 단계별 진행 상황 노출. 내부 약어·메커니즘 용어(서브에이전트, Context 정리 등) 노출 X, **일반 명사로 자연스럽게**:
+
+**cascade 진입 시점** (이전 phase 완료, 다음 phase 시작 전):
+
+```
+✓ <이전 phase 한국어 명사> 완료
+  - 산출물: <주요 산출물 1-2개>
+
+다음 단계: <다음 phase 한국어 명사>
+  - 입력: <이전 phase 산출물에서 받는 항목>
+  - 작업: <간단한 1줄 설명>
+
+진행하시겠습니까? (y / 잠시 검토 / 수정 요청)
+```
+
+**서브에이전트 dispatch 시점** (메커니즘 (B)):
+
+```
+다음 단계로 작업 환경을 분리합니다 (객관적 평가/관점 전환을 위해).
+  - 분리 작업: <다음 phase> 시작
+  - 받을 결과: <Output Contract 1-2줄 요약>
+
+처리 중...
+```
+
+**서브에이전트 결과 반환 시점**:
+
+```
+다음 단계 작업 완료:
+  - 결과: <schema 요약 — 핵심 산출물>
+  - 다음 권장 단계: <후속 phase 안내>
+```
+
+> **노출 금지 용어**: "Layer 1", "PC2", "Mode A", "context 정리", "서브에이전트 분리" 등 내부 작업 용어. 모두 일반 명사 또는 자연어 표현으로 변환 (가이드 §2.6 + se-lifecycle-naming.md §4).
+
+#### 0.6.6 각 Phase Orchestrator의 Cascade 책임
+
+phase orchestrator는 PROCEDURE.md에 다음을 포함:
+
+| 섹션 | 내용 |
+|------|------|
+| `## Output Contract` | 자기 phase 결과의 schema (다음 phase가 받을 형식) |
+| `## 다음 단계` | 후속 phase 선택 로직 + cascade 메커니즘 (Context 정리 vs 서브에이전트) 명시 + 사용자 안내 메시지 템플릿 |
+| `## 검증 체크리스트` | cascade 진입 전 자기 phase 완료 조건 (Output Contract 모든 필드 채워졌는지) |
+
+신규 phase orchestrator 작성 시 본 §0.6 cascade 정책을 따라 작성. 기존 orchestrator도 마이그레이션 사이클(E 단계)에서 cascade 정책 반영하여 갱신.
 
 ---
 
@@ -267,44 +594,55 @@ disable-model-invocation: true   # buddy 모든 command 표준
 
 **buddy 정책**: PROCEDURE.md는 **모델 중립적으로 작성**한다. 즉 어느 모델이 호출하더라도 정확히 동작하도록 절차·schema·분기를 명시화. 모델별 가정에 의존하는 본문(예: "Opus라면 알아서 처리할 것")은 피한다.
 
-### 1.5 Skill Catalog Entry 평가 기준 — Frontmatter의 4번째 위치
+### 1.5 Skill Catalog Entry 평가 기준 — 구조적 정합성만 평가
 
-> **배경**: buddy의 PROCEDURE.md는 frontmatter가 없는 대신, `plugin/skills/router/references/skill-catalog.md`의 **각 entry가 사실상 frontmatter의 description 역할**을 한다. router가 dispatch 결정 시 이 entry를 본다 (가이드 §0.1 표 참조).
->
-> **누락 발견 2026-06-01**: 본 §1.5는 evaluate-skill이 PROCEDURE.md / command.md / router/SKILL.md만 평가하고 **catalog entry 품질을 평가하지 못하는 결함**을 메우기 위해 신설.
+> **배경**: 초기에는 PROCEDURE.md에 frontmatter가 없어 catalog entry가 dispatch description 역할을 대신했다. ADR-020(2026-06-02) 결정 이후 모든 PROCEDURE.md에 frontmatter가 추가되며, F1-F5가 description quality를 담당한다. 따라서 **본 §1.5의 CE 항목은 catalog entry의 구조적 정합성만 평가**하도록 축소됨 (2026-06-02 D2 결정).
 
-#### 1.5.1 Catalog entry 표 형식
+#### 1.5.1 Catalog entry 표 형식 (ADR-020 적용 후)
+
+각 catalog 파일(`catalog-<phase>.md`)의 entry 표:
 
 ```
-| `<skill-name>` | <호출 방법> | <1줄 description — 트리거 키워드 + 목적> |
+| Skill | Frontmatter | 1줄 요약 | Command |
+|-------|------------|--------|---------|
+| `<skill-name>` | `plugin/skills/<name>/PROCEDURE.md:<line-start>-<line-end>` | <간략 요약> | `/buddy:<name>` 또는 `dispatch only` |
 ```
 
-| 컬럼 | 의미 | 예시 |
-|------|------|------|
-| `<skill-name>` | PROCEDURE.md 디렉토리 이름과 동일 | `concretize-idea` |
-| `<호출 방법>` | 3종: `command + dispatch` / `dispatch only (via /buddy:start)` / `(직접 호출 불가, ...)` | `command + dispatch` |
-| `<1줄 description>` | router의 dispatch 결정용 트리거 텍스트. 가이드 §1.2.1 description 규칙과 동일 원칙 적용 | "idea/concept → PRD + 사업성 검증. greenfield 진입점" |
+| 컬럼 | 의미 | router 활용 |
+|------|------|----------|
+| `Skill` | skill name (kebab-case) | identifier |
+| `Frontmatter` | frontmatter 위치 (라인 범위 명시) | Layer 2 lazy-load의 `Read offset/limit` |
+| `1줄 요약` | dispatch 보조 인덱스 (frontmatter의 핵심을 압축) | 사용자 가독성 + router 빠른 후보 식별 |
+| `Command` | 사용자 호출 가능 여부 | `/buddy:<name>` 또는 `dispatch only` |
 
-#### 1.5.2 Catalog Entry 평가 항목 (CE1-CE5)
+#### 1.5.2 Catalog Entry 평가 항목 (CE — 축소 3 항목)
 
-PROCEDURE.md 평가 시 **항상 같이 평가**한다 (paired evaluation — §1.6 참조).
+PROCEDURE.md 평가 시 **항상 같이 평가**한다 (paired evaluation — §1.6 참조). description quality 평가(CE3-CE5)는 폐지 — F1-F5가 담당.
 
-- **CE1**: entry가 catalog의 phase별 표 중 정확한 phase에 위치 — `engineering-phases.md` §2 phase 정의와 일치
-- **CE2**: 호출 방법 컬럼이 3종 중 하나로 명시 + 실제 `plugin/commands/<name>.md` 존재 여부와 일치
-  - `command + dispatch` → command 파일 존재해야 함
+- **CE1**: entry가 정확한 phase의 catalog 파일에 위치 — `engineering-phases.md` §2 phase 정의와 일치
+  - 예: 신규 기획 작업 스킬은 `catalog-phase-1.md` Mode A 섹션에
+- **CE2**: 호출 방법 컬럼이 실제 `plugin/commands/<name>.md` 존재 여부와 일치
+  - `/buddy:<name>` → command 파일 존재해야 함
   - `dispatch only` → command 파일 부재해야 함 (가이드 §1.2.3 buddy 등가 매핑)
-  - `(직접 호출 불가, X 경유)` → command 파일 부재 + 경유 경로 명시
-- **CE3**: description 1줄에 **트리거 키워드 + 목적**을 모두 담음. 추상 형용사("종합적", "효과적", "다양한") 0개
-- **CE4**: 같은 phase 내 다른 entry와 **차별점 명확** — 다른 entry와 80% 이상 키워드 중복 시 fail
-- **CE5**: description 길이 50-300자 권장 (너무 짧으면 trigger 부족, 너무 길면 표 가독성 저하)
+- **CE-Line**: `Frontmatter` 컬럼의 라인 범위가 실제 PROCEDURE.md frontmatter 영역(첫 `---`부터 다음 `---`까지)과 정확히 일치 — Layer 2 lazy-load 정확성 보장 (가이드 §0.3 R3)
 
-#### 1.5.3 Catalog entry 평가의 가중치
+#### 1.5.3 폐지된 CE 항목 (D2 결정 — F1-F5로 이관)
 
-- **카테고리 가중치**: 1.0 (Frontmatter F1-F5와 동등 — dispatch 신호이지만 단일 라인이라 본문 가중치 2.0보다 낮음)
-- **항목 수**: 5
-- **카테고리 최대 점수**: 5 × 1.0 = 5
+다음 3 항목은 F1-F5와 중복되므로 **폐지**:
 
-평가 케이스 분모 갱신은 §4.4 paired evaluation 통합 케이스(PC1-PC5)로 처리. 상세 §4.4 참조.
+| 폐지 항목 | F1-F5 대응 |
+|--------|---------|
+| CE3 (description 트리거 키워드 + 추상 형용사 0) | **F1** (Use when), **F2** (자연어 trigger 3+), **F3** (추상 형용사 0) |
+| CE4 (같은 phase 내 차별점) | **F2** (사용자 자연어 발화 패턴 3+로 차별성 표현) + 본문 §1 정체성 |
+| CE5 (글자수 50-300자) | **F3** (description + when_to_use 합산 1,536자 cap) |
+
+#### 1.5.4 Catalog entry 평가의 가중치
+
+- **카테고리 가중치**: 1.0
+- **항목 수**: 3 (CE1, CE2, CE-Line)
+- **카테고리 최대 점수**: 3 × 1.0 = 3
+
+평가 케이스 분모는 §4.4 paired evaluation 케이스(PC1-PC4)로 처리. 상세 §4.4 참조.
 
 ### 1.6 Paired Evaluation 정책 — 평가 누락 방지 (Lost-in-the-middle 회피)
 
@@ -317,8 +655,8 @@ PROCEDURE.md 평가 시 **항상 같이 평가**한다 (paired evaluation — §
 | # | 위치 | 평가 조건 | 미존재 시 |
 |---|------|---------|---------|
 | 1 | `plugin/skills/<name>/PROCEDURE.md` | 항상 (이게 없으면 skill 자체 부재 → 에러) | 에러: skill 부재 |
-| 2 | `plugin/commands/<name>.md` | 파일이 **존재할 때만** 평가. 부재는 pattern library skill의 정상 상태 | F1-F5 카테고리 분모에서 제외 (PC3/PC4 케이스) |
-| 3 | `plugin/skills/router/references/skill-catalog.md` 의 `<name>` entry | grep으로 entry 발견 시 평가 | CE1-CE5 fail (등재 누락은 router가 dispatch 못 함) |
+| 2 | `plugin/commands/<name>.md` | 파일이 **존재할 때만** 별도 점수 보고 (PC1/PC2의 부가 케이스) | 정상 (pattern library skill의 정상 상태) — 분모 영향 없음 |
+| 3 | 해당 `catalog-<phase>.md` (또는 마이그레이션 미완료 시 단일 `skill-catalog.md`)의 `<name>` entry | grep으로 entry 발견 시 평가 | CE (3 축소 항목) fail (등재 누락은 router가 dispatch 못 함) |
 | 4 | `plugin/skills/router/SKILL.md` | `<name>` == `router`일 때만 평가 (router 자신 평가) | 일반 평가에서는 #1-#3만 평가 |
 
 #### 1.6.2 출력 통합
@@ -327,21 +665,22 @@ paired evaluation 결과는 **위치별 점수 + 통합 점수** 둘 다 출력�
 
 ```yaml
 paired_evaluation:
-  procedure:      { passed: 11, total: 12, score: 22 }    # B1-B12
-  command:        { passed: 4,  total: 5,  score: 4 }     # F1-F5 (없으면 N/A)
-  catalog_entry:  { passed: 5,  total: 5,  score: 5 }     # CE1-CE5
-  persona:        { passed: 3,  total: 4,  score: 4.5 }   # P1-P4 (적용 시)
-  total:          { passed_weighted_sum: 35.5, denominator: 40, score: 88.75, grade: "합격" }
+  procedure_frontmatter:  { passed: 5, total: 5,  score: 5  }    # F1-F5
+  procedure_body:         { passed: 11, total: 12, score: 22 }    # B1-B12
+  catalog_entry:          { passed: 3,  total: 3,  score: 3  }    # CE 3 축소
+  persona:                { passed: 3,  total: 4,  score: 4.5 }   # P1-P4 (적용 시)
+  total:                  { passed_weighted_sum: 34.5, denominator: 38, score: 90.79, grade: "우수" }
   case: PC1
+  bonus_command_frontmatter:  { passed: 4, total: 5, score: 4 }   # command.md F1-F5 (존재 시 부가 평가)
 ```
 
 #### 1.6.3 단일 위치 평가의 정당한 사용처
 
-paired가 기본이지만 다음 경우 단일 위치 평가(C1-C4) 정당화:
+paired가 기본이지만 다음 경우 단일 위치 평가 정당화:
 
-- 새 catalog entry 추가 직후 entry만 점검 → C-CE (catalog entry 단독)
-- command.md frontmatter만 수정 후 점검 → C1 또는 C2 (command 단독)
-- PROCEDURE.md 본문만 수정 후 점검 → C3 또는 C4 (PROCEDURE 단독)
+- 새 catalog entry 추가 직후 entry만 점검
+- command.md frontmatter만 수정 후 점검
+- PROCEDURE.md 본문만 수정 후 점검
 
 명시적으로 단일 위치만 평가하라고 사용자가 요청한 경우 외에는 항상 paired.
 
@@ -794,7 +1133,9 @@ Anthropic CoT 가이드는 복잡한 추론이 필요한 단계에서 명시적 
 
 skill 한 개를 평가할 때 사용하는 점검표. 각 항목 통과 시 1점, 통과율 80% 이상이 합격.
 
-### 4.1 Frontmatter (router/SKILL.md, plugin/commands/*.md만 해당)
+### 4.1 Frontmatter (모든 PROCEDURE.md + router/SKILL.md + plugin/commands/*.md)
+
+ADR-020 적용 후 모든 PROCEDURE.md에 frontmatter 추가됨. F1-F5는 frontmatter 보유 파일 전체에 적용:
 
 - [ ] **F1**: `description` 첫 문장에 "Use when" 또는 "사용 시점" 명시
 - [ ] **F2**: `description`에 사용자 자연어 발화 패턴 3개 이상 포함
@@ -804,13 +1145,13 @@ skill 한 개를 평가할 때 사용하는 점검표. 각 항목 통과 시 1�
 
 ### 4.1b Catalog Entry (모든 PROCEDURE.md의 paired 평가 대상 — §1.5)
 
-PROCEDURE.md 평가 시 `plugin/skills/router/references/skill-catalog.md`의 해당 entry도 같이 평가한다.
+PROCEDURE.md 평가 시 해당 catalog 파일(`catalog-<phase>.md`)의 entry도 같이 평가. description quality는 F1-F5가 담당하므로 CE는 **구조 정합성 3 항목**으로 축소 (2026-06-02 D2 결정).
 
-- [ ] **CE1**: entry가 정확한 phase 표에 위치 (`engineering-phases.md` §2 정의와 일치)
-- [ ] **CE2**: 호출 방법 컬럼이 3종 중 하나 + 실제 command 파일 존재/부재와 일치
-- [ ] **CE3**: description에 트리거 키워드 + 목적 모두 포함, 추상 형용사 0개
-- [ ] **CE4**: 같은 phase 내 다른 entry와 차별점 명확 (키워드 80% 이상 중복 X)
-- [ ] **CE5**: description 길이 50-300자 권장
+- [ ] **CE1**: entry가 정확한 phase의 catalog 파일에 위치 (`engineering-phases.md` §2 정의와 일치)
+- [ ] **CE2**: 호출 방법 컬럼이 실제 `plugin/commands/<name>.md` 존재/부재와 일치
+- [ ] **CE-Line**: `Frontmatter` 컬럼의 라인 범위가 실제 PROCEDURE.md frontmatter 영역과 일치 (Layer 2 lazy-load 정확성)
+
+**폐지 항목** (F1-F5로 이관): CE3 (트리거 키워드 → F1/F2/F3), CE4 (차별점 → F2 + 본문 §1), CE5 (글자수 → F3)
 
 ### 4.2 본문 구조 (모든 PROCEDURE.md)
 
@@ -848,53 +1189,53 @@ PROCEDURE.md 평가 시 `plugin/skills/router/references/skill-catalog.md`의 �
 
 ### 4.4 점수 계산
 
+ADR-020 적용 후 단순화된 모델 (2026-06-02 D3 결정).
+
 #### 카테고리 가중치
 
 | 카테고리 | 항목 수 | 가중치 |
 |---------|--------|-------|
 | Frontmatter | 5 (F1-F5) | 1.0 |
-| Catalog Entry | 5 (CE1-CE5) | 1.0 |
+| Catalog Entry | 3 (CE1, CE2, CE-Line) | 1.0 |
 | 본문 구조 | 12 (B1-B12) | 2.0 |
 | Persona | 4 (P1-P4) | 1.5 |
 
 #### 적용성 판정 (분모 결정 규칙)
 
-각 카테고리는 **평가 대상 파일·skill의 성격에 따라 분모에 포함 여부가 달라진다**. 분모를 동적으로 계산해야 공정 비교가 가능하다.
-
 | 카테고리 | 분모 포함 조건 | 미포함 시 |
 |---------|--------------|---------|
-| Frontmatter (F1-F5) | 평가 파일이 `router/SKILL.md` 또는 `plugin/commands/*.md` | PROCEDURE.md 단독 평가 시 F1-F5 분모에서 제외 |
-| Catalog Entry (CE1-CE5) | 평가 대상이 `skill-catalog.md` entry를 가진 skill (router 자신은 제외) | router/SKILL.md / command.md 단독 평가 시 제외 |
-| 본문 구조 (B1-B12) | **항상 포함** (PROCEDURE.md 평가 시) | command.md 단독 평가 시 일부만 (B1, B12) |
+| Frontmatter (F1-F5) | 평가 대상 파일에 frontmatter 존재 (ADR-020 적용 후 모든 PROCEDURE.md + router/SKILL.md + commands/*.md) | frontmatter 부재 파일은 제외 (마이그레이션 미완료 시) |
+| Catalog Entry (CE 3) | 평가 대상이 `catalog-<phase>.md` entry를 가진 skill (router 자신·일부 진입점 command 제외) | router/SKILL.md / 단독 command.md 평가 시 제외 |
+| 본문 구조 (B1-B12) | PROCEDURE.md 평가 시 항상 포함 | command.md 단독 평가 시 일부만 (B1, B12) |
 | Persona (P1-P4) | 가이드 §3.5.1 권장 매트릭스에 해당 skill이 "권장" 분류 | "비권장" 또는 "메타/dispatcher" skill은 P1-P4 분모에서 제외 |
 
-#### 평가 케이스별 분모 (paired evaluation 통합)
+#### 평가 케이스 (PC1-PC4) — paired evaluation 단순화
 
-**paired evaluation**(§1.6): 사용자가 `start` 같은 skill 이름을 입력하면 evaluate-skill은 다음 3 위치를 **자동 동반 평가**한다:
-- `plugin/skills/start/PROCEDURE.md` (본문)
-- `plugin/commands/start.md` (있으면, frontmatter)
-- `skill-catalog.md`의 `start` entry (있으면)
+**paired evaluation**(§1.6): 사용자가 skill 이름을 입력하면 evaluate-skill은 다음 위치를 자동 동반 평가:
+- `plugin/skills/<name>/PROCEDURE.md` (frontmatter + 본문 + persona)
+- `plugin/commands/<name>.md` (존재 시)
+- 해당 `catalog-<phase>.md`의 entry (존재 시)
+- `<name>` == `router`일 때만 `plugin/skills/router/SKILL.md`
 
-→ 점수 계산은 **통합 분모**로 한다. 단일 위치만 평가하던 기존 C1-C4는 폐기되고 **paired 통합 케이스 PC1-PC4**로 대체.
+ADR-020 적용 후 frontmatter가 PROCEDURE에도 있으므로 case가 단순해짐:
 
 | 케이스 | 평가 대상 조합 | Persona | 분모 합 | 계산 |
 |-------|--------------|---------|--------|------|
-| **PC1** | PROCEDURE.md + command.md + catalog entry 모두 존재, persona 권장 | 권장 | **40** | 5×1.0 (F) + 5×1.0 (CE) + 12×2.0 (B) + 4×1.5 (P) = 5+5+24+6 |
-| **PC2** | PROCEDURE.md + command.md + catalog entry 모두 존재, persona 비권장 | 비권장 | **34** | 5×1.0 + 5×1.0 + 12×2.0 + 0 = 5+5+24 |
-| **PC3** | PROCEDURE.md + catalog entry (command 없음 — pattern library), persona 권장 | 권장 | **35** | 0 + 5×1.0 + 12×2.0 + 4×1.5 = 5+24+6 |
-| **PC4** | PROCEDURE.md + catalog entry (command 없음), persona 비권장 | 비권장 | **29** | 0 + 5×1.0 + 12×2.0 + 0 = 5+24 |
-| **PC5** | router/SKILL.md 단독 (catalog entry 없음 — router는 카탈로그 자체) | N/A | **29** | 5×1.0 + 0 + 12×2.0 + 0 = 5+24 |
+| **PC1** | PROCEDURE.md + catalog entry 모두 존재, persona 권장 | 권장 | **38** | 5×1.0 (F) + 3×1.0 (CE) + 12×2.0 (B) + 4×1.5 (P) = 5+3+24+6 |
+| **PC2** | PROCEDURE.md + catalog entry 모두 존재, persona 비권장 | 비권장 | **32** | 5+3+24 |
+| **PC3** | router/SKILL.md 단독 (catalog entry 없음 — router는 catalog의 호스트) | N/A | **29** | 5+24 |
+| **PC4** | command.md 단독 (frontmatter + 본문 일부만 — B1, B12) | N/A | **9** | 5+4 |
 
-**legacy C1-C4** (단일 위치 평가, 디버깅·부분 평가용으로만 유지):
+**부가 케이스** (선택적 추가 평가 대상):
+- PROCEDURE에 command.md도 함께 존재 시: PC1/PC2에 command.md F1-F5도 별도 평가 (skill 단위와 command 단위 점수 분리 보고)
+- 마이그레이션 미완료 PROCEDURE (frontmatter 없음): F1-F5를 분모에서 제외 — 임시 케이스 (E 단계 완료 시 폐지)
 
-| 케이스 | 평가 대상 | Persona | 분모 합 |
-|-------|---------|---------|--------|
-| **C1** | router/SKILL.md or command.md 단독 | 권장 | **35** (5+24+6) |
-| **C2** | router/SKILL.md or command.md 단독 | 비권장 | **29** (5+24) |
-| **C3** | PROCEDURE.md 단독 | 권장 | **30** (24+6) |
-| **C4** | PROCEDURE.md 단독 | 비권장 | **24** (24) |
+#### 폐지된 케이스 (2026-06-02 D3)
 
-기본은 **paired (PC1-PC5)**. 단일 위치 평가가 필요한 경우(예: 새 catalog entry만 추가 후 점검)에만 C1-C4 사용.
+기존 PC1-PC5 (5 케이스) + C1-C4 (4 케이스) = 9 케이스 → **PC1-PC4 (4 케이스)** 로 단순화. 단순화 근거:
+- frontmatter가 모든 PROCEDURE에 있으므로 paired/single 구분 단순
+- CE 항목 5 → 3 축소로 분모 자동 단순
+- 디버깅용 single 평가는 PC3/PC4로 흡수 가능
 
 #### 최종 점수 공식
 

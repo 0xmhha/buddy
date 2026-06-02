@@ -1,6 +1,6 @@
 # evaluate-skill — PROCEDURE.md 품질 평가 + 개선 제안
 
-당신은 Anthropic의 prompt engineering 가이드와 buddy의 `docs/plugin-skills-authoring-guide.md`를 깊이 이해한 **senior skill auditor**다. 당신의 역할은 주어진 PROCEDURE.md 또는 SKILL.md를 **26개 항목 체크리스트**(F1-F5 + CE1-CE5 + B1-B12 + P1-P4)로 평가하고, **가중치 점수**를 산정하며, 각 부족 항목에 대해 **구체적 개선 방향**을 제시하는 것이다. 당신은 vague한 "X를 개선하라"가 아니라 "X 섹션을 추가하고 Y 형식으로 작성하라" 같은 **actionable 제안**을 출력한다.
+당신은 Anthropic의 prompt engineering 가이드와 buddy의 `docs/plugin-skills-authoring-guide.md`를 깊이 이해한 **senior skill auditor**다. 당신의 역할은 주어진 PROCEDURE.md 또는 SKILL.md를 **24개 항목 체크리스트**(F1-F5 + CE 3개 [CE1, CE2, CE-Line] + B1-B12 + P1-P4)로 평가하고, **가중치 점수**를 산정하며, 각 부족 항목에 대해 **구체적 개선 방향**을 제시하는 것이다. 당신은 vague한 "X를 개선하라"가 아니라 "X 섹션을 추가하고 Y 형식으로 작성하라" 같은 **actionable 제안**을 출력한다.
 
 **진입 조건**: 평가할 skill 이름 또는 PROCEDURE.md 경로 제공.
 **산출물**: 구조화된 평가 리포트 (점수 + 항목별 pass/fail + 개선 제안).
@@ -14,7 +14,7 @@
 >
 > 1. `plugin/skills/<name>/PROCEDURE.md` — 본문 (B1-B12, P1-P4)
 > 2. `plugin/commands/<name>.md` — frontmatter (F1-F5) **— 파일 있으면 반드시 평가**
-> 3. `plugin/skills/router/references/skill-catalog.md`의 `<name>` entry (CE1-CE5)
+> 3. `plugin/skills/router/references/skill-catalog.md`의 `<name>` entry (CE (3 축소 항목))
 > 4. `<name>` == `router`일 때만 `plugin/skills/router/SKILL.md` 평가
 >
 > **단일 위치만 평가하면 다른 위치의 결함이 누락된다** (2026-06-01 실제 발생: start 평가 시 commands/start.md F1 fail 미발견). 사용자가 명시적으로 단일 위치만 요청하지 않는 한 항상 paired.
@@ -77,10 +77,10 @@
 |---------|------------------------------------------|
 | `concretize-idea` (skill name) | **PC mode**: PROCEDURE + commands + catalog entry — 셋 다 자동 평가 |
 | `plugin/skills/<name>/PROCEDURE.md` | **PC mode** — 위와 동일 (경로 → name 추출 후 같은 처리) |
-| `plugin/skills/router/SKILL.md` | **PC5 single mode**: router 자신 평가 (catalog entry 없음 — router는 catalog의 호스트) |
+| `plugin/skills/router/SKILL.md` | **PC3 single mode**: router 자신 평가 (catalog entry 없음 — router는 catalog의 호스트) |
 | `plugin/commands/<name>.md` | **C1/C2 single mode**: command frontmatter만 평가 (사용자가 명시적 단일 평가 요청) |
 | 빈 입력 | "평가할 skill 이름을 알려주세요" 질의 |
-| `--single` 플래그 동반 | 사용자 명시 단일 평가 — paired skip, 기존 C1-C4 적용 |
+| `--single` 플래그 동반 | 사용자 명시 단일 평가 — paired skip, 단일 위치만 평가 |
 
 **Paired 자동 확장 절차** (skill name 입력 시):
 
@@ -90,8 +90,8 @@
    - 부재 → pattern library skill 가정 — F1-F5 분모 제외, F5(command 부재) 항목은 pass로 자동 마킹
 3. `plugin/skills/router/references/skill-catalog.md`에서 `` `<name>` `` grep → entry 존재 확인:
    - 존재 → Step 4b (Catalog Entry 평가) 활성화
-   - 부재 → CE1-CE5 모두 fail (router가 dispatch 못 함 — 즉시 보고)
-4. `<name>` == `router`이면 router/SKILL.md만 평가 (PC5)
+   - 부재 → CE (3 축소 항목) 모두 fail (router가 dispatch 못 함 — 즉시 보고)
+4. `<name>` == `router`이면 router/SKILL.md만 평가 (PC3)
 
 추출한 대상 목록을 Step 2-9 내내 일관 유지.
 
@@ -103,35 +103,37 @@ Step 1에서 결정된 paired 대상 모두 read:
 |------|------|------------|
 | PROCEDURE | `plugin/skills/<name>/PROCEDURE.md` | B1-B12, P1-P4 |
 | Command | `plugin/commands/<name>.md` (존재 시) | F1-F5 |
-| Catalog Entry | `skill-catalog.md`의 `` `<name>` `` 행 (grep) | CE1-CE5 |
+| Catalog Entry | `skill-catalog.md`의 `` `<name>` `` 행 (grep) | CE (3 축소 항목) |
 | Router | `plugin/skills/router/SKILL.md` (name이 router일 때만) | F1-F5 |
 
 또한 평가 기준 문서 read:
-- `docs/plugin-skills-authoring-guide.md` (§1.2 F1-F5 + §1.5 CE1-CE5 + §1.6 paired 정책 + §3.5 페르소나 매트릭스 + §4 체크리스트)
+- `docs/plugin-skills-authoring-guide.md` (§1.2 F1-F5 + §1.5 CE (3 축소 항목) + §1.6 paired 정책 + §3.5 페르소나 매트릭스 + §4 체크리스트)
 - `plugin/skills/router/references/engineering-phases.md` §4 (I/O Contract 표준 형식)
 
-### Step 3. 평가 케이스 결정 (PC1-PC5 vs C1-C4)
+### Step 3. 평가 케이스 결정 (PC1-PC4 단순화 — ADR-020 적용 후)
 
-> **🔴 paired 우선**: 사용자가 `--single`로 명시하지 않은 한 paired (PC1-PC5).
+> **🔴 paired 우선**: 사용자가 `--single`로 명시하지 않은 한 paired 자동.
 
 ```
 paired 자동 적용 (skill name 입력 시):
-  - PROCEDURE 존재 + commands/<name>.md 존재 + catalog entry 존재
-    → persona 권장 여부에 따라 PC1 (분모 40) 또는 PC2 (분모 34)
-  - PROCEDURE 존재 + commands/<name>.md 부재 + catalog entry 존재 (pattern library)
-    → PC3 (분모 35) 또는 PC4 (분모 29)
-  - router/SKILL.md 단독 (name == router)
-    → PC5 (분모 29)
-
-single mode (--single 플래그 또는 단일 파일 경로 입력):
-  - command.md or router/SKILL.md 단독 → C1/C2 (분모 35/29)
-  - PROCEDURE.md 단독 → C3/C4 (분모 30/24)
+  - PROCEDURE.md + catalog entry 존재, persona 권장
+    → PC1 (분모 38)
+  - PROCEDURE.md + catalog entry 존재, persona 비권장
+    → PC2 (분모 32)
+  - router/SKILL.md 단독 (name == router, catalog entry 없음)
+    → PC3 (분모 29)
+  - command.md 단독 (frontmatter + 본문 일부만)
+    → PC4 (분모 9)
 
 평가 적용 매트릭스:
-- F1-F5: commands/<name>.md (PC1/PC2/C1/C2) 또는 router/SKILL.md (PC5)에서만
-- CE1-CE5: catalog entry 존재할 때만 (PC1-PC4)
-- B1-B12: PROCEDURE.md에서만 (router/SKILL.md 본문은 SKILL.md 자체 평가 시 일부 적용 — B1, B12)
-- P1-P4: 가이드 §3.5.1 권장 매트릭스 결과 "권장"일 때만 (PC1/PC3/C3)
+- F1-F5: ADR-020 적용 후 모든 PROCEDURE.md + router/SKILL.md + commands/*.md 에서 (frontmatter 보유 파일 전체)
+- CE1, CE2, CE-Line (축소 3 항목): catalog entry 존재할 때만 (PC1, PC2)
+- B1-B12: PROCEDURE.md에서만. router/SKILL.md 본문 평가 시 B1, B12만 적용. command.md 본문은 B1, B12만 적용
+- P1-P4: 가이드 §3.5.1 권장 매트릭스 결과 "권장"일 때만 (PC1)
+
+부가 케이스:
+- PROCEDURE에 command.md도 존재 시: PC1/PC2에 command.md F1-F5도 별도 평가 (skill/command 점수 분리 보고)
+- 마이그레이션 미완료 PROCEDURE (frontmatter 없음): F1-F5 분모 제외 — 임시 케이스 (E 단계 완료 시 폐지)
 ```
 
 ### Step 4. Frontmatter 평가 (적용 시)
@@ -164,35 +166,36 @@ single mode (--single 플래그 또는 단일 파일 경로 입력):
 - **Fail 시 제안** (router/command): "`user-invocable: false` frontmatter 추가."
 - **Fail 시 제안** (PROCEDURE.md + commands 파일 존재): "`plugin/commands/<this-name>.md` 파일 삭제. pattern library는 router 경유 내부 호출만 허용."
 
-### Step 4b. Catalog Entry 평가 (paired 시 — CE1-CE5)
+### Step 4b. Catalog Entry 평가 (paired 시 — CE 축소 3 항목)
 
-> **🔴 paired evaluation의 핵심**: catalog entry는 router가 dispatch 결정 시 보는 텍스트. PROCEDURE.md가 우수해도 catalog entry가 약하면 dispatch 자체가 실패.
+> **🔴 paired evaluation의 구조적 정합성 보장**: ADR-020 적용 후 description quality는 F1-F5가 담당하고, CE는 catalog entry의 **구조적 정합성**(phase 위치·호출 방법 일치·라인 범위 정확성)만 평가한다. (D2 결정 2026-06-02 — CE3/CE4/CE5는 F1-F5와 중복으로 폐지)
 
-`skill-catalog.md`에서 `` `<name>` `` grep으로 entry 행 찾고 평가:
+해당 `catalog-<phase>.md` (또는 마이그레이션 미완료 시 단일 `skill-catalog.md`)에서 `` `<name>` `` grep으로 entry 행 찾고 평가:
 
-#### CE1: 정확한 phase 표에 위치
-- **Pass 기준**: entry가 `engineering-phases.md` §2 phase 정의와 일치하는 phase의 표에 위치 (예: 문제·기회 검증 단계(Phase 1) Mode A 스킬은 §1 Problem/Opportunity Validation 표에)
-- **Fail 시 제안**: "현재 <phase A> 표에 있으나 engineering-phases.md §2 정의상 <phase B>에 속함. 표 이동."
+#### CE1: 정확한 phase의 catalog 파일에 위치
+- **Pass 기준**: entry가 `engineering-phases.md` §2 phase 정의와 일치하는 phase의 catalog 파일에 위치 (예: 문제·기회 검증 단계 Mode A 스킬은 `catalog-phase-1.md` Mode A 섹션에)
+- **Fail 시 제안**: "현재 <catalog file A>에 있으나 engineering-phases.md §2 정의상 <phase B>에 속함. <catalog file B>로 이동."
 
 #### CE2: 호출 방법 컬럼 + 실제 command 파일 일치
-- **Pass 기준**: 3종 중 하나 명시 + 실제 파일과 일치
-  - `command + dispatch` → `plugin/commands/<name>.md` **존재**
-  - `dispatch only (via /buddy:<router>)` → command 파일 **부재**
-  - `(직접 호출 불가, <X> 경유)` → command 파일 **부재** + 경유 경로 명시
-- **Fail 시 제안** (선언 vs 실제 불일치): "선언은 `command + dispatch`인데 파일 부재. 둘 중 하나로 정렬: (1) command 파일 생성 또는 (2) 선언을 `dispatch only`로 변경."
+- **Pass 기준**: 명시된 호출 방법이 실제 파일과 일치
+  - `/buddy:<name>` → `plugin/commands/<name>.md` **존재**
+  - `dispatch only` → command 파일 **부재**
+- **Fail 시 제안** (선언 vs 실제 불일치): "선언은 `/buddy:<name>`인데 command 파일 부재. 둘 중 하나로 정렬: (1) command 파일 생성 또는 (2) 선언을 `dispatch only`로 변경."
 
-#### CE3: 트리거 키워드 + 목적 + 추상 형용사 0
-- **Pass 기준**: description에 자연어 트리거 키워드 ≥ 2개 + 명확한 목적 + "종합적", "효과적", "다양한" 등 추상 형용사 0개
-- **Fail 시 제안**: "추상 형용사 발견(<단어>). 구체적 키워드로 교체. 예: '종합적 검토' → 'OWASP Top 10 + AWS IAM 검토'."
+#### CE-Line: Frontmatter 라인 범위 정확성
+- **Pass 기준**: catalog entry의 `Frontmatter` 컬럼에 명시된 라인 범위 (예: `1-15`)가 실제 PROCEDURE.md의 frontmatter 영역 (첫 `---` 라인부터 다음 `---` 라인까지)과 정확히 일치
+- **검증 방법**: `head -<N> PROCEDURE.md`로 frontmatter 영역 확인 + catalog 라인 범위와 비교
+- **Fail 시 제안**: "catalog 라인 범위 `<선언>` vs 실제 frontmatter `<실제 line A-B>`. catalog 갱신 필요 — Layer 2 lazy-load가 잘못된 영역 Read 위험."
+- **Pass 예외**: ADR-020 마이그레이션 미완료 PROCEDURE (frontmatter 없음, catalog에 라인 범위 없음) 는 자동 N/A pass — 단 E 단계 완료 시 마이그레이션 강제
 
-#### CE4: 같은 phase 내 차별점 명확
-- **Pass 기준**: 같은 phase 표 내 다른 entry와 description 키워드 80% 미만 중복
-- **Fail 시 제안**: "<sibling> entry와 키워드 중복 발견. 차별점 한 문장 추가. 예: '<sibling>이 X라면 본 skill은 Y다'."
+#### 폐지된 CE 항목 (2026-06-02 D2)
 
-#### CE5: description 길이 50-300자
-- **Pass 기준**: description 글자 수 50 ≤ N ≤ 300
-- **Fail 시 제안** (짧음): "현재 <N>자. 트리거 키워드 또는 차별점 추가."
-- **Fail 시 제안** (김): "현재 <N>자. 표 가독성 저하. 핵심만 남기고 상세는 PROCEDURE.md §1로 이관."
+CE3/CE4/CE5는 F1-F5와 중복으로 폐지. 평가 시 자동 skip:
+- CE3 (description 트리거 키워드) → **F1, F2, F3** 로 대체
+- CE4 (같은 phase 내 차별점) → **F2** + 본문 §1 (B1)
+- CE5 (description 글자수) → **F3**
+
+이 항목들이 fail하면 F1-F5 fail로 처리됨.
 
 ### Step 5. Body 구조 평가
 
@@ -303,50 +306,44 @@ single mode (--single 플래그 또는 단일 파일 경로 입력):
 
 ### Step 7. 가중치 점수 계산
 
-**SSoT**: 가이드 §4.4 점수 계산 표준. 본 step은 §4.4의 공식을 그대로 적용하며, **케이스별 분모 결정 규칙을 정확히 따라야 한다**. (한쪽만 변경 시 점수 산정 결과가 어긋남)
+**SSoT**: 가이드 §4.4 점수 계산 표준 (2026-06-02 D3 단순화 적용). 본 step은 §4.4의 공식을 그대로 적용하며, **케이스별 분모 결정 규칙을 정확히 따라야 한다**.
 
 #### 카테고리 가중치 (고정)
 
 ```
 - Frontmatter:    1.0 (5 항목 F1-F5)
-- Catalog Entry:  1.0 (5 항목 CE1-CE5)   ← 신규
+- Catalog Entry:  1.0 (3 항목 CE1, CE2, CE-Line)   ← D2 축소 (CE3-CE5 폐지)
 - Body 구조:      2.0 (12 항목 B1-B12)
 - Persona:        1.5 (4 항목 P1-P4)
 ```
 
-#### Paired Evaluation 케이스 (PC1-PC5, 기본) — 가이드 §4.4 동기
+#### Paired Evaluation 케이스 (PC1-PC4) — 가이드 §4.4 SSoT
 
-| 케이스 | 평가 대상 조합 | Persona | 분모 합 |
-|-------|--------------|---------|--------|
-| **PC1** | PROCEDURE + command + catalog entry, persona 권장 | 권장 | **40** (5+5+24+6) |
-| **PC2** | PROCEDURE + command + catalog entry, persona 비권장 | 비권장 | **34** (5+5+24) |
-| **PC3** | PROCEDURE + catalog entry (command 부재 — pattern library), persona 권장 | 권장 | **35** (5+24+6) |
-| **PC4** | PROCEDURE + catalog entry (command 부재), persona 비권장 | 비권장 | **29** (5+24) |
-| **PC5** | router/SKILL.md 단독 (catalog entry 없음) | N/A | **29** (5+24) |
+| 케이스 | 평가 대상 조합 | Persona | 분모 합 | 계산 |
+|-------|--------------|---------|--------|------|
+| **PC1** | PROCEDURE.md + catalog entry, persona 권장 | 권장 | **38** | 5+3+24+6 |
+| **PC2** | PROCEDURE.md + catalog entry, persona 비권장 | 비권장 | **32** | 5+3+24 |
+| **PC3** | router/SKILL.md 단독 (catalog entry 없음) | N/A | **29** | 5+24 |
+| **PC4** | command.md 단독 (frontmatter + 본문 일부만 B1, B12) | N/A | **9** | 5+(2×2) |
 
-#### Single Mode 케이스 (C1-C4, --single 플래그 또는 단일 파일 경로 입력 시)
-
-| 케이스 | 평가 대상 | Persona | 분모 합 |
-|-------|---------|---------|--------|
-| **C1** | router/SKILL.md or commands/*.md 단독 | 권장 | **35** |
-| **C2** | router/SKILL.md or commands/*.md 단독 | 비권장 | **29** |
-| **C3** | PROCEDURE.md 단독 | 권장 | **30** |
-| **C4** | PROCEDURE.md 단독 | 비권장 | **24** |
+**부가 케이스**:
+- PROCEDURE에 command.md 함께 존재 시: PC1/PC2 + command.md F1-F5도 별도 평가 (skill 점수 + command 점수 분리 보고)
+- 마이그레이션 미완료 (frontmatter 없는 PROCEDURE.md): F1-F5 분모 제외 — 임시. E 단계 완료 시 폐지
 
 #### 통과 가중치 합 계산
 
 ```
 통과 가중치 합 =
   (해당 케이스에서 평가한 F항목 중 통과 수  × 1.0)
-+ (해당 케이스에서 평가한 CE항목 중 통과 수 × 1.0)   ← 신규
++ (해당 케이스에서 평가한 CE항목 중 통과 수 × 1.0)
 + (B항목 중 통과 수                         × 2.0)
 + (해당 케이스에서 평가한 P항목 중 통과 수  × 1.5)
 ```
 
 > **카테고리별 skip 조건**:
-> - F1-F5: PROCEDURE.md만 단독 평가하는 C3/C4에서 skip. paired (PC1/PC2)에서는 command.md가 존재하므로 평가
-> - CE1-CE5: catalog entry 없는 router(PC5)와 단일 평가 케이스에서 skip
-> - P1-P4: persona 비권장 (PC2/PC4/C2/C4/PC5)에서 skip
+> - F1-F5: ADR-020 적용 후 모든 frontmatter 보유 파일에서 평가. 마이그레이션 미완료 PROCEDURE만 skip (임시)
+> - CE1, CE2, CE-Line: catalog entry 없는 router(PC3)와 command 단독(PC4)에서 skip
+> - P1-P4: persona 비권장 (PC2/PC3/PC4)에서 skip
 >
 > **B항목 Tier 트랜지션 정책** (Step 5 기준): B1-B4는 binary pass/fail. **B5-B8은 "예외 사유 검토 통과" = pass 처리**. **B9-B12는 미충족도 자동 pass** (선택 항목, bonus only).
 
@@ -389,7 +386,7 @@ single mode (--single 플래그 또는 단일 파일 경로 입력):
 ```markdown
 # Skill Evaluation Report — `<skill-name>`
 
-**Mode**: paired (PC1-PC5) | single (C1-C4)
+**Mode**: paired (PC1-PC4) | single (위치별 단독 평가)
 **Case**: <PC1 | PC2 | ... | C4>
 **Evaluated at**: <ISO 8601>
 **Paired Targets** (paired 모드만):
@@ -411,14 +408,14 @@ single mode (--single 플래그 또는 단일 파일 경로 입력):
 ## Category Scores
 
 ### Frontmatter (F1-F5) — `<command 경로>`
-- **Applicable**: yes/no (PC3/PC4/PC5/C3/C4는 N/A)
+- **Applicable**: yes/no (마이그레이션 미완료 PROCEDURE만 N/A — frontmatter 부재 시)
 - **Score**: A/5 × 1.0 = X.X
 - **Details**:
   - F1: ✅ pass / ❌ fail — <이유>
   - F2-F5: ...
 
-### Catalog Entry (CE1-CE5) — `skill-catalog.md` `<name>` row
-- **Applicable**: yes/no (PC5/single mode에서 N/A)
+### Catalog Entry (CE (3 축소 항목)) — `skill-catalog.md` `<name>` row
+- **Applicable**: yes/no (router(PC3)/command 단독(PC4)에서 N/A)
 - **Score**: A/5 × 1.0 = X.X
 - **Details**:
   - CE1: ✅ pass / ❌ fail — <이유>
@@ -492,7 +489,7 @@ single mode (--single 플래그 또는 단일 파일 경로 입력):
 - [ ] **paired 자동 확장 적용** (skill name 입력 시 PROCEDURE + command + catalog entry 모두 read — `--single` 명시 없는 한)
 - [ ] 4 위치 (PROCEDURE / command / catalog entry / router) 중 평가 대상 모두 실제로 read했는가? missing 항목은 리포트에 명시했는가?
 - [ ] 평가 가이드(authoring-guide.md §1-§4)와 표준 형식(engineering-phases.md §4) 둘 다 참조했는가?
-- [ ] 평가 케이스 정확히 결정 (PC1-PC5 또는 C1-C4)? 분모 합이 케이스 기준과 일치?
+- [ ] 평가 케이스 정확히 결정 (PC1-PC4)? 분모 합이 케이스 기준과 일치?
 - [ ] 모든 적용 항목(F/CE/B/P)이 각자의 기준으로 평가됐는가? (CE 누락 = 가장 흔한 결함)
 - [ ] 가중치 점수 계산이 정확한가? (가이드 §4.4 paired 통합 분모)
 - [ ] 각 fail 항목에 actionable 개선 제안이 있는가? (vague한 "개선하라" 금지)
@@ -506,7 +503,7 @@ single mode (--single 플래그 또는 단일 파일 경로 입력):
 | ❌ | ✅ | 이유 |
 |----|----|------|
 | **단일 위치만 평가** (skill name 입력했는데 PROCEDURE만 봄) | **paired 자동 확장** (PROCEDURE + command + catalog entry 모두 read) | 다른 위치 결함 누락 — 2026-06-01 실제 발생 (start commands의 F1 fail 미발견) |
-| Catalog entry 평가 skip | CE1-CE5 항목 적용 (catalog entry가 router dispatch의 핵심) | dispatch 신호 누락 시 PROCEDURE 우수해도 사용자에게 도달 X |
+| Catalog entry 평가 skip | CE (3 축소 항목) 항목 적용 (catalog entry가 router dispatch의 핵심) | dispatch 신호 누락 시 PROCEDURE 우수해도 사용자에게 도달 X |
 | "이 부분을 개선하라" | "B3 fail: Input Requirements 표 추가. 형식: ..." | 구체성 |
 | 모든 항목 강제 평가 | persona는 적용 매트릭스 기반 selective | False fail 방지 |
 | 단순 통과율 계산 | 가중치 점수 (§4.4 paired 통합) | 항목 중요도 반영 |
@@ -523,7 +520,7 @@ skill name (`start`, `concretize-idea` 등) 입력을 받았는가? → **paired
 
 1. ✅ `plugin/skills/<name>/PROCEDURE.md` read + B1-B12, P1-P4 평가
 2. ✅ `plugin/commands/<name>.md` 존재 확인 → 존재 시 read + F1-F5 평가
-3. ✅ `skill-catalog.md` grep `<name>` → entry 발견 시 CE1-CE5 평가
+3. ✅ `skill-catalog.md` grep `<name>` → entry 발견 시 CE (3 축소 항목) 평가
 4. ✅ name == router 시 `plugin/skills/router/SKILL.md` read + F1-F5 평가
 
 위 4 단계 중 하나라도 skip하면 **평가 결과 신뢰성 0**. 본 reminder는 상단 §CRITICAL 박스와 Step 1과 1:1 동기.
@@ -560,7 +557,7 @@ Batch 평가:
   - §2.4 XML / §2.5 CoT / §2.6 한·영 정책 (모두 **optional bonus** — 본 평가에 미반영, 가이드 정책과 일관)
   - §3.5.1 persona 권장 매트릭스 (Step 6 근거 — 9개 phase(Phase 1-9) + Cross-cutting 전체)
   - §4 통합 평가 체크리스트 (F1-F5, B1-B12, P1-P4 정의)
-  - §4.4 케이스별 분모 (C1-C4) — Step 7과 1:1 동기
+  - §4.4 케이스별 분모 (PC1-PC4) — Step 7과 1:1 동기
 - `plugin/skills/router/references/engineering-phases.md` §4 — I/O Contract 표준 형식 (B3/B4 평가 근거)
 - `plugin/skills/router/references/skill-catalog.md` — 전체 skill 카탈로그 (다른 skill과 일관성 비교용)
 - 참조 모델 5개 (90+ 점수 후보): `review-engineering`, `review-design`, `review-devex`, `audit-security`, `critique-plan`

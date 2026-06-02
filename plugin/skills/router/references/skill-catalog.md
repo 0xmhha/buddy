@@ -240,7 +240,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `detect-install-type` | dispatch | [패턴 라이브러리] tool install type(global-git/local-git/vendored/package-manager/dev-symlink) detect + upgrade path |
 | `guide-setup-wizard` | dispatch | [패턴 라이브러리] auto-detect → picker → verify pattern으로 credential/config setup flow 설계 |
 | `start` | command + dispatch | 사용자 의도 기반 진입 라우터 — 자연어 발화에서 컨텍스트 추출 + 3 질문(프로젝트 경로 / 작업 유형 / 상업성)으로 누락 정보 수집 후 확인 → 경로 유무 기준으로 dispatch (경로 있음 → assess-product-change, 경로 없음 → concretize-idea). command 이름 모를 때 첫 entry |
-| `evaluate-skill` | command + dispatch | 지정한 PROCEDURE.md / SKILL.md / command 파일을 26-항목 체크리스트(authoring-guide §4)로 평가 — frontmatter 5 + catalog entry 5 + body 12 + persona 4. paired 자동 확장 (skill name 입력 시 PROCEDURE + command + catalog 동시 평가). 가중치 점수(0-100) + 항목별 actionable 개선 제안 + priority 정렬 출력 |
+| `evaluate-skill` | command + dispatch | 지정한 PROCEDURE.md / SKILL.md / command 파일을 24-항목 체크리스트(authoring-guide §4)로 평가 — frontmatter 5 + catalog entry 3 + body 12 + persona 4. paired 자동 확장 (skill name 입력 시 PROCEDURE + command + catalog 동시 평가). 가중치 점수(0-100) + 항목별 actionable 개선 제안 + priority 정렬 출력 |
 | `status` | command + dispatch | artifact 탐지 (docs/prd.md / docs/feature-spec/ / docs/tech-spec.md / docs/actor-track-plan.yaml 등) 로 현재 lifecycle phase 추론 + 다음 권장 command 안내. phase 무관 호출 |
 | `write-a-skill` | command + dispatch | [META] 신규 buddy 스킬을 PROCEDURE.md + skill-catalog 등재 + 차용 4분류 정책 적용까지 한 사이클로 작성. RED-GREEN-REFACTOR subagent pressure test 강제. 사용자가 "새 스킬 만들자/추가하자/skill 작성" 할 때 호출 |
 | `save-context` | command + dispatch | decisions, remaining work, git status를 checkpoint로 저장해 future session이 branch가 달라도 이어받게 한다. phase 무관 — 어느 단계에서든 세션 전환 시 호출 |
