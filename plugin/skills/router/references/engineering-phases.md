@@ -22,14 +22,14 @@
 | `## §1. 정의 원칙` | Artifact-based 채택 근거 + Phase 간 흐름 다이어그램 |
 | `## §2. Phase 정의` | 각 Phase의 정체성·핵심 질문·orchestrator·Input/Output·소속 스킬 |
 | └ `### Phase 1 — ...` (Mode A, Mode B 2 sub-block) | concretize-idea + Stage 매핑 / assess-product-change + scope·routing |
-| └ `### Phase 2 — Feature Definition` | define-features + actor/use case |
-| └ `### Phase 3 — Technical Design` | design-system + 9 카테고리 (3-A~3-I) |
-| └ `### Phase 4 — Implementation Planning` | plan-build + Task DAG |
-| └ `### Phase 5 — Development` | build-feature + developer-authored tests **(Phase 6과 책임 경계)** |
-| └ `### Phase 6 — Verification & Quality` | verify-quality + 상용 quality bar **(Phase 5와 책임 경계)** |
-| └ `### Phase 7 — Release` | ship-release + launch readiness **(UAT 위치 + Phase 6 경계)** |
-| └ `### Phase 8 — Operations & Iteration` | iterate-product + Engineering/Product/Marketing |
-| └ `### Phase 9 — Lifecycle Management` | manage-lifecycle + deprecation **(Mode B와 분류 정책)** |
+| └ `### Phase 2 — Requirements Specification` | define-features + actor/use case |
+| └ `### Phase 3 — Software Design` | design-system + 9 카테고리 (3-A~3-I) |
+| └ `### Phase 4 — Iteration Planning` | plan-build + Task DAG |
+| └ `### Phase 5 — Construction` | build-feature + developer-authored tests **(Phase 6과 책임 경계)** |
+| └ `### Phase 6 — Verification & Validation` | verify-quality + 상용 quality bar **(Phase 5와 책임 경계)** |
+| └ `### Phase 7 — Release & Deployment` | ship-release + launch readiness **(UAT 위치 + Phase 6 경계)** |
+| └ `### Phase 8 — Operation & Maintenance` | iterate-product + Engineering/Product/Marketing |
+| └ `### Phase 9 — Retirement / Decommissioning` | manage-lifecycle + deprecation **(Mode B와 분류 정책)** |
 | └ `### Cross-cutting (Phase 소속 없음)` | phase 무관 스킬 (decompose-blocker, status 등) |
 | `## §3. Phase 전이 규칙` | 정상 흐름 / Backtrack / Skip vs Routing / 전이 판단 기준 |
 | `## §4. Input/Output Contract 표준 형식` | Input Requirements 표 / Output Contract 표 / Type 분류 / 미제공 시 처리 |
@@ -59,21 +59,33 @@ buddy는 **Artifact-based를 주축**으로 채택한다.
 
 각 phase의 Activity(뭘 하는가)와 Decision(뭘 결정하는가)도 참조 정보로 함께 기술하되, **정체성의 근거는 artifact**이다.
 
-### Phase 간 관계
+### 라이프사이클은 Artifact 의존성 그래프(DAG)다
 
-phase 간 기본 흐름은 순차적이지만, 조건에 따라 backtrack(이전 phase 복귀) 또는 skip(건너뛰기)이 발생한다. 이 전이 규칙은 §3에서 정의한다.
+phase는 **시간순 단계가 아니라 산출물 의존성 그래프의 노드**다. 노드는 자신이 생산하는 산출물(output)로 명명되며, 엣지 `A ──► B`는 "A의 output = B의 required input"을 뜻한다. 각 노드의 **Input Artifacts 표 = Definition of Ready(DoR)**, **Output Artifacts 표 = Definition of Done(DoD)** 다 (§2).
+
+- **진입점**은 사용자가 고르는 게 아니라 "지금 존재하는 artifact의 frontier"로 계산된다 (`status` 스킬이 artifact 탐지로 자동 추론).
+- **prerequisite(DoR) 미충족** 시 그 input을 생산하는 upstream 노드로 자동 선행한다 (§3 backtrack의 재정의 — 예외가 아니라 정상 빌드 규칙).
+- **사이클**은 trigger(인시던트·실험 결과·변경 요청)가 새 source를 주입하면 downstream 노드만 증분 재평가되는 것이다 (Make/Bazel의 stale-rebuild 의미론).
+- "Phase 1~9" 번호는 그래프를 사람이 읽기 쉽게 묶은 **클러스터 라벨**이며 강제 실행 순서가 아니다. 아래 표기는 *위상 정렬(topological order)의 한 예시*일 뿐이다.
+
+노드 표준 용어(SE/Agile) + DoR/DoD 매핑 SSoT는 [`docs/se-lifecycle-naming.md §1`](../../../../docs/se-lifecycle-naming.md)을 따른다.
 
 ```
-§1 → §2 → §3 → §4 → §5 → §6 → §7 → §8 ⇄ §2
-                                              ↓
-                                             §9
+trigger: idea | change request | incident | metric
+   │ (어떤 source + 어떤 artifact가 이미 존재하나 → 진입 노드 결정)
+   ▼
+Discovery ─(PRD)─► Requirements Spec ─(SRS)─► Software Design ─(SDD)─► Iteration Planning
+   ─(task DAG)─► Construction ─(code+tests)─► V&V ─(evidence)─► Release & Deployment
+   ─(deployed)─► Operation & Maintenance ─(improvement)─► [Requirements Spec로 역류]
+                                          └─(EOL 결정)─► Retirement
+   ※ ─(…)─ = "왼쪽 노드의 DoD = 오른쪽 노드의 DoR"
 ```
 
 ---
 
 ## §2. Phase 정의
 
-### Phase 1 — Problem/Opportunity Validation
+### Phase 1 — Discovery / Impact Analysis (문제·기회 검증 / 변경 영향 분석)
 
 | 항목 | 내용 |
 |------|------|
@@ -82,7 +94,7 @@ phase 간 기본 흐름은 순차적이지만, 조건에 따라 backtrack(이전
 
 Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다. 어떤 mode든 종료 시 동일한 output 형태 — **검증된 작업 항목(validated work item) + 다음 phase 결정** — 을 생산한다.
 
-#### Mode A — Greenfield (신규 프로덕트)
+#### Mode A — Discovery / Inception (Greenfield, 신규 프로덕트)
 
 기존 프로덕트가 없고, 아이디어 단계에서 시작하는 경우.
 
@@ -135,7 +147,7 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 > 매핑 SSoT: `plugin/skills/concretize-idea/PROCEDURE.md` "Stage 흐름" 섹션. 본 표는 그것의 reverse index.
 
-#### Mode B — Existing Product (기존 프로덕트 변경)
+#### Mode B — Impact Analysis (Existing Product, 기존 프로덕트 변경)
 
 이미 운영 중인 프로덕트에 대한 모든 변경 작업 — 버그 수정, 신규 기능, 성능 개선, 기술 부채 정리, 의존성 갱신 등 유형 무관. 핵심은 **변경의 scope(범위)를 평가**하여 다음 phase를 결정하는 것.
 
@@ -173,10 +185,11 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 2 — Feature Definition
+### Phase 2 — Requirements Specification (기능 정의)
 
 | 항목 | 내용 |
 |------|------|
+| **표준 용어** | Requirements Specification (SWEBOK · IEEE 830/29148) — Output 산출물 **SRS**가 이름에 박혀 있음 |
 | **정체성** | PRD를 actor/use case 분해를 거쳐 구현 가능한 feature 단위로 변환한다 |
 | **핵심 질문** | "무엇을 만드는가?" |
 | **Orchestrator** | `define-features` |
@@ -217,10 +230,11 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 3 — Technical Design
+### Phase 3 — Software Design (기술 설계)
 
 | 항목 | 내용 |
 |------|------|
+| **표준 용어** | Software Design (SWEBOK · IEEE 1016) — Output 산출물 **SDD**가 이름에 박혀 있음 |
 | **정체성** | feature를 구현하기 위한 기술적 구조를 결정한다 |
 | **핵심 질문** | "어떻게 만드는가?" |
 | **Orchestrator** | `design-system` |
@@ -330,10 +344,11 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 4 — Implementation Planning
+### Phase 4 — Iteration Planning (구현 계획)
 
 | 항목 | 내용 |
 |------|------|
+| **표준 용어** | Iteration Planning / Work Breakdown (Scrum · PMBOK) — Output 산출물 **Iteration Plan(task DAG)** |
 | **정체성** | 기술 설계를 실행 가능한 task 단위로 분해하고 순서를 정한다 |
 | **핵심 질문** | "어떤 순서로 만드는가?" |
 | **Orchestrator** | `plan-build` |
@@ -371,10 +386,11 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 5 — Development
+### Phase 5 — Construction (개발)
 
 | 항목 | 내용 |
 |------|------|
+| **표준 용어** | Construction / Implementation (SWEBOK Software Construction) — Output 산출물 **working code + developer tests** |
 | **정체성** | 계획된 task를 **코드 + 자체 테스트(developer-authored)**로 구현하고, 해당 자체 테스트가 통과하는 상태까지 만든다 |
 | **핵심 질문** | "구현했고, 자체 테스트는 통과하는가?" |
 | **Orchestrator** | `build-feature` |
@@ -426,10 +442,11 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 6 — Verification & Quality
+### Phase 6 — Verification & Validation (검증·확인)
 
 | 항목 | 내용 |
 |------|------|
+| **표준 용어** | Verification & Validation, V&V (IEEE 1012) — Output 산출물 **V&V evidence**. Verification("올바르게 만들었나") + Validation("올바른 것을 만들었나") 둘 다 포함 |
 | **정체성** | Phase 5 산출물(코드 + 자체 테스트)이 **상용 출시 가능한 quality bar**(meaningful coverage, security, a11y, i18n, compliance, code health, performance)에 도달했는지 별도 차원에서 평가한다 |
 | **핵심 질문** | "단순히 작동하는 것을 넘어 출시할 수 있는 품질인가?" |
 | **Orchestrator** | `verify-quality` |
@@ -484,10 +501,11 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 7 — Release
+### Phase 7 — Release & Deployment (출시·배포)
 
 | 항목 | 내용 |
 |------|------|
+| **표준 용어** | Release & Deployment (DevOps · ITIL) — Output 산출물 **release package + deployed artifact** |
 | **정체성** | 검증된 코드를 사용자에게 전달한다 (패키징/태깅/배포/공지/launch readiness 확인 포함). **UAT는 본 phase의 launch readiness 일환**으로 분류 (Phase 6 quality bar와 별개로, 실사용자 acceptance 관점 검증) |
 | **핵심 질문** | "사용자에게 안전하게 전달할 준비가 되었고, 전달했는가?" |
 | **Orchestrator** | `ship-release` |
@@ -543,10 +561,11 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 8 — Operations & Iteration
+### Phase 8 — Operation & Maintenance (운영·개선)
 
 | 항목 | 내용 |
 |------|------|
+| **표준 용어** | Operation & Maintenance (ISO/IEC 12207 · 14764) — Output 산출물 **ops metrics + improvement backlog**. Lean의 Build-Measure-Learn 루프를 포함 |
 | **정체성** | 운영 중인 시스템을 관찰하고, 데이터 기반으로 개선한다 |
 | **핵심 질문** | "잘 돌아가고 있는가?" |
 | **Orchestrator** | `iterate-product` |
@@ -607,10 +626,11 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 
 ---
 
-### Phase 9 — Lifecycle Management
+### Phase 9 — Retirement / Decommissioning (폐기·종료)
 
 | 항목 | 내용 |
 |------|------|
+| **표준 용어** | Retirement / Decommissioning (ISO/IEC/IEEE 12207 Disposal process) — Output 산출물 **deprecation·migration·EOL plan**. 구 명칭 `Lifecycle Management`는 상위 lifecycle 개념과 충돌하여 폐기 |
 | **정체성** | 노후화된 feature/product의 수명을 결정하고 정리한다 |
 | **핵심 질문** | "유지할 것인가, 끝낼 것인가?" |
 | **Orchestrator** | `manage-lifecycle` |
@@ -680,6 +700,8 @@ Phase 1은 **프로덕트 존재 여부**에 따라 2가지 mode로 동작한다
 ---
 
 ## §3. Phase 전이 규칙
+
+> **DAG 관점 (2026-06-02)**: 아래 "정상 흐름 / backtrack / skip / routing"은 모두 artifact 의존성 그래프의 **단일 규칙** — *"노드의 DoR(required input)이 충족되면 실행, 미충족이면 그 input을 생산하는 upstream 노드로 선행"* — 의 표현이다. backtrack = DoR 미충족 시 upstream 선행, skip = 이미 충족된 노드 통과, routing = 충족된 frontier에서 다음 노드 선택. "정상 흐름"은 위상 정렬(topological order)의 한 예시일 뿐 강제 순서가 아니다.
 
 ### 정상 흐름 (forward)
 

@@ -104,16 +104,16 @@
 
 | Phase | Orchestrator | 진입 조건 | Stage skills (보유) | Cross-cutting |
 |-------|-------------|---------|---------------------|---------------|
-| §1 Idea & Business Validation (Mode A) | `concretize-idea` | idea/concept만 존재 (greenfield) | `validate-idea`, `validate-advanced-edge-idea`, `assess-business-viability`, `review-pricing-and-gtm`, `define-product-spec` | `apply-builder-ethos`, `autoplan`(review) |
-| §1 Problem/Change Assessment (Mode B) | `assess-product-change` | 기존 프로덕트에 변경 필요 | — (scope 평가 후 §2/§3/§5로 routing) | — |
-| §2 Feature Definition & Backlog | `define-features` | PRD 확정 | `identify-actors`, `map-actor-use-cases`, `map-use-case-to-system-boundary`, `compose-feature-from-use-cases`, `define-feature-spec`, `score-feature-priority`, `map-feature-dependencies`, `split-work-into-features`, `query-feature-registry`, `triage-work-items` | — |
-| §3 Technical Design | `design-system` | Feature backlog 확정 | `review-architecture`, `review-engineering`, `design-artifact-storage`, `design-billing-system`, `design-claude-hooks`, `design-deploy-strategy`, `design-embedding-search`, `design-mcp-server`, `consult-codex`, `consult-design-system`, `verify-best-alternative` | `autoplan`(review) |
-| §4 Implementation Plan | `plan-build` | Technical design 확정 | — | `autoplan`(review) |
-| §5 Development | `build-feature` | Implementation plan 확정 | `build-with-tdd`, `iterate-fix-verify`, `freeze-edit-scope`, `dispatch-parallel-agents`, `diagnose-bug`, `consult-codex` | — |
-| §6 Quality | `verify-quality` | Code complete | `classify-qa-tiers`, `run-browser-qa`, `monitor-regressions`, `audit-security`, `audit-live-devex`, `measure-code-health`, `classify-review-risks`, `review-ai-safety-liability`, `review-privacy-data-risk`, `review-license-and-ip-risk`, `review-terms-policy-readiness` | — |
-| §7 Release & Beta | `ship-release` | Quality gate pass | `setup-quality-gates`, `auto-create-pr`, `automate-release-tagging`, `sync-release-docs`, `write-changelog`, `guard-destructive-commands`, `compose-safety-mode` | — |
-| §8 Operate & Iterate | `iterate-product` | Production traffic | `design-ab-experiment`, `analyze-ab-experiment`, `analyze-user-funnel`, `generate-improvement-tasks`, `handle-incident`, `conduct-postmortem`, `monitor-regressions`, `summarize-retro` | — |
-| §9 Lifecycle Management | `manage-lifecycle` | Feature/product 노후화 | — | — |
+| §1 Discovery / Inception (Mode A) | `concretize-idea` | idea/concept만 존재 (greenfield) | `validate-idea`, `validate-advanced-edge-idea`, `assess-business-viability`, `review-pricing-and-gtm`, `define-product-spec` | `apply-builder-ethos`, `autoplan`(review) |
+| §1 Impact Analysis (Mode B) | `assess-product-change` | 기존 프로덕트에 변경 필요 | — (scope 평가 후 §2/§3/§5로 routing) | — |
+| §2 Requirements Specification | `define-features` | PRD 확정 | `identify-actors`, `map-actor-use-cases`, `map-use-case-to-system-boundary`, `compose-feature-from-use-cases`, `define-feature-spec`, `score-feature-priority`, `map-feature-dependencies`, `split-work-into-features`, `query-feature-registry`, `triage-work-items` | — |
+| §3 Software Design | `design-system` | Feature backlog 확정 | `review-architecture`, `review-engineering`, `design-artifact-storage`, `design-billing-system`, `design-claude-hooks`, `design-deploy-strategy`, `design-embedding-search`, `design-mcp-server`, `consult-codex`, `consult-design-system`, `verify-best-alternative` | `autoplan`(review) |
+| §4 Iteration Planning | `plan-build` | Technical design 확정 | — | `autoplan`(review) |
+| §5 Construction | `build-feature` | Implementation plan 확정 | `build-with-tdd`, `iterate-fix-verify`, `freeze-edit-scope`, `dispatch-parallel-agents`, `diagnose-bug`, `consult-codex` | — |
+| §6 Verification & Validation | `verify-quality` | Code complete | `classify-qa-tiers`, `run-browser-qa`, `monitor-regressions`, `audit-security`, `audit-live-devex`, `measure-code-health`, `classify-review-risks`, `review-ai-safety-liability`, `review-privacy-data-risk`, `review-license-and-ip-risk`, `review-terms-policy-readiness` | — |
+| §7 Release & Deployment | `ship-release` | Quality gate pass | `setup-quality-gates`, `auto-create-pr`, `automate-release-tagging`, `sync-release-docs`, `write-changelog`, `guard-destructive-commands`, `compose-safety-mode` | — |
+| §8 Operation & Maintenance | `iterate-product` | Production traffic | `design-ab-experiment`, `analyze-ab-experiment`, `analyze-user-funnel`, `generate-improvement-tasks`, `handle-incident`, `conduct-postmortem`, `monitor-regressions`, `summarize-retro` | — |
+| §9 Retirement / Decommissioning | `manage-lifecycle` | Feature/product 노후화 | — | — |
 
 ---
 
@@ -124,7 +124,7 @@
 > 패턴 라이브러리와 보관 스킬은 manifest 에 노출하지 않는다.
 
 > **9-phase 라이프사이클 단계 약칭** (이하 표에서 사용 — `docs/se-lifecycle-naming.md` SSoT):
-> 1) 문제·기회 검증 / 2) 기능 정의 / 3) 기술 설계 / 4) 구현 계획 / 5) 개발 / 6) 품질 검증 / 7) 출시 / 8) 운영·개선 / 9) 수명주기 관리.
+> 1) 문제·기회 검증 / 2) 기능 정의 / 3) 기술 설계 / 4) 구현 계획 / 5) 개발 / 6) 검증·확인 / 7) 출시 / 8) 운영·개선 / 9) 폐기·종료.
 
 ### 5.1 상태 확인 (1)
 
@@ -143,10 +143,10 @@
 | `/buddy:design-system` | 3. 기술 설계 | 기술 스택 / API 계약 / infra / 데이터 모델 |
 | `/buddy:plan-build` | 4. 구현 계획 | actor 별 task 분해 + 의존성 그래프 |
 | `/buddy:build-feature` | 5. 개발 | TDD 루프 + 병렬 worker agent |
-| `/buddy:verify-quality` | 6. 품질 검증 | 테스트 + 보안 + 컴플라이언스 |
+| `/buddy:verify-quality` | 6. 검증·확인 | 테스트 + 보안 + 컴플라이언스 |
 | `/buddy:ship-release` | 7. 출시 | PR + 태깅 + canary + UAT |
 | `/buddy:iterate-product` | 8. 운영·개선 | A/B 분석 + 인시던트 + funnel |
-| `/buddy:manage-lifecycle` | 9. 수명주기 관리 | deprecation + 마이그레이션 + EOL |
+| `/buddy:manage-lifecycle` | 9. 폐기·종료 | deprecation + 마이그레이션 + EOL |
 
 ### 5.3 다각도 리뷰 (1)
 
@@ -182,8 +182,8 @@
 | `/buddy:build-with-tdd` | 5. 개발 | TDD 루프 단독 실행 |
 | `/buddy:diagnose-bug` | 5. 개발 | 버그 재현 → 원인 → fix |
 | `/buddy:dispatch-parallel-agents` | 5. 개발 | worktree 격리 + worker 분배 |
-| `/buddy:audit-security` | 6. 품질 검증 | OWASP / secrets / JWT 점검 |
-| `/buddy:measure-code-health` | 6. 품질 검증 | 0-10 가중 점수 대시보드 |
+| `/buddy:audit-security` | 6. 검증·확인 | OWASP / secrets / JWT 점검 |
+| `/buddy:measure-code-health` | 6. 검증·확인 | 0-10 가중 점수 대시보드 |
 | `/buddy:auto-create-pr` | 7. 출시 | PR 자동 생성 |
 | `/buddy:setup-quality-gates` | 7. 출시 | pre-commit / pre-push 게이트 설치 |
 | `/buddy:summarize-retro` | 8. 운영·개선 | git history → 주간 회고 |

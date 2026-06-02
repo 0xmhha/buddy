@@ -1,8 +1,10 @@
 # SE Lifecycle Naming — buddy 명사 표준
 
-> **목적**: buddy 9-phase 라이프사이클의 각 단계에 대해 **(a) 내부 작업 약어** + **(b) 한국어 일반 명사** + **(c) 영문 일반 명사** 3가지 표현을 표준화한다. 모든 buddy 문서·출력은 본 SSoT를 따른다.
+> **목적**: buddy 라이프사이클을 **artifact 의존성 그래프(DAG)** 로 정의하고, 각 노드(단계)에 대해 **(a) 내부 작업 약어** + **(b) 한국어 일반 명사** + **(c) 영문 표준 용어(SE/Agile)** + **(d) Input(DoR)/Output(DoD) 계약**을 표준화한다. 모든 buddy 문서·출력은 본 SSoT를 따른다.
 >
-> **배경**: 기존 문서들이 같은 phase를 미세하게 다른 명사로 부르고 있어 일관성 결여. "Phase 1", "CE1-CE5" 같은 약어를 외부 출력에 그대로 노출하면 사용자 이해가 어려워지고 불필요한 확인 토큰이 소비됨.
+> **핵심 원리**: 라이프사이클은 *시간순 단계*가 아니라 *산출물 의존성 그래프*다. "Phase 1~9" 번호는 그래프를 사람이 읽기 쉽게 묶은 **클러스터 라벨**이며 강제 실행 순서가 아니다. 각 노드는 **자신이 생산하는 산출물(output)로 명명**하므로 단어만 보고 산출물이 유추되고, input은 그래프의 직전 노드(엣지)에서 읽힌다. 진입·완료 계약은 Agile의 **Definition of Ready(DoR = input gate)** / **Definition of Done(DoD = output gate)** 로 표기한다.
+>
+> **배경**: 기존 문서들이 같은 노드를 미세하게 다른 명사로 부르고, 선형 SDLC 어휘(Phase 1→9)로 순환·다진입 구조를 설명해 일관성·정합성이 결여됨. 표준 SE/Agile 용어로 통일하여 단어 자체가 input/output을 함의하게 한다. "Phase 1", "CE1-CE5" 같은 약어를 외부 출력에 그대로 노출하면 사용자 이해가 어려워지고 불필요한 확인 토큰이 소비됨.
 >
 > **사용 시점**:
 > - 모든 사용자 대면 문서·답변·출력 작성 시
@@ -12,46 +14,80 @@
 
 ---
 
-## §1. 9-Phase 라이프사이클 명사 매핑
+## §1. 라이프사이클 DAG — 노드 명사 매핑
 
-각 단계는 다음 3가지 표현을 가진다.
+라이프사이클은 **노드(산출물을 생산하는 단계) + 엣지("왼쪽 노드의 Output = 오른쪽 노드의 Input")** 로 구성된 의존성 그래프다. 각 노드는 4가지 표현을 가진다: 내부 약어 · 한국어 명사 · 영문 표준 용어 · Input(DoR)/Output(DoD) 계약. **노드는 자신이 생산하는 산출물(output)로 명명**하므로 단어만 보고 산출물이 유추되고, input은 그래프의 직전 노드에서 읽힌다.
 
-| # | 내부 약어 (작업·식별) | 한국어 일반 명사 (사용자 대면) | 영문 일반 명사 (공식 문서) |
-|---|---------------------|--------------------------|------------------------|
-| 1 | Phase 1 | **문제·기회 검증 단계** | Problem/Opportunity Validation |
-| 2 | Phase 2 | **기능 정의 단계** | Feature Definition |
-| 3 | Phase 3 | **기술 설계 단계** | Technical Design |
-| 4 | Phase 4 | **구현 계획 단계** | Implementation Planning |
-| 5 | Phase 5 | **개발 단계** | Development |
-| 6 | Phase 6 | **품질 검증 단계** | Verification & Quality |
-| 7 | Phase 7 | **출시 단계** | Release |
-| 8 | Phase 8 | **운영·개선 단계** | Operations & Iteration |
-| 9 | Phase 9 | **수명주기 관리 단계** | Lifecycle Management |
+| 내부 약어 | 한국어 명사 (사용자 대면) | 영문 표준 용어 (SE/Agile) | Input — DoR | Output — DoD (이름에 박힌 산출물) | 표준 출처 |
+|---|---|---|---|---|---|
+| Phase 1 · Mode A | **문제·기회 검증 단계** | Discovery / Inception | idea·hypothesis | 검증된 PRD + HLD | Lean·Agile / RUP |
+| Phase 1 · Mode B | **변경 영향 분석 단계** | Impact Analysis | change request + 기존 codebase | Impact Assessment + Scope 분류 | ISO/IEC 14764 |
+| Phase 2 | **기능 정의 단계** | Requirements Specification | PRD / validated work item | SRS = feature backlog + actor·UC map | SWEBOK · IEEE 830/29148 |
+| Phase 3 | **기술 설계 단계** | Software Design | requirements spec (SRS) | SDD = ADR·API contract·data model | SWEBOK · IEEE 1016 |
+| Phase 4 | **구현 계획 단계** | Iteration Planning (WBS) | design (SDD) + specs | Iteration Plan = task DAG·actor-track | Scrum · PMBOK |
+| Phase 5 | **개발 단계** | Construction (Implementation) | iteration plan | working code + developer tests | SWEBOK (Software Construction) |
+| Phase 6 | **검증·확인 단계** | Verification & Validation (V&V) | code + developer tests | V&V evidence = QA·security·compliance | IEEE 1012 |
+| Phase 7 | **출시·배포 단계** | Release & Deployment | V&V passed code | release package + deployed artifact | DevOps · ITIL |
+| Phase 8 | **운영·개선 단계** | Operation & Maintenance | deployed artifact + production traffic | ops metrics + improvement backlog | ISO 12207 · 14764 |
+| Phase 9 | **폐기·종료 단계** | Retirement / Decommissioning | usage data + business decision | deprecation·migration·EOL plan | ISO/IEC/IEEE 12207 (Disposal) |
 
-### §1.1 각 phase별 1줄 설명
+> **번호 = 클러스터 라벨, 순서 아님**: "Phase 1~9"는 그래프를 사람이 읽기 쉽게 묶은 라벨이며 강제 실행 순서가 아니다. 실제 진입점은 "지금 존재하는 artifact의 frontier"로 결정된다(§1.1).
+>
+> **2개 정합 교정**: (a) Phase 6 `Verification & Quality` → **V&V** — 빠져 있던 *Validation*("올바른 제품인가") 복원. (b) Phase 9 `Lifecycle Management`(상위 lifecycle 개념과 충돌하던 오기) → **Retirement / Decommissioning**(ISO 12207 Disposal). 추가로 Phase 1 Mode B를 ISO 14764 정식 유지보수 용어 **Impact Analysis**로 명명.
 
-| 단계 | 핵심 활동 | 대표 산출물 |
-|------|---------|---------|
-| 문제·기회 검증 단계 | 아이디어 검증 + 사업성 평가 + PRD/HLD 작성 (신규) 또는 변경 영향 평가 + scope 분류 (기존 제품) | PRD, HLD, 영향 평가 리포트 |
-| 기능 정의 단계 | actor·use case·system boundary 분해 → feature 합성 → backlog | Feature backlog (priority + estimate) |
-| 기술 설계 단계 | tech stack ADR + infra + API contract + data model + 설계 검토 | ADR, API spec, data model, design docs |
-| 구현 계획 단계 | actor별 task 분해 + 의존성 DAG + 병렬 실행 계획 | Task DAG, parallel execution plan |
-| 개발 단계 | TDD 루프 + 병렬 worker agent + 코드 + 자체 테스트 작성 | Working code + developer-authored tests |
-| 품질 검증 단계 | 상용 quality bar 검증 (coverage / security / a11y / compliance / code health) | QA report, security audit, compliance sign-off |
-| 출시 단계 | 패키징 + 태깅 + 배포 + canary + UAT + launch readiness | Tagged release, deployed artifact, launch checklist pass |
-| 운영·개선 단계 | A/B 실험 + funnel 분석 + 인시던트 대응 + improvement backlog | Experiment results, postmortem, improvement tasks |
-| 수명주기 관리 단계 | feature/product deprecation + 마이그레이션 + EOL | Deprecation plan, migration plan, EOL documentation |
+### §1.1 DAG 구조 (엣지 = DoD→DoR 계약)
+
+```
+trigger: idea | change request | incident | metric signal
+   │  (어떤 source + 어떤 artifact가 이미 존재하나 → 진입 노드 결정)
+   ▼
+Discovery ─(PRD)─► Requirements Spec ─(SRS)─► Software Design ─(SDD)─► Iteration Planning
+   ─(task DAG)─► Construction ─(code+tests)─► V&V ─(evidence)─► Release & Deployment
+   ─(deployed)─► Operation & Maintenance ─(improvement = 새 source)─► [Requirements Spec로 역류]
+                                          └─(EOL 결정)─► Retirement
+
+· ─(…)─ = "왼쪽 노드의 DoD = 오른쪽 노드의 DoR"
+· 진입 = 현재 존재하는 artifact의 frontier (status 스킬이 자동 탐지)
+    아무것도 없음        → Discovery부터 (전체 빌드)
+    코드만 + 작은 변경   → Construction부터 (Mode B small)
+    SRS 있음             → Software Design부터 (Mode B medium)
+    production + metrics → Operation부터, 결과가 Requirements Spec로 역류
+· prerequisite(DoR) 미충족 → 그 input을 생산하는 upstream 노드로 자동 선행 (구 "backtrack")
+· 사이클 = trigger가 새 source를 주입하면 downstream만 증분 재평가 (Make/Bazel stale-rebuild 의미론)
+```
+
+### §1.2 각 노드 핵심 활동
+
+| 노드 | 핵심 활동 |
+|------|---------|
+| 문제·기회 검증 (Discovery) | 아이디어 검증 + 사업성 평가 + PRD/HLD 작성 |
+| 변경 영향 분석 (Impact Analysis) | 변경 영향 평가 + scope 분류 + routing (기존 제품) |
+| 기능 정의 (Requirements Spec) | actor·use case·system boundary 분해 → feature 합성 → backlog |
+| 기술 설계 (Software Design) | tech stack ADR + infra + API contract + data model + 설계 검토 |
+| 구현 계획 (Iteration Planning) | actor별 task 분해 + 의존성 DAG + 병렬 실행 계획 |
+| 개발 (Construction) | TDD 루프 + 병렬 worker agent + 코드 + 자체 테스트 작성 |
+| 검증·확인 (V&V) | 상용 quality bar 검증 (coverage / security / a11y / compliance / code health) |
+| 출시·배포 (Release & Deployment) | 패키징 + 태깅 + 배포 + canary + UAT + launch readiness |
+| 운영·개선 (Operation & Maintenance) | A/B 실험 + funnel 분석 + 인시던트 대응 + improvement backlog |
+| 폐기·종료 (Retirement) | feature/product deprecation + 마이그레이션 + EOL |
+
+### §1.3 고도(altitude) — 같은 그래프, 다른 재평가 빈도
+
+| 고도 | 노드 | 재평가 빈도 |
+|------|------|------------|
+| 제품 수명 (macro) | Discovery, Retirement | 드물게 — 제품 1회 탄생 / 폐기 |
+| 반복 (micro) | Requirements Spec ~ Operation & Maintenance | 매 iteration · trigger마다 |
 
 ---
 
 ## §2. Phase 1 내부 — Mode A / Mode B
 
-문제·기회 검증 단계는 프로덕트 존재 여부에 따라 2가지 모드로 동작.
+문제·기회 검증 단계는 프로덕트 존재 여부에 따라 2가지 모드로 동작 (그래프 진입 노드가 갈림).
 
-| 내부 약어 | 한국어 일반 명사 (사용자 대면) | 영문 일반 명사 |
+| 내부 약어 | 한국어 일반 명사 (사용자 대면) | 영문 표준 용어 |
 |---------|--------------------------|-------------|
-| Mode A | **신규 제품 기획 모드** | Greenfield (New Product) |
-| Mode B | **기존 제품 변경 모드** | Existing Product (Change Assessment) |
+| Mode A | **신규 제품 기획 모드** | Discovery / Inception (Greenfield) |
+| Mode B | **기존 제품 변경 모드** | Impact Analysis (Change Assessment) |
 
 - **신규 제품 기획 모드** (Mode A): 코드베이스가 없는 상태에서 아이디어로부터 시작 → PRD + HLD + 사업성 검증
 - **기존 제품 변경 모드** (Mode B): 기존 코드베이스가 있는 상태에서 변경 요청 접수 → 영향 평가 + scope 분류 → 다음 단계로 라우팅

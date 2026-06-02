@@ -48,7 +48,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `autoplan` | `/buddy:autoplan` | 기존 plan/PRD/ADR/task plan을 4-mode review (review-scope/engineering/design/devex 순차) |
 | `finish-development-branch` | `/buddy:finish-development-branch` | §5 build-feature 후 PR 생성까지의 5-stage sub-orchestrator (pre-flight sync + quality-gate + changelog + docs-sync + PR + mergeable verify). git 안전 정책 (force 금지 / safe merge only / STOP 우선) 적용. Iron Law mergeable=CLEAN 검증. |
 
-### §1 Stage Skills — Problem/Opportunity Validation
+### §1 Stage Skills — Discovery / Impact Analysis
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -66,7 +66,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `define-product-spec` | command + dispatch | 아이디어 검증과 사업성 검증 결과를 공식 PRD(Product Requirements Document)로 고정. write-spec 역할 — actors + use cases(logical) 포함 |
 | `write-hld` | command + dispatch | PRD 완료 후 High Level Design 작성 — product decomposition + tech stack + inter-product communication + use case→product mapping. autoplan(validate-spec)의 review-design / review-devex / review-engineering 검증 대상 생산 |
 
-### §2 Stage Skills — Feature Definition
+### §2 Stage Skills — Requirements Specification
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -82,7 +82,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `query-feature-registry` | dispatch | PRD 또는 feature candidate를 받아 feature-management-saas-mcp registry에서 유사 feature 검색해 reuse / adapt / inspire |
 | `triage-work-items` | dispatch | 이슈/feature/task 같은 work item의 우선순위 결정과 lifecycle state machine 운영 |
 
-### §3 Stage Skills — Technical Design (cascade bridges)
+### §3 Stage Skills — Software Design (cascade bridges)
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -101,7 +101,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `prototype-from-spec` | command + dispatch | low-fi (wireframe) → state diagram (5+ state) → high-fi (system 정합) → user testing 5명 → dev handoff |
 | `design-interaction-pattern` | command + dispatch | gesture / motion (200~300ms ease-out) / feedback (100ms 안) / state transition + mobile gesture vocabulary + prefers-reduced-motion |
 
-### §3 Stage Skills — Technical Design
+### §3 Stage Skills — Software Design
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -125,7 +125,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `verify-best-alternative` | command + dispatch | [AI 편향 방지 — 엔지니어링 한정] 아키텍처·데이터모델·알고리즘·API·인증·스택·코드네이밍·prompt 등 *엔지니어링 결정*의 첫 답 commit 직전 강제 다관점 검토 (orthogonal N개 대안 발산 + rubric 비교). §3 design-* 스킬들에서 sub-step 의무 호출. **scope: 엔지니어링만 — 그래픽 디자인·브랜드·마케팅·사업기획은 별도 스킬(미래)** |
 | `critique-plan` | dispatch | Implementation plan에 대한 strategic critique (CEO/founder 페르소나) |
 
-### §4 Stage Skills — Implementation Planning
+### §4 Stage Skills — Iteration Planning
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -137,7 +137,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `estimate-build-timeline` | command + dispatch | critical path 기반 calendar timeline + CI (best/expected/p90/worst) + risk buffer + holiday 반영 |
 | `publish-to-tracker` | command + dispatch | 내부 §2 feature spec / §4 task plan → 외부 issue tracker (GitHub/Linear/Jira) 발행. 모드 `prd` (PRD 1건) / `issues` (tracer-bullet vertical slice N건, HITL·AFK 라벨, ready-for-agent surface, blocked-by 의존성 순서). dispatch-parallel-agents 의 grabbable surface 생성. mattpocock to-prd/to-issues adopt-with-edits. |
 
-### §5 Stage Skills — Development
+### §5 Stage Skills — Construction
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -152,7 +152,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `refactor-with-rename-trace` | command + dispatch | LSP rename + 호출 그래프 cross-check + grep 누락 검증 + test baseline. pure rename = 단일 commit |
 | `update-docs-with-code` | command + dispatch | 코드 변경 → README / ADR / CHANGELOG / HANDOFF / skill-catalog 5 영역 동기화 매트릭스 + automation hook |
 
-### §6 Stage Skills — Verification & Quality
+### §6 Stage Skills — Verification & Validation
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -176,7 +176,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `review-license-and-ip-risk` | dispatch | 의존성/asset/AI 생성 코드의 라이선스 호환성, IP 출처, 상업 사용 가능성 검토 + risk register & remediation |
 | `review-terms-policy-readiness` | dispatch | 상용 출시 전 ToS / Privacy Policy / AUP / Refund Policy / Cookie Policy / DPA 준비도 검토 |
 
-### §7 Stage Skills — Release
+### §7 Stage Skills — Release & Deployment
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -195,7 +195,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `prepare-launch-checklist` | command + dispatch | launch readiness 17+ 항목 gate (engineering/security/ops/product/legal/cost) — GA 직전 cross-functional final check |
 | `setup-incident-paging` | command + dispatch | on-call rotation + escalation policy + alert wiring + runbook 인덱스 — production incident first response 구조 |
 
-### §8 Stage Skills — Operations & Iteration
+### §8 Stage Skills — Operation & Maintenance
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
@@ -221,7 +221,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 | `audit-seo-aso` | command + dispatch | SEO 5 영역 + ASO 6 영역 + keyword research 4 차원 + content gap + drift monitoring (E-E-A-T) |
 | `automate-marketing-content` | command + dispatch | email sequence + cold email cadence + content calendar + automation 5 도구 + 6 metric + CAN-SPAM/GDPR/KISA |
 
-### §9 Stage Skills — Lifecycle Management
+### §9 Stage Skills — Retirement / Decommissioning
 
 | Skill name | Trigger | When to use (1줄) |
 |------------|---------|------------------|
