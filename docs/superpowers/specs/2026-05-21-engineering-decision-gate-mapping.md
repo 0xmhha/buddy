@@ -2,7 +2,7 @@
 
 **Status**: Accepted (2026-05-21)
 **Authors**: mhha (plugin track)
-**Related**: ADR-018 (verify-best-alternative rename + forced gate + decompose-blocker), SKILLS_ANALYSIS § A
+**Related**: ADR-018 (verify-best-alternative rename + forced gate + decompose-blocker), `docs/archive/2026-05-20-external-skills-analysis.md` § A
 **Purpose**: buddy 9-phase lifecycle 전반에서 `verify-best-alternative` 가 *언제·어디서·어떻게* 호출되어야 하는지의 단일 SSoT. ADR-018 §2 forced gate의 *실효성 확보*를 위해 결정 Step 본문에 추가될 instruction의 근거가 됨.
 
 ---
@@ -229,5 +229,5 @@ build-with-tdd / refactor-with-rename-trace / iterate-fix-verify 등은 *결정 
 - ADR-018 — verify-best-alternative rename + forced gate 정책
 - `plugin/skills/verify-best-alternative/PROCEDURE.md` — 본 스킬 본문 (엔지니어링 한정)
 - `plugin/skills/router/references/skill-catalog.md` — 결정성 스킬 카탈로그
-- SKILLS_ANALYSIS.md § A — 잔여 정리 사항 (외부 분석 문서)
+- `docs/archive/2026-05-20-external-skills-analysis.md` § A — 잔여 정리 사항 (외부 분석 문서, 2026-06-02 archive 이동)
 - ADR-003 — 외부 자산 attribution 정책 (관련 없음, 참조만)

@@ -7,7 +7,7 @@
 
 ## Context
 
-`SKILLS_ANALYSIS § A` (cross-skill engineering process audit, 2026-05-20) surfaced three independent gaps in the plugin track that were rejecting reviewers:
+`docs/archive/2026-05-20-external-skills-analysis.md § A` (cross-skill engineering process audit, 2026-05-20; archived 2026-06-02) surfaced three independent gaps in the plugin track that were rejecting reviewers:
 
 1. **`explore-design-variants` was being misread as design-only.** The maintainer themselves needed to dig into the body to remember the skill's actual purpose — preventing AI commit-to-first-answer bias on engineering decisions, applicable to architecture, naming, algorithm, API shape, data model, etc. A model reviewing the catalog made the same mistake. The title, catalog description, and persona paragraph all under-represented the intent.
 2. **The bias-prevention machinery was dormant by default.** `explore-design-variants` had to be invoked manually. Whenever a user or AI made a `design-*` decision without thinking to call it, the bias guard did nothing. The most valuable property of the skill (catching first-answer bias in routine decisions) was paywalled behind user awareness.
@@ -114,7 +114,7 @@ NOTICE updated with an `inspired-by` attribution per ADR-003 §2.4 acknowledging
 
 ## References
 
-- `SKILLS_ANALYSIS.md § A` (cross-skill engineering process audit, `/Users/wm-it-22-00661/Work/github/study/ai/skill/`) — original gap identification (not in this repo)
+- `docs/archive/2026-05-20-external-skills-analysis.md § A` (cross-skill engineering process audit, originally at `/Users/wm-it-22-00661/Work/github/study/ai/skill/`, moved into the buddy repo 2026-05-23, archived 2026-06-02) — original gap identification
 - `plugin/skills/verify-best-alternative/PROCEDURE.md` — renamed body
 - `plugin/skills/decompose-blocker/PROCEDURE.md` — new skill body
 - `plugin/skills/write-a-skill/PROCEDURE.md` — `decompose-blocker` was authored through this skill

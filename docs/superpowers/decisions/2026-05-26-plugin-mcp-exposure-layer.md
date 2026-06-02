@@ -3,7 +3,7 @@
 **Status**: Accepted (2026-05-26)
 **Authors**: mhha (plugin track)
 **Supersedes**: —
-**Related**: ADR-003 (external attribution policy), ADR-006 (PROCEDURE form — new artifacts must conform), ADR-010 (v1.0 whole-product scope — this closes one of the four-asset charter gaps), [charter §2.4](../../two-tracks-charter.md) (plugin buddy four-asset promise), [`plugin-skills-engineering-flow.md`](../../plugin-skills-engineering-flow.md) §4 (C1 — Very High priority hole)
+**Related**: ADR-003 (external attribution policy), ADR-006 (PROCEDURE form — new artifacts must conform), ADR-010 (v1.0 whole-product scope — this closes one of the four-asset charter gaps), [charter §2.4](../../two-tracks-charter.md) (plugin buddy four-asset promise), [`docs/archive/2026-05-25-plugin-skills-engineering-flow.md`](../../archive/2026-05-25-plugin-skills-engineering-flow.md) §4 (C1 — Very High priority hole; archived 2026-06-02)
 **Tags**: mcp-exposure, plugin-track, charter-asset-promise, distribution-model, hybrid-fallback, claude-plugin-spec, four-asset-completion
 
 ---
@@ -104,7 +104,7 @@ The four-asset charter promise is meaningful precisely because it implies "no ex
 
 ### Positive
 
-- Closes the H1/C1 hole identified in [`plugin-skills-engineering-flow.md`](../../plugin-skills-engineering-flow.md) §4 and lifts the four-asset charter promise from 25% (skill only) to 50% (skill + MCP).
+- Closes the H1/C1 hole identified in [`docs/archive/2026-05-25-plugin-skills-engineering-flow.md`](../../archive/2026-05-25-plugin-skills-engineering-flow.md) §4 and lifts the four-asset charter promise from 25% (skill only) to 50% (skill + MCP).
 - Dogfood users keep the property they have today: the locally built `buddy` binary serves their MCP requests, so changes to `cmd/buddy-mcp` are observable immediately without a plugin rebuild.
 - New users get working MCP tools out of the box on macOS and Linux, on both arm64 and amd64.
 - The launcher contract is small enough to audit on sight (twenty lines of POSIX shell), which keeps the trust surface narrow.
@@ -153,8 +153,8 @@ A revisit produces either a new ADR (in supersede chain) or a new entry in this 
 ## 7. References
 
 - [`docs/two-tracks-charter.md`](../../two-tracks-charter.md) §2.4 — four-asset promise (skill / MCP / agent / hook)
-- [`docs/plugin-skills-engineering-flow.md`](../../plugin-skills-engineering-flow.md) §4 — C1 Very High priority entry, this ADR closes it
-- [`docs/plugin-skills-inventory.md`](../../plugin-skills-inventory.md) §1 — four-asset table (currently shows MCP / agent / hook / rules all empty)
+- [`docs/archive/2026-05-25-plugin-skills-engineering-flow.md`](../../archive/2026-05-25-plugin-skills-engineering-flow.md) §4 — C1 Very High priority entry, this ADR closes it (archived 2026-06-02)
+- [`docs/archive/2026-05-25-plugin-skills-inventory.md`](../../archive/2026-05-25-plugin-skills-inventory.md) §1 — four-asset table snapshot at the time of this ADR (showed MCP / agent / hook / rules all empty; archived 2026-06-02)
 - [`cmd/buddy-mcp/main.go`](../../../cmd/buddy-mcp/main.go) — existing stdio MCP server
 - [`cmd/buddy/mcp_cmd.go`](../../../cmd/buddy/mcp_cmd.go) — current manual `buddy mcp add/remove` subcommand (kept for non-plugin users)
 - [`internal/mcp/`](../../../internal/mcp/) — nine tool surfaces (~25 tools)

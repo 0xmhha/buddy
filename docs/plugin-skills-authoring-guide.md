@@ -1409,7 +1409,7 @@ result:
 - `plugin/skills/router/references/skill-catalog.md` — 전체 skill 카탈로그
 - `plugin/skills/router/references/routing-rules.md` — 라우팅 충돌 결정
 - `docs/plugin-skills-classification-matrix.md` — 152 skill 분류
-- `docs/plugin-skills-flow-graph.md` — I/O Contract 전이 그래프
+- `docs/archive/2026-05-27-plugin-skills-flow-graph.md` — I/O Contract 전이 그래프 (2026-05-27 snapshot, archived 2026-06-02; ADR-020 마이그레이션 완료 후 재생성 예정)
 
 ### 7.3 참고 buddy skill (페르소나 적용 모범 사례)
 

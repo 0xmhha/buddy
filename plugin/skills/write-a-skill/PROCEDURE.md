@@ -57,7 +57,7 @@
 - 1회용 task 또는 throwaway prototype 절차
 - archive(`plugin/_archive/`) 항목 부활 — archive 사유 ADR 먼저 재검토
 - 외부 스킬을 verbatim 복사 — 차용 4분류 정책 위반 (정책상 금지)
-- description 1줄을 못 쓰겠는 모호한 영역 — 스킬 범위가 안 잡힌 것, 먼저 `critique-plan`으로 회귀 (또는 사용자와 자유 형식 Q&A. *별도 `brainstorm` 스킬은 SKILLS_ANALYSIS § A 미래 갭으로 식별됨 — 현재 미존재*)
+- description 1줄을 못 쓰겠는 모호한 영역 — 스킬 범위가 안 잡힌 것, 먼저 `critique-plan`으로 회귀 (또는 사용자와 자유 형식 Q&A. *별도 `brainstorm` 스킬은 현재 미존재 — 자유 형식 Q&A로 대체*)
 
 ## 3. 입력
 
@@ -354,7 +354,7 @@ next_steps:
 
 ### 앞 단계 (선행 스킬)
 
-- `critique-plan` — 스킬 범위가 모호할 때 / 큰 스킬(>300줄 예상) 또는 새 lifecycle stage 추가 시 *plan critique* 먼저. (별도 `brainstorm` 스킬은 SKILLS_ANALYSIS § A에서 미래 갭으로 식별 — 현재 미존재, 자유 형식 Q&A로 대체)
+- `critique-plan` — 스킬 범위가 모호할 때 / 큰 스킬(>300줄 예상) 또는 새 lifecycle stage 추가 시 *plan critique* 먼저. (별도 `brainstorm` 스킬은 현재 미존재 — 자유 형식 Q&A로 대체)
 - `consult-codex` — 외부 자산 흡수 결정의 *second opinion* 필요 시.
 - `write-adr` — discipline-enforcing 스킬 신설 또는 4분류 attribution 결정이 큰 변경이면 ADR 먼저.
 

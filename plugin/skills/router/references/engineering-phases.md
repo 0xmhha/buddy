@@ -844,7 +844,7 @@ standalone 등급은 PROCEDURE.md에 별도 기재하지 않는다 — Input Req
 - 개별 스킬의 실제 Input/Output Contract 내용 → 각 PROCEDURE.md에 기재
 - 스킬 간 라우팅 충돌 결정 → [`routing-rules.md`](./routing-rules.md)
 - 스킬 목록 및 description → [`skill-catalog.md`](./skill-catalog.md)
-- SE 이론 baseline 상세 → [`docs/plugin-skills-engineering-flow.md`](../../../../docs/plugin-skills-engineering-flow.md)
+- SE 이론 baseline 상세 → [`docs/archive/2026-05-25-plugin-skills-engineering-flow.md`](../../../../docs/archive/2026-05-25-plugin-skills-engineering-flow.md) (2026-05-25 snapshot, archived 2026-06-02)
 
 ### 변경 trigger
 
