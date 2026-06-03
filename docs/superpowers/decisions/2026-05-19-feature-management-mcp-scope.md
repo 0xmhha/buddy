@@ -79,7 +79,7 @@ Keep the cycle-handoff "deferred" status, no ADR.
 
 ## Consequences
 
-- **D-3 (cycle-handoff §4.5 row) is closed.** The deferred items row for `feature-management-mcp` should be removed from `docs/HANDOFF.md` / `docs/notes/2026-05-11-cycle-handoff.md` (HANDOFF was updated 2026-05-19 to drop this; cycle-handoff is a historical note, no edit needed).
+- **D-3 (cycle-handoff §4.5 row) is closed.** The deferred items row for `feature-management-mcp` should be removed from `docs/HANDOFF.md` / `docs/archive/2026-05-11-cycle-handoff.md` (HANDOFF was updated 2026-05-19 to drop this; cycle-handoff is a historical note, archived 2026-06-02, no edit needed).
 - The cli buddy `feature_*` MCP surface is frozen at v0.3.0 shape. Adding a new field to `feature.Feature` or a new MCP tool requires a future ADR amending this one.
 - The plugin's design-* skills' references to `feature-management-saas-mcp` are now formally OK to keep verbatim — they refer to the external SaaS reference, not to cli buddy itself.
 - Future docs that say "feature-management-mcp" alone should be edited to either "cli buddy feature registry" or "feature-management-saas-mcp" depending on intent.

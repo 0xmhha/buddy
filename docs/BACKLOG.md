@@ -106,7 +106,7 @@ ADR-010 framework 로 v1.0.0 = (B-1~B-4 + C-1~C-5) 9 조건. 현 ✅ **9/9 close
 
 | ID | 작업 | 상태 | 비용 |
 |----|------|------|------|
-| ~~W1-1~~ | ~~**B-2 production dogfood cycle-2 완주**~~ | ✅ Done — cycle-3 close 2026-05-21, 4/4 조건 충족 (C1 self-hosting anchor / C2 9 phase 흔적 / C3 Run 4 real spawn-to-finalise post-BA-12 fix / C4 0 % 실패율). cycle 안에 BA-12 (claude --print) within-cycle fix (commit `04ebeaa`). [`notes/2026-05-20-dogfood-result-cycle-3.md`](./notes/2026-05-20-dogfood-result-cycle-3.md) §E 참조. | — |
+| ~~W1-1~~ | ~~**B-2 production dogfood cycle-2 완주**~~ | ✅ Done — cycle-3 close 2026-05-21, 4/4 조건 충족 (C1 self-hosting anchor / C2 9 phase 흔적 / C3 Run 4 real spawn-to-finalise post-BA-12 fix / C4 0 % 실패율). cycle 안에 BA-12 (claude --print) within-cycle fix (commit `04ebeaa`). [`archive/2026-05-20-dogfood-result-cycle-3.md`](./archive/2026-05-20-dogfood-result-cycle-3.md) §E 참조. | — |
 | ~~W1-2~~ | ~~Cycle-2 finding triage~~ | ✅ Done — cycle-3 absorbed cycle-2 (cycle-2 superseded). BA-1 closed, BA-3/4/5 deferred earlier; BA-10/12 within-cycle close (cycle-3); BA-11/13 → Wave 4 신규. | — |
 | ~~W1-3~~ | ~~Cycle-2 close + 다음 cycle trigger~~ | ✅ Done — cycle-2 superseded by cycle-3, cycle-3 closed 2026-05-21. 다음 cycle trigger = BA-11/13 fix 후 follow-up dogfood OR v1.0.0 publish 후 production-traffic 누적 1주 OR cycle-4 signal. | — |
 
@@ -219,7 +219,7 @@ Wave 1 (B-2 dogfood, user-paced)  ║  Wave 7 (C-1~C-5, AI 단독, 병행 가능
 
 1. **본 refactor cycle 의 결과 review** — ADR-009 (vision) + ADR-010 (v1.0.0 scope) + ADR-011 (release policy) 사용자 confirm. 본 BACKLOG 의 진척률 40% 재산정도 함께.
 2. **병행 진행 권장**:
-   - **Wave 1 (B-2)**: 사용자 페이스 — [`docs/notes/2026-05-19-dogfood-result-cycle-2.md`](./notes/2026-05-19-dogfood-result-cycle-2.md) §B 3 paths. AI 가속 불가.
+   - **Wave 1 (B-2)**: 사용자 페이스 — [`docs/archive/2026-05-19-dogfood-result-cycle-2.md`](./archive/2026-05-19-dogfood-result-cycle-2.md) §B 3 paths. AI 가속 불가. (cycle-2 자체는 cycle-3로 superseded, archived 2026-06-02)
    - **Wave 7 (C-1~C-5)**: AI 단독 — W7-1 Session Monitor 부터 area-specific ADR 작성 → impl. Wave 1 의 user-paced 와 직교, 병행.
 3. **Wave 2/3 (polish) 는 Wave 1 finding 발견 시 우선** 진입. 아니면 Wave 7 안의 design cycle 사이 saturation 으로 보충.
 4. **ADR-011 적용**: 다음 release 부터 milestone-driven (e.g., v0.8.0 = W7-1 Session Monitor ship 시). v0.7.6 같은 doc-only patch 는 publish 안 함.
@@ -246,6 +246,6 @@ Wave 1 (B-2 dogfood, user-paced)  ║  Wave 7 (C-1~C-5, AI 단독, 병행 가능
 
 - [`docs/HANDOFF.md`](./HANDOFF.md) — 세션 인계 (v0.13.0 baseline, 2026-06-02 갱신)
 - [`docs/archive/cli-buddy-spec.md`](./archive/cli-buddy-spec.md) §9 phase table — W3 cascade 100%
-- [`docs/notes/2026-05-11-cycle-handoff.md`](./notes/2026-05-11-cycle-handoff.md) — 이전 cycle close baseline
-- [`docs/notes/2026-05-19-dogfood-result-cycle-2.md`](./notes/2026-05-19-dogfood-result-cycle-2.md) — 진행 중 cycle (Wave 1 의 실행 매뉴얼)
+- [`docs/archive/2026-05-11-cycle-handoff.md`](./archive/2026-05-11-cycle-handoff.md) — 이전 cycle close baseline (archived 2026-06-02)
+- [`docs/archive/2026-05-19-dogfood-result-cycle-2.md`](./archive/2026-05-19-dogfood-result-cycle-2.md) — cycle-2 (cycle-3로 superseded, archived 2026-06-02)
 - [`docs/superpowers/decisions/README.md`](./superpowers/decisions/README.md) — ADR Index (8건 모두 Accepted)

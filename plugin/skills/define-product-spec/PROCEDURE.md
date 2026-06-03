@@ -230,7 +230,10 @@ PRD를 vertical slice 가능한 feature 후보로 변환 (다음 스킬 입력).
 
 ## 9. 흡수된 책임 (D-B 통합 결정 — 2026-05-10)
 
-본 skill 은 [`docs/notes/2026-05-10-missing-skills-inventory.md`](../../../docs/notes/2026-05-10-missing-skills-inventory.md) §2.2 의 D-B 결정에 따라 다음 *external 추천 skill 의 책임* 을 흡수한다 (별도 skill 작성 X):
+본 skill 은 2026-05-10 D-B 통합 결정 (사용자 confirm lock-in; inventory note 는 commit `9ab21dd` 로 제거, 결정 자체는 유지)에 따라 다음 *external 추천 skill 의 책임* 을 흡수한다 (별도 skill 작성 X):
+
+- `define-product-context` (Matt skills `grill-with-docs` 기반, domain context / ADR 운영) — 본 skill 의 sub-section 으로 흡수
+- `write-prd` (Matt skills `to-prd` 기반, PRD 작성) — 동일 책임 cover 로 폐기
 
 ### 9.1 `define-product-context` 흡수 — domain context / ADR 기반 운영
 

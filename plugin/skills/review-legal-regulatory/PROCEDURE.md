@@ -180,8 +180,7 @@ AI 책임:
 
 ## 8. 참조
 
-- [`docs/two-tracks-charter.md`](../../../docs/two-tracks-charter.md) §2.4.2 — region-cross-cutting framework
-- [`docs/notes/2026-05-10-missing-skills-inventory.md`](../../../docs/notes/2026-05-10-missing-skills-inventory.md) §2.4.2
+- 2026-05-10 D-G 정정 lock-in: region-cross-cutting 3 layer framework — Layer 1 (region 결정 = `decide-target-market`) / Layer 2 (region-agnostic core, 본 skill) / Layer 3 (region-specific extension = Korea cluster 3건 deferred / USA·EU 0건). 원본 inventory note 는 commit `9ab21dd` 로 제거, 결정 자체는 유지.
 - 기존 buddy `review-privacy-data-risk` / `review-license-and-ip-risk` / `review-ai-safety-liability` (sub-skill)
 - (deferred) `consult-korea-legal-context` (Korea cluster, trigger 시 활성화)
 - 본 skill 은 *법률 자문 대체 X*. 항상 *전문가 검토 의뢰* 가 최종 step.

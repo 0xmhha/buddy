@@ -13,7 +13,7 @@
 | **plugin buddy** — Claude Code plugin (skill / MCP / agent / hook 카탈로그). 9-phase orchestrator, single-router dispatch | 4-Layer lazy-load 스킬 마이그레이션 (ADR-020, Phase 1부터 사용자 주도) + Korea cluster (Wave 5, trigger-bound) |
 | **cli buddy** — TUI 자동화 agent 관리 + AI-usage coaching (ADR-009/010) | **W4 follow-on (post-v1.0 polish)**: W4-1 branch-aware skill selection / W4-2 self-check fail semantics / W4-4 scheduler live indicator / W4-5 log-tail scrollback. W3-4 macOS notarization (Apple Dev ID trigger-bound). |
 
-**외부 SaaS 적용 검증 (dogfood) 종료 기록**: [`docs/notes/2026-05-20-dogfood-result-cycle-3.md`](./notes/2026-05-20-dogfood-result-cycle-3.md) — cycle-3 4/4 조건 충족으로 종료 (2026-05-21). 절차 가이드(`dogfood-guide.md`, `b2-dogfood-playbook.md`, `dogfood-feedback-template.md`)는 효력 종료로 2026-06-02 삭제 (git history 참조).
+**외부 SaaS 적용 검증 (dogfood) 종료 기록**: [`docs/archive/2026-05-20-dogfood-result-cycle-3.md`](./archive/2026-05-20-dogfood-result-cycle-3.md) — cycle-3 4/4 조건 충족으로 종료 (2026-05-21, archived 2026-06-02). 절차 가이드(`dogfood-guide.md`, `b2-dogfood-playbook.md`, `dogfood-feedback-template.md`)는 효력 종료로 2026-06-02 삭제 (git history 참조).
 
 ---
 
@@ -197,9 +197,9 @@ cat docs/BACKLOG.md       # 잔여 작업 SSoT
 | `docs/response-format-guide.md` | 응답 포맷 스타일 가이드 |
 | `docs/superpowers/specs/2026-05-06-lifecycle-orchestrator-architecture.md` | plugin 9-phase 아키텍처 현행 SSoT |
 | `docs/superpowers/decisions/` | ADR Index — 결정의 "왜" |
-| `docs/notes/2026-05-20-dogfood-result-cycle-3.md` | **현 active dogfood cycle** |
-| `docs/notes/` (older) | 이전 cycle handoffs (historical) |
-| `docs/archive/` | 완료된 spec / 결정 문서 (역사적 보존) |
+| `docs/archive/2026-05-20-dogfood-result-cycle-3.md` | 외부 SaaS 적용 검증 종료 기록 (cycle-3 close evidence, 2026-05-21) |
+| `docs/notes/` | 최신 세션 핸드오프 + audit findings (5/26 이후) |
+| `docs/archive/` | 완료된 spec / 결정 / 종료 cycle / 이전 핸드오프 (역사적 보존) |
 | `DOGFOOD.md` | 사용자가 본인 머신에 install할 때 안내 |
 
 ---

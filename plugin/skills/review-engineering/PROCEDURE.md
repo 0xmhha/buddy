@@ -407,7 +407,7 @@ plan이 "data는 A에서 C로 흐른다"고 handwave하면, 이렇게 말하라:
 
 ## 흡수된 책임 (D-B 통합 결정 — 2026-05-10)
 
-본 skill 은 [`docs/notes/2026-05-10-missing-skills-inventory.md`](../../../docs/notes/2026-05-10-missing-skills-inventory.md) §2.2 의 D-B 결정에 따라 `review-code-architecture` (Matt Pocock skills 의 `improve-codebase-architecture` 기반) 의 책임을 흡수한다.
+본 skill 은 2026-05-10 D-B 통합 결정 (사용자 confirm lock-in; inventory note 는 commit `9ab21dd` 로 제거, 결정 자체는 유지)에 따라 `review-code-architecture` (Matt Pocock skills 의 `improve-codebase-architecture` 기반) 의 책임을 흡수한다.
 
 ### 흡수 영역 — deep module / interface depth / locality / leverage
 

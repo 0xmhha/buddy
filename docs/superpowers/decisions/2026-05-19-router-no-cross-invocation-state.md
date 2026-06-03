@@ -11,7 +11,7 @@ The plugin v1.0.0 entry condition list (ADR-004 §2.2) includes:
 
 > **#4** — router smart-skip session state (B7) 해결 또는 supersede
 
-The origin of B7 is the Cycle 1 dogfood result (`docs/notes/2026-05-10-dogfood-result-cycle-1.md`):
+The origin of B7 is the Cycle 1 dogfood result (`docs/archive/2026-05-10-dogfood-result-cycle-1.md`, archived 2026-06-02):
 
 > B7 | conceptual | router smart-skip | validate-idea Q4 의 smart-skip 규칙 (L161 *이전 답이 이미 나중 질문 커버했으면 skip*) 이 router 단에선 *대화 메모리 의존* — `/buddy:run validate-idea` 재호출 시 이전 답 유실 | session state 메커니즘 도입 (별도 design 필요) — Cycle 3+ 후보.
 
