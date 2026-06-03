@@ -33,6 +33,21 @@
 
 ## 실행 절차
 
+### Step 0. 진행 중 / 저장된 작업 감지 (재개 안내)
+
+`start`는 "새 작업 시작"이 기본이지만, 이미 진행 중이거나 저장된 작업이 있으면 다른 스킬이 더 맞다. 질문(Step 1) 전에 한 번만 점검한다.
+
+!`SLUG=$(basename "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null); ls "$HOME/.claude/checkpoints/$SLUG"/*.md >/dev/null 2>&1 && echo CHECKPOINT_EXISTS; for f in docs/prd.md docs/PRD.md docs/feature-spec docs/actor-track-plan.yaml docs/tech-spec.md; do [ -e "$f" ] && { echo ARTIFACTS_EXIST; break; }; done`
+
+- `CHECKPOINT_EXISTS` 또는 `ARTIFACTS_EXIST` 감지 시 → **중단하지 말고 확인**:
+  > "진행 중이거나 저장해 둔 작업이 보입니다.
+  > - 이어서 하려면 → 저장본 복원은 `/buddy:restore-context`, 현재 위치·다음 단계 확인은 `/buddy:status`
+  > - 새 작업을 시작하려면 → 이대로 계속할게요.
+  > (이어가기 / 새 작업 중 선택해 주세요)"
+  - "이어가기" 선택 → 해당 스킬을 안내하고 본 스킬 종료.
+  - "새 작업" 또는 무응답 → Step 1로 계속.
+- 둘 다 미감지 → 바로 Step 1.
+
 ### Step 1. 입력 확인
 
 `$ARGUMENTS` 검사:

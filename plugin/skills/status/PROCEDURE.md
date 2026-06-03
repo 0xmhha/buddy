@@ -35,9 +35,11 @@
 | `dist/` 또는 `CHANGELOG.md` 존재 + release tag | §7 Release 이후 | `ship-release` |
 | 다수 존재 + production traffic 언급 | §8 Operations | `iterate-product` |
 
-탐지 불가 시: "현재 phase를 특정할 수 없어. 어느 단계에 있는지 알려줘."
+**완전 빈 프로젝트** (산출물·코드베이스 모두 없음) → 보여줄 진행 상태가 없다. 안내 후 종료: "아직 시작 전입니다. 새 작업은 `/buddy:start`로 시작하세요."
 
-**Phase 1 Mode 판별 기준**: 코드베이스(go.mod, package.json, Cargo.toml, pyproject.toml 등)가 있으면 기존 프로덕트(Mode B → `assess-product-change`), 없으면 신규(Mode A → `concretize-idea`).
+탐지 불가 시(단서 일부만 있어 phase 특정 불가): "현재 phase를 특정할 수 없어. 어느 단계에 있는지 알려줘."
+
+**Phase 1 Mode 판별 기준**: 코드베이스(go.mod, package.json, Cargo.toml, pyproject.toml 등)가 있으면 기존 프로덕트(Mode B), 없으면 신규(Mode A). **두 Mode 모두 실행 커맨드는 `/buddy:start`** — `concretize-idea`·`assess-product-change`는 직접 호출 불가하므로 출력의 "지금 바로 실행할 커맨드"에는 `/buddy:start`를 적는다.
 
 ### Step 2. 중단 원인 식별 (선택)
 

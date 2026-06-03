@@ -100,7 +100,7 @@ Buddy 는 모든 skill 을 **artifact 의존성 그래프(DAG)** 로 조직한�
 
 | 클러스터 (DAG 노드) | Orchestrator (entry) | DoR (input) → DoD (output) |
 |-------|----------------------|---------|
-| §1 Discovery / Impact Analysis | `concretize-idea` / `assess-product-change` | idea/concept → PRD + 사업성 검증 (Mode A) · change request + codebase → 영향 평가 + scope (Mode B) |
+| §1 Discovery / Impact Analysis | `concretize-idea` / `assess-product-change` | idea/concept → PRD + HLD (Mode A) · change request + codebase → 영향 평가 + scope (Mode B) |
 | §2 Requirements Specification | `define-features` | PRD → actor / use case / system boundary → feature backlog (SRS) |
 | §3 Software Design | `design-system` | feature backlog (SRS) → tech stack ADR + infra + API + data model (SDD) |
 | §4 Iteration Planning | `plan-build` | software design (SDD) → actor 별 task graph + 병렬 실행 plan |
@@ -110,6 +110,8 @@ Buddy 는 모든 skill 을 **artifact 의존성 그래프(DAG)** 로 조직한�
 | §8 Operation & Maintenance | `iterate-product` | production traffic → A/B + funnel + improvement backlog |
 | §9 Retirement / Decommissioning | `manage-lifecycle` | usage data + 폐기 결정 → deprecation + migration + EOL plan |
 
+> **§1 진입 명령어**: `concretize-idea`·`assess-product-change` 는 직접 호출 명령어가 없다. **새 작업 진입은 `/buddy:start`** (경로 유무로 Mode A/B 자동 분기). "진행 중인데 현재 위치/다음 단계"는 `/buddy:status`, "이어서 재개"는 `/buddy:restore-context`. 나머지 §2~§9 orchestrator 는 `/buddy:<orchestrator>` 직접 호출.
+
 Cross-phase 보조:
 
 - `autoplan` — 어느 노드의 산출물(plan/PRD/ADR/task plan)에든 호출 가능한 4-mode review (review-scope → review-engineering → review-design → review-devex 순차).
@@ -118,11 +120,10 @@ Cross-phase 보조:
 
 라우팅 결정 워크플로우 (artifact frontier 기반):
 
-1. **정확 매칭 (fast path)**: command name 또는 사용자 발화가 위 표의 entry-point skill 1개와 정확히 매칭되면 그 노드를 dispatch — 인라인 표만으로 충분.
-2. **매칭 없으면 frontier 로 진입 노드 결정**: 현재 존재하는 artifact 를 보고(필요 시 `status`) 어느 노드까지 DoD 가 채워졌는지 판단해 그 다음 노드를 진입점으로 둔다.
+1. **명시적 지정 우선 (fast path + User Sovereignty)**: command name 또는 사용자 발화가 특정 skill(orchestrator든 stage든)과 정확히 매칭되면 그 skill 을 그대로 dispatch — **frontier 추론·DoR 검사 생략**, stage 를 orchestrator 로 escalate 하지 않는다. 사용자가 의도를 명시했으면 라우터가 임의로 묶거나 바꾸지 않는다.
+2. **명시 매칭이 없으면 frontier 로 진입 노드 결정**: 현재 존재하는 artifact 를 보고(필요 시 `status`) 어느 노드까지 DoD 가 채워졌는지 판단해 그 다음 노드를 진입점으로 둔다.
 3. **DoR 충족 검사 (prerequisite gate)**: 진입하려는 노드의 DoR(required input artifact)이 없으면, 그것을 생산하는 **upstream 노드로 자동 선행**한다 (예: Software Design 요청인데 SRS 부재 → 먼저 §2). 이는 backtrack·skip·scope-routing 을 아우르는 단일 규칙이다.
-4. **stage 단독 명시 존중**: 사용자가 stage skill 명을 직접 지정하면 orchestrator 로 escalate 하지 않는다 (User Sovereignty).
-5. **lazy-load 트리거** (노드가 정해진 뒤에만, 필요한 것만):
+4. **lazy-load 트리거** (노드가 정해진 뒤에만, 필요한 것만):
    - 위 인라인 표(orchestrator entry)로 노드가 정해지면 추가 Read 불필요.
    - 노드 §N 내 **stage·domain skill** 이 필요하면 → `Read ${CLAUDE_PLUGIN_ROOT}/skills/router/references/catalog/phase-N-*.md` (**해당 노드 shard 1개만** — 전체 카탈로그 로드 금지, 토큰 절약). orchestrator·cross-cutting 목록·노드별 shard 맵은 `skills/router/references/skill-catalog.md` 인덱스.
    - **노드 *내*** 2개+ 모호 → 그 shard 의 `Not when`(anti-trigger)/disambiguation 으로 해소.
