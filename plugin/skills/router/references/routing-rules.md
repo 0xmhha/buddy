@@ -1,4 +1,4 @@
-# Buddy Plugin — Skill Router
+# Buddy Plugin — Skill Routing Rules (충돌·모호 해소)
 
 > **Lazy-load 문서.** 평상시 컨텍스트에 자동 포함되지 않는다.
 > [`skill-catalog.md`](./skill-catalog.md)의 description만 보고 skill 라우팅이 결정되는 경우에는 이 문서를 읽지 않는다 — 토큰을 아낀다.
@@ -29,11 +29,11 @@
 
 | Priority | Category | 대표 skill | Rationale |
 |----------|----------|-----------|-----------|
-| 1 | **Phase orchestrator** | `concretize-idea`, `define-features`, `design-system`, `plan-build`, `build-feature`, `verify-quality`, `ship-release`, `iterate-product`, `manage-lifecycle` | 라이프사이클 단계 시작 gate. 각 phase는 독립 진입점·결정 분기·산출물을 가진다. Tie-breaker: 진입 조건 매칭 (idea만 있으면 §1, PRD 있으면 §2+, 코드 있으면 §3+, production traffic 있으면 §8). |
-| 2 | **Cross-phase review sub-orchestrator** | `autoplan` | 어느 phase의 산출물(PRD / ADR / task plan)에든 호출 가능한 4-mode review pipeline. Phase orchestrator 안의 review stage로 공유 사용. 사용자 명시 호출 시 standalone 동작. |
+| 1 | **노드 orchestrator** (lifecycle entry) | `concretize-idea`, `assess-product-change`, `define-features`, `design-system`, `plan-build`, `build-feature`, `verify-quality`, `ship-release`, `iterate-product`, `manage-lifecycle` | 라이프사이클 노드 진입 gate. 각 노드는 독립 진입점·결정 분기·산출물을 가진다. Tie-breaker: 진입 조건(DoR) 매칭 (idea만 있으면 §1, PRD 있으면 §2+, 코드 있으면 §3+, production traffic 있으면 §8). |
+| 2 | **Cross-phase sub-orchestrator** | `autoplan`, `finish-development-branch` | `autoplan`=어느 노드 산출물(PRD/ADR/task plan)에든 호출 가능한 4-mode review. `finish-development-branch`=§5 후 PR까지 5-stage. 노드 orchestrator 안에서 공유 + 사용자 명시 시 standalone. |
 | 3 | **Stage skill (dual-mode)** | 각 phase 안의 stage skill | orchestrator 안에서 단계로도 호출되고, 사용자 명시 호출 시 standalone으로도 동작. 사용자가 stage 단독 명시 호출하면 orchestrator로 escalate 금지 (User Sovereignty). |
 | 4 | **Domain skill** | `build-with-tdd`, `diagnose-bug`, `run-browser-qa`, `auto-create-pr`, … | 특정 단계의 ritual workflow. 진입점이 아니라 진행 중 호출. |
-| 5 | **Pattern library** | `audit-live-devex`, `classify-qa-tiers`, `freeze-edit-scope`, `apply-builder-ethos`, `guard-destructive-commands`, `compose-safety-mode`, `detect-install-type`, `save-context`, `restore-context`, `persist-learning-jsonl`, `classify-review-risks`, `monitor-regressions` | 다른 skill 내부에서 ambient 적용. **plugin.json commands에 등재 금지. 직접 dispatch 금지.** |
+| 5 | **Pattern library** | `audit-live-devex`, `classify-qa-tiers`, `freeze-edit-scope`, `apply-builder-ethos`, `guard-destructive-commands`, `compose-safety-mode`, `detect-install-type`, `persist-learning-jsonl`, `classify-review-risks`, `monitor-regressions` | 다른 skill 내부에서 ambient 적용. **plugin.json commands에 등재 금지. 직접 dispatch 금지.** (`save-context`·`restore-context`는 직접 호출 커맨드 → 여기 아님, cross-cutting) |
 | 6 | **Archive** | `route-intent`, `route-multi-platform`, `route-spec-to-code` | `plugin/_archive/` 격리. dispatch / command 모두 금지. |
 
 ---
@@ -64,7 +64,7 @@
 
 - 조건: PRD(또는 idea의 구체 spec)가 존재, feature backlog가 미정의
 - 선택: **`define-features`** — 이유: use case 분해 → actor 식별 → system boundary → feature 합성 순서 보장.
-- Q8=(a): actor / use case / system boundary 매핑이 §2 첫 단계로 강제됨.
+- `define-features` 진입 시 actor / use case / system boundary 매핑이 §2 첫 단계로 강제됨.
 
 ### 케이스 C: 코드베이스 존재, 기술 설계 필요 → §3 design-system
 

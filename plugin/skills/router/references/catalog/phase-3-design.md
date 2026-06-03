@@ -70,9 +70,10 @@
 ## 3-I. Decision Support
 | Skill | Trigger | When to use | Not when (→ 대안) |
 |---|---|---|---|
-| `consult-codex` | command + dispatch | 외부 LLM CLI로 review/challenge/consult second opinion | 내부 다관점 대안 비교 → `verify-best-alternative` |
-| `verify-best-alternative` | command + dispatch | [편향 방지] 엔지니어링 결정 commit 직전 orthogonal 대안 발산 + rubric 비교 (design-* sub-step 의무) | 전략·사업 plan critique → `critique-plan` |
+| `verify-best-alternative` | command + dispatch | [편향 방지] 엔지니어링 결정 commit 직전 orthogonal 대안 발산 + rubric 비교 (design-* sub-step 의무) | 전략·사업 plan critique → `critique-plan` / 외부 LLM 의견 → `consult-codex`(cross-cutting) |
 | `critique-plan` | dispatch | Implementation plan strategic critique (CEO/founder 페르소나) | 엔지니어링 결정 검토 → `verify-best-alternative` |
+
+> 외부 LLM second opinion은 cross-cutting `consult-codex`(인덱스 참조 — 노드 무관)로 호출한다. §3 전용 stage 가 아니므로 본 shard에 stage 행으로 두지 않는다.
 
 ## Disambiguation (노드 내)
 - `design-api-contract`(sync 요청/응답) vs `design-event-schema`(async 이벤트): 통신 패러다임.

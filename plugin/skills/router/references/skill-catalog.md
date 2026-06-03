@@ -67,6 +67,7 @@ Buddy plugin의 skill은 세 경로로 활성화된다.
 |------------|---------|------------------|
 | `apply-builder-ethos` | dispatch | Boil the Lake, Search Before Building, User Sovereignty 3 원칙 주입 |
 | `benchmark-llm-models` | dispatch [패턴 라이브러리] | multi-provider LLM benchmark (Claude/GPT/Gemini) — auth verify, select, comparison |
+| `consult-codex` | command + dispatch | 외부 LLM CLI(codex 등)로 review/challenge/consult 3 모드 second opinion. 어느 노드에서든 결정 검토에 호출 (특히 §3 설계·§5 구현) |
 | `decompose-blocker` | command + dispatch | [엔지니어링·언어독립] 코드 작업 stuck 시 문제 분해 + 비용-정보 매트릭스. **자동 trigger: 동일 문제 3회 시도 후 미해결** 또는 사용자 명시. *fix 수행 X*, 다음 스킬로 dispatch 준비 |
 | `detect-install-type` | dispatch [패턴 라이브러리] | tool install type(global-git/local-git/vendored/package-manager/dev-symlink) detect + upgrade path |
 | `guide-setup-wizard` | dispatch [패턴 라이브러리] | auto-detect → picker → verify로 credential/config setup flow 설계 |
