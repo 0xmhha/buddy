@@ -1,3 +1,13 @@
+---
+name: analyze-market-size
+description: |
+  Use when 시장 규모를 정량 산출해야 할 때 (TAM/SAM/SOM — Total/Serviceable/Serviceable-Obtainable Addressable Market). Top-down (Statista / Gartner industry report) + bottom-up (reachable customer × ARPC) cross-check, ±50% sensitivity로 정확도 확보. PRD / 사업성 가설 입력, 투자 deck TAM 검증, 신규 시장 SAM 재산정, pivot 결정 SAM 좁히기 시점.
+  Trigger phrases: "시장 크기 분석", "TAM 산출", "TAM/SAM/SOM 계산", "market size", "addressable market", "총 시장 규모".
+when_to_use: |
+  사업성 7차원 평가 (assess-business-viability) 내 시장 규모 차원 입력 또는 단독 호출. 사업성 전반은 assess-business-viability, 고객 segment 분리는 map-customer-segments로 라우팅.
+disable-model-invocation: true
+---
+
 # Analyze Market Size — TAM / SAM / SOM 산출 + cross-check
 
 ## 1. 목적
